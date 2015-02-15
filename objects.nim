@@ -129,7 +129,7 @@ proc setProp*(obj: MObject, name: string, newVal: MData) =
 template setPropR*(obj: MObject, name: string, newVal: expr) =
   obj.setProp(name, newVal.md)
 
-proc getLocation(obj: MObject): MObject =
+proc getLocation*(obj: MObject): MObject =
   let world = obj.world
   if world == nil: return nil
 
@@ -140,7 +140,7 @@ proc getLocation(obj: MObject): MObject =
   else:
     return nil
 
-proc getContents(obj: MObject): seq[MObject] =
+proc getContents*(obj: MObject): seq[MObject] =
   let world = obj.world
   if world == nil: return nil
 
@@ -154,7 +154,7 @@ proc getContents(obj: MObject): seq[MObject] =
 
   return result
 
-proc getAliases(obj: MObject): seq[string] =
+proc getAliases*(obj: MObject): seq[string] =
   let aliases = obj.getPropVal("aliases")
   var result: seq[string] = @[]
 
@@ -165,7 +165,7 @@ proc getAliases(obj: MObject): seq[string] =
 
   return result
 
-proc getStrProp(obj: MObject, name: string): string =
+proc getStrProp*(obj: MObject, name: string): string =
   let datum = obj.getPropVal(name)
 
   if datum.isType(dStr):
