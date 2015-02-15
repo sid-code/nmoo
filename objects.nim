@@ -80,6 +80,9 @@ proc `$`*(x: MData): string {.inline.} =
 proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
   return datum.dtype == dtype
 
+proc byID*(world: World, id: ObjID): MObject =
+  world.objects[id.int]
+
 proc blankObject*: MObject =
   MObject(
     id: 0.id,
@@ -189,9 +192,6 @@ proc delete*(world: World, obj: MObject) =
   var idx = obj.id.int
 
   objs[idx] = nil
-
-proc byID*(world: World, id: ObjID): MObject =
-  world.objects[id.int]
 
 proc changeParent*(obj: MObject, newParent: MObject) =
   if not newParent.fertile:
