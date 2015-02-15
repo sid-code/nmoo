@@ -129,6 +129,50 @@ proc setProp*(obj: MObject, name: string, newVal: MData) =
 template setPropR*(obj: MObject, name: string, newVal: expr) =
   obj.setProp(name, newVal.md)
 
+proc getLocation(obj: MObject): MObject =
+  let world = obj.world
+  if world == nil: return nil
+
+  let loc = obj.getPropVal("location")
+
+  if loc.isType(dObj):
+    return world.byID(loc.objVal)
+  else:
+    return nil
+
+proc getContents(obj: MObject): seq[MObject] =
+  let world = obj.world
+  if world == nil: return nil
+
+  let contents = obj.getPropVal("contents")
+  var result: seq[MObject] = @[]
+
+  if contents.isType(dList):
+    for o in contents.listVal:
+      if o.isType(dObj):
+        result.add(world.byID(o.objVal))
+
+  return result
+
+proc getAliases(obj: MObject): seq[string] =
+  let aliases = obj.getPropVal("aliases")
+  var result: seq[string] = @[]
+
+  if aliases.isType(dList):
+    for o in aliases.listVal:
+      if o.isType(dStr):
+        result.add(o.strVal)
+
+  return result
+
+proc getStrProp(obj: MObject, name: string): string =
+  let datum = obj.getPropVal(name)
+
+  if datum.isType(dStr):
+    return datum.strVal
+  else:
+    return ""
+
 proc createWorld*: World =
   World( objects: @[] )
 
