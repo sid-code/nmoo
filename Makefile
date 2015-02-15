@@ -1,14 +1,14 @@
 NIMC=nim
 CFLAGS=--verbosity:0 c
-SOURCE=main.nim test.nim objects.nim querying.nim
+SOURCE=objects.nim querying.nim
 BINS=main test
 
 all: $(BINS)
 
-main: $(SOURCE)
+main: $(SOURCE) main.nim
 	$(NIMC) $(CFLAGS) main.nim
 
-test: $(SOURCE)
+test: $(SOURCE) test.nim
 	$(NIMC) $(CFLAGS) test.nim
 
 clean: $(BINS)
