@@ -1,7 +1,12 @@
+import sequtils
 
 type
-  MObject = ref object
-    id: int
+  World* = ref object
+    objects: seq[MObject]
+
+  MObject* = ref object
+    id: ObjID
+    world: World
     is_player: bool
     
     props: seq[MProperty]
@@ -14,39 +19,43 @@ type
     pub_read: bool
     fertile: bool
 
-  MProperty = ref object
+  MProperty* = ref object
     name: string
     val: MData
     owner: MObject
-    inheritor: MObject
+    inherited: bool
 
     pub_write: bool
     pub_read: bool
     owner_is_parent: bool
 
-  MVerb = object # stub
+  MVerb* = ref object # stub
     names: string
     owner: MObject
-    inheritor: MObject
+    inherited: bool
 
     code: string
 
-  MDataType = enum
-    dInt, dFloat, dStr, dErr, dList, dObj
+  MDataType* = enum
+    dInt, dFloat, dStr, dErr, dList, dObj, dNil
 
-  MData = object
-    case dtype: MDataType
-      of dInt: intVal: int
-      of dFloat: floatVal: float
-      of dStr: strVal: string
-      of dErr: errVal: MError
-      of dList: listVal: seq[MData]
-      of dObj: objVal: ObjID
+  MData* = object
+    case dtype*: MDataType
+      of dInt: intVal*: int
+      of dFloat: floatVal*: float
+      of dStr: strVal*: string
+      of dErr: errVal*: MError
+      of dList: listVal*: seq[MData]
+      of dObj: objVal*: ObjID
+      of dNil: nilVal*: int # dummy
 
-  MError = enum
+  MError* = enum
     E_WHOOPS
 
-  ObjID = distinct int
+  ObjID* = distinct int
+
+
+proc id*(x: int): ObjID = ObjID(x)
 
 proc md*(x: int): MData = MData(dtype: dInt, intVal: x)
 proc md*(x: float): MData = MData(dtype: dFloat, floatVal: x)
@@ -55,20 +64,26 @@ proc md*(x: MError): MData = MData(dtype: dErr, errVal: x)
 proc md*(x: seq[MData]): MData = MData(dtype: dList, listVal: x)
 proc md*(x: ObjID): MData = MData(dtype: dObj, objVal: x)
 proc md*(x: MObject): MData = x.id.md
+let nilD = MData(dtype: dNil, nilVal: 1)
 
 proc `$`*(x: ObjID): string {.borrow.}
 proc `$`*(x: MData): string {.inline.} =
   case x.dtype:
-    of dInt: return $x.intVal
-    of dFloat: return $x.floatVal & "f"
-    of dStr: return "\"" & $x.strVal & "\""
-    of dErr: return "some error"
-    of dList: return $x.listVal
-    of dObj: return "#" & $x.objVal
+    of dInt: $x.intVal
+    of dFloat: $x.floatVal & "f"
+    of dStr: "\"" & $x.strVal & "\""
+    of dErr: "some error"
+    of dList: $x.listVal
+    of dObj: "#" & $x.objVal
+    of dNil: "nil"
 
-proc blankObject*(): MObject =
-  var obj = MObject(
-    id: 0,
+proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
+  return datum.dtype == dtype
+
+proc blankObject*: MObject =
+  MObject(
+    id: 0.id,
+    world: nil,
     is_player: false,
     props: @[],
     verbs: @[],
@@ -79,7 +94,7 @@ proc blankObject*(): MObject =
     fertile: true
   )
 
-  return obj
+proc world*(obj: MObject): World = obj.world
 
 proc getProp*(obj: MObject, name: string): MProperty =
   for p in obj.props:
@@ -88,8 +103,12 @@ proc getProp*(obj: MObject, name: string): MProperty =
 
   return nil
 
-proc `val=`*(prop: MProperty, newVal: MData) =
-  prop.val = newVal
+proc getPropVal*(obj: MObject, name: string): MData =
+  var result = obj.getProp(name)
+  if result == nil:
+    nilD
+  else:
+    result.val
 
 proc setProp*(obj: MObject, name: string, newVal: MData) =
   var p = obj.getProp(name)
@@ -98,7 +117,7 @@ proc setProp*(obj: MObject, name: string, newVal: MData) =
       name: name,
       val: newVal,
       owner: obj,
-      inheritor: nil,
+      inherited: false,
       
       pub_read: true,
       pub_write: false,
@@ -107,6 +126,69 @@ proc setProp*(obj: MObject, name: string, newVal: MData) =
   else:
     p.val = newVal
 
-var o = blankObject()
-o.setProp("name", "hi".md)
+template setPropR*(obj: MObject, name: string, newVal: expr) =
+  obj.setProp(name, newVal.md)
 
+proc createWorld*: World =
+  World( objects: @[] )
+
+proc add*(world: World, obj: MObject) =
+  var objs = world.objects
+  var newid = ObjID(len(objs))
+
+  obj.id = newid
+  obj.world = world
+  objs.add(obj)
+
+proc delete*(world: World, obj: MObject) =
+  var objs = world.objects
+  var idx = obj.id.int
+
+  objs[idx] = nil
+
+proc byID*(world: World, id: ObjID): MObject =
+  world.objects[id.int]
+
+proc changeParent*(obj: MObject, newParent: MObject) =
+  if not newParent.fertile:
+    return
+
+  if obj.parent != nil:
+    # delete currently inherited properties
+    obj.props.keepItIf(not it.inherited)
+    obj.verbs.keepItIf(not it.inherited)
+
+    # remove this from old parent's children
+    obj.parent.children.keepItIf(it != obj)
+
+
+  deepCopy(obj.props, newParent.props)
+  deepCopy(obj.verbs, newParent.verbs)
+
+  for p in obj.props:
+    p.inherited = true
+  
+  for v in obj.verbs:
+    v.inherited = true
+
+  obj.parent = newParent
+  newParent.children.add(obj)
+
+  
+proc createChild*(parent: MObject): MObject =
+  if not parent.fertile:
+    return nil
+
+  var newObj = blankObject()
+
+  newObj.is_player = parent.is_player
+  newObj.pub_read = parent.pub_read
+  newObj.pub_write = parent.pub_write
+  newObj.fertile = parent.fertile
+
+  newObj.changeParent(parent)
+
+  return newObj
+
+  
+  
