@@ -67,6 +67,7 @@ proc md*(x: MObject): MData = x.id.md
 let nilD = MData(dtype: dNil, nilVal: 1)
 
 proc `$`*(x: ObjID): string {.borrow.}
+proc `==`*(x: ObjID): string {.borrow.}
 proc `$`*(x: MData): string {.inline.} =
   case x.dtype:
     of dInt: $x.intVal
