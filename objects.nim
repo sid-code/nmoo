@@ -56,6 +56,7 @@ type
 
 
 proc id*(x: int): ObjID = ObjID(x)
+proc getID*(obj: MObject): ObjID = obj.id
 
 proc md*(x: int): MData = MData(dtype: dInt, intVal: x)
 proc md*(x: float): MData = MData(dtype: dFloat, floatVal: x)
