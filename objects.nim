@@ -143,6 +143,14 @@ proc getProp*(obj: MObject, name: string): MProperty =
 
   return nil
 
+proc setPropChildCopy*(obj: MObject, name: string, newVal: bool): bool =
+  var prop = obj.getProp(name)
+  if prop != nil:
+    prop.copy_val = newVal
+    return true
+  else:
+    return false
+
 proc getPropVal*(obj: MObject, name: string): MData =
   var result = obj.getProp(name)
   if result == nil:
