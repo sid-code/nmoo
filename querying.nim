@@ -24,8 +24,12 @@ proc query*(obj: MObject, str: string): seq[MObject] =
   let loc = obj.getLocation()
 
   if loc != nil:
-    for o in loc.getContents(): searchSpace.add(o)
+    let (has, contents) = loc.getContents()
+    if has:
+      for o in contents: searchSpace.add(o)
 
-  for o in obj.getContents(): searchSpace.add(o)
+  let (has, contents) = obj.getContents()
+  if has:
+    for o in contents: searchSpace.add(o)
 
   return searchSpace.filterIt(it.matches(str))
