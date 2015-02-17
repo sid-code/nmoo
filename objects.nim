@@ -224,16 +224,22 @@ proc getStrProp*(obj: MObject, name: string): string =
 proc createWorld*: World =
   World( objects: @[] )
 
+proc getObjects*(world: World): ptr seq[MObject] =
+  addr world.objects
+
 proc add*(world: World, obj: MObject) =
-  var objs = world.objects
-  var newid = ObjID(len(objs))
+  var objs = world.getObjects()
+  var newid = ObjID(objs[].len)
 
   obj.id = newid
   obj.world = world
-  objs.add(obj)
+  objs[].add(obj)
 
-proc delete*(world: World, obj: MObject) =
-  var objs = world.objects
+proc size*(world: World): int =
+  world.objects.len
+
+proc delete*(world: var World, obj: MObject) =
+  var objs = world.getObjects()
   var idx = obj.id.int
 
   objs[idx] = nil
