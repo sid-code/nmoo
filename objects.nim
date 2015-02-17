@@ -285,5 +285,9 @@ proc createChild*(parent: var MObject): MObject =
 
   return newObj
 
-  
-  
+proc moveTo*(obj: var MObject, newLoc: var MObject) =
+  var loc = obj.getLocation()
+  discard loc.removeFromContents(obj)
+  obj.setPropR("location", newLoc)
+  newLoc.addToContents(obj)
+
