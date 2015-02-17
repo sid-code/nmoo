@@ -164,42 +164,56 @@ proc getLocation*(obj: MObject): MObject =
   else:
     return nil
 
-proc getRawContents(obj: MObject): seq[MData] =
+proc getRawContents(obj: MObject): tuple[hasContents: bool, contents: seq[MData]] =
 
   let contents = obj.getPropVal("contents")
 
   if contents.isType(dList):
-    return contents.listVal
+    return (true, contents.listVal)
   else:
-    return @[]
+    return (false, @[])
 
 
-proc getContents*(obj: MObject): seq[MObject] =
-  var result: seq[MObject] = @[]
+proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]] =
   let world = obj.world
-  if world == nil: return result
+  if world == nil: return (false, @[])
 
-  var contents = obj.getRawContents();
+  var result: seq[MObject] = @[]
 
-  for o in contents:
-    if o.isType(dObj):
-      result.add(world.byID(o.objVal))
+  var (has, contents) = obj.getRawContents();
 
-  return result
+  if has:
+    for o in contents:
+      if o.isType(dObj):
+        result.add(world.byID(o.objVal))
 
-proc addToContents*(obj: MObject, newMember: var MObject) =
-  var contents = obj.getRawContents();
-  contents.add(newMember.md)
-  obj.setPropR("contents", contents)
+    return (true, result)
+  else:
+    return (false, @[])
+  
 
-proc removeFromContents(obj: MObject, member: var MObject): MObject =
-  var contents = obj.getRawContents();
 
-  for idx, o in contents:
-    if o.objVal == obj.id:
-      system.delete(contents, idx)
+proc addToContents*(obj: MObject, newMember: var MObject): bool =
+  var (has, contents) = obj.getRawContents();
+  if has:
+    contents.add(newMember.md)
+    obj.setPropR("contents", contents)
+    return true
+  else:
+    return false
+
+proc removeFromContents(obj: MObject, member: var MObject): bool =
+  var (has, contents) = obj.getRawContents();
+
+  if has:
+    for idx, o in contents:
+      if o.objVal == obj.id:
+        system.delete(contents, idx)
 
     obj.setPropR("contents", contents)
+    return true
+  else:
+    return false
 
 
 proc getAliases*(obj: MObject): seq[string] =
@@ -285,9 +299,17 @@ proc createChild*(parent: var MObject): MObject =
 
   return newObj
 
-proc moveTo*(obj: var MObject, newLoc: var MObject) =
+proc moveTo*(obj: var MObject, newLoc: var MObject): bool =
   var loc = obj.getLocation()
-  discard loc.removeFromContents(obj)
-  obj.setPropR("location", newLoc)
-  newLoc.addToContents(obj)
+  if loc != nil:
+    discard loc.removeFromContents(obj)
+
+  if newLoc.addToContents(obj):
+    obj.setPropR("location", newLoc)
+    return true
+  else:
+    return false
+
+
+    
 
