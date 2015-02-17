@@ -143,7 +143,6 @@ proc setProp*(obj: MObject, name: string, newVal: MData) =
       val: newVal,
       owner: obj,
       inherited: false,
-      
       pub_read: true,
       pub_write: false,
       owner_is_parent: true
@@ -165,19 +164,43 @@ proc getLocation*(obj: MObject): MObject =
   else:
     return nil
 
-proc getContents*(obj: MObject): seq[MObject] =
-  let world = obj.world
-  if world == nil: return nil
+proc getRawContents(obj: MObject): seq[MData] =
 
   let contents = obj.getPropVal("contents")
-  var result: seq[MObject] = @[]
 
   if contents.isType(dList):
-    for o in contents.listVal:
-      if o.isType(dObj):
-        result.add(world.byID(o.objVal))
+    return contents.listVal
+  else:
+    return @[]
+
+
+proc getContents*(obj: MObject): seq[MObject] =
+  var result: seq[MObject] = @[]
+  let world = obj.world
+  if world == nil: return result
+
+  var contents = obj.getRawContents();
+
+  for o in contents:
+    if o.isType(dObj):
+      result.add(world.byID(o.objVal))
 
   return result
+
+proc addToContents*(obj: MObject, newMember: var MObject) =
+  var contents = obj.getRawContents();
+  contents.add(newMember.md)
+  obj.setPropR("contents", contents)
+
+proc removeFromContents(obj: MObject, member: var MObject): MObject =
+  var contents = obj.getRawContents();
+
+  for idx, o in contents:
+    if o.objVal == obj.id:
+      system.delete(contents, idx)
+
+    obj.setPropR("contents", contents)
+
 
 proc getAliases*(obj: MObject): seq[string] =
   let aliases = obj.getPropVal("aliases")
