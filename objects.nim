@@ -25,6 +25,8 @@ type
     owner: MObject
     inherited: bool
 
+    copy_val: bool
+
     pub_write: bool
     pub_read: bool
     owner_is_parent: bool
@@ -67,6 +69,17 @@ proc md*(x: ObjID): MData = MData(dtype: dObj, objVal: x)
 proc md*(x: MObject): MData = x.id.md
 let nilD* = MData(dtype: dNil, nilVal: 1)
 
+proc blank*(dt: MDataType): MData =
+  case dt:
+    of dInt: 0.md
+    of dFloat: 0.0'f64.md
+    of dStr: "".md
+    of dErr: E_WHOOPS.md # CHANGE ME
+    of dList: @[].md
+    of dObj: 0.ObjID.md
+    of dNil: nilD
+
+
 proc `$`*(x: ObjID): string {.borrow.}
 proc `==`*(x: ObjID, y: ObjID): bool {.borrow.}
 proc `$`*(x: MData): string {.inline.} =
@@ -91,6 +104,8 @@ proc copy(prop: MProperty): MProperty =
     val: prop.val,
     owner: prop.owner,
     inherited: prop.inherited,
+
+    copy_val: prop.copy_val,
 
     pub_read: prop.pub_read,
     pub_write: prop.pub_write,
@@ -143,6 +158,9 @@ proc setProp*(obj: MObject, name: string, newVal: MData) =
       val: newVal,
       owner: obj,
       inherited: false,
+      
+      copy_val: false,
+
       pub_read: true,
       pub_write: false,
       owner_is_parent: true
@@ -190,7 +208,7 @@ proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]
     return (true, result)
   else:
     return (false, @[])
-  
+
 
 
 proc addToContents*(obj: MObject, newMember: var MObject): bool =
@@ -274,6 +292,13 @@ proc changeParent*(obj: var MObject, newParent: var MObject) =
   for p in newParent.props:
     var pc = p.copy
     pc.inherited = true
+
+    # only copy the value of the property if specified by the property
+
+    if not pc.copy_val:
+      pc.val = blank(pc.val.dtype)
+
+
     obj.props.add(pc)
 
   for v in obj.verbs:
