@@ -5,8 +5,27 @@ var root = blankObject()
 world.add(root)
 root.setPropR("name", "root")
 root.setPropR("aliases", @[])
-root.setPropR("location", root)
 root.setPropR("rootprop", "yes")
+
+
+var genericContainer = root.createChild()
+world.add(genericContainer)
+genericContainer.setPropR("name", "generic container")
+genericContainer.setPropR("contents", @[])
+
+var nowhere = genericContainer.createChild()
+world.add(nowhere)
+
+var genericThing = root.createChild()
+
+world.add(genericThing)
+genericThing.setPropR("name", "generic thing")
+assert(genericThing.moveTo(nowhere))
+
+genericContainer.changeParent(genericThing)
+assert(genericContainer.moveTo(nowhere))
+assert(genericThing.moveTo(nowhere))
+
 
 proc testInheritance =
 
@@ -24,16 +43,19 @@ proc testInheritance =
 
 proc testQuery =
 
-  var o1 = root.createChild()
+  var o1 = genericThing.createChild()
   world.add(o1)
 
-  var o2 = root.createChild()
+  var o2 = genericContainer.createChild()
   world.add(o2)
 
-  o1.moveTo(o2)
+  o2.setPropR("contents", @[])
+  discard o1.moveTo(o2)
 
   o1.setPropR("aliases", @["thingy".md])
-  assert(o2.getContents().len == 1)
+  var (has, contents) = o2.getContents()
+  assert(has)
+  assert(contents.len == 1)
   assert(o2.query("thingy").len == 1)
   
 
