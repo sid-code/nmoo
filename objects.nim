@@ -301,6 +301,8 @@ proc createChild*(parent: var MObject): MObject =
 
 proc moveTo*(obj: var MObject, newLoc: var MObject): bool =
   var loc = obj.getLocation()
+  if loc == newLoc:
+    return false
   if loc != nil:
     discard loc.removeFromContents(obj)
 
@@ -309,7 +311,3 @@ proc moveTo*(obj: var MObject, newLoc: var MObject): bool =
     return true
   else:
     return false
-
-
-    
-
