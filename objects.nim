@@ -244,7 +244,7 @@ proc delete*(world: var World, obj: MObject) =
 
   objs[idx] = nil
 
-proc changeParent*(obj: MObject, newParent: MObject) =
+proc changeParent*(obj: var MObject, newParent: var MObject) =
   if not newParent.fertile:
     return
 
@@ -257,20 +257,20 @@ proc changeParent*(obj: MObject, newParent: MObject) =
     obj.parent.children.keepItIf(it != obj)
 
 
-  deepCopy(obj.props, newParent.props)
-  deepCopy(obj.verbs, newParent.verbs)
+  for p in newParent.props:
+    var pc = p.copy
+    pc.inherited = true
+    obj.props.add(pc)
 
-  for p in obj.props:
-    p.inherited = true
-  
   for v in obj.verbs:
-    v.inherited = true
+    var vc = v.copy
+    vc.inherited = true
+    obj.verbs.add(vc)
 
   obj.parent = newParent
   newParent.children.add(obj)
 
-  
-proc createChild*(parent: MObject): MObject =
+proc createChild*(parent: var MObject): MObject =
   if not parent.fertile:
     return nil
 
