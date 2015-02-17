@@ -6,6 +6,7 @@ world.add(root)
 root.setPropR("name", "root")
 root.setPropR("aliases", @[])
 root.setPropR("rootprop", "yes")
+assert(root.setPropChildCopy("rootprop", true))
 
 
 var genericContainer = root.createChild()
@@ -23,8 +24,10 @@ genericThing.setPropR("name", "generic thing")
 assert(genericThing.moveTo(nowhere))
 
 genericContainer.changeParent(genericThing)
+
 assert(genericContainer.moveTo(nowhere))
-assert(genericThing.moveTo(nowhere))
+
+assert(nowhere.getContents().contents.len == 2)
 
 
 proc testInheritance =
