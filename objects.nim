@@ -65,7 +65,7 @@ proc md*(x: MError): MData = MData(dtype: dErr, errVal: x)
 proc md*(x: seq[MData]): MData = MData(dtype: dList, listVal: x)
 proc md*(x: ObjID): MData = MData(dtype: dObj, objVal: x)
 proc md*(x: MObject): MData = x.id.md
-let nilD = MData(dtype: dNil, nilVal: 1)
+let nilD* = MData(dtype: dNil, nilVal: 1)
 
 proc `$`*(x: ObjID): string {.borrow.}
 proc `==`*(x: ObjID, y: ObjID): bool {.borrow.}
