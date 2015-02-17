@@ -8,7 +8,7 @@ type
     id: ObjID
     world: World
     is_player: bool
-    
+
     props: seq[MProperty]
     verbs: seq[MVerb]
 
@@ -84,6 +84,26 @@ proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
 
 proc byID*(world: World, id: ObjID): MObject =
   world.objects[id.int]
+
+proc copy(prop: MProperty): MProperty =
+  MProperty(
+    name: prop.name,
+    val: prop.val,
+    owner: prop.owner,
+    inherited: prop.inherited,
+
+    pub_read: prop.pub_read,
+    pub_write: prop.pub_write,
+    owner_is_parent: prop.owner_is_parent
+  )
+
+proc copy(verb: MVerb): MVerb =
+  MVerb(
+    names: verb.names,
+    owner: verb.owner,
+    inherited: verb.inherited,
+    code: verb.code
+  )
 
 proc blankObject*: MObject =
   MObject(
