@@ -4,8 +4,8 @@ import objects, sequtils
 proc startsWith(s1, s2: string): bool =
   if s1.len < s2.len: return false
 
-  for idx, ch in s1:
-    if ch != s2[idx]: return false
+  for idx, ch in s2:
+    if ch != s1[idx]: return false
 
   return true
 
