@@ -3,6 +3,8 @@ CFLAGS=--verbosity:0 c
 SOURCE=objects.nim querying.nim
 BINS=main test
 
+.PHONY: all
+
 all: $(BINS)
 
 main: $(SOURCE) main.nim
