@@ -52,7 +52,7 @@ type
       of dNil: nilVal*: int # dummy
 
   MError* = enum
-    E_WHOOPS
+    E_NONE
 
   ObjID* = distinct int
 
@@ -74,7 +74,7 @@ proc blank*(dt: MDataType): MData =
     of dInt: 0.md
     of dFloat: 0.0'f64.md
     of dStr: "".md
-    of dErr: E_WHOOPS.md # CHANGE ME
+    of dErr: E_NONE.md # CHANGE ME
     of dList: @[].md
     of dObj: 0.ObjID.md
     of dNil: nilD
