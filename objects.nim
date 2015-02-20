@@ -88,7 +88,7 @@ proc `==`*(x: ObjID, y: ObjID): bool {.borrow.}
 proc `$`*(x: MData): string {.inline.} =
   case x.dtype:
     of dInt: $x.intVal
-    of dFloat: $x.floatVal & "f"
+    of dFloat: $x.floatVal
     of dStr: "\"" & x.strVal & "\""
     of dBin: "\'" & x.binVal
     of dErr: "some error"
