@@ -46,7 +46,7 @@ type
       of dInt: intVal*: int
       of dFloat: floatVal*: float
       of dStr: strVal*: string
-      of dBin: binVal: string # builtin call
+      of dBin: binVal*: string # builtin call
       of dErr: errVal*: MError
       of dList: listVal*: seq[MData]
       of dObj: objVal*: ObjID
