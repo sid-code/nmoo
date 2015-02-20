@@ -8,9 +8,12 @@ task defaultTask, "builds everything":
   for exe in Exes:
     runTask(exe)
 
-template simpleBuild(name: string) =
+proc isGood(name: string): bool =
+  name.needsRefresh(name & ".nim")
+
+proc simpleBuild(name: string) =
   task name, "builds " & name:
-    if name.needsRefresh(name & ".nim"):
+    if name.isGood():
       if shell(nimExe, DefaultOptions, "c", name):
         echo "success building " & name
     else:
@@ -21,6 +24,10 @@ task "clean", "removes executables":
     echo "removing " & exe
     shell("rm ", exe)
 
-simpleBuild("test")
-simpleBuild("main")
-simpleBuild("scripting")
+task "tests", "run tests":
+  runTask("test")
+  shell("./test")
+
+
+for exe in Exes:
+  simpleBuild(exe)
