@@ -1,68 +1,73 @@
-import objects, querying
+import 
+  unittest,
+  objects, querying, scripting
 
-var world = createWorld()
-var root = blankObject()
-world.add(root)
-root.setPropR("name", "root")
-root.setPropR("aliases", @[])
-root.setPropR("rootprop", "yes")
-assert(root.setPropChildCopy("rootprop", true))
-
-
-var genericContainer = root.createChild()
-world.add(genericContainer)
-genericContainer.setPropR("name", "generic container")
-genericContainer.setPropR("contents", @[])
-
-var nowhere = genericContainer.createChild()
-world.add(nowhere)
-
-var genericThing = root.createChild()
-
-world.add(genericThing)
-genericThing.setPropR("name", "generic thing")
-assert(genericThing.moveTo(nowhere))
-
-genericContainer.changeParent(genericThing)
-
-assert(genericContainer.moveTo(nowhere))
-
-assert(nowhere.getContents().contents.len == 2)
+suite "object tests":
+  setup:
+    var world = createWorld()
+    var root = blankObject()
+    world.add(root)
+    root.setPropR("name", "root")
+    root.setPropR("aliases", @[])
+    root.setPropR("rootprop", "yes")
+    check root.setPropChildCopy("rootprop", true)
 
 
-proc testInheritance =
+    var genericContainer = root.createChild()
+    world.add(genericContainer)
+    genericContainer.setPropR("name", "generic container")
+    genericContainer.setPropR("contents", @[])
 
-  var child = root.createChild()
-  world.add(child)
-  child.setPropR("name", "child")
+    var nowhere = genericContainer.createChild()
+    world.add(nowhere)
 
-  var evenMoreChild = child.createChild()
-  world.add(evenMoreChild)
-  evenMoreChild.setPropR("rootprop", "no")
+    var genericThing = root.createChild()
 
-  child.changeParent(evenMoreChild)
+    world.add(genericThing)
+    genericThing.setPropR("name", "generic thing")
+    check genericThing.moveTo(nowhere)
 
-  assert(child.getPropVal("rootprop").strVal == "no")
+    genericContainer.changeParent(genericThing)
 
-proc testQuery =
+    check genericContainer.moveTo(nowhere)
 
-  var o1 = genericThing.createChild()
-  world.add(o1)
+    check nowhere.getContents().contents.len == 2
 
-  var o2 = genericContainer.createChild()
-  world.add(o2)
+  test "inheritance works":
+    var child = root.createChild()
+    world.add(child)
+    child.setPropR("name", "child")
 
-  o2.setPropR("contents", @[])
-  discard o1.moveTo(o2)
+    var evenMoreChild = child.createChild()
+    world.add(evenMoreChild)
+    evenMoreChild.setPropR("rootprop", "no")
 
-  o1.setPropR("aliases", @["thingy".md])
-  var (has, contents) = o2.getContents()
-  assert(has)
-  assert(contents.len == 1)
-  assert(o2.query("thingy").len == 1)
-  
+    child.changeParent(evenMoreChild)
 
-testInheritance()
-testQuery()
+    check child.getPropVal("rootprop").strVal == "no"
 
-echo "All tests passed"
+  test "query works":
+    var o1 = genericThing.createChild()
+    world.add(o1)
+
+    var o2 = genericContainer.createChild()
+    world.add(o2)
+
+    o2.setPropR("contents", @[])
+    discard o1.moveTo(o2)
+
+    o1.setPropR("aliases", @["thingy".md])
+    var (has, contents) = o2.getContents()
+
+    check has
+    check contents.len == 1
+    check o2.query("thin").len == 1
+
+suite "scripting":
+  suite "lexer":
+    setup:
+      var testStr = "(builtin \"stri\\\"ng\")"
+
+    test "lexer works":
+      var lexed = lex(testStr)
+      check lexed.len == 4
