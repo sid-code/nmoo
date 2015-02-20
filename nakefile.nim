@@ -19,7 +19,7 @@ template simpleBuild(name: string) =
 task "clean", "removes executables":
   for exe in Exes:
     echo "removing " & exe
-    shell("rm " & exe)
+    shell("rm ", exe)
 
 simpleBuild("test")
 simpleBuild("main")
