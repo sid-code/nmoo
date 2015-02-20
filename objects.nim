@@ -1,4 +1,4 @@
-import sequtils
+import sequtils, strutils
 
 type
   World* = ref object
@@ -53,7 +53,7 @@ type
       of dNil: nilVal*: int # dummy
 
   MError* = enum
-    E_NONE, E_TYPE
+    E_NONE, E_TYPE, E_BUILTIN
 
   ObjID* = distinct int
 
@@ -89,7 +89,7 @@ proc `$`*(x: MData): string {.inline.} =
   case x.dtype:
     of dInt: $x.intVal
     of dFloat: $x.floatVal
-    of dStr: "\"" & x.strVal & "\""
+    of dStr: x.strVal.escape
     of dBin: "\'" & x.binVal
     of dErr: "some error"
     of dList: $x.listVal
@@ -170,7 +170,6 @@ proc setProp*(obj: MObject, name: string, newVal: MData) =
       val: newVal,
       owner: obj,
       inherited: false,
-      
       copy_val: false,
 
       pub_read: true,
