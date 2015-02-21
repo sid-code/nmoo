@@ -1,4 +1,4 @@
-import 
+import
   unittest,
   objects, querying, scripting
 
@@ -77,13 +77,12 @@ suite "scripting":
       let testStr = "(echo \"hello world\" (sub-list \"who knew?\" 3.14))"
       var parser = newParser(testStr)
     test "parser works":
-      let 
+      let
         result = parser.parseList()
         str = $result
-      
+
       check str == "@['echo, \"hello world\", @['sub-list, \"who knew?\", 3.14]]"
 
-      
 var parser = newParser("""
 (let (("a" "b")) (echo a))
 """)
