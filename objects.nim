@@ -39,14 +39,14 @@ type
     code: string
 
   MDataType* = enum
-    dInt, dFloat, dStr, dBin, dErr, dList, dObj, dNil
+    dInt, dFloat, dStr, dSym, dErr, dList, dObj, dNil
 
   MData* = object
     case dtype*: MDataType
       of dInt: intVal*: int
       of dFloat: floatVal*: float
       of dStr: strVal*: string
-      of dBin: binVal*: string # builtin call
+      of dSym: symVal*: string # builtin call
       of dErr: errVal*: MError
       of dList: listVal*: seq[MData]
       of dObj: objVal*: ObjID
@@ -64,7 +64,7 @@ proc getID*(obj: MObject): ObjID = obj.id
 proc md*(x: int): MData = MData(dtype: dInt, intVal: x)
 proc md*(x: float): MData = MData(dtype: dFloat, floatVal: x)
 proc md*(x: string): MData = MData(dtype: dStr, strVal: x)
-proc mdb*(x: string): MData = MData(dtype: dBin, binVal: x)
+proc mds*(x: string): MData = MData(dtype: dSym, symVal: x)
 proc md*(x: MError): MData = MData(dtype: dErr, errVal: x)
 proc md*(x: seq[MData]): MData = MData(dtype: dList, listVal: x)
 proc md*(x: ObjID): MData = MData(dtype: dObj, objVal: x)
@@ -76,7 +76,7 @@ proc blank*(dt: MDataType): MData =
     of dInt: 0.md
     of dFloat: 0.0'f64.md
     of dStr: "".md
-    of dBin: "".mdb
+    of dSym: "".mdb
     of dErr: E_NONE.md # CHANGE ME
     of dList: @[].md
     of dObj: 0.ObjID.md
@@ -90,7 +90,7 @@ proc `$`*(x: MData): string {.inline.} =
     of dInt: $x.intVal
     of dFloat: $x.floatVal
     of dStr: x.strVal.escape
-    of dBin: "\'" & x.binVal
+    of dSym: "\'" & x.symVal
     of dErr: "some error"
     of dList: $x.listVal
     of dObj: "#" & $x.objVal
