@@ -57,7 +57,7 @@ suite "object tests":
     discard o1.moveTo(o2)
 
     o1.setPropR("aliases", @["thingy".md])
-    var (has, contents) = o2.getContents()
+    let (has, contents) = o2.getContents()
 
     check has
     check contents.len == 1
@@ -66,8 +66,28 @@ suite "object tests":
 suite "scripting":
   suite "lexer":
     setup:
-      var testStr = "(builtin \"stri\\\"ng\")"
+      let testStr = "(builtin \"stri\\\"ng\")"
 
     test "lexer works":
-      var lexed = lex(testStr)
+      let lexed = lex(testStr)
       check lexed.len == 4
+
+  suite "parser":
+    setup:
+      let testStr = "(echo \"hello world\" (sub-list \"who knew?\" 3.14))"
+      var parser = newParser(testStr)
+    test "parser works":
+      let 
+        result = parser.parseList()
+        str = $result
+      
+      check str == "@['echo, \"hello world\", @['sub-list, \"who knew?\", 3.14]]"
+
+      
+var parser = newParser("""
+(let (("a" "b")) (echo a))
+""")
+
+let result = parser.parseList()
+var symt = initSymbolTable()
+discard eval(result, symt)

@@ -53,7 +53,7 @@ type
       of dNil: nilVal*: int # dummy
 
   MError* = enum
-    E_NONE, E_TYPE, E_BUILTIN
+    E_NONE, E_TYPE, E_BUILTIN, E_ARGS, E_UNBOUND
 
   ObjID* = distinct int
 
