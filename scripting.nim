@@ -10,6 +10,8 @@ type
     ttype: TokenType
     image: string
 
+  MParseError* = object of Exception
+
 proc `$`*(token: Token): string =
   token.image
 ## LEXER
