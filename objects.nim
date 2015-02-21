@@ -76,7 +76,7 @@ proc blank*(dt: MDataType): MData =
     of dInt: 0.md
     of dFloat: 0.0'f64.md
     of dStr: "".md
-    of dSym: "".mdb
+    of dSym: "".mds
     of dErr: E_NONE.md # CHANGE ME
     of dList: @[].md
     of dObj: 0.ObjID.md
