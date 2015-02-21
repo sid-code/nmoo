@@ -161,10 +161,22 @@ template defBuiltin(name: string, body: stmt) {.immediate.} =
 
   builtins[name] = bproc
 
+proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
+  if not symtable.hasKey(symVal):
+    E_UNBOUND.md
+  else:
+    symtable[symVal]
 
-proc eval*(exp: MData, symtable: SymbolTable): MData =
+proc eval*(exp: MData, symtable: SymbolTable = initSymbolTable()): MData =
   if not exp.isType(dList):
-    return exp
+    if exp.isType(dSym):
+      let val = resolveSymbol(exp.symVal, symtable)
+      if val.isType(dErr):
+        return E_UNBOUND.md
+      else:
+        return val
+    else:
+      return exp
 
   var listv = exp.listVal
   if listv.len == 0 or not listv[0].isType(dSym):
@@ -174,31 +186,38 @@ proc eval*(exp: MData, symtable: SymbolTable): MData =
   var listvr = listv[1 .. -1]
   for idx, el in listvr:
     if el.isType(dSym):
-      let val = el.symVal;
-      if not symtable.hasKey(val):
+      let val = resolveSymbol(el.symVal, symtable)
+      if val.isType(dErr):
         return E_UNBOUND.md
       else:
-        listvr[idx] = symtable[val]
+        listvr[idx] = val
 
   let
     sym = listv[0].symVal
-    symtv = symtable
 
   if builtins.hasKey(sym):
-    return builtins[sym](listvr, symtv)
+    return builtins[sym](listvr, symtable)
   else:
     return E_BUILTIN.md
 
 
 defBuiltin "echo":
   for arg in args:
-    echo eval(arg, symtable)
+    let result = eval(arg, symtable)
+    if result.isType(dErr):
+      return result
+    else:
+      echo result
   return args.md
 
 defBuiltin "do":
   var newArgs: seq[MData] = @[]
   for arg in args:
-    newArgs.add(eval(arg, symtable))
+    let result = eval(arg, symtable)
+    if result.isType(dErr):
+      return result
+    else:
+      newArgs.add(result)
 
   return newArgs.md
 
@@ -220,10 +239,15 @@ defBuiltin "let":
     let pair = asmt.listVal
     if not pair.len == 2:
       return E_ARGS.md
-    if not pair[0].isType(dStr):
+    if not pair[0].isType(dSym):
       return E_ARGS.md
 
-    let symName = pair[0].strVal
-    newSymtable[symName] = eval(pair[1], newSymtable)
+    let 
+      symName = pair[0].symVal
+      setVal = eval(pair[1], newSymtable)
+
+    if setVal.isType(dErr):
+      return setVal
+    newSymtable[symName] = setVal
 
   return eval(args[1], newSymtable)
