@@ -1,7 +1,7 @@
 import nake
 
 const
-  Exes = ["test", "main", "scripting"]
+  Exes = ["test", "main"]
   DefaultOptions = "--verbosity:0"
 
 task defaultTask, "builds everything":
