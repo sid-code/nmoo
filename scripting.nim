@@ -94,16 +94,16 @@ proc eval(exp: MData): MData =
     return exp
 
   var listv = exp.listVal
-  if listv.len == 0 or not listv[0].isType(dBin):
+  if listv.len == 0 or not listv[0].isType(dSym):
     return exp
 
-  var bin = listv[0].binVal
+  var sym = listv[0].symVal
 
   for idx, term in listv:
     listv[idx] = eval(term)
 
-  if builtins.hasKey(bin):
-    return builtins[bin](listv[1 .. -1])
+  if builtins.hasKey(sym):
+    return builtins[sym](listv[1 .. -1])
   else:
     return E_BUILTIN.md
 
