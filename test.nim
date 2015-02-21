@@ -83,10 +83,18 @@ suite "scripting":
 
       check str == "@['echo, \"hello world\", @['sub-list, \"who knew?\", 3.14]]"
 
-var parser = newParser("""
-(let (("a" "b")) (echo a))
-""")
+  suite "evaluator":
+    setup:
+      var parser = newParser("""
+      (do (let ((a "b") (b a)) b) (echo a))
+      """)
 
-let result = parser.parseList()
-var symt = initSymbolTable()
-discard eval(result, symt)
+      let parsed = parser.parseList()
+
+    test "let statement binds symbols locally":
+      let
+        result = eval(parsed)
+      
+      check result.isType(dErr)
+      check result.errVal == E_UNBOUND
+      
