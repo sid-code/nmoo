@@ -77,7 +77,7 @@ proc blank*(dt: MDataType): MData =
     of dFloat: 0.0'f64.md
     of dStr: "".md
     of dSym: "".mds
-    of dErr: E_NONE.md # CHANGE ME
+    of dErr: E_NONE.md
     of dList: @[].md
     of dObj: 0.ObjID.md
     of dNil: nilD
@@ -91,7 +91,7 @@ proc `$`*(x: MData): string {.inline.} =
     of dFloat: $x.floatVal
     of dStr: x.strVal.escape
     of dSym: "\'" & x.symVal
-    of dErr: "some error"
+    of dErr: $x.errVal
     of dList: $x.listVal
     of dObj: "#" & $x.objVal
     of dNil: "nil"
