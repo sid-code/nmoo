@@ -6,7 +6,7 @@ proc getLocation*(obj: MObject): MObject
 proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]]
 import verbs
 
-proc setCode(verb: MVerb, newCode: string) =
+proc setCode*(verb: MVerb, newCode: string) =
   var parser = newParser(newCode)
   verb.parsed = parser.parseList()
 
