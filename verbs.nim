@@ -101,7 +101,7 @@ proc verbMatchesName(verb: MVerb, str: string): bool =
 
   return false
 
-proc handleCommand(obj: MObject, command: string): MData =
+proc handleCommand*(obj: MObject, command: string): MData =
 
   let
     parsed = parseCommand(command)
