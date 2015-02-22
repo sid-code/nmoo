@@ -1,4 +1,4 @@
-import objects, sequtils
+import types, objects, sequtils
 
 
 proc startsWith(s1, s2: string): bool =
@@ -18,18 +18,20 @@ proc matches(obj: MObject, str: string): bool =
 
   return false
 
-proc query*(obj: MObject, str: string): seq[MObject] =
-  var searchSpace: seq[MObject] = @[]
+proc getVicinity*(obj: MObject): seq[MObject] =
+
+  result = @[]
 
   let loc = obj.getLocation()
 
   if loc != nil:
     let (has, contents) = loc.getContents()
     if has:
-      for o in contents: searchSpace.add(o)
+      for o in contents: result.add(o)
 
   let (has, contents) = obj.getContents()
   if has:
-    for o in contents: searchSpace.add(o)
+    for o in contents: result.add(o)
 
-  return searchSpace.filterIt(it.matches(str))
+proc query*(obj: MObject, str: string): seq[MObject] =
+  obj.getVicinity().filterIt(it.matches(str))

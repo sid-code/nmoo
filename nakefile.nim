@@ -4,8 +4,8 @@ const
   DefaultOptions = "--verbosity:0"
 
 var Exes = initTable[string, seq[string]]()
-Exes["test"] = @["objects", "scripting"]
-Exes["main"] = @["objects"]
+Exes["test"] = @["types", "objects", "scripting", "querying", "verbs"]
+Exes["main"] = @["types", "objects"]
 
 task defaultTask, "builds everything":
   for exe, deps in Exes:

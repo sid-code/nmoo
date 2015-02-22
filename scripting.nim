@@ -1,8 +1,6 @@
-import objects, tables, strutils, math, sequtils
+import types, objects, tables, strutils, math, sequtils
 
 type
-  SymbolTable = Table[string, MData]
-  BuiltinProc = proc(args: var seq[MData], symtable: SymbolTable): MData
   TokenType = enum
     OPAREN_TOK, CPAREN_TOK,
     ATOM_TOK
@@ -156,7 +154,7 @@ proc parseList*(parser: var MParser): MData =
 var builtins* = initTable[string, BuiltinProc]()
 
 template defBuiltin(name: string, body: stmt) {.immediate.} =
-  var bproc: BuiltinProc = proc (args: var seq[MData], symtable: SymbolTable): MData =
+  var bproc: BuiltinProc = proc (args: var seq[MData], symtable: SymbolTable, level: int): MData =
     body
 
   builtins[name] = bproc
@@ -167,7 +165,7 @@ proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
   else:
     symtable[symVal]
 
-proc eval*(exp: MData, symtable: SymbolTable = initSymbolTable()): MData =
+proc eval*(exp: MData, symtable: SymbolTable = initSymbolTable(), level: int = 3): MData =
   if not exp.isType(dList):
     if exp.isType(dSym):
       let val = resolveSymbol(exp.symVal, symtable)
@@ -196,14 +194,14 @@ proc eval*(exp: MData, symtable: SymbolTable = initSymbolTable()): MData =
     sym = listv[0].symVal
 
   if builtins.hasKey(sym):
-    return builtins[sym](listvr, symtable)
+    return builtins[sym](listvr, symtable, level)
   else:
     return E_BUILTIN.md
 
 
 defBuiltin "echo":
   for arg in args:
-    let result = eval(arg, symtable)
+    let result = eval(arg, symtable, level)
     if result.isType(dErr):
       return result
     else:
@@ -213,7 +211,7 @@ defBuiltin "echo":
 defBuiltin "do":
   var newArgs: seq[MData] = @[]
   for arg in args:
-    let result = eval(arg, symtable)
+    let result = eval(arg, symtable, level)
     if result.isType(dErr):
       return result
     else:
@@ -244,10 +242,10 @@ defBuiltin "let":
 
     let 
       symName = pair[0].symVal
-      setVal = eval(pair[1], newSymtable)
+      setVal = eval(pair[1], newSymtable, level)
 
     if setVal.isType(dErr):
       return setVal
     newSymtable[symName] = setVal
 
-  return eval(args[1], newSymtable)
+  return eval(args[1], newSymtable, level)

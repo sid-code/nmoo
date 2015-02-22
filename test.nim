@@ -1,6 +1,8 @@
 import
   unittest,
-  objects, querying, scripting
+  types, objects, scripting
+
+import querying
 
 suite "object tests":
   setup:
@@ -94,7 +96,6 @@ suite "scripting":
     test "let statement binds symbols locally":
       let
         result = eval(parsed)
-      
+
       check result.isType(dErr)
       check result.errVal == E_UNBOUND
-      
