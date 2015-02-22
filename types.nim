@@ -164,6 +164,36 @@ proc newProperty*(
     ownerIsParent: ownerIsParent
   )
 
+proc newVerb*(
+  names: string,
+  owner: MObject,
+  inherited: bool = false,
+
+  code: string = "",
+  parsed: MData = nilD,
+
+  doSpec: ObjSpec,
+  ioSpec: ObjSpec,
+  prepSpec: PrepType,
+
+  pubWrite: bool = false,
+  pubRead: bool = true,
+  pubExec: bool = true
+): MVerb =
+  MVerb(
+    names: names,
+    owner: owner,
+    inherited: inherited,
+
+    doSpec: doSpec,
+    ioSpec: ioSpec,
+    prepSpec: prepSpec,
+
+    pubWrite: pubWrite,
+    pubRead: pubRead,
+    pubExec: pubExec
+  )
+
 proc copy*(prop: MProperty): MProperty =
   MProperty(
     name: prop.name,
