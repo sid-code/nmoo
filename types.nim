@@ -11,6 +11,7 @@ type
     id: ObjID
     world: World
     isPlayer*: bool
+    owner*: MObject
 
     props*: seq[MProperty]
     verbs*: seq[MVerb]
@@ -134,6 +135,7 @@ proc blankObject*: MObject =
     isPlayer: false,
     props: @[],
     verbs: @[],
+    owner: nil,
     parent: nil,
     children: @[],
     pubRead: true,

@@ -204,6 +204,7 @@ proc createChild*(parent: var MObject): MObject =
   newObj.pubRead = parent.pubRead
   newObj.pubWrite = parent.pubWrite
   newObj.fertile = parent.fertile
+  newObj.owner = parent.owner
 
   newObj.changeParent(parent)
 

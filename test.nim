@@ -10,6 +10,7 @@ suite "object tests":
     var world = createWorld()
     var root = blankObject()
     world.add(root)
+    root.owner = root
     root.setPropR("name", "root")
     root.setPropR("aliases", @[])
     root.setPropR("rootprop", "yes")
