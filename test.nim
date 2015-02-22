@@ -1,6 +1,7 @@
 import
   unittest,
-  types, objects, scripting
+  types, objects, scripting,
+  verbs
 
 import querying
 
@@ -64,6 +65,20 @@ suite "object tests":
     check has
     check contents.len == 1
     check o2.query("thin").len == 1
+
+  test "verbs fire correctly":
+    var verb = newVerb(
+      names = "action",
+      owner = root,
+      prepSpec = pNone,
+      doSpec = oNone,
+      ioSpec = oNone,
+    )
+
+    root.verbs.add(verb)
+
+    verb.setCode("(do argstr)")
+    check ($root.handleCommand("action hey") == "@[\"hey\"]")
 
 suite "scripting":
   suite "lexer":
