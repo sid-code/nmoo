@@ -116,6 +116,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
 
     world = obj.getWorld
   var searchSpace = obj.getVicinity()
+  searchSpace.add(obj)
 
   if world != nil:
     searchSpace.add(world.getVerbObj())
