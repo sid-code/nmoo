@@ -1,6 +1,6 @@
 ## nmoo (tentative) is a MOO inspired by LambdaMOO
 
-[LambdaMoo][1] is an old virtual community that's still running. It's a
+[LambdaMOO][1] is an old virtual community that's still running. It's a
 text-based world. If you're into that sort of thing, I highly recommend going
 in there once and seeing how it is.
 
