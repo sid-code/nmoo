@@ -5,7 +5,7 @@ type
   ObjID* = distinct int
   World* = ref object
     objects: seq[MObject]
-    verbObj: MObject # object that holds global verbs
+    verbObj*: MObject # object that holds global verbs
 
   MObject* = ref object
     id: ObjID
@@ -49,7 +49,7 @@ type
     owner*: MObject
     inherited*: bool
 
-    code*: string
+    code*: string # This has to be public but don't use it, use setCode
     parsed*: MData
 
     doSpec*: ObjSpec
