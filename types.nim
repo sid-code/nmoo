@@ -142,11 +142,11 @@ proc newProperty*(
   val: MData,
   owner: MObject,
   inherited: bool,
-  copyVal: bool,
+  copyVal: bool = false,
 
-  pubRead: bool,
-  pubWrite: bool,
-  ownerIsParent: bool
+  pubRead: bool = true,
+  pubWrite: bool = false,
+  ownerIsParent: bool = true
 ): MProperty =
   MProperty(
     name: name,
