@@ -37,15 +37,15 @@ proc setProp*(obj: MObject, name: string, newVal: MData) =
   var p = obj.getProp(name)
   if p == nil:
     obj.props.add(newProperty(
-      name,
-      newVal,
-      obj,
-      false,
-      false,
+      name = name,
+      val = newVal,
+      owner = obj,
+      inherited = false,
+      copyVal = false,
 
-      true,
-      false,
-      true
+      pubRead = true,
+      pubWrite = false,
+      ownerIsParent = true
     ))
   else:
     p.val = newVal
