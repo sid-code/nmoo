@@ -56,6 +56,10 @@ type
     ioSpec*: ObjSpec
     prepSpec*: PrepType
 
+    pubWrite*: bool
+    pubRead*: bool
+    pubExec*: bool
+
   MDataType* = enum
     dInt, dFloat, dStr, dSym, dErr, dList, dObj, dNil
 
