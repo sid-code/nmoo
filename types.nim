@@ -174,9 +174,9 @@ proc newVerb*(
   code: string = "",
   parsed: MData = nilD,
 
-  doSpec: ObjSpec,
-  ioSpec: ObjSpec,
-  prepSpec: PrepType,
+  doSpec: ObjSpec = oNone,
+  ioSpec: ObjSpec = oNone,
+  prepSpec: PrepType = pNone,
 
   pubWrite: bool = false,
   pubRead: bool = true,
