@@ -21,10 +21,10 @@ for this project.
 Things I have done (or almost done):
   * set up an acceptable object system with inheritance
   * created a scripting language to define verbs
-
-Things left to do:
   * player command parsing
   * verb handling
+
+Things left to do:
   * build up the object database
   * networking
 
