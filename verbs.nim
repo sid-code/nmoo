@@ -136,8 +136,8 @@ proc handleCommand*(obj: MObject, command: string): MData =
 
       if v.prepSpec != prep.ptype:
         continue
-      if doQuery.len > 0:
 
+      if doQuery.len > 0:
         if v.doSpec == oAny:
           symtable["dobj"] = doQuery[0].md
         elif v.doSpec == oStr:
@@ -147,6 +147,8 @@ proc handleCommand*(obj: MObject, command: string): MData =
       else:
         if v.doSpec == oThis:
           symtable["dobj"] = o.md
+        elif v.doSpec == oNone:
+          discard
         else:
           continue
 
@@ -160,6 +162,8 @@ proc handleCommand*(obj: MObject, command: string): MData =
       else:
         if v.ioSpec == oThis:
           symtable["iobj"] = o.md
+        elif v.ioSpec == oNone:
+          discard
         else:
           continue
       
