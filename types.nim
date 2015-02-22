@@ -27,14 +27,14 @@ type
   MProperty* = ref object
     name*: string
     val*: MData
-    owner: MObject
+    owner*: MObject
     inherited*: bool
 
     copyVal*: bool
 
-    pubWrite: bool
-    pubRead: bool
-    ownerIsParent: bool
+    pubWrite*: bool
+    pubRead*: bool
+    ownerIsParent*: bool
 
   PrepType* = enum
     pWith, pAt, pInFront, pIn, pOn, pFrom, pOver,
