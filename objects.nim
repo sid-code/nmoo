@@ -147,7 +147,10 @@ proc add*(world: World, obj: MObject) =
 
 proc createWorld*: World =
   result = newWorld()
-  result.add(blankObject())
+  var verbObj = blankObject()
+  result.add(verbObj)
+  result.verbObj = verbObj
+
 
 proc size*(world: World): int =
   world.getObjects()[].len
