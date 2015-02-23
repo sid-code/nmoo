@@ -260,12 +260,12 @@ defBuiltin "let":
 
     let 
       symName = pair[0].symVal
-      setVal = evalD(pair[1], newSymtable)
+      setVal = evalD(pair[1], st = newSymtable)
 
     checkForError(setVal)
     newSymtable[symName] = setVal
 
-  return evalD(args[1], newSymtable)
+  return evalD(args[1], st = newSymtable)
 
 defBuiltin "cond":
   for arg in args:
