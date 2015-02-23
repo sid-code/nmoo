@@ -115,19 +115,21 @@ proc handleCommand*(obj: MObject, command: string): MData =
     ioQuery = obj.query(ioString)
 
     world = obj.getWorld
+
   var searchSpace = obj.getVicinity()
   searchSpace.add(obj)
 
-  if world != nil:
-    searchSpace.add(world.getVerbObj())
+  doAssert(world != nil)
+  searchSpace.add(world.getVerbObj())
 
+  var symtable = initSymbolTable()
+  symtable["caller"] = obj.md
 
   for o in searchSpace:
     for v in o.verbs:
       let owner = v.owner
       doAssert(owner != nil)
 
-      var symtable = initSymbolTable()
       symtable["dobjstr"] = doString.md
       symtable["iobjstr"] = ioString.md
       symtable["dobj"] = nilD
