@@ -130,6 +130,8 @@ proc truthy*(datum: MData): bool =
 
 proc byID*(world: World, id: ObjID): MObject =
   world.objects[id.int]
+proc dataToObj*(world: World, objd: MData): MObject =
+  world.byID(objd.objVal)
 
 proc blankObject*: MObject =
   MObject(

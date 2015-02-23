@@ -290,3 +290,22 @@ defBuiltin "cond":
         continue
 
   return E_BADCOND.md
+
+# (getprop what propname)
+defBuiltin "getprop":
+  if not args.len == 2:
+    return E_ARGS.md
+
+  let objd = args[0]
+  checkType(objd, dObj)
+  let obj = world.dataToObj(objd)
+  if obj == nil:
+    return E_ARGS.md
+
+  let propd = args[1]
+  checkType(propd, dStr)
+  let
+    prop = propd.strVal
+    val = obj.getPropVal(prop)
+
+  return val

@@ -103,12 +103,17 @@ suite "scripting":
 
   suite "evaluator":
     setup:
+      var world = createWorld()
+      var root = blankObject()
+      world.add(root)
+      root.setPropR("name", "root")
+
       proc evalS(code: string): MData =
         var parser = newParser(code)
         let
           parsed = parser.parseList()
         
-        return eval(parsed)
+        return eval(parsed, world)
 
     test "let statement binds symbols locally":
       let result = evalS("""
@@ -132,3 +137,17 @@ suite "scripting":
 
       check result.isType(dStr)
       check result.strVal == "it works"
+
+    test "getprop statement works":
+      var result = evalS("""
+      (getprop #1 "name")
+      """)
+
+      check result.isType(dStr)
+      check result.strVal == "root"
+
+      result = evalS("""
+      (getprop #1 "nonexistant")
+      """)
+
+      check result.isType(dNil)
