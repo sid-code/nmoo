@@ -151,3 +151,18 @@ suite "scripting":
       """)
 
       check result.isType(dNil)
+
+    test "setprop statement works":
+      var result = evalS("""
+      (setprop #1 "newprop" "val")
+      """)
+
+      check result.isType(dStr)
+      check result.strVal == "val"
+
+      result = evalS("""
+      (getprop #1 "newprop")
+      """)
+
+      check result.isType(dStr)
+      check result.strVal == "val"

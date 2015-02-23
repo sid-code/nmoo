@@ -5,6 +5,7 @@ proc getAliases*(obj: MObject): seq[string]
 proc getLocation*(obj: MObject): MObject
 proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]]
 proc getPropVal*(obj: MObject, name: string): MData
+proc setProp*(obj: MObject, name: string, newVal: MData)
 import verbs, scripting
 
 proc setCode*(verb: MVerb, newCode: string) =

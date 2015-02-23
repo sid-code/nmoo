@@ -309,3 +309,24 @@ defBuiltin "getprop":
     val = obj.getPropVal(prop)
 
   return val
+
+# (setprop what propname newprop)
+defBuiltin "setprop":
+  if not args.len == 3:
+    return E_ARGS.md
+
+  let objd = args[0]
+  checkType(objd, dObj)
+  let obj = world.dataToObj(objd)
+  if obj == nil:
+    return E_ARGS.md
+
+  let
+    propd = args[1]
+    newVal = args[2]
+  checkType(propd, dStr)
+  let
+    prop = propd.strVal
+  obj.setProp(prop, newVal)
+
+  return newVal
