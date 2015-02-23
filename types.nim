@@ -76,7 +76,7 @@ type
       of dNil: nilVal*: int # dummy
 
   MError* = enum
-    E_NONE, E_TYPE, E_BUILTIN, E_ARGS, E_UNBOUND
+    E_NONE, E_TYPE, E_BUILTIN, E_ARGS, E_UNBOUND, E_BADCOND
   SymbolTable* = Table[string, MData]
   BuiltinProc* = proc(args: var seq[MData], symtable: SymbolTable, level: int): MData
 
@@ -124,6 +124,9 @@ proc `$`*(x: MData): string {.inline.} =
 
 proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
   return datum.dtype == dtype
+
+proc truthy*(datum: MData): bool =
+  return not (datum.isType(dInt) and datum.intVal == 0 or datum.isType(dFloat) and datum.floatVal == 0)
 
 proc byID*(world: World, id: ObjID): MObject =
   world.objects[id.int]

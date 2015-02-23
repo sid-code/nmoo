@@ -220,6 +220,18 @@ defBuiltin "do":
 
   return newArgs.md
 
+defBuiltin "slet": # single let
+  if args.len != 2:
+    return E_ARGS.md
+
+  let first = args[0]
+  if not first.isType(dList) or first.listVal.len != 2:
+    return E_ARGS.md
+
+  let newStmt = @[ "let".mds, @[first].md, args[1] ].md
+  return eval(newStmt, symtable, level)
+
+
 defBuiltin "let":
   # First argument: list of pairs
   # Second argument: expression to evaluate with the symbol table
@@ -250,5 +262,22 @@ defBuiltin "let":
 
   return evalD(args[1], newSymtable)
 
+defBuiltin "cond":
+  for arg in args:
+    if not arg.isType(dList):
+      return E_ARGS.md
+    let larg = arg.listVal
+    if larg.len == 0 or larg.len > 2:
+      return E_ARGS.md
 
-  
+    if larg.len == 1:
+      return larg[0]
+    else:
+      let condVal = evalD(larg[0])
+      checkForError(condVal)
+      if condVal.truthy:
+        return larg[1]
+      else:
+        continue
+
+  return E_BADCOND.md
