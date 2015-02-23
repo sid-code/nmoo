@@ -153,12 +153,6 @@ proc parseList*(parser: var MParser): MData =
 
 var builtins* = initTable[string, BuiltinProc]()
 
-template defBuiltin(name: string, body: stmt) {.immediate.} =
-  var bproc: BuiltinProc = proc (args: var seq[MData], symtable: SymbolTable, level: int): MData =
-    body
-
-  builtins[name] = bproc
-
 proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
   if not symtable.hasKey(symVal):
     E_UNBOUND.md
@@ -198,24 +192,31 @@ proc eval*(exp: MData, symtable: SymbolTable = initSymbolTable(), level: int = 3
   else:
     return E_BUILTIN.md
 
+template defBuiltin(name: string, body: stmt) {.immediate.} =
+  var bproc: BuiltinProc = proc (args: var seq[MData], symtable: SymbolTable, level: int): MData =
+    proc evalD(e: MData, st: SymbolTable = symtable, lv: int = level): MData = # to provide a simpler call
+      eval(e, st, lv)
+    body
+
+  builtins[name] = bproc
+
+template checkForError(value: MData) {.immediate.} =
+  if value.isType(dErr):
+    return value
 
 defBuiltin "echo":
   for arg in args:
-    let result = eval(arg, symtable, level)
-    if result.isType(dErr):
-      return result
-    else:
-      echo result
+    let res = evalD(arg)
+    checkForError(res)
+    echo result
   return args.md
 
 defBuiltin "do":
   var newArgs: seq[MData] = @[]
   for arg in args:
-    let result = eval(arg, symtable, level)
-    if result.isType(dErr):
-      return result
-    else:
-      newArgs.add(result)
+    let res = evalD(arg)
+    checkForError(res)
+    newArgs.add(res)
 
   return newArgs.md
 
@@ -242,10 +243,12 @@ defBuiltin "let":
 
     let 
       symName = pair[0].symVal
-      setVal = eval(pair[1], newSymtable, level)
+      setVal = evalD(pair[1], newSymtable)
 
-    if setVal.isType(dErr):
-      return setVal
+    checkForError(setVal)
     newSymtable[symName] = setVal
 
-  return eval(args[1], newSymtable, level)
+  return evalD(args[1], newSymtable)
+
+
+  
