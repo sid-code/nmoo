@@ -1,10 +1,11 @@
-import types, scripting, sequtils, strutils
+import types, sequtils, strutils
 
 proc getStrProp*(obj: MObject, name: string): string
 proc getAliases*(obj: MObject): seq[string]
 proc getLocation*(obj: MObject): MObject
 proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]]
-import verbs
+proc getPropVal*(obj: MObject, name: string): MData
+import verbs, scripting
 
 proc setCode*(verb: MVerb, newCode: string) =
   var parser = newParser(newCode)
