@@ -103,15 +103,32 @@ suite "scripting":
 
   suite "evaluator":
     setup:
-      var parser = newParser("""
+      proc evalS(code: string): MData =
+        var parser = newParser(code)
+        let
+          parsed = parser.parseList()
+        
+        return eval(parsed)
+
+    test "let statement binds symbols locally":
+      let result = evalS("""
       (do (let ((a "b") (b a)) b) (echo a))
       """)
 
-      let parsed = parser.parseList()
-
-    test "let statement binds symbols locally":
-      let
-        result = eval(parsed)
-
       check result.isType(dErr)
       check result.errVal == E_UNBOUND
+
+    test "cond statement works":
+      var result = evalS("""
+      (cond (1 "it works") (0 "it doesn't work") ("it doesn't work!!!"))
+      """)
+
+      check result.isType(dStr)
+      check result.strVal == "it works"
+
+      result = evalS("""
+      (cond (0 "whoops") ("it works"))
+      """)
+
+      check result.isType(dStr)
+      check result.strVal == "it works"
