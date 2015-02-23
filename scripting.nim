@@ -16,7 +16,6 @@ type
     tokens: seq[Token]
     tindex: int
 
-
 proc initSymbolTable*: SymbolTable = initTable[string, MData]()
 
 proc `$`*(token: Token): string =
@@ -159,7 +158,7 @@ proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
   else:
     symtable[symVal]
 
-proc eval*(exp: MData, symtable: SymbolTable = initSymbolTable(), level: int = 3): MData =
+proc eval*(exp: MData, world: var World, symtable: SymbolTable = initSymbolTable(), level: int = 3): MData =
   if not exp.isType(dList):
     if exp.isType(dSym):
       let val = resolveSymbol(exp.symVal, symtable)
@@ -188,14 +187,16 @@ proc eval*(exp: MData, symtable: SymbolTable = initSymbolTable(), level: int = 3
     sym = listv[0].symVal
 
   if builtins.hasKey(sym):
-    return builtins[sym](listvr, symtable, level)
+    return builtins[sym](listvr, world, symtable, level)
   else:
     return E_BUILTIN.md
 
 template defBuiltin(name: string, body: stmt) {.immediate.} =
-  var bproc: BuiltinProc = proc (args: var seq[MData], symtable: SymbolTable, level: int): MData =
-    proc evalD(e: MData, st: SymbolTable = symtable, lv: int = level): MData = # to provide a simpler call
-      eval(e, st, lv)
+  var bproc: BuiltinProc = proc (args: var seq[MData], world: var World, symtable: SymbolTable, level: int): MData =
+    # to provide a simpler call to eval (note the optional args)
+    proc evalD(e: MData, w: var World = world, st: SymbolTable = symtable, lv: int = level): MData =
+      eval(e, w, st, lv)
+
     body
 
   builtins[name] = bproc

@@ -114,7 +114,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
     doQuery = obj.query(doString)
     ioQuery = obj.query(ioString)
 
-    world = obj.getWorld
+  var world = obj.getWorld
 
   var searchSpace = obj.getVicinity()
   searchSpace.add(obj)
@@ -169,7 +169,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
         else:
           continue
       
-      return eval(v.parsed, symtable, owner.level)
+      return eval(v.parsed, world, symtable, owner.level)
       
   return nilD
 
