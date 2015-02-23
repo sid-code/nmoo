@@ -205,6 +205,11 @@ template checkForError(value: MData) {.immediate.} =
   if value.isType(dErr):
     return value
 
+template checkType(value: MData, expected: MDataType, ifnot: MError = E_ARGS)
+          {.immediate.} =
+  if not value.isType(expected):
+    return ifnot.md
+
 defBuiltin "echo":
   for arg in args:
     let res = evalD(arg)
@@ -226,11 +231,12 @@ defBuiltin "slet": # single let
     return E_ARGS.md
 
   let first = args[0]
-  if not first.isType(dList) or first.listVal.len != 2:
+  checkType(first, dList)
+  if first.listVal.len != 2:
     return E_ARGS.md
 
   let newStmt = @[ "let".mds, @[first].md, args[1] ].md
-  return eval(newStmt, symtable, level)
+  return evalD(newStmt)
 
 
 defBuiltin "let":
@@ -239,8 +245,7 @@ defBuiltin "let":
   if args.len != 2:
     return E_ARGS.md
 
-  if not args[0].isType(dList):
-    return E_ARGS.md
+  checkType(args[0], dList)
 
   var newSymtable = symtable
 
@@ -251,8 +256,7 @@ defBuiltin "let":
     let pair = asmt.listVal
     if not pair.len == 2:
       return E_ARGS.md
-    if not pair[0].isType(dSym):
-      return E_ARGS.md
+    checkType(pair[0], dSym)
 
     let 
       symName = pair[0].symVal
@@ -265,8 +269,7 @@ defBuiltin "let":
 
 defBuiltin "cond":
   for arg in args:
-    if not arg.isType(dList):
-      return E_ARGS.md
+    checkType(arg, dList)
     let larg = arg.listVal
     if larg.len == 0 or larg.len > 2:
       return E_ARGS.md
