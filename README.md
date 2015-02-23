@@ -27,6 +27,7 @@ Things I have done (or almost done):
 Things left to do:
   * build up the object database
   * networking
+  * any sort of documentation
 
   [1]: http://en.wikipedia.org/wiki/LambdaMOO
   [2]: http://www.hayseed.net/MOO/manuals/ProgrammersManual.html
