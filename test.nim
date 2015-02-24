@@ -108,12 +108,12 @@ suite "scripting":
       world.add(root)
       root.setPropR("name", "root")
 
-      proc evalS(code: string): MData =
+      proc evalS(code: string, who: MObject = root): MData =
         var parser = newParser(code)
         let
           parsed = parser.parseList()
         
-        return eval(parsed, world)
+        return eval(parsed, world, who)
 
     test "let statement binds symbols locally":
       let result = evalS("""
@@ -166,3 +166,14 @@ suite "scripting":
 
       check result.isType(dStr)
       check result.strVal == "val"
+
+    test "setprop checks permissions":
+      var unworthy = blankObject()
+      world.add(unworthy)
+      unworthy.level = 3
+      let result = evalS("""
+      (setprop #1 "newprop" "oops")
+      """, unworthy)
+
+      check result.isType(dErr)
+      check result.errVal == E_PERM
