@@ -266,7 +266,7 @@ defBuiltin "let":
       return E_ARGS.md
     checkType(pair[0], dSym)
 
-    let 
+    let
       symName = pair[0].symVal
       setVal = evalD(pair[1], st = newSymtable)
 
