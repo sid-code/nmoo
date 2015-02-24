@@ -7,6 +7,32 @@ proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]
 proc getPropVal*(obj: MObject, name: string): MData
 proc setProp*(obj: MObject, name: string, newVal: MData): MProperty
 proc getProp*(obj: MObject, name: string): MProperty
+
+## Permissions handling
+
+proc isWizard(obj: MObject): bool = obj.level == 0
+
+proc canRead*(reader, obj: MObject): bool =
+  reader.level == 0 or obj.owner == reader or obj.pubRead
+
+proc canWrite*(writer, obj: MObject): bool =
+  writer.level == 0 or obj.owner == writer or obj.pubWrite
+
+proc canRead*(reader: MObject, prop: MProperty): bool =
+  reader.level == 0 or prop.owner == reader or prop.pubRead
+
+proc canWrite*(writer: MObject, prop: MProperty): bool =
+  writer.level == 0 or prop.owner == writer or prop.pubWrite
+
+proc canRead*(reader: MObject, verb: MVerb): bool =
+  reader.level == 0 or verb.owner == reader or verb.pubRead
+
+proc canWrite*(writer: MObject, verb: MVerb): bool =
+  writer.level == 0 or verb.owner == writer or verb.pubWrite
+
+proc canExecute*(executor: MObject, verb: MVerb): bool =
+  executor.level == 0 or verb.owner == executor or verb.pubExec
+
 import verbs, scripting
 
 proc setCode*(verb: MVerb, newCode: string) =
@@ -230,27 +256,3 @@ proc moveTo*(obj: var MObject, newLoc: var MObject): bool =
   else:
     return false
 
-## Permissions handling
-
-proc isWizard(obj: MObject): bool = obj.level == 0
-
-proc canRead(reader, obj: MObject): bool =
-  reader.level == 0 or obj.owner == reader or obj.pubRead
-
-proc canWrite(writer, obj: MObject): bool =
-  writer.level == 0 or obj.owner == writer or obj.pubWrite
-
-proc canRead(reader: MObject, prop: MProperty): bool =
-  reader.level == 0 or prop.owner == reader or prop.pubRead
-
-proc canWrite(writer: MObject, prop: MProperty): bool =
-  writer.level == 0 or prop.owner == writer or prop.pubWrite
-
-proc canRead(reader: MObject, verb: MVerb): bool =
-  reader.level == 0 or verb.owner == reader or verb.pubRead
-
-proc canWrite(writer: MObject, verb: MVerb): bool =
-  writer.level == 0 or verb.owner == writer or verb.pubWrite
-
-proc canExecute(executor: MObject, verb: MVerb): bool =
-  executor.level == 0 or verb.owner == executor or verb.pubExec
