@@ -5,7 +5,7 @@ proc getAliases*(obj: MObject): seq[string]
 proc getLocation*(obj: MObject): MObject
 proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]]
 proc getPropVal*(obj: MObject, name: string): MData
-proc setProp*(obj: MObject, name: string, newVal: MData)
+proc setProp*(obj: MObject, name: string, newVal: MData): MProperty
 proc getProp*(obj: MObject, name: string): MProperty
 import verbs, scripting
 
@@ -36,10 +36,10 @@ proc getPropVal*(obj: MObject, name: string): MData =
   else:
     result.val
 
-proc setProp*(obj: MObject, name: string, newVal: MData) =
+proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
   var p = obj.getProp(name)
   if p == nil:
-    obj.props.add(newProperty(
+    p = newProperty(
       name = name,
       val = newVal,
       owner = obj,
@@ -49,12 +49,16 @@ proc setProp*(obj: MObject, name: string, newVal: MData) =
       pubRead = true,
       pubWrite = false,
       ownerIsParent = true
-    ))
+    )
+
+    obj.props.add(p)
   else:
     p.val = newVal
 
+  return p
+
 template setPropR*(obj: MObject, name: string, newVal: expr) =
-  obj.setProp(name, newVal.md)
+  discard obj.setProp(name, newVal.md)
 
 proc getLocation*(obj: MObject): MObject =
   let world = obj.getWorld()
