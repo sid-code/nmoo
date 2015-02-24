@@ -340,9 +340,14 @@ defBuiltin "setprop":
     propd = args[1]
     newVal = args[2]
   checkType(propd, dStr)
-  let prop = propd.strVal
+  let
+    prop = propd.strVal
+    oldProp = obj.getProp(prop)
   var propO = obj.setProp(prop, newVal)
 
-  propO.owner = user
+  # If the property didn't exist before, we want its owner to be us,
+  # not the object that it belongs to.
+  if oldProp == nil:
+    propO.owner = user
 
   return newVal
