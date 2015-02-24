@@ -305,13 +305,22 @@ defBuiltin "getprop":
   if obj == nil:
     return E_ARGS.md
 
+  if not user.canRead(obj):
+    return E_PERM.md
+
   let propd = args[1]
   checkType(propd, dStr)
   let
     prop = propd.strVal
-    val = obj.getPropVal(prop)
+    propO = obj.getProp(prop)
 
-  return val
+  if propO == nil:
+    return nilD
+
+  if not user.canRead(propO):
+    return E_PERM.md
+
+  return propO.val
 
 # (setprop what propname newprop)
 defBuiltin "setprop":
@@ -324,12 +333,16 @@ defBuiltin "setprop":
   if obj == nil:
     return E_ARGS.md
 
+  if not user.canWrite(obj):
+    return E_PERM.md
+
   let
     propd = args[1]
     newVal = args[2]
   checkType(propd, dStr)
-  let
-    prop = propd.strVal
-  obj.setProp(prop, newVal)
+  let prop = propd.strVal
+  var propO = obj.setProp(prop, newVal)
+
+  propO.owner = user
 
   return newVal
