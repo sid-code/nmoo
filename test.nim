@@ -177,3 +177,16 @@ suite "scripting":
 
       check result.isType(dErr)
       check result.errVal == E_PERM
+
+    test "setprop sets owner of new properties correctly":
+      var worthy = blankObject()
+      world.add(worthy)
+      # note: the level defaults to zero so we don't have to change it
+      var result = evalS("""
+      (setprop #1 "newprop" "newval")
+      """, worthy)
+
+      check result.isType(dStr)
+      let prop = root.getProp("newprop")
+      check prop != nil
+      check prop.owner == worthy
