@@ -163,7 +163,8 @@ proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
   else:
     symtable[symVal]
 
-proc eval*(exp: MData, world: var World, symtable: SymbolTable = initSymbolTable(), level: int = 3): MData =
+proc eval*(exp: MData, world: var World, user: MObject,
+           symtable: SymbolTable = initSymbolTable()): MData =
   if not exp.isType(dList):
     if exp.isType(dSym):
       let val = resolveSymbol(exp.symVal, symtable)
@@ -192,15 +193,17 @@ proc eval*(exp: MData, world: var World, symtable: SymbolTable = initSymbolTable
     sym = listv[0].symVal
 
   if builtins.hasKey(sym):
-    return builtins[sym](listvr, world, symtable, level)
+    return builtins[sym](listvr, world, user, symtable)
   else:
     return E_BUILTIN.md
 
 template defBuiltin(name: string, body: stmt) {.immediate.} =
-  var bproc: BuiltinProc = proc (args: var seq[MData], world: var World, symtable: SymbolTable, level: int): MData =
+  var bproc: BuiltinProc = proc (args: var seq[MData], world: var World,
+                                 user: MObject, symtable: SymbolTable): MData =
     # to provide a simpler call to eval (note the optional args)
-    proc evalD(e: MData, w: var World = world, st: SymbolTable = symtable, lv: int = level): MData =
-      eval(e, w, st, lv)
+    proc evalD(e: MData, w: var World = world, u: MObject = user,
+               st: SymbolTable = symtable): MData =
+      eval(e, w, u, st)
 
     body
 

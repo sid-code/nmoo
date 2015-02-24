@@ -169,7 +169,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
         else:
           continue
       
-      return eval(v.parsed, world, symtable, owner.level)
+      return eval(v.parsed, world, owner, symtable)
       
   return nilD
 
