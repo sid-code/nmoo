@@ -127,6 +127,9 @@ proc handleCommand*(obj: MObject, command: string): MData =
 
   for o in searchSpace:
     for v in o.verbs:
+      if not obj.canExecute(v):
+        continue
+
       let owner = v.owner
       doAssert(owner != nil)
 
