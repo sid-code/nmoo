@@ -93,7 +93,7 @@ proc nameMatchesStr(name: string, str: string): bool =
 
   return ci == '*' or tolerateSize
 
-proc verbMatchesName(verb: MVerb, str: string): bool =
+proc matchesName(verb: MVerb, str: string): bool =
   let names = verb.names.split(" ")
   for name in names:
     if nameMatchesStr(name, str):
@@ -127,7 +127,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
 
   for o in searchSpace:
     for v in o.verbs:
-      if not obj.canExecute(v):
+      if not v.matchesName(verb) or not obj.canExecute(v):
         continue
 
       let owner = v.owner
