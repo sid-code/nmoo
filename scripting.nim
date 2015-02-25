@@ -341,7 +341,7 @@ defBuiltin "getprop":
 # (setprop what propname newprop)
 defBuiltin "setprop":
   if not args.len == 3:
-    return E_ARGS.md
+    return E_ARGS.md("setprop takes exactly 3 arguments")
 
   let objd = args[0]
   checkType(objd, dObj)
