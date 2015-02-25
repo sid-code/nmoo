@@ -169,7 +169,6 @@ proc getStrProp*(obj: MObject, name: string): string =
     return ""
 
 
-
 proc add*(world: World, obj: MObject) =
   var objs = world.getObjects()
   var newid = ObjID(objs[].len)
@@ -238,6 +237,8 @@ proc createChild*(parent: var MObject): MObject =
   newObj.pubWrite = parent.pubWrite
   newObj.fertile = parent.fertile
   newObj.owner = parent.owner
+
+  newObj.output = parent.output
 
   newObj.changeParent(parent)
 

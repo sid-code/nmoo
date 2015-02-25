@@ -25,6 +25,8 @@ type
     pubRead*: bool
     fertile*: bool
 
+    output*: proc(msg: string)
+
   MProperty* = ref object
     name*: string
     val*: MData
@@ -134,8 +136,12 @@ proc byID*(world: World, id: ObjID): MObject =
 proc dataToObj*(world: World, objd: MData): MObject =
   world.byID(objd.objVal)
 
+proc makeOutputProc(obj: MObject): proc (m: string) =
+  return proc (m: string) {.closure.} =
+    echo "<#$1>: $2" % [$obj.getID(), m]
+
 proc blankObject*: MObject =
-  MObject(
+  result = MObject(
     id: 0.id,
     world: nil,
     isPlayer: false,
@@ -146,8 +152,14 @@ proc blankObject*: MObject =
     children: @[],
     pubRead: true,
     pubWrite: false,
-    fertile: true
+    fertile: true,
+    output: nil
   )
+  result.output = makeOutputProc(result)
+
+proc send*(obj: MObject, msg: string) =
+  obj.output(msg)
+
 
 proc newProperty*(
   name: string,
