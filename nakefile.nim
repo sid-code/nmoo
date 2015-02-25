@@ -23,7 +23,7 @@ proc simpleBuild(name: string, deps: seq[string]) =
     refresh = refresh or name.needsRefresh(sourceFile)
 
     if refresh:
-      if shell(nimExe, DefaultOptions, "c", name):
+      if direShell(nimExe, DefaultOptions, "c", name):
         echo "success building " & name
     else:
       echo name & " is up to date"
@@ -38,7 +38,7 @@ task "clean", "removes executables":
 
 task "tests", "run tests":
   runTask("test")
-  shell("./test")
+  direShell("./test")
 
 
 for exe, deps in Exes:
