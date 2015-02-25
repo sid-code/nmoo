@@ -31,7 +31,10 @@ proc simpleBuild(name: string, deps: seq[string]) =
 task "clean", "removes executables":
   for exe, deps in Exes:
     echo "removing " & exe
-    shell("rm ", exe)
+    removeFile(exe)
+
+  echo "removing nimcache"
+  removeDir("nimcache")
 
 task "tests", "run tests":
   runTask("test")
