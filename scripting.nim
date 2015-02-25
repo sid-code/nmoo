@@ -238,7 +238,7 @@ defBuiltin "echo":
   for arg in args:
     let res = evalD(arg)
     checkForError(res)
-    echo result
+    echo res
   return args.md
 
 defBuiltin "do":
