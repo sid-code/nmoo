@@ -239,6 +239,24 @@ template extractObject(where: expr, objd: MData) {.immediate.} =
 
   where = obj
 
+template checkRead(obj, what: MObject) =
+  if not obj.canRead(what):
+    return E_PERM.md(obj.toObjStr() & " cannot read " & what.toObjStr())
+template checkWrite(obj, what: MObject) =
+  if not obj.canWrite(what):
+    return E_PERM.md(obj.toObjStr() & " cannot write " & what.toObjStr())
+template checkRead(obj: MObject, what: MProperty) =
+  if not obj.canRead(what):
+    return E_PERM.md(obj.toObjStr() & " cannot read property: " & what.name)
+template checkWrite(obj: MObject, what: MProperty) =
+  if not obj.canWrite(what):
+    return E_PERM.md(obj.toObjStr() & " cannot write property: " & what.name)
+template checkRead(obj: MObject, what: MVerb) =
+  if not obj.canRead(what):
+    return E_PERM.md(obj.toObjStr() & " cannot read verb: " & what.names)
+template canWrite(obj: MObject, what: MVerb) =
+  if not obj.canWrite(what):
+    return E_PERM.md(obj.toObjStr() & " cannot write verb: " & what.names)
 
 
 
@@ -328,9 +346,6 @@ defBuiltin "getprop":
   var obj: MObject
   extractObject(obj, objd)
 
-  if not user.canRead(obj):
-    return E_PERM.md(user.toObjStr() & " cannot read " & objd.toObjStr(world))
-
   let propd = args[1]
   checkType(propd, dStr)
   let
@@ -340,8 +355,7 @@ defBuiltin "getprop":
   if propO == nil:
     return nilD
 
-  if not user.canRead(propO):
-    return E_PERM.md
+  user.checkRead(propO)
 
   return propO.val
 
@@ -355,8 +369,6 @@ defBuiltin "setprop":
   var obj: MObject
   extractObject(obj, objd)
 
-  if not user.canWrite(obj):
-    return E_PERM.md(user.toObjStr() & " cannot write " & objd.toObjStr(world))
 
   let
     propd = args[1]
@@ -365,12 +377,18 @@ defBuiltin "setprop":
   let
     prop = propd.strVal
     oldProp = obj.getProp(prop)
-  var propO = obj.setProp(prop, newVal)
 
-  # If the property didn't exist before, we want its owner to be us,
-  # not the object that it belongs to.
   if oldProp == nil:
+    user.checkWrite(obj)
+    var propO = obj.setProp(prop, newVal)
+
+    # If the property didn't exist before, we want its owner to be us,
+    # not the object that it belongs to.
     propO.owner = user
+  else:
+    var propO = obj.getProp(prop)
+    user.checkWrite(propO)
+    propO.val = newVal
 
   return newVal
 
