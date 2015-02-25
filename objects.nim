@@ -12,26 +12,33 @@ proc getProp*(obj: MObject, name: string): MProperty
 
 proc isWizard(obj: MObject): bool = obj.level == 0
 
-proc canRead*(reader, obj: MObject): bool =
-  reader.level == 0 or obj.owner == reader or obj.pubRead
+proc owns*(who, obj: MObject): bool {.inline.} =
+  who.isWizard() or obj.owner == who
+proc owns*(who: MObject, prop: MProperty): bool {.inline.} =
+  who.isWizard() or prop.owner == who
+proc owns*(who: MObject, verb: MVerb): bool {.inline.} =
+  who.isWizard() or verb.owner == who
 
-proc canWrite*(writer, obj: MObject): bool =
-  writer.level == 0 or obj.owner == writer or obj.pubWrite
+proc canRead*(reader, obj: MObject): bool {.inline.} =
+  reader.owns(obj) or obj.pubRead
 
-proc canRead*(reader: MObject, prop: MProperty): bool =
-  reader.level == 0 or prop.owner == reader or prop.pubRead
+proc canWrite*(writer, obj: MObject): bool {.inline.} =
+  writer.owns(obj) or obj.pubWrite
 
-proc canWrite*(writer: MObject, prop: MProperty): bool =
-  writer.level == 0 or prop.owner == writer or prop.pubWrite
+proc canRead*(reader: MObject, prop: MProperty): bool {.inline.} =
+  reader.owns(prop) or prop.pubRead
 
-proc canRead*(reader: MObject, verb: MVerb): bool =
-  reader.level == 0 or verb.owner == reader or verb.pubRead
+proc canWrite*(writer: MObject, prop: MProperty): bool {.inline.} =
+  writer.owns(prop) or prop.pubWrite
 
-proc canWrite*(writer: MObject, verb: MVerb): bool =
-  writer.level == 0 or verb.owner == writer or verb.pubWrite
+proc canRead*(reader: MObject, verb: MVerb): bool {.inline.} =
+  reader.owns(verb) or verb.pubRead
 
-proc canExecute*(executor: MObject, verb: MVerb): bool =
-  executor.level == 0 or verb.owner == executor or verb.pubExec
+proc canWrite*(writer: MObject, verb: MVerb): bool {.inline.} =
+  writer.owns(verb) or verb.pubWrite
+
+proc canExecute*(executor: MObject, verb: MVerb): bool {.inline.} =
+  executor.owns(verb) or verb.pubExec
 
 import verbs, scripting
 
