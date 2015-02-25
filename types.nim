@@ -72,7 +72,9 @@ type
       of dFloat: floatVal*: float
       of dStr: strVal*: string
       of dSym: symVal*: string # builtin call
-      of dErr: errVal*: MError
+      of dErr:
+        errVal*: MError
+        errMsg*: string
       of dList: listVal*: seq[MData]
       of dObj: objVal*: ObjID
       of dNil: nilVal*: int # dummy
@@ -95,7 +97,8 @@ proc md*(x: int): MData = MData(dtype: dInt, intVal: x)
 proc md*(x: float): MData = MData(dtype: dFloat, floatVal: x)
 proc md*(x: string): MData = MData(dtype: dStr, strVal: x)
 proc mds*(x: string): MData = MData(dtype: dSym, symVal: x)
-proc md*(x: MError): MData = MData(dtype: dErr, errVal: x)
+proc md*(x: MError): MData = MData(dtype: dErr, errVal: x, errMsg: "no message set")
+proc md*(x: MError, s: string): MData = MData(dtype: dErr, errVal: x, errMsg: s)
 proc md*(x: seq[MData]): MData = MData(dtype: dList, listVal: x)
 proc md*(x: ObjID): MData = MData(dtype: dObj, objVal: x)
 proc md*(x: MObject): MData = x.id.md
@@ -120,7 +123,7 @@ proc `$`*(x: MData): string {.inline.} =
     of dFloat: $x.floatVal
     of dStr: x.strVal.escape
     of dSym: "\'" & x.symVal
-    of dErr: $x.errVal
+    of dErr: $x.errVal & ": " & x.errMsg
     of dList: $x.listVal
     of dObj: "#" & $x.objVal
     of dNil: "nil"

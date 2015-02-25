@@ -159,7 +159,7 @@ var builtins* = initTable[string, BuiltinProc]()
 
 proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
   if not symtable.hasKey(symVal):
-    E_UNBOUND.md
+    E_UNBOUND.md("unbound symbol " & symVal)
   else:
     symtable[symVal]
 
@@ -167,11 +167,7 @@ proc eval*(exp: MData, world: var World, user: MObject,
            symtable: SymbolTable = initSymbolTable()): MData =
   if not exp.isType(dList):
     if exp.isType(dSym):
-      let val = resolveSymbol(exp.symVal, symtable)
-      if val.isType(dErr):
-        return E_UNBOUND.md
-      else:
-        return val
+      return resolveSymbol(exp.symVal, symtable)
     else:
       return exp
 
@@ -185,7 +181,7 @@ proc eval*(exp: MData, world: var World, user: MObject,
     if el.isType(dSym):
       let val = resolveSymbol(el.symVal, symtable)
       if val.isType(dErr):
-        return E_UNBOUND.md
+        return val
       else:
         listvr[idx] = val
 
@@ -216,7 +212,7 @@ template checkForError(value: MData) {.immediate.} =
 template checkType(value: MData, expected: MDataType, ifnot: MError = E_ARGS)
           {.immediate.} =
   if not value.isType(expected):
-    return ifnot.md
+    return ifnot.md("expected argument of type " & $expected & " instead got " & $value.dType)
 
 proc toObjStr(obj: MObject): string =
   let 
@@ -256,12 +252,12 @@ defBuiltin "do":
 
 defBuiltin "slet": # single let
   if args.len != 2:
-    return E_ARGS.md
+    return E_ARGS.md("slet expects two arguments")
 
   let first = args[0]
   checkType(first, dList)
   if first.listVal.len != 2:
-    return E_ARGS.md
+    return E_ARGS.md("slet's first argument is a tuple (symbol value-to-bind)")
 
   let newStmt = @[ "let".mds, @[first].md, args[1] ].md
   return evalD(newStmt)
@@ -280,10 +276,10 @@ defBuiltin "let":
   let asmtList = args[0].listVal
   for asmt in asmtList:
     if not asmt.isType(dList):
-      return E_ARGS.md
+      return E_ARGS.md("let takes a list of assignments")
     let pair = asmt.listVal
     if not pair.len == 2:
-      return E_ARGS.md
+      return E_ARGS.md("each assignment in the list must be a tuple (symbol value-to-bind)")
     checkType(pair[0], dSym)
 
     let
@@ -300,7 +296,7 @@ defBuiltin "cond":
     checkType(arg, dList)
     let larg = arg.listVal
     if larg.len == 0 or larg.len > 2:
-      return E_ARGS.md
+      return E_ARGS.md("each argument to cond must be of length 1 or 2")
 
     if larg.len == 1:
       return larg[0]
@@ -317,16 +313,16 @@ defBuiltin "cond":
 # (getprop what propname)
 defBuiltin "getprop":
   if not args.len == 2:
-    return E_ARGS.md
+    return E_ARGS.md("getprop takes exactly 2 arguments")
 
   let objd = args[0]
   checkType(objd, dObj)
   let obj = world.dataToObj(objd)
   if obj == nil:
-    return E_ARGS.md
+    return E_ARGS.md("invalid object " & $objd)
 
   if not user.canRead(obj):
-    return E_PERM.md
+    return E_PERM.md(user.toObjStr() & " cannot read " & objd.toObjStr(world))
 
   let propd = args[1]
   checkType(propd, dStr)
@@ -351,10 +347,10 @@ defBuiltin "setprop":
   checkType(objd, dObj)
   let obj = world.dataToObj(objd)
   if obj == nil:
-    return E_ARGS.md
+    return E_ARGS.md("invalid object: " & $objd)
 
   if not user.canWrite(obj):
-    return E_PERM.md
+    return E_PERM.md(user.toObjStr() & " cannot write " & objd.toObjStr(world))
 
   let
     propd = args[1]
