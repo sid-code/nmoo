@@ -190,3 +190,13 @@ suite "scripting":
       let prop = root.getProp("newprop")
       check prop != nil
       check prop.owner == worthy
+
+    test "try statement works":
+      var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")
+      check result.isType(dInt)
+      check result.intVal == 4 # for good measure
+
+      result = evalS("(try \"no error here!\" (echo \"incorrect except fire\") 4)")
+
+      check result.isType(dInt)
+      check result.intVal == 4
