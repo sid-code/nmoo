@@ -232,6 +232,14 @@ proc toObjStr(objd: MData, world: World): string =
   else:
     return toObjStr(obj)
 
+template extractObject(where: expr, objd: MData) {.immediate.} =
+  let obj = world.dataToObj(objd)
+  if obj == nil:
+    return E_ARGS.md("invalid object " & $objd)
+
+  where = obj
+
+
 
 
 defBuiltin "echo":
@@ -317,9 +325,8 @@ defBuiltin "getprop":
 
   let objd = args[0]
   checkType(objd, dObj)
-  let obj = world.dataToObj(objd)
-  if obj == nil:
-    return E_ARGS.md("invalid object " & $objd)
+  var obj: MObject
+  extractObject(obj, objd)
 
   if not user.canRead(obj):
     return E_PERM.md(user.toObjStr() & " cannot read " & objd.toObjStr(world))
@@ -345,9 +352,8 @@ defBuiltin "setprop":
 
   let objd = args[0]
   checkType(objd, dObj)
-  let obj = world.dataToObj(objd)
-  if obj == nil:
-    return E_ARGS.md("invalid object: " & $objd)
+  var obj: MObject
+  extractObject(obj, objd)
 
   if not user.canWrite(obj):
     return E_PERM.md(user.toObjStr() & " cannot write " & objd.toObjStr(world))
