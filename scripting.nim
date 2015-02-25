@@ -367,3 +367,25 @@ defBuiltin "setprop":
     propO.owner = user
 
   return newVal
+
+# (try (what) (except) (finally))
+defBuiltin "try":
+  let alen = args.len
+  if not (alen == 2 or alen == 3):
+    return E_ARGS.md("try takes 2 or 3 arguments")
+
+  let tryClause = evalD(args[0])
+
+  # here we do manual error handling
+  if tryClause.isType(dErr):
+    var newSymtable = symtable
+    newSymtable["error"] = tryClause
+    let exceptClause = evalD(args[1], st = newSymtable)
+
+    checkForError(exceptClause)
+    return exceptClause
+
+  if alen == 3:
+    let finallyClause = evalD(args[2])
+    checkForError(finallyClause)
+    return finallyClause
