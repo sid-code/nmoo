@@ -132,7 +132,12 @@ proc truthy*(datum: MData): bool =
   return not (datum.isType(dInt) and datum.intVal == 0 or datum.isType(dFloat) and datum.floatVal == 0)
 
 proc byID*(world: World, id: ObjID): MObject =
-  world.objects[id.int]
+  let idint = id.int
+  if idint > world.objects.len:
+    return nil
+  else:
+    return world.objects[id.int]
+
 proc dataToObj*(world: World, objd: MData): MObject =
   world.byID(objd.objVal)
 
