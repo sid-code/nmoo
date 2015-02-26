@@ -181,7 +181,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
         else:
           continue
       
-      return eval(v.parsed, world, owner, symtable)
+      return eval(v.parsed, world, obj, owner, symtable)
       
   return nilD
 

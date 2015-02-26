@@ -113,7 +113,7 @@ suite "scripting":
         let
           parsed = parser.parseList()
         
-        return eval(parsed, world, who)
+        return eval(parsed, world, who, who)
 
     test "let statement binds symbols locally":
       let result = evalS("""

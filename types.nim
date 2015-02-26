@@ -83,7 +83,7 @@ type
     E_NONE, E_TYPE, E_BUILTIN, E_ARGS, E_UNBOUND, E_BADCOND, E_PERM
   SymbolTable* = Table[string, MData]
   BuiltinProc* = proc(args: var seq[MData], world: var World,
-                      user: MObject, symtable: SymbolTable): MData
+                      caller, owner: MObject, symtable: SymbolTable): MData
 
 let nilD* = MData(dtype: dNil, nilVal: 1)
 

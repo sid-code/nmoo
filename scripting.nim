@@ -163,7 +163,7 @@ proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
   else:
     symtable[symVal]
 
-proc eval*(exp: MData, world: var World, user: MObject,
+proc eval*(exp: MData, world: var World, caller, owner: MObject,
            symtable: SymbolTable = initSymbolTable()): MData =
   if not exp.isType(dList):
     if exp.isType(dSym):
@@ -189,17 +189,17 @@ proc eval*(exp: MData, world: var World, user: MObject,
     sym = listv[0].symVal
 
   if builtins.hasKey(sym):
-    return builtins[sym](listvr, world, user, symtable)
+    return builtins[sym](listvr, world, caller, owner, symtable)
   else:
     return E_BUILTIN.md
 
 template defBuiltin(name: string, body: stmt) {.immediate.} =
   var bproc: BuiltinProc = proc (args: var seq[MData], world: var World,
-                                 user: MObject, symtable: SymbolTable): MData =
+                                 caller, owner: MObject, symtable: SymbolTable): MData =
     # to provide a simpler call to eval (note the optional args)
-    proc evalD(e: MData, w: var World = world, u: MObject = user,
-               st: SymbolTable = symtable): MData =
-      eval(e, w, u, st)
+    proc evalD(e: MData, w: var World = world, c: MObject = caller,
+               o: MObject = owner, st: SymbolTable = symtable): MData =
+      eval(e, w, c, o, st)
 
     body
 
@@ -367,7 +367,7 @@ defBuiltin "getprop":
   if propO == nil:
     return nilD
 
-  user.checkRead(propO)
+  owner.checkRead(propO)
 
   return propO.val
 
@@ -391,15 +391,15 @@ defBuiltin "setprop":
     oldProp = obj.getProp(prop)
 
   if oldProp == nil:
-    user.checkWrite(obj)
+    owner.checkWrite(obj)
     var propO = obj.setProp(prop, newVal)
 
     # If the property didn't exist before, we want its owner to be us,
     # not the object that it belongs to.
-    propO.owner = user
+    propO.owner = owner
   else:
     var propO = obj.getProp(prop)
-    user.checkWrite(propO)
+    owner.checkWrite(propO)
     propO.val = newVal
 
   return newVal
