@@ -101,6 +101,24 @@ proc matchesName(verb: MVerb, str: string): bool =
 
   return false
 
+iterator matchingVerbs(obj, vobj: MObject, name: string): MVerb =
+  for v in vobj.verbs:
+    if v.matchesName(name) and obj.canExecute(v):
+      yield v
+
+iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] =
+  var world = obj.getWorld()
+  var searchSpace = obj.getVicinity()
+  searchSpace.add(obj)
+
+  doAssert(world != nil)
+  searchSpace.add(world.getVerbObj())
+
+  for o in searchSpace:
+    for v in matchingVerbs(obj, o, name):
+        yield (o, v)
+
+
 proc handleCommand*(obj: MObject, command: string): MData =
 
   let
@@ -114,22 +132,13 @@ proc handleCommand*(obj: MObject, command: string): MData =
     doQuery = obj.query(doString)
     ioQuery = obj.query(ioString)
 
-  var world = obj.getWorld
+  var
+    world = obj.getWorld()
+    symtable = initSymbolTable()
 
-  var searchSpace = obj.getVicinity()
-  searchSpace.add(obj)
-
-  doAssert(world != nil)
-  searchSpace.add(world.getVerbObj())
-
-  var symtable = initSymbolTable()
   symtable["caller"] = obj.md
 
-  for o in searchSpace:
-    for v in o.verbs:
-      if not v.matchesName(verb) or not obj.canExecute(v):
-        continue
-
+  for o, v in vicinityVerbs(obj, verb):
       let owner = v.owner
       doAssert(owner != nil)
 
