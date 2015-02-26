@@ -239,6 +239,18 @@ template extractObject(where: expr, objd: MData) {.immediate.} =
 
   where = obj
 
+template checkOwn(obj, what: MObject) =
+  if not obj.owns(what):
+    return E_PERM.md(obj.toObjStr() & " doesn't own " & what.toObjStr())
+
+template checkOwn(obj: MObject, prop: MProperty) =
+  if not obj.owns(prop):
+    return E_PERM.md(obj.toObjStr() & " doesn't own " & prop.name)
+
+template checkOwn(obj: MObject, verb: MVerb) =
+  if not obj.owns(verb):
+    return E_PERM.md(obj.toObjStr() & " doesn't own " & verb.name)
+
 template checkRead(obj, what: MObject) =
   if not obj.canRead(what):
     return E_PERM.md(obj.toObjStr() & " cannot read " & what.toObjStr())
