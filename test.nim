@@ -93,7 +93,7 @@ suite "object tests":
     root.verbs.add(verb)
 
     verb.setCode("(do args)")
-    check ($root.verbCall(root, "action", @["hey".md]) == "@[@[\"hey\"]]")
+    check ($root.verbCall("action", root, @["hey".md]) == "@[@[\"hey\"]]")
 
 suite "scripting":
   suite "lexer":
