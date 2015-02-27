@@ -42,10 +42,6 @@ proc canExecute*(executor: MObject, verb: MVerb): bool {.inline.} =
 
 import verbs, scripting
 
-proc setCode*(verb: MVerb, newCode: string) =
-  var parser = newParser(newCode)
-  verb.parsed = parser.parseList()
-
 
 proc getProp*(obj: MObject, name: string): MProperty =
   for p in obj.props:

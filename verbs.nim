@@ -64,6 +64,10 @@ proc parseCommand(str: string): ParsedCommand =
       result.doString = result.rest[0 .. prepLoc - 2]
       result.ioString = result.rest[prepLoc + result.prep.image.len + 1 .. -1]
 
+proc setCode*(verb: MVerb, newCode: string) =
+  var parser = newParser(newCode)
+  verb.parsed = parser.parseList()
+
 proc nameMatchesStr(name: string, str: string): bool =
   if name == "*": return true
 
