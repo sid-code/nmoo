@@ -93,6 +93,9 @@ proc nameMatchesStr(name: string, str: string): bool =
 
   return name.len == str.len or ci == '*' or tolerateSize
 
+proc call(verb: MVerb, world: var World, caller: MObject, symtable: SymbolTable): MData =
+  eval(verb.parsed, world, caller, verb.owner, symtable)
+
 proc matchesName(verb: MVerb, str: string): bool =
   let names = verb.names.split(" ")
   for name in names:
@@ -119,6 +122,22 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
       yield (o, v)
 
 
+proc verbCall*(owner, caller: MObject, name: string, args: seq[MData]): MData =
+  var
+    world = caller.getWorld()
+    symtable = initSymbolTable()
+
+  doAssert(world != nil)
+
+
+  symtable["caller"] = caller.md
+  symtable["args"] = args.md
+
+  for v in matchingVerbs(caller, owner, name):
+    return v.call(world, caller, symtable)
+
+
+
 proc handleCommand*(obj: MObject, command: string): MData =
 
   let
@@ -139,9 +158,6 @@ proc handleCommand*(obj: MObject, command: string): MData =
   symtable["caller"] = obj.md
 
   for o, v in vicinityVerbs(obj, verb):
-    let owner = v.owner
-    doAssert(owner != nil)
-
     symtable["dobjstr"] = doString.md
     symtable["iobjstr"] = ioString.md
     symtable["dobj"] = nilD
@@ -181,7 +197,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
       else:
         continue
     
-    return eval(v.parsed, world, obj, owner, symtable)
+    return v.call(world, obj, symtable)
 
   return nilD
 
