@@ -95,6 +95,8 @@ type
   BuiltinProc* = proc(args: var seq[MData], world: var World,
                       caller, owner: MObject, symtable: SymbolTable): MData
 
+proc initSymbolTable*: SymbolTable = initTable[string, MData]()
+
 let nilD* = MData(dtype: dNil, nilVal: 1)
 
 proc id*(x: int): ObjID = ObjID(x)

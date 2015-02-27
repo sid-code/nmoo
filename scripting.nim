@@ -16,7 +16,6 @@ type
     tokens: seq[Token]
     tindex: int
 
-proc initSymbolTable*: SymbolTable = initTable[string, MData]()
 
 proc `$`*(token: Token): string =
   token.image
