@@ -81,6 +81,20 @@ suite "object tests":
     verb.setCode("(do argstr)")
     check ($root.handleCommand("action hey") == "@[\"hey\"]")
 
+  test "verbs call correctly":
+    var verb = newVerb(
+      names = "action",
+      owner = root,
+      prepSpec = pNone,
+      doSpec = oNone,
+      ioSpec = oNone,
+    )
+
+    root.verbs.add(verb)
+
+    verb.setCode("(do args)")
+    check ($root.verbCall(root, "action", @["hey".md]) == "@[@[\"hey\"]]")
+
 suite "scripting":
   suite "lexer":
     setup:
