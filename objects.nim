@@ -40,7 +40,7 @@ proc canWrite*(writer: MObject, verb: MVerb): bool {.inline.} =
 proc canExecute*(executor: MObject, verb: MVerb): bool {.inline.} =
   executor.owns(verb) or verb.pubExec
 
-import verbs, scripting
+import verbs
 
 
 proc getProp*(obj: MObject, name: string): MProperty =
