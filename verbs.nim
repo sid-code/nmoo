@@ -116,7 +116,7 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
 
   for o in searchSpace:
     for v in matchingVerbs(obj, o, name):
-        yield (o, v)
+      yield (o, v)
 
 
 proc handleCommand*(obj: MObject, command: string): MData =
@@ -139,49 +139,49 @@ proc handleCommand*(obj: MObject, command: string): MData =
   symtable["caller"] = obj.md
 
   for o, v in vicinityVerbs(obj, verb):
-      let owner = v.owner
-      doAssert(owner != nil)
+    let owner = v.owner
+    doAssert(owner != nil)
 
-      symtable["dobjstr"] = doString.md
-      symtable["iobjstr"] = ioString.md
-      symtable["dobj"] = nilD
-      symtable["iobj"] = nilD
-      symtable["argstr"] = rest.md
+    symtable["dobjstr"] = doString.md
+    symtable["iobjstr"] = ioString.md
+    symtable["dobj"] = nilD
+    symtable["iobj"] = nilD
+    symtable["argstr"] = rest.md
 
-      if v.prepSpec != prep.ptype:
+    if v.prepSpec != prep.ptype:
+      continue
+
+    if doQuery.len > 0:
+      if v.doSpec == oAny:
+        symtable["dobj"] = doQuery[0].md
+      elif v.doSpec == oStr:
+        discard
+      else:
+        continue
+    else:
+      if v.doSpec == oThis:
+        symtable["dobj"] = o.md
+      elif v.doSpec == oNone:
+        discard
+      else:
         continue
 
-      if doQuery.len > 0:
-        if v.doSpec == oAny:
-          symtable["dobj"] = doQuery[0].md
-        elif v.doSpec == oStr:
-          discard
-        else:
-          continue
+    if ioQuery.len > 0:
+      if v.ioSpec == oAny:
+        symtable["iobj"] = ioQuery[0].md
+      elif v.ioSpec == oStr:
+        discard
       else:
-        if v.doSpec == oThis:
-          symtable["dobj"] = o.md
-        elif v.doSpec == oNone:
-          discard
-        else:
-          continue
+        continue
+    else:
+      if v.ioSpec == oThis:
+        symtable["iobj"] = o.md
+      elif v.ioSpec == oNone:
+        discard
+      else:
+        continue
+    
+    return eval(v.parsed, world, obj, owner, symtable)
 
-      if ioQuery.len > 0:
-        if v.ioSpec == oAny:
-          symtable["iobj"] = ioQuery[0].md
-        elif v.ioSpec == oStr:
-          discard
-        else:
-          continue
-      else:
-        if v.ioSpec == oThis:
-          symtable["iobj"] = o.md
-        elif v.ioSpec == oNone:
-          discard
-        else:
-          continue
-      
-      return eval(v.parsed, world, obj, owner, symtable)
-      
   return nilD
 
