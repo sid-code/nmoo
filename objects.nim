@@ -40,6 +40,24 @@ proc canWrite*(writer: MObject, verb: MVerb): bool {.inline.} =
 proc canExecute*(executor: MObject, verb: MVerb): bool {.inline.} =
   executor.owns(verb) or verb.pubExec
 
+proc toObjStr*(obj: MObject): string =
+  let
+    name = obj.getPropVal("name")
+    objdstr = $obj.md
+  if name.isType(dStr) and name.strVal.len > 0:
+    return "$2 ($1)" % [objdstr, name.strVal]
+  else:
+    return "No name ($1)" % objdstr
+
+proc toObjStr*(objd: MData, world: World): string =
+  ## Converts MData holding objects into strings
+  let
+    obj = world.dataToObj(objd)
+  if obj == nil:
+    return "Invalid object ($1)" % $objd
+  else:
+    return obj.toObjStr()
+
 import verbs
 
 
@@ -260,20 +278,3 @@ proc moveTo*(obj: var MObject, newLoc: var MObject): bool =
     return false
 
 
-proc toObjStr*(obj: MObject): string =
-  let
-    name = obj.getPropVal("name")
-    objdstr = $obj.md
-  if name.isType(dStr):
-    return "$2 ($1)" % [objdstr, name.strVal]
-  else:
-    return "No name ($1)" % objdstr
-
-proc toObjStr*(objd: MData, world: World): string =
-  ## Converts MData holding objects into strings
-  let
-    obj = world.dataToObj(objd)
-  if obj == nil:
-    return "Invalid object ($1)" % $objd
-  else:
-    return obj.toObjStr()
