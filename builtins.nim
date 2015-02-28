@@ -62,11 +62,13 @@ template canWrite(obj: MObject, what: MVerb) =
 
 
 defBuiltin "echo":
+  var newArgs: seq[MData] = @[]
   for arg in args:
     let res = evalD(arg)
     checkForError(res)
     echo res
-  return args.md
+    newArgs.add(res)
+  return newArgs.md
 
 defBuiltin "do":
   var newArgs: seq[MData] = @[]
