@@ -139,6 +139,8 @@ proc verbCall*(owner: MObject, name: string, caller: MObject, args: seq[MData]):
   for v in matchingVerbs(caller, owner, name):
     return v.call(world, caller, symtable)
 
+  return nilD
+
 
 proc handleCommand*(obj: MObject, command: string): MData =
 
@@ -198,7 +200,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
         discard
       else:
         continue
-    
+
     return v.call(world, obj, symtable)
 
   return nilD
