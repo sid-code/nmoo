@@ -260,3 +260,21 @@ proc moveTo*(obj: var MObject, newLoc: var MObject): bool =
   else:
     return false
 
+
+proc toObjStr*(obj: MObject): string =
+  let
+    name = obj.getPropVal("name")
+    objdstr = $obj.md
+  if name.isType(dStr):
+    return "$2 ($1)" % [objdstr, name.strVal]
+  else:
+    return "No name ($1)" % objdstr
+
+proc toObjStr*(objd: MData, world: World): string =
+  ## Converts MData holding objects into strings
+  let
+    obj = world.dataToObj(objd)
+  if obj == nil:
+    return "Invalid object ($1)" % $objd
+  else:
+    return obj.toObjStr()
