@@ -221,7 +221,7 @@ proc changeParent*(obj: var MObject, newParent: var MObject) =
 
     obj.props.add(pc)
 
-  for v in obj.verbs:
+  for v in newParent.verbs:
     var vc = v.copy
     vc.inherited = true
     obj.verbs.add(vc)
@@ -244,7 +244,6 @@ proc createChild*(parent: var MObject): MObject =
   newObj.output = parent.output
 
   newObj.changeParent(parent)
-
   return newObj
 
 proc moveTo*(obj: var MObject, newLoc: var MObject): bool =
