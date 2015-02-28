@@ -225,6 +225,9 @@ proc newVerb*(
     owner: owner,
     inherited: inherited,
 
+    code: code,
+    parsed: nilD,
+
     doSpec: doSpec,
     ioSpec: ioSpec,
     prepSpec: prepSpec,
@@ -254,7 +257,15 @@ proc copy*(verb: MVerb): MVerb =
     owner: verb.owner,
     inherited: verb.inherited,
     code: verb.code,
-    parsed: verb.parsed
+    parsed: verb.parsed,
+
+    doSpec: verb.doSpec,
+    ioSpec: verb.ioSpec,
+    prepSpec: verb.prepSpec,
+
+    pubRead: verb.pubRead,
+    pubWrite: verb.pubWrite,
+    pubExec: verb.pubExec
   )
 
 proc newWorld*: World =
