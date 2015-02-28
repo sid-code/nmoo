@@ -10,6 +10,9 @@ proc startsWith(s1, s2: string): bool =
   return true
 
 proc matches(obj: MObject, str: string): bool =
+  if str.len == 0:
+    return false
+
   let name = obj.getStrProp("name")
   if name.startsWith(str): return true
 
