@@ -28,6 +28,7 @@ proc getVicinity*(obj: MObject): seq[MObject] =
   let loc = obj.getLocation()
 
   if loc != nil:
+    result.add(loc)
     let (has, contents) = loc.getContents()
     if has:
       for o in contents: result.add(o)
