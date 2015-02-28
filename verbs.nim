@@ -125,8 +125,7 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
     for v in matchingVerbs(obj, o, name):
       yield (o, v)
 
-
-proc verbCall*(owner, caller: MObject, name: string, args: seq[MData]): MData =
+proc verbCall*(owner: MObject, name: string, caller: MObject, args: seq[MData]): MData =
   var
     world = caller.getWorld()
     symtable = initSymbolTable()
@@ -139,7 +138,6 @@ proc verbCall*(owner, caller: MObject, name: string, args: seq[MData]): MData =
 
   for v in matchingVerbs(caller, owner, name):
     return v.call(world, caller, symtable)
-
 
 
 proc handleCommand*(obj: MObject, command: string): MData =
