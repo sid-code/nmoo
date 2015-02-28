@@ -143,7 +143,7 @@ proc removeFromContents(obj: MObject, member: var MObject): bool =
 
   if has:
     for idx, o in contents:
-      if o.objVal == obj.getID():
+      if o.objVal == member.getID():
         system.delete(contents, idx)
 
     obj.setPropR("contents", contents)

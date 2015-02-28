@@ -229,7 +229,7 @@ defBuiltin "move":
 
   checkType(destd, dObj)
   var dest: MObject
-  extractObject(dest, whatd)
+  extractObject(dest, destd)
 
   checkOwn(owner, what)
 
@@ -246,17 +246,20 @@ defBuiltin "move":
   while conductor != nil:
     if conductor == what:
       return E_RECMOVE.md("moving $1 to $2 is recursive" % [what.toObjStr(), dest.toObjStr()])
+    conductor = conductor.getLocation()
 
-  let moveSucceeded = what.moveTo(dest)
+  var moveSucceeded = what.moveTo(dest)
+
   if not moveSucceeded:
-    return E_FMOVE.md("moving $1 to $2 failed" % [what.toObjStr(), dest.toObjStr()])
+    return E_FMOVE.md("moving $1 to $2 failed (it could already be at $2)" %
+          [what.toObjStr(), dest.toObjStr()])
 
   let oldLoc = what.getLocation()
   if oldLoc != nil:
     discard oldLoc.verbCall("exitfunc", caller, whatlist)
 
   discard dest.verbCall("enterfunc", caller, whatlist)
-  return nilD
+  return what.md
 
 
 # (try (what) (except) (finally))
