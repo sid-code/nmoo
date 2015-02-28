@@ -4,7 +4,7 @@ const
   DefaultOptions = "--verbosity:0"
 
 var Exes = initTable[string, seq[string]]()
-Exes["test"] = @["types", "objects", "scripting", "querying", "verbs"]
+Exes["test"] = @["types", "objects", "scripting", "querying", "verbs", "builtins"]
 Exes["main"] = @["types", "objects"]
 
 task defaultTask, "builds everything":
