@@ -97,122 +97,160 @@ suite "object tests":
     verb.setCode("(do args)")
     check ($root.verbCall("action", root, @["hey".md]) == "@[@[\"hey\"]]")
 
-suite "scripting":
-  suite "lexer":
-    setup:
-      let testStr = "(builtin \"stri\\\"ng\")"
 
-    test "lexer works":
-      let lexed = lex(testStr)
-      check lexed.len == 4
+suite "lexer":
+  setup:
+    let testStr = "(builtin \"stri\\\"ng\")"
 
-  suite "parser":
-    setup:
-      let testStr = "(echo \"hello world\" (sub-list \"who knew?\" 3.14))"
-      var parser = newParser(testStr)
-    test "parser works":
+  test "lexer works":
+    let lexed = lex(testStr)
+    check lexed.len == 4
+
+suite "parser":
+  setup:
+    let testStr = "(echo \"hello world\" (sub-list \"who knew?\" 3.14))"
+    var parser = newParser(testStr)
+  test "parser works":
+    let
+      result = parser.parseList()
+      str = $result
+
+    check str == "@['echo, \"hello world\", @['sub-list, \"who knew?\", 3.14]]"
+
+suite "evaluator":
+  setup:
+    var world = createWorld()
+    var root = blankObject()
+    world.add(root)
+    root.setPropR("name", "root")
+
+    proc evalS(code: string, who: MObject = root): MData =
+      var parser = newParser(code)
       let
-        result = parser.parseList()
-        str = $result
+        parsed = parser.parseList()
 
-      check str == "@['echo, \"hello world\", @['sub-list, \"who knew?\", 3.14]]"
+      return eval(parsed, world, who, who)
 
-  suite "evaluator":
-    setup:
-      var world = createWorld()
-      var root = blankObject()
-      world.add(root)
-      root.setPropR("name", "root")
+  test "let statement binds symbols locally":
+    let result = evalS("""
+    (do (let ((a "b") (b a)) b) (echo a))
+    """)
 
-      proc evalS(code: string, who: MObject = root): MData =
-        var parser = newParser(code)
-        let
-          parsed = parser.parseList()
-        
-        return eval(parsed, world, who, who)
+    check result.isType(dErr)
+    check result.errVal == E_UNBOUND
 
-    test "let statement binds symbols locally":
-      let result = evalS("""
-      (do (let ((a "b") (b a)) b) (echo a))
-      """)
+  test "cond statement works":
+    var result = evalS("""
+    (cond (1 "it works") (0 "it doesn't work") ("it doesn't work!!!"))
+    """)
 
-      check result.isType(dErr)
-      check result.errVal == E_UNBOUND
+    check result.isType(dStr)
+    check result.strVal == "it works"
 
-    test "cond statement works":
-      var result = evalS("""
-      (cond (1 "it works") (0 "it doesn't work") ("it doesn't work!!!"))
-      """)
+    result = evalS("""
+    (cond (0 "whoops") ("it works"))
+    """)
 
-      check result.isType(dStr)
-      check result.strVal == "it works"
+    check result.isType(dStr)
+    check result.strVal == "it works"
 
-      result = evalS("""
-      (cond (0 "whoops") ("it works"))
-      """)
+  test "getprop statement works":
+    var result = evalS("""
+    (getprop #1 "name")
+    """)
 
-      check result.isType(dStr)
-      check result.strVal == "it works"
+    check result.isType(dStr)
+    check result.strVal == "root"
 
-    test "getprop statement works":
-      var result = evalS("""
-      (getprop #1 "name")
-      """)
+    result = evalS("""
+    (getprop #1 "nonexistant")
+    """)
 
-      check result.isType(dStr)
-      check result.strVal == "root"
+    check result.isType(dNil)
 
-      result = evalS("""
-      (getprop #1 "nonexistant")
-      """)
+  test "setprop statement works":
+    var result = evalS("""
+    (setprop #1 "newprop" "val")
+    """)
 
-      check result.isType(dNil)
+    check result.isType(dStr)
+    check result.strVal == "val"
 
-    test "setprop statement works":
-      var result = evalS("""
-      (setprop #1 "newprop" "val")
-      """)
+    result = evalS("""
+    (getprop #1 "newprop")
+    """)
 
-      check result.isType(dStr)
-      check result.strVal == "val"
+    check result.isType(dStr)
+    check result.strVal == "val"
 
-      result = evalS("""
-      (getprop #1 "newprop")
-      """)
+  test "setprop checks permissions":
+    var unworthy = blankObject()
+    world.add(unworthy)
+    unworthy.level = 3
+    let result = evalS("""
+    (setprop #1 "newprop" "oops")
+    """, unworthy)
 
-      check result.isType(dStr)
-      check result.strVal == "val"
+    check result.isType(dErr)
+    check result.errVal == E_PERM
 
-    test "setprop checks permissions":
-      var unworthy = blankObject()
-      world.add(unworthy)
-      unworthy.level = 3
-      let result = evalS("""
-      (setprop #1 "newprop" "oops")
-      """, unworthy)
+  test "setprop sets owner of new properties correctly":
+    var worthy = blankObject()
+    world.add(worthy)
+    # note: the level defaults to zero so we don't have to change it
+    var result = evalS("""
+    (setprop #1 "newprop" "newval")
+    """, worthy)
 
-      check result.isType(dErr)
-      check result.errVal == E_PERM
+    check result.isType(dStr)
+    let prop = root.getProp("newprop")
+    check prop != nil
+    check prop.owner == worthy
 
-    test "setprop sets owner of new properties correctly":
-      var worthy = blankObject()
-      world.add(worthy)
-      # note: the level defaults to zero so we don't have to change it
-      var result = evalS("""
-      (setprop #1 "newprop" "newval")
-      """, worthy)
+  test "try statement works":
+    var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")
+    check result.isType(dInt)
+    check result.intVal == 4 # for good measure
 
-      check result.isType(dStr)
-      let prop = root.getProp("newprop")
-      check prop != nil
-      check prop.owner == worthy
+    result = evalS("(try \"no error here!\" (echo \"incorrect except fire\") 4)")
 
-    test "try statement works":
-      var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")
-      check result.isType(dInt)
-      check result.intVal == 4 # for good measure
+    check result.isType(dInt)
+    check result.intVal == 4
 
-      result = evalS("(try \"no error here!\" (echo \"incorrect except fire\") 4)")
+  test "move statement works":
+    var genericContainer = root.createChild()
+    world.add(genericContainer)
+    genericContainer.setPropR("name", "generic container")
+    genericContainer.setPropR("contents", @[])
 
-      check result.isType(dInt)
-      check result.intVal == 4
+    var nowhere = genericContainer.createChild()
+    world.add(nowhere)
+    nowhere.setPropR("name", "nowhere")
+
+    var genericThing = root.createChild()
+    world.add(genericThing)
+    genericThing.setPropR("name", "generic thing")
+    check genericThing.moveTo(nowhere)
+
+    genericContainer.changeParent(genericThing)
+
+    # move actually moves objects
+    var result = evalS("(move #2 #3)")
+    check genericContainer.getLocation() == nowhere
+    let (has, contents) = nowhere.getContents()
+    check has
+    check genericContainer in contents
+    
+    # move removes objects from previous location
+    result = evalS("(move #4 #2)")
+    let (has2, contents2) = nowhere.getContents()
+    check has2
+    check contents2.len == 1
+
+    # for good measure
+    check genericThing.getLocation() == genericContainer
+    
+    # recursive move
+    result = evalS("(move #2 #2)")
+    check result.isType(dErr)
+    check result.errVal == E_RECMOVE
