@@ -267,3 +267,33 @@ defBuiltin "try":
     let finallyClause = evalD(args[2])
     checkForError(finallyClause)
     return finallyClause
+
+# (lambda (var) (expr-in-var))
+defBuiltin "lambda":
+  let alen = args.len
+  if alen < 2:
+    return E_ARGS.md("lambda takes 2 or more arguments")
+
+  if alen == 2:
+    return (@["lambda".mds] & args).md
+
+  var newSymtable = symtable
+  let boundld = args[0]
+  checkType(boundld, dList)
+
+  let
+    boundl = boundld.listVal
+    numBound = boundl.len
+
+  if alen != 2 + numBound:
+    return E_ARGS.md("lambda taking $1 arguments given $2 instead" %
+            [$numBound, $(alen - 2)])
+
+  let lambdaArgs = args[2 .. -1]
+  for idx, symd in boundl:
+    checkType(symd, dSym)
+    let sym = symd.symVal
+    newSymtable[sym] = lambdaArgs[idx]
+
+  let expression = args[1]
+  return evalD(expression, st = newSymtable)
