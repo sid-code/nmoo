@@ -96,11 +96,10 @@ proc toData(token: Token): MData =
       result = rest[0 .. -2].md
     of Digits, '-', '.':
       try:
-        let num = parseFloat(image)
-        if num.floor == num:
-          result = num.int.md
+        if '.' in image or 'e' in image:
+          result = parseFloat(image).md
         else:
-          result =  num.md
+          result = parseInt(image).md
       except OverflowError:
         raise newException(MParseError, "number overflow " & image)
       except ValueError:
