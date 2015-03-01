@@ -285,3 +285,8 @@ suite "evaluator":
 
     result = evalS("(istype 3 \"doodoo\")")
     check result.isType(dErr)
+
+  test "map statement works":
+    var result = evalS("(map (1 2 3 4) do)")
+    check result.isType(dList)
+    check result.listVal.len == 4
