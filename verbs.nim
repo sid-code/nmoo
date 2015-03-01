@@ -167,7 +167,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
     symtable["iobj"] = nilD
     symtable["argstr"] = rest.md
 
-    if v.prepSpec != prep.ptype:
+    if v.prepSpec != pNone and v.prepSpec != prep.ptype:
       continue
 
     if doQuery.len > 0:
