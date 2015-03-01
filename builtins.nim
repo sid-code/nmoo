@@ -12,6 +12,17 @@ template defBuiltin(name: string, body: stmt) {.immediate.} =
 
   scripting.builtins[name] = bproc
 
+proc strToType(str: string): tuple[b: bool, t: MDataType] =
+  case str.toLower():
+    of "int": return (true, dInt)
+    of "float": return (true, dFloat)
+    of "str": return (true, dStr)
+    of "sym": return (true, dSym)
+    of "obj": return (true, dObj)
+    of "list": return (true, dList)
+    of "nil": return (true, dNil)
+    else: return (false, dInt)
+
 template checkForError(value: MData) {.immediate.} =
   if value.isType(dErr):
     return value
@@ -58,7 +69,6 @@ template checkRead(obj: MObject, what: MVerb) =
 template canWrite(obj: MObject, what: MVerb) =
   if not obj.canWrite(what):
     return E_PERM.md(obj.toObjStr() & " cannot write verb: " & what.names)
-
 
 
 defBuiltin "echo":
@@ -297,3 +307,21 @@ defBuiltin "lambda":
 
   let expression = args[1]
   return evalD(expression, st = newSymtable)
+
+defBuiltin "istype":
+  if args.len != 2:
+    return E_ARGS.md("istype takes 2 arguments")
+
+  let
+    what = args[0]
+    typed = args[1]
+  checkType(typed, dStr)
+
+  let (valid, typedVal) = strToType(typed.strVal)
+  if not valid:
+    return E_ARGS.md("'$1' is not a valid data type" % typed.strVal)
+
+  if what.isType(typedVal):
+    return 1.md
+  else:
+    return 0.md
