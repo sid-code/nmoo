@@ -158,9 +158,12 @@ var builtins* = initTable[string, BuiltinProc]()
 
 proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
   if not symtable.hasKey(symVal):
-    E_UNBOUND.md("unbound symbol '$1'" % symVal)
+    if not builtins.hasKey(symVal):
+      return E_UNBOUND.md("unbound symbol '$1'" % symVal)
+    else:
+      return symVal.mds
   else:
-    symtable[symVal]
+    return symtable[symVal]
 
 proc eval*(exp: MData, world: var World, caller, owner: MObject,
            symtable: SymbolTable = initSymbolTable()): MData =
