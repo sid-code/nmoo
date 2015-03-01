@@ -325,3 +325,17 @@ defBuiltin "istype":
     return 1.md
   else:
     return 0.md
+
+defBuiltin "call":
+  if args.len < 1:
+    return E_ARGS.md("call takes one or more argument (lambda then arguments)")
+
+  let lamb = args[0]
+  checkType(lamb, dList)
+  var lambl = lamb.listVal
+  if lambl.len != 3:
+    return E_ARGS.md("call: invalid lambda")
+
+  lambl = lambl & args[1 .. -1]
+
+  return evalD(lambl.md)
