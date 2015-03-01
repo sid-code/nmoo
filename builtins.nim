@@ -233,10 +233,10 @@ defBuiltin "move":
 
   if not acc.truthy:
     return E_NACC.md("moving $1 to $2 refused" % [what.toObjStr(), dest.toObjStr()])
-  
+
   # check for recursive move
   var conductor = dest
-  
+
   while conductor != nil:
     if conductor == what:
       return E_RECMOVE.md("moving $1 to $2 is recursive" % [what.toObjStr(), dest.toObjStr()])
