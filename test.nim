@@ -260,6 +260,11 @@ suite "evaluator":
     check result.isType(dList)
     check result.listVal.len == 2
 
+  test "call statement works":
+    var result = evalS("(call (lambda (x y) (do x y)) 4 4)")
+    check result.isType(dList)
+    check result.listVal.len == 2
+
   test "istype statement works":
     var result = evalS("(istype \"abc\" \"str\")")
     check result.isType(dInt)
