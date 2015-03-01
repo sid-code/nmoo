@@ -190,6 +190,6 @@ proc eval*(exp: MData, world: var World, caller, owner: MObject,
   if builtins.hasKey(sym):
     return builtins[sym](listvr, world, caller, owner, symtable)
   else:
-    return E_BUILTIN.md
+    return E_BUILTIN.md("undefined builtin: $1" % sym)
 
 
