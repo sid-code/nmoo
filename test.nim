@@ -240,7 +240,7 @@ suite "evaluator":
     let (has, contents) = nowhere.getContents()
     check has
     check genericContainer in contents
-    
+
     # move removes objects from previous location
     result = evalS("(move #4 #2)")
     let (has2, contents2) = nowhere.getContents()
@@ -249,8 +249,13 @@ suite "evaluator":
 
     # for good measure
     check genericThing.getLocation() == genericContainer
-    
+
     # recursive move
     result = evalS("(move #2 #2)")
     check result.isType(dErr)
     check result.errVal == E_RECMOVE
+
+  test "lambda statement works":
+    var result = evalS("(lambda (x y) (do x y) 4 4)")
+    check result.isType(dList)
+    check result.listVal.len == 2
