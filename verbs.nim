@@ -114,10 +114,9 @@ iterator matchingVerbs(obj, vobj: MObject, name: string): MVerb =
       yield v
 
 iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] =
-  var world = obj.getWorld()
   var searchSpace = obj.getVicinity()
-  searchSpace.add(obj)
 
+  var world = obj.getWorld()
   doAssert(world != nil)
   searchSpace.add(world.getVerbObj())
 
