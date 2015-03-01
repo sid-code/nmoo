@@ -351,4 +351,26 @@ defBuiltin "call":
   else:
     return E_ARGS.md("call's first argument must be a builtin symbol or a lambda")
 
+# (map list stmt)
+# this builtin lets (call) validate the "function" passed
+defBuiltin "map":
+  if args.len != 2:
+    return E_ARGS.md("map takes 2 arguments")
 
+  let
+    listd = args[0]
+    lamb = args[1]
+
+  checkType(listd, dList)
+  let list = listd.listVal
+  var newList: seq[MData] = @[]
+
+  for el in list:
+    var singleResult: MData
+    if lamb.isType(dSym):
+      singleResult = evalD(@[lamb, el].md)
+    else:
+      singleResult = evalD(@["call".mds, lamb, el].md)
+    newList.add(singleResult)
+
+  return newList.md
