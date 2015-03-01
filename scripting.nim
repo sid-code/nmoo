@@ -95,15 +95,18 @@ proc toData(token: Token): MData =
     of '"':
       result = rest[0 .. -2].md
     of Digits, '-', '.':
-      try:
-        if '.' in image or 'e' in image:
-          result = parseFloat(image).md
-        else:
-          result = parseInt(image).md
-      except OverflowError:
-        raise newException(MParseError, "number overflow " & image)
-      except ValueError:
-        raise newException(MParseError, "malformed number " & image)
+      if image == "-": # special case
+        result = "-".mds
+      else:
+        try:
+          if '.' in image or 'e' in image:
+            result = parseFloat(image).md
+          else:
+            result = parseInt(image).md
+        except OverflowError:
+          raise newException(MParseError, "number overflow " & image)
+        except ValueError:
+          raise newException(MParseError, "malformed number " & image)
     else:
       result = image.mds
 
