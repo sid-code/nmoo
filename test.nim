@@ -259,3 +259,19 @@ suite "evaluator":
     var result = evalS("(lambda (x y) (do x y) 4 4)")
     check result.isType(dList)
     check result.listVal.len == 2
+
+  test "istype statement works":
+    var result = evalS("(istype \"abc\" \"str\")")
+    check result.isType(dInt)
+    check result.intVal == 1
+
+    result = evalS("(istype 3 \"int\")")
+    check result.isType(dInt)
+    check result.intVal == 1
+
+    result = evalS("(istype 3 \"str\")")
+    check result.isType(dInt)
+    check result.intVal == 0
+
+    result = evalS("(istype 3 \"doodoo\")")
+    check result.isType(dErr)
