@@ -308,6 +308,9 @@ defBuiltin "lambda":
   let expression = args[1]
   return evalD(expression, st = newSymtable)
 
+# (istype thingy typedesc)
+# typedesc is a string:
+#   int, float, str, sym, obj, list, err
 defBuiltin "istype":
   if args.len != 2:
     return E_ARGS.md("istype takes 2 arguments")
@@ -326,6 +329,8 @@ defBuiltin "istype":
   else:
     return 0.md
 
+# (call lambda args)
+# forces evaluation (is this a good way to do it?)
 defBuiltin "call":
   if args.len < 1:
     return E_ARGS.md("call takes one or more argument (lambda then arguments)")
