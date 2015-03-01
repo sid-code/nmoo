@@ -260,8 +260,13 @@ suite "evaluator":
     check result.isType(dList)
     check result.listVal.len == 2
 
-  test "call statement works":
+  test "call statement works on lambdas":
     var result = evalS("(call (lambda (x y) (do x y)) 4 4)")
+    check result.isType(dList)
+    check result.listVal.len == 2
+
+  test "call statement works on builtins":
+    var result = evalS("(call do 4 4)")
     check result.isType(dList)
     check result.listVal.len == 2
 
