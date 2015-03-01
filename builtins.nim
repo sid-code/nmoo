@@ -329,18 +329,26 @@ defBuiltin "istype":
   else:
     return 0.md
 
-# (call lambda args)
+# (call lambda-or-builtin args)
 # forces evaluation (is this a good way to do it?)
 defBuiltin "call":
   if args.len < 1:
     return E_ARGS.md("call takes one or more argument (lambda then arguments)")
 
-  let lamb = args[0]
-  checkType(lamb, dList)
-  var lambl = lamb.listVal
-  if lambl.len != 3:
-    return E_ARGS.md("call: invalid lambda")
+  let execd = args[0]
+  if execd.isType(dSym):
+    let stmt = (@[execd] & args[1 .. -1]).md
 
-  lambl = lambl & args[1 .. -1]
+    return evalD(stmt)
+  elif execd.isType(dList):
+    var lambl = execd.listVal
+    if lambl.len != 3:
+      return E_ARGS.md("call: invalid lambda")
 
-  return evalD(lambl.md)
+    lambl = lambl & args[1 .. -1]
+
+    return evalD(lambl.md)
+  else:
+    return E_ARGS.md("call's first argument must be a builtin symbol or a lambda")
+
+
