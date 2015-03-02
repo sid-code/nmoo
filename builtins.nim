@@ -374,3 +374,40 @@ defBuiltin "map":
     newList.add(singleResult)
 
   return newList.md
+
+template defArithmeticOperator(name: string, op: proc(x: float, y: float): float) {.immediate.} =
+  defBuiltin name:
+    if args.len != 2:
+      return E_ARGS.md("$1 takes 2 arguments" % name)
+
+    var lhsd = evalD(args[0])
+    checkForError(lhsd)
+    var rhsd = evalD(args[1])
+    checkForError(rhsd)
+
+    var
+      lhs: float
+      rhs: float
+
+    if lhsd.isType(dInt):
+      lhs = lhsd.intVal.float
+    elif lhsd.isType(dFloat):
+      lhs = lhsd.floatVal
+    else:
+      return E_ARGS.md("invalid number " & $lhsd)
+    if rhsd.isType(dInt):
+      rhs = rhsd.intVal.float
+    elif rhsd.isType(dFloat):
+      rhs = rhsd.floatVal
+    else:
+      return E_ARGS.md("invalid number " & $rhsd)
+
+    if lhsd.isType(dInt) and rhsd.isType(dInt):
+      return op(lhs, rhs).int.md
+    else:
+      return op(lhs, rhs).md
+
+defArithmeticOperator("+", `+`)
+defArithmeticOperator("-", `-`)
+defArithmeticOperator("*", `*`)
+defArithmeticOperator("/", `/`)
