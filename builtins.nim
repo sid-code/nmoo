@@ -70,6 +70,14 @@ template canWrite(obj: MObject, what: MVerb) =
   if not obj.canWrite(what):
     return E_PERM.md(obj.toObjStr() & " cannot write verb: " & what.names)
 
+proc genCall(fun: MData, args: seq[MData]): MData =
+  var resList: seq[MData]
+  if fun.isType(dSym):
+    resList = @[fun]
+  else:
+    resList = @["call".mds, fun]
+
+  return (resList & args).md
 
 defBuiltin "echo":
   var newArgs: seq[MData] = @[]
@@ -351,7 +359,7 @@ defBuiltin "call":
   else:
     return E_ARGS.md("call's first argument must be a builtin symbol or a lambda")
 
-# (map list stmt)
+# (map list func)
 # this builtin lets (call) validate the "function" passed
 defBuiltin "map":
   if args.len != 2:
@@ -366,11 +374,7 @@ defBuiltin "map":
   var newList: seq[MData] = @[]
 
   for el in list:
-    var singleResult: MData
-    if lamb.isType(dSym):
-      singleResult = evalD(@[lamb, el].md)
-    else:
-      singleResult = evalD(@["call".mds, lamb, el].md)
+    var singleResult: MData = evalD(genCall(lamb, @[el]))
     newList.add(singleResult)
 
   return newList.md
