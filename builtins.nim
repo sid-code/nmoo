@@ -379,6 +379,25 @@ defBuiltin "map":
 
   return newList.md
 
+#(reduce start list func)
+defBuiltin "reduce":
+  if args.len != 3:
+    return E_ARGS.md("reduce takes 3 arguments")
+
+  let
+    start = args[0]
+    listd = args[1]
+    lamb = args[2]
+
+  checkType(listd, dList)
+  let list = listD.listVal
+
+  var res: MData = start
+  for el in list:
+    res = evalD(genCall(lamb, @[res, el]))
+
+  return res
+
 template defArithmeticOperator(name: string, op: proc(x: float, y: float): float) {.immediate.} =
   defBuiltin name:
     if args.len != 2:
