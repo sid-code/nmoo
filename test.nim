@@ -307,6 +307,9 @@ suite "evaluator":
     check result.isType(dList)
     check result.listVal.len == 4
 
+    result = evalS("(map (1 2 3 4) (lambda (x) (do x)))")
+    check result.isType(dList)
+    check result.listVal.len == 4
   test "arithmetic works":
     var result = evalS("(+ 3 4)")
     check result.isType(dInt)
