@@ -140,6 +140,30 @@ proc `$`*(x: MData): string {.inline.} =
     of dObj: "#" & $x.objVal
     of dNil: "nil"
 
+proc `==`*(x: MData, y: MData): bool =
+  if x.dtype == y.dtype:
+    case x.dtype:
+      of dInt: return x.intVal == y.intVal
+      of dFloat: return x.floatVal == y.floatVal
+      of dStr: return x.strVal == y.strVal
+      of dSym: return x.symVal == y.symVal
+      of dErr: return x.errVal == y.errVal
+      of dList:
+        let
+          xl = x.listVal
+          yl = y.listVal
+        if xl.len != yl.len:
+          return false
+        else:
+          for idx, el in xl:
+            if yl[idx] != el:
+              return false
+          return true
+      of dObj: return x.objVal == y.objVal
+      of dNil: return true
+  else:
+    return false
+
 proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
   return datum.dtype == dtype
 
