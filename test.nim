@@ -290,3 +290,34 @@ suite "evaluator":
     var result = evalS("(map (1 2 3 4) do)")
     check result.isType(dList)
     check result.listVal.len == 4
+
+  test "arithmetic works":
+    var result = evalS("(+ 3 4)")
+    check result.isType(dInt)
+    check result.intVal == 7
+
+    result = evalS("(+ 3.0 4)")
+    check result.isType(dFloat)
+    check result.floatVal == 7.0
+
+    result = evalS("(- 4 2)")
+    check result.isType(dInt)
+    check result.intVal == 2
+
+    result = evalS("(* 4 2)")
+    check result.isType(dInt)
+    check result.intVal == 8
+
+    result = evalS("(/ 4 2)")
+    check result.isType(dInt)
+    check result.intVal == 2
+    result = evalS("(/ 4 3)")
+    check result.isType(dInt)
+    check result.intVal == 1
+    result = evalS("(/ 3 4.0)")
+    check result.isType(dFloat)
+    check result.floatVal == 0.75
+
+    result = evalS("(+ 3 (- 2 1))")
+    check result.isType(dInt)
+    check result.intVal == 4
