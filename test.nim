@@ -7,6 +7,22 @@ import
 
 import querying
 
+test "== operator works for MData":
+  var
+    x = 2.md
+    y = 2.md
+
+  check x == y
+
+  x = @[1.md, "two".md, "three".mds].md
+  y = @[1.md, "two".md, "three".mds].md
+
+  check x == y
+
+  x = @[2.md, "two".md, "three".mds].md
+
+  check x != y
+
 suite "object tests":
   setup:
     var world = createWorld()
