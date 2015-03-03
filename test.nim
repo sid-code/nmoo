@@ -226,6 +226,15 @@ suite "evaluator":
     check prop != nil
     check prop.owner == worthy
 
+  test "props statement works":
+    var result = evalS("(props #1)", worthy)
+    check ($result == "@[\"name\"]")
+
+  test "props checks permissions":
+    root.pubRead = false
+    var result = evalS("(props #1)", unworthy)
+    check result.isType(dErr)
+
   test "try statement works":
     var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")
     check result.isType(dInt)
