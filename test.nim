@@ -138,6 +138,14 @@ suite "evaluator":
     var world = createWorld()
     var root = blankObject()
     world.add(root)
+
+    var worthy = blankObject()
+    world.add(worthy)
+
+    var unworthy = blankObject()
+    world.add(unworthy)
+    unworthy.level = 3
+
     root.setPropR("name", "root")
 
     proc evalS(code: string, who: MObject = root): MData =
@@ -200,9 +208,6 @@ suite "evaluator":
     check result.strVal == "val"
 
   test "setprop checks permissions":
-    var unworthy = blankObject()
-    world.add(unworthy)
-    unworthy.level = 3
     let result = evalS("""
     (setprop #1 "newprop" "oops")
     """, unworthy)
@@ -211,8 +216,6 @@ suite "evaluator":
     check result.errVal == E_PERM
 
   test "setprop sets owner of new properties correctly":
-    var worthy = blankObject()
-    world.add(worthy)
     # note: the level defaults to zero so we don't have to change it
     var result = evalS("""
     (setprop #1 "newprop" "newval")
