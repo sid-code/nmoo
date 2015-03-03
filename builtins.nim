@@ -213,6 +213,25 @@ defBuiltin "setprop":
 
   return newVal
 
+# (props obj)
+# returns a list of obj's properties
+defBuiltin "props":
+  if args.len != 1:
+    return E_ARGS.md("props takes 1 argument")
+
+  let objd = args[0]
+  var obj: MObject
+  checkType(objd, dObj)
+  extractObject(obj, objd)
+
+  checkRead(caller, obj)
+
+  var res: seq[MData] = @[]
+  for p in obj.props:
+    res.add(p.name.md)
+
+  return res.md
+
 # (move what dest)
 defBuiltin "move":
   if args.len != 2:
