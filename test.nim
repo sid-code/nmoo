@@ -1,5 +1,5 @@
 import
-  unittest,
+  unittest, tables,
   types, objects,
   verbs,
   scripting,
@@ -148,12 +148,13 @@ suite "evaluator":
 
     root.setPropR("name", "root")
 
+    var symtable = initSymbolTable()
     proc evalS(code: string, who: MObject = root): MData =
       var parser = newParser(code)
       let
         parsed = parser.parseList()
 
-      return eval(parsed, world, who, who)
+      return eval(parsed, world, who, who, symtable)
 
   test "let statement binds symbols locally":
     let result = evalS("""
@@ -262,15 +263,19 @@ suite "evaluator":
 
     genericContainer.changeParent(genericThing)
 
+    symtable["gencont"] = genericContainer.md
+    symtable["nowhere"] = nowhere.md
+    symtable["genthing"] = genericThing.md
+
     # move actually moves objects
-    var result = evalS("(move #2 #3)")
+    var result = evalS("(move gencont nowhere)")
     check genericContainer.getLocation() == nowhere
     let (has, contents) = nowhere.getContents()
     check has
     check genericContainer in contents
 
     # move removes objects from previous location
-    result = evalS("(move #4 #2)")
+    result = evalS("(move genthing gencont)")
     let (has2, contents2) = nowhere.getContents()
     check has2
     check contents2.len == 1
@@ -279,7 +284,7 @@ suite "evaluator":
     check genericThing.getLocation() == genericContainer
 
     # recursive move
-    result = evalS("(move #2 #2)")
+    result = evalS("(move gencont gencont)")
     check result.isType(dErr)
     check result.errVal == E_RECMOVE
 
