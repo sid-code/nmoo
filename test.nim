@@ -187,11 +187,10 @@ suite "evaluator":
     check result.isType(dStr)
     check result.strVal == "root"
 
-    result = evalS("""
-    (getprop #1 "nonexistant")
-    """)
-
-    check result.isType(dNil)
+  test "getprop raises error if property not found":
+    var result = evalS("""(getprop #1 "doodoo")""")
+    check result.isType(dErr)
+    check result.errVal == E_PROPNF
 
   test "setprop statement works":
     var result = evalS("""
