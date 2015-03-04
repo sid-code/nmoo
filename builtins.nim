@@ -171,14 +171,14 @@ defBuiltin "getprop":
   checkType(propd, dStr)
   let
     prop = propd.strVal
-    propO = obj.getProp(prop)
+    propObj = obj.getProp(prop)
 
-  if propO == nil:
+  if propObj == nil:
     return E_PROPNF.md("property $1 not found on $2" % [prop, $obj.toObjStr()])
 
-  owner.checkRead(propO)
+  owner.checkRead(propObj)
 
-  return propO.val
+  return propObj.val
 
 # (setprop what propname newprop)
 defBuiltin "setprop":
@@ -201,15 +201,15 @@ defBuiltin "setprop":
 
   if oldProp == nil:
     owner.checkWrite(obj)
-    var propO = obj.setProp(prop, newVal)
+    var propObj = obj.setProp(prop, newVal)
 
     # If the property didn't exist before, we want its owner to be us,
     # not the object that it belongs to.
-    propO.owner = owner
+    propObj.owner = owner
   else:
-    var propO = obj.getProp(prop)
-    owner.checkWrite(propO)
-    propO.val = newVal
+    var propObj = obj.getProp(prop)
+    owner.checkWrite(propObj)
+    propObj.val = newVal
 
   return newVal
 
