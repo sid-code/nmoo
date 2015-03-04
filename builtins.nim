@@ -262,6 +262,64 @@ defBuiltin "getpropinfo":
 
   return extractInfo(propObj)
 
+# (setpropinfo what propname newinfo)
+# newinfo is like result from getpropinfo but can
+# optionally have a third element specifying a new
+# name for the property
+
+defBuiltin "setpropinfo":
+  if not args.len == 3:
+    return E_ARGS.md("setpropinfo takes exactly 3 arguments")
+
+  let objd = args[0]
+  checkType(objd, dObj)
+  var obj: MObject
+  extractObject(obj, objd)
+
+  let propd = args[1]
+  checkType(propd, dStr)
+  let
+    prop = propd.strVal
+    propObj = obj.getProp(prop)
+
+  if propObj == nil:
+    return E_PROPNF.md("property $1 not found on $2" % [prop, $obj.toObjStr()])
+
+  checkWrite(owner, propObj)
+
+  # validate the property info
+  let propinfod = args[2]
+  checkType(propinfod, dList)
+  let propinfo = propinfod.listVal
+  if not (propinfo.len == 2 or propinfo.len == 3):
+    return E_ARGS.md("setpropinfo: supplied property info is not of length 2 or 3")
+
+  let newOwnerd = evalD(propinfo[0])
+  checkForError(newOwnerd)
+  checkType(newOwnerd, dObj)
+  var newOwner: MObject
+  extractObject(newOwner, newOwnerd)
+  let newPermsd = evalD(propinfo[1])
+  checkForError(newPermsd)
+  checkType(newPermsd, dStr)
+  let newPerms = newPermsd.strVal
+
+
+  if propinfo.len == 3: # we're changing names
+    let newNamed = evalD(propinfo[2])
+    checkForError(newNamed)
+    checkType(newNamed, dStr)
+    let newName = newNamed.strVal
+
+    propObj.name = newName
+
+  propObj.owner = newOwner
+  propObj.pubRead = "r" in newPerms
+  propObj.pubWrite = "w" in newPerms
+  propObj.ownerIsParent = "c" in newPerms
+
+  return objd
+
 
 # (props obj)
 # returns a list of obj's properties
