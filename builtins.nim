@@ -258,6 +258,8 @@ defBuiltin "getpropinfo":
   if propObj == nil:
     return E_PROPNF.md("property $1 not found on $2" % [prop, $obj.toObjStr()])
 
+  checkRead(owner, propObj)
+
   return extractInfo(propObj)
 
 
