@@ -213,6 +213,54 @@ defBuiltin "setprop":
 
   return newVal
 
+proc extractInfo(prop: MProperty): MData =
+  var result: seq[MData] = @[]
+  result.add(prop.owner.md)
+
+  var perms = ""
+  if prop.pubRead: perms &= "r"
+  if prop.pubWrite: perms &= "w"
+  if prop.ownerIsParent: perms &= "c"
+
+  result.add(perms.md)
+  return result.md
+
+proc extractInfo(verb: MVerb): MData =
+  var result: seq[MData] = @[]
+  result.add(verb.names.md)
+
+  var perms = ""
+  if verb.pubRead: perms &= "r"
+  if verb.pubWrite: perms &= "w"
+  if verb.pubExec: perms &= "x"
+
+  result.add(perms.md)
+  return result.md
+
+# (getpropinfo what propname)
+# result is (owner perms)
+# perms is [rwc]
+defBuiltin "getpropinfo":
+  if not args.len == 2:
+    return E_ARGS.md("getpropinfo takes exactly 2 arguments")
+
+  let objd = args[0]
+  checkType(objd, dObj)
+  var obj: MObject
+  extractObject(obj, objd)
+
+  let propd = args[1]
+  checkType(propd, dStr)
+  let
+    prop = propd.strVal
+    propObj = obj.getProp(prop)
+
+  if propObj == nil:
+    return E_PROPNF.md("property $1 not found on $2" % [prop, $obj.toObjStr()])
+
+  return extractInfo(propObj)
+
+
 # (props obj)
 # returns a list of obj's properties
 defBuiltin "props":
