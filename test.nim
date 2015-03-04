@@ -235,6 +235,20 @@ suite "evaluator":
     check prop != nil
     check prop.owner == worthy
 
+  test "setpropinfo works":
+    var result = evalS("""(setpropinfo #1 "name" (#1 "rw" "name1"))""")
+    let prop = root.getProp("name1")
+    check prop != nil
+    check prop.name == "name1"
+    check prop.pubWrite
+    check prop.pubRead
+    check (not prop.ownerIsParent)
+
+  test "setpropinfo checks permissions":
+    var result = evalS("""(setpropinfo #1 "name" (#1 "rw" "name1"))""", unworthy)
+    check result.isType(dErr)
+    check result.errVal == E_PERM
+
   test "props statement works":
     var result = evalS("(props #1)", worthy)
     check ($result == "@[\"name\"]")
