@@ -89,7 +89,8 @@ type
     E_PERM,
     E_NACC,
     E_RECMOVE,
-    E_FMOVE
+    E_FMOVE,
+    E_PROPNF
 
   SymbolTable* = Table[string, MData]
   BuiltinProc* = proc(args: var seq[MData], world: var World,
