@@ -192,6 +192,15 @@ suite "evaluator":
     check result.isType(dErr)
     check result.errVal == E_PROPNF
 
+  test "getpropinfo works":
+    var result = evalS("""(getpropinfo #1 "name")""")
+    check result.isType(dList)
+    var rl = result.listVal
+    check rl.len == 2
+    check rl[0].isType(dObj)
+    check rl[0] == root.md
+    check rl[1].isType(dStr)
+
   test "setprop statement works":
     var result = evalS("""
     (setprop #1 "newprop" "val")
