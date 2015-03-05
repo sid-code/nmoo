@@ -113,6 +113,12 @@ iterator matchingVerbs(obj: MObject, name: string): MVerb =
     if v.matchesName(name):
       yield v
 
+proc getVerb*(obj: MObject, name: string): MVerb =
+  for v in matchingVerbs(obj, name):
+    return v
+
+  return nil
+
 iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] =
   var searchSpace = obj.getVicinity()
 
