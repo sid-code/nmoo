@@ -258,6 +258,23 @@ suite "evaluator":
     var result = evalS("(props #1)", unworthy)
     check result.isType(dErr)
 
+  test "verbs statement works":
+    var verb = newVerb(
+      names = "verb name",
+      owner = root,
+      doSpec = oNone,
+      prepSpec = pNone,
+      ioSpec = oNone
+    )
+    root.verbs.add(verb)
+    var result = evalS("(verbs #1)", worthy)
+    check ($result == "@[\"verb name\"]")
+
+  test "verbs checks permissions":
+    root.pubRead = false
+    var result = evalS("(verbs #1)", unworthy)
+    check result.isType(dErr)
+
   test "try statement works":
     var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")
     check result.isType(dInt)
