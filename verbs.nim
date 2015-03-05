@@ -108,9 +108,9 @@ proc matchesName(verb: MVerb, str: string): bool =
 
   return false
 
-iterator matchingVerbs(obj, vobj: MObject, name: string): MVerb =
-  for v in vobj.verbs:
-    if v.matchesName(name) and obj.canExecute(v):
+iterator matchingVerbs(obj: MObject, name: string): MVerb =
+  for v in obj.verbs:
+    if v.matchesName(name):
       yield v
 
 iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] =
@@ -121,8 +121,9 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
   searchSpace.add(world.getVerbObj())
 
   for o in searchSpace:
-    for v in matchingVerbs(obj, o, name):
-      yield (o, v)
+    for v in matchingVerbs(o, name):
+      if obj.canExecute(v):
+        yield (o, v)
 
 proc verbCall*(owner: MObject, name: string, caller: MObject, args: seq[MData]): MData =
   var
@@ -135,8 +136,9 @@ proc verbCall*(owner: MObject, name: string, caller: MObject, args: seq[MData]):
   symtable["caller"] = caller.md
   symtable["args"] = args.md
 
-  for v in matchingVerbs(caller, owner, name):
-    return v.call(world, caller, symtable)
+  for v in matchingVerbs(owner, name):
+    if caller.canExecute(v):
+      return v.call(world, caller, symtable)
 
   return nilD
 
