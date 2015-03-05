@@ -340,6 +340,25 @@ defBuiltin "props":
 
   return res.md
 
+# (verbs obj)
+# returns a list of obj's verbs' names
+defBuiltin "verbs":
+  if args.len != 1:
+    return E_ARGS.md("verbs takes 1 argument")
+
+  let objd = args[0]
+  var obj: MObject
+  checkType(objd, dObj)
+  extractObject(obj, objd)
+
+  checkRead(caller, obj)
+
+  var res: seq[MData] = @[]
+  for v in obj.verbs:
+    res.add(v.names.md)
+
+  return res.md
+
 # (move what dest)
 defBuiltin "move":
   if args.len != 2:
