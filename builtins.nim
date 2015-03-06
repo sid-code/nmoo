@@ -237,6 +237,68 @@ proc extractInfo(verb: MVerb): MData =
   result.add(perms.md)
   return result.md
 
+type
+  PropInfo = tuple[owner: MObject, perms: string, newName: string]
+  VerbInfo = tuple[owner: MObject, perms: string, newName: string]
+  VerbArgsInfo = tuple[dsp: ObjSpec, psp: PrepType, isp: ObjSpec]
+
+template propInfoFromInput(info: seq[MData]): PropInfo =
+  if info.len != 2 and info.len != 3:
+    return E_ARGS.md("property info must be a list of size 2 or 3")
+
+  var result: PropInfo
+
+  let ownerd = evalD(info[0])
+  checkForError(ownerd)
+  checkType(ownerd, dObj)
+  var ownero: MObject
+  extractObject(ownero, ownerd)
+  result.owner = ownero
+
+  let permsd = evalD(info[1])
+  checkForError(permsd)
+  checkType(permsd, dStr)
+  let perms = permsd.strVal
+  result.perms = perms
+
+  if info.len == 3:
+    let newNamed = evalD(info[2])
+    checkForError(newNamed)
+    checkType(newNamed, dStr)
+    let newName = newNamed.strVal
+    result.newName = newName
+
+  result
+
+template verbInfoFromInput(info: seq[MData]): VerbInfo =
+  if info.len != 2 and info.len != 3:
+    return E_ARGS.md("verb info must be a list of size 2 or 3")
+
+  var result: VerbInfo
+
+  let ownerd = evalD(info[0])
+  checkForError(ownerd)
+  checkType(ownerd, dObj)
+  var ownero: MObject
+  extractObject(ownero, ownerd)
+  result.owner = ownero
+
+  let permsd = evalD(info[1])
+  checkForError(permsd)
+  checkType(permsd, dStr)
+  let perms = permsd.strVal
+  result.perms = perms
+
+  if info.len == 3:
+    let newNamed = evalD(info[2])
+    checkForError(newNamed)
+    checkType(newNamed, dStr)
+    let newName = newNamed.strVal
+    result.newName = newName
+
+  result
+
+
 # (getpropinfo what propname)
 # result is (owner perms)
 # perms is [rwc]
