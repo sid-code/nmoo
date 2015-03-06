@@ -352,33 +352,15 @@ defBuiltin "setpropinfo":
   # validate the property info
   let propinfod = args[2]
   checkType(propinfod, dList)
-  let propinfo = propinfod.listVal
-  if propinfo.len != 2 and propinfo.len != 3:
-    return E_ARGS.md("setpropinfo: supplied property info is not of length 2 or 3")
-
-  let newOwnerd = evalD(propinfo[0])
-  checkForError(newOwnerd)
-  checkType(newOwnerd, dObj)
-  var newOwner: MObject
-  extractObject(newOwner, newOwnerd)
-  let newPermsd = evalD(propinfo[1])
-  checkForError(newPermsd)
-  checkType(newPermsd, dStr)
-  let newPerms = newPermsd.strVal
-
-
-  if propinfo.len == 3: # we're changing names
-    let newNamed = evalD(propinfo[2])
-    checkForError(newNamed)
-    checkType(newNamed, dStr)
-    let newName = newNamed.strVal
-
-    propObj.name = newName
-
+  let
+    propinfo = propinfod.listVal
+    (newOwner, newPerms, newName) = propInfoFromInput(propinfo)
   propObj.owner = newOwner
   propObj.pubRead = "r" in newPerms
   propObj.pubWrite = "w" in newPerms
   propObj.ownerIsParent = "c" in newPerms
+  if newName != nil:
+    propObj.name = newName
 
   return objd
 
