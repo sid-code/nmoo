@@ -291,7 +291,7 @@ defBuiltin "setpropinfo":
   let propinfod = args[2]
   checkType(propinfod, dList)
   let propinfo = propinfod.listVal
-  if not (propinfo.len == 2 or propinfo.len == 3):
+  if propinfo.len != 2 and propinfo.len != 3:
     return E_ARGS.md("setpropinfo: supplied property info is not of length 2 or 3")
 
   let newOwnerd = evalD(propinfo[0])
