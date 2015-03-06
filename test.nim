@@ -237,6 +237,8 @@ suite "evaluator":
 
   test "setpropinfo works":
     var result = evalS("""(setpropinfo #1 "name" (#1 "rw" "name1"))""")
+    check result.isType(dObj)
+    check result.objVal.int == 1
     let prop = root.getProp("name1")
     check prop != nil
     check prop.name == "name1"
