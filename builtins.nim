@@ -158,61 +158,6 @@ defBuiltin "cond":
 
   return E_BADCOND.md
 
-# (getprop what propname)
-defBuiltin "getprop":
-  if not args.len == 2:
-    return E_ARGS.md("getprop takes exactly 2 arguments")
-
-  let objd = evalD(args[0])
-  checkForError(objd)
-  let obj = extractObject(objd)
-
-  let propd = args[1]
-  checkType(propd, dStr)
-  let
-    prop = propd.strVal
-    propObj = obj.getProp(prop)
-
-  if propObj == nil:
-    return E_PROPNF.md("property $1 not found on $2" % [prop, $obj.toObjStr()])
-
-  checkRead(owner, propObj)
-
-  return propObj.val
-
-# (setprop what propname newprop)
-defBuiltin "setprop":
-  if not args.len == 3:
-    return E_ARGS.md("setprop takes exactly 3 arguments")
-
-  let objd = evalD(args[0])
-  checkForError(objd)
-  let obj = extractObject(objd)
-
-  let
-    propd = evalD(args[1])
-    newVal = args[2]
-
-  checkForError(propd)
-  checkType(propd, dStr)
-  let
-    prop = propd.strVal
-    oldProp = obj.getProp(prop)
-
-  if oldProp == nil:
-    owner.checkWrite(obj)
-    var propObj = obj.setProp(prop, newVal)
-
-    # If the property didn't exist before, we want its owner to be us,
-    # not the object that it belongs to.
-    propObj.owner = owner
-  else:
-    var propObj = obj.getProp(prop)
-    owner.checkWrite(propObj)
-    propObj.val = newVal
-
-  return newVal
-
 proc extractInfo(prop: MProperty): MData =
   var result: seq[MData] = @[]
   result.add(prop.owner.md)
@@ -346,6 +291,50 @@ template getVerbOn(objd, verbdescd: MData): MVerb =
 
   verb
 
+# (getprop what propname)
+defBuiltin "getprop":
+  if not args.len == 2:
+    return E_ARGS.md("getprop takes exactly 2 arguments")
+
+  let propObj = getPropOn(args[0], args[1])
+
+  checkRead(owner, propObj)
+
+  return propObj.val
+
+# (setprop what propname newprop)
+defBuiltin "setprop":
+  if not args.len == 3:
+    return E_ARGS.md("setprop takes exactly 3 arguments")
+
+  let objd = evalD(args[0])
+  checkForError(objd)
+  let obj = extractObject(objd)
+
+  let
+    propd = evalD(args[1])
+    newVal = args[2]
+
+  checkForError(propd)
+  checkType(propd, dStr)
+  let
+    prop = propd.strVal
+    oldProp = obj.getProp(prop)
+
+  if oldProp == nil:
+    owner.checkWrite(obj)
+    var propObj = obj.setProp(prop, newVal)
+
+    # If the property didn't exist before, we want its owner to be us,
+    # not the object that it belongs to.
+    propObj.owner = owner
+  else:
+    var propObj = obj.getProp(prop)
+    owner.checkWrite(propObj)
+    propObj.val = newVal
+
+  return newVal
+
 # (getpropinfo what propname)
 # result is (owner perms)
 # perms is [rwc]
@@ -353,22 +342,12 @@ defBuiltin "getpropinfo":
   if not args.len == 2:
     return E_ARGS.md("getpropinfo takes exactly 2 arguments")
 
-  let objd = evalD(args[0])
-  checkForError(objd)
-  let obj = extractObject(objd)
-
-  let propd = evalD(args[1])
-  checkForError(propd)
-  let
-    prop = propd.strVal
-    propObj = obj.getProp(prop)
-
-  if propObj == nil:
-    return E_PROPNF.md("property $1 not found on $2" % [prop, $obj.toObjStr()])
+  let propObj = getPropOn(args[0], args[1])
 
   checkRead(owner, propObj)
 
   return extractInfo(propObj)
+
 
 # (setpropinfo what propname newinfo)
 # newinfo is like result from getpropinfo but can
