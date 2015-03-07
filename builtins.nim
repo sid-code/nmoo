@@ -313,6 +313,38 @@ proc setInfo(verb: MVerb, info: VerbInfo) =
   if info.newName != nil:
     verb.names = info.newName
 
+template getPropOn(objd, propd: MData): MProperty =
+  let objd2 = evalD(objd)
+  checkForError(objd2)
+  let obj = extractObject(objd2)
+
+  let propd2 = evalD(propd)
+  checkForError(propd)
+  checkType(propd2, dStr)
+  let
+    propName = propd.strVal
+    propObj = obj.getProp(propName)
+
+  if propObj == nil:
+    return E_PROPNF.md("property $1 not found on $2" % [propName, $obj.toObjStr()])
+
+  propObj
+
+template getVerbOn(objd, verbdescd: MData): MVerb =
+  let objd2 = evalD(objd)
+  checkForError(objd2)
+  let obj = extractObject(objd2)
+
+  let verbdescd2 = evalD(verbdescd)
+  checkForError(verbdescd2)
+  checkType(verbdescd2, dStr)
+  let verbdesc = verbdescd2.strVal
+
+  let verb = obj.getVerb(verbdesc)
+  if verb == nil:
+    return E_VERBNF.md("verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
+
+  verb
 
 # (getpropinfo what propname)
 # result is (owner perms)
@@ -347,19 +379,7 @@ defBuiltin "setpropinfo":
   if not args.len == 3:
     return E_ARGS.md("setpropinfo takes exactly 3 arguments")
 
-  let objd = evalD(args[0])
-  checkForError(objd)
-  let obj = extractObject(objd)
-
-  let propd = evalD(args[1])
-  checkForError(args[1])
-  checkType(propd, dStr)
-  let
-    prop = propd.strVal
-    propObj = obj.getProp(prop)
-
-  if propObj == nil:
-    return E_PROPNF.md("property $1 not found on $2" % [prop, $obj.toObjStr()])
+  let propObj = getPropOn(args[0], args[1])
 
   checkWrite(owner, propObj)
 
