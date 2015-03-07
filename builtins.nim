@@ -368,16 +368,11 @@ defBuiltin "setpropinfo":
   checkType(propinfod, dList)
   let
     propinfo = propinfod.listVal
-    (newOwner, newPerms, newName) = propInfoFromInput(propinfo)
-  propObj.owner = newOwner
-  propObj.pubRead = "r" in newPerms
-  propObj.pubWrite = "w" in newPerms
-  propObj.ownerIsParent = "c" in newPerms
-  if newName != nil:
-    propObj.name = newName
+    info = propInfoFromInput(propinfo)
 
-  return objd
+  propObj.setInfo(info)
 
+  return args[0]
 
 # (props obj)
 # returns a list of obj's properties
