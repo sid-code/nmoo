@@ -169,6 +169,12 @@ proc `==`*(x: MData, y: MData): bool =
 proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
   return datum.dtype == dtype
 
+proc toEchoString*(x: MData): string =
+  if x.isType(dStr):
+    x.strVal
+  else:
+    $x
+
 proc truthy*(datum: MData): bool =
   return not (datum.isType(dInt) and datum.intVal == 0 or datum.isType(dFloat) and datum.floatVal == 0)
 
