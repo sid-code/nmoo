@@ -183,12 +183,15 @@ proc handleCommand*(obj: MObject, command: string): MData =
         symtable["dobj"] = doQuery[0].md
       elif v.doSpec == oStr:
         discard
+      elif v.doSpec == oThis:
+        if doQuery[0] != o:
+          continue
+        else:
+          symtable["dobj"] = o.md
       else:
         continue
     else:
-      if v.doSpec == oThis:
-        symtable["dobj"] = o.md
-      elif v.doSpec == oNone:
+      if v.doSpec == oNone:
         discard
       else:
         continue
@@ -198,12 +201,15 @@ proc handleCommand*(obj: MObject, command: string): MData =
         symtable["iobj"] = ioQuery[0].md
       elif v.ioSpec == oStr:
         discard
+      elif v.ioSpec == oThis:
+        if ioQuery[0] != o:
+          continue
+        else:
+          symtable["iobj"] = o.md
       else:
         continue
     else:
-      if v.ioSpec == oThis:
-        symtable["iobj"] = o.md
-      elif v.ioSpec == oNone:
+      if v.ioSpec == oNone:
         discard
       else:
         continue

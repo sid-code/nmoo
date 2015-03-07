@@ -89,15 +89,15 @@ suite "object tests":
     var verb = newVerb(
       names = "action",
       owner = root,
-      prepSpec = pNone,
-      doSpec = oNone,
-      ioSpec = oNone,
+      doSpec = oThis,
+      prepSpec = pOn,
+      ioSpec = oThis,
     )
 
     root.verbs.add(verb)
 
     verb.setCode("(do argstr)")
-    check ($root.handleCommand("action hey") == "@[\"hey\"]")
+    check ($root.handleCommand("action root on root") == "@[\"root on root\"]")
 
   test "verbs call correctly":
     var verb = newVerb(
