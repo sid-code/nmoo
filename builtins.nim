@@ -67,7 +67,7 @@ template checkWrite(obj: MObject, what: MProperty) =
 template checkRead(obj: MObject, what: MVerb) =
   if not obj.canRead(what):
     return E_PERM.md(obj.toObjStr() & " cannot read verb: " & what.names)
-template canWrite(obj: MObject, what: MVerb) =
+template checkWrite(obj: MObject, what: MVerb) =
   if not obj.canWrite(what):
     return E_PERM.md(obj.toObjStr() & " cannot write verb: " & what.names)
 
