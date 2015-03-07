@@ -85,7 +85,7 @@ defBuiltin "echo":
   for arg in args:
     let res = evalD(arg)
     checkForError(res)
-    echo res
+    caller.send(res.toEchoString())
     newArgs.add(res)
   return newArgs.md
 
