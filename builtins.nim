@@ -214,7 +214,7 @@ proc extractInfo(verb: MVerb): MData =
 type
   PropInfo = tuple[owner: MObject, perms: string, newName: string]
   VerbInfo = tuple[owner: MObject, perms: string, newName: string]
-  VerbArgsInfo = tuple[dsp: ObjSpec, psp: PrepType, isp: ObjSpec]
+  VerbArgs = tuple[doSpec: ObjSpec, prepSpec: PrepType, ioSpec: ObjSpec]
 
 template propInfoFromInput(info: seq[MData]): PropInfo =
   if info.len != 2 and info.len != 3:
