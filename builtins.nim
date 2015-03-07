@@ -105,8 +105,11 @@ defBuiltin "eval":
   let argd = evalD(args[0])
   checkForError(argd)
   checkType(argd, dStr)
+  var evalStr = argd.strVal
+  if evalStr[0] != '(':
+    evalStr = '(' & evalStr & ')'
 
-  var parser = newParser(argd.strVal)
+  var parser = newParser(evalStr)
   let parsed = parser.parseList()
   return evalD(parsed, o = caller)
 
