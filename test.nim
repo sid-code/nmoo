@@ -291,6 +291,11 @@ suite "evaluator":
     result = evalS("(getverbinfo #1 \"verb\")")
     check ($result == "@[#1, \"rwx\", \"new ve*rb name\"]")
 
+  test "getverbargs statement works":
+    var result = evalS("(getverbargs #1 \"verb\")")
+    check result.isType(dList)
+    check result.listVal.len == 3
+
   test "try statement works":
     var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")
     check result.isType(dInt)
