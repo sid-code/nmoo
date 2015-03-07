@@ -525,6 +525,23 @@ defBuiltin "getverbargs":
 
   return extractArgs(verb)
 
+# (setverbargs obj verb-desc (objspec prepspec objspec))
+defBuiltin "setverbargs":
+  if args.len != 3:
+    return E_ARGS.md("setverbargs takes 3 arguments")
+
+  let verb = getVerbOn(args[0], args[1])
+  checkWrite(owner, verb)
+
+  let argsInfod = evalD(args[2])
+  checkForError(argsInfod)
+  checkType(argsInfod, dList)
+
+  let argsInfo = verbArgsFromInput(argsInfod.listVal)
+  verb.setArgs(argsInfo)
+
+  return args[0]
+
 # (move what dest)
 defBuiltin "move":
   if args.len != 2:
