@@ -296,6 +296,13 @@ suite "evaluator":
     check result.isType(dList)
     check result.listVal.len == 3
 
+  test "setverbargs statement works":
+    var result = evalS("(setverbargs #1 \"verb\" (\"any\" \"in front of\" \"any\"))")
+    check result.isType(dObj)
+    check verb.doSpec == oAny
+    check verb.prepSpec == pInFront
+    check verb.ioSpec == oAny
+
   test "try statement works":
     var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")
     check result.isType(dInt)
