@@ -158,6 +158,34 @@ defBuiltin "cond":
 
   return E_BADCOND.md
 
+proc objSpecToStr(osp: ObjSpec): string =
+  ($osp).toLower[1 .. -1]
+
+proc strToObjSpec(osps: string): tuple[success: bool, result: ObjSpec] =
+  let realSpec = "o" & osps[0].toUpper & osps[1 .. -1]
+  try:
+    return (true, parseEnum[ObjSpec](realSpec))
+  except:
+    return (false, oNone)
+
+proc prepSpecToStr(psp: PrepType): string =
+  var images: seq[string] = @[]
+  for prep in Prepositions:
+    let (ptype, image) = prep
+    if ptype == psp:
+      images.add(image)
+
+  return images.join("/")
+
+proc strToPrepSpec(psps: string): tuple[success: bool, result: PrepType] =
+  let pspsLower = psps.toLower()
+  for prep in Prepositions:
+    let (ptype, image) = prep
+    if image == pspsLower:
+      return (true, ptype)
+
+  return (false, pNone)
+
 proc extractInfo(prop: MProperty): MData =
   var result: seq[MData] = @[]
   result.add(prop.owner.md)
