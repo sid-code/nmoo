@@ -211,6 +211,14 @@ proc extractInfo(verb: MVerb): MData =
   result.add(verb.names.md)
   return result.md
 
+proc extractArgs(verb: MVerb): MData =
+  var result: seq[MData] = @[]
+  result.add(objSpecToStr(verb.doSpec).md)
+  result.add(prepSpecToStr(verb.prepSpec).md)
+  result.add(objSpecToStr(verb.ioSpec).md)
+
+  return result.md
+
 type
   PropInfo = tuple[owner: MObject, perms: string, newName: string]
   VerbInfo = tuple[owner: MObject, perms: string, newName: string]
@@ -268,6 +276,43 @@ template verbInfoFromInput(info: seq[MData]): VerbInfo =
 
   result
 
+template objSpecFromData(ospd: MData): ObjSpec =
+  let specd = evalD(ospd)
+  checkForError(specd)
+  checkType(specd, dStr)
+  let
+    str = specd.strVal
+    (success, spec) = strToObjSpec(str)
+
+  if not success:
+    return E_ARGS.md("invalid object spec '$1'" % str)
+
+  spec
+
+template prepSpecFromData(pspd: MData): PrepType =
+  let specd = evalD(pspd)
+  checkForError(specd)
+  checkType(specd, dStr)
+  let
+    str = specd.strVal
+    (success, spec) = strToPrepSpec(str)
+
+  if not success:
+    return E_ARGS.md("invalid preposition spec '$1'" % str)
+
+  spec
+
+template verbArgsFromInput(info: seq[MData]): VerbArgs =
+  if info.len != 3:
+    return E_ARGS.md("verb args must be a list of size 3")
+
+  var result: VerbArgs
+  result.doSpec = objSpecFromData(info[0])
+  result.prepSpec = prepSpecFromData(info[1])
+  result.ioSpec = objSpecFromData(info[2])
+
+  result
+
 proc setInfo(prop: MProperty, info: PropInfo) =
   prop.owner = info.owner
   prop.pubRead = "r" in info.perms
@@ -285,6 +330,11 @@ proc setInfo(verb: MVerb, info: VerbInfo) =
 
   if info.newName != nil:
     verb.names = info.newName
+
+proc setArgs(verb: MVerb, args: VerbArgs) =
+  verb.doSpec = args.doSpec
+  verb.prepSpec = args.prepSpec
+  verb.ioSpec = args.ioSpec
 
 template getPropOn(objd, propd: MData): MProperty =
   let objd2 = evalD(objd)
