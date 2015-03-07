@@ -98,6 +98,18 @@ defBuiltin "do":
 
   return newArgs.md
 
+defBuiltin "eval":
+  if args.len != 1:
+    return E_ARGS.md("eval takes one argument")
+
+  let argd = evalD(args[0])
+  checkForError(argd)
+  checkType(argd, dStr)
+
+  var parser = newParser(argd.strVal)
+  let parsed = parser.parseList()
+  return evalD(parsed, o = caller)
+
 defBuiltin "slet": # single let
   if args.len != 2:
     return E_ARGS.md("slet expects two arguments")
