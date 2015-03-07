@@ -14,7 +14,7 @@ type
     prep: Preposition
 
 const
-  Prepositions: seq[Preposition] = @[
+  Prepositions*: seq[Preposition] = @[
     (pWith, "with"),
     (pWith, "using"),
     (pAt, "at"), (pAt, "to"),
