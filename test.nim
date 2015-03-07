@@ -278,6 +278,14 @@ suite "evaluator":
     var result = evalS("(verbs #1)", unworthy)
     check result.isType(dErr)
 
+  test "getverbinfo statement works":
+    var result = evalS("(getverbinfo #1 \"verb\")")
+    check result.isType(dList)
+    check result.listVal.len == 3
+    check result.listVal[0].isType(dObj)
+    check result.listVal[1].isType(dStr)
+    check result.listVal[2].isType(dStr)
+
   test "try statement works":
     var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")
     check result.isType(dInt)
