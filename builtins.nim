@@ -515,6 +515,16 @@ defBuiltin "setverbinfo":
   verb.setInfo(info)
   return args[0]
 
+# (getverbargs obj verb-desc)
+defBuiltin "getverbargs":
+  if args.len != 2:
+    return E_ARGS.md("getverbargs takes 2 arguments")
+
+  let verb = getVerbOn(args[0], args[1])
+  checkRead(owner, verb)
+
+  return extractArgs(verb)
+
 # (move what dest)
 defBuiltin "move":
   if args.len != 2:
