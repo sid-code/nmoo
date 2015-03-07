@@ -150,7 +150,7 @@ suite "evaluator":
       names = "verb name",
       owner = root,
       doSpec = oNone,
-      prepSpec = pNone,
+      prepSpec = pWith,
       ioSpec = oNone
     )
     root.verbs.add(verb)
