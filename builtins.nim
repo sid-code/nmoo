@@ -295,6 +295,24 @@ template verbInfoFromInput(info: seq[MData]): VerbInfo =
 
   result
 
+proc setInfo(prop: MProperty, info: PropInfo) =
+  prop.owner = info.owner
+  prop.pubRead = "r" in info.perms
+  prop.pubWrite = "w" in info.perms
+  prop.ownerIsParent = "c" in info.perms
+
+  if info.newName != nil:
+    prop.name = info.newName
+
+proc setInfo(verb: MVerb, info: VerbInfo) =
+  verb.owner = info.owner
+  verb.pubRead = "r" in info.perms
+  verb.pubWrite = "w" in info.perms
+  verb.pubExec = "x" in info.perms
+
+  if info.newName != nil:
+    verb.names = info.newName
+
 
 # (getpropinfo what propname)
 # result is (owner perms)
