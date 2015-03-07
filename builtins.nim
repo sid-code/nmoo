@@ -227,7 +227,7 @@ proc extractInfo(prop: MProperty): MData =
 
 proc extractInfo(verb: MVerb): MData =
   var result: seq[MData] = @[]
-  result.add(verb.names.md)
+  result.add(verb.owner.md)
 
   var perms = ""
   if verb.pubRead: perms &= "r"
@@ -235,6 +235,7 @@ proc extractInfo(verb: MVerb): MData =
   if verb.pubExec: perms &= "x"
 
   result.add(perms.md)
+  result.add(verb.names.md)
   return result.md
 
 type
