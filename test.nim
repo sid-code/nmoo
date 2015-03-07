@@ -286,6 +286,11 @@ suite "evaluator":
     check result.listVal[1].isType(dStr)
     check result.listVal[2].isType(dStr)
 
+  test "setverbinfo statement works":
+    var result = evalS("(setverbinfo #1 \"verb\" (#1 \"rwx\" \"new ve*rb name\"))")
+    result = evalS("(getverbinfo #1 \"verb\")")
+    check ($result == "@[#1, \"rwx\", \"new ve*rb name\"]")
+
   test "try statement works":
     var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")
     check result.isType(dInt)
