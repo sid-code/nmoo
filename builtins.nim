@@ -404,6 +404,28 @@ defBuiltin "verbs":
 
   return res.md
 
+# (getverbinfo obj verb-desc)
+defBuiltin "getverbinfo":
+  if args.len != 2:
+    return E_ARGS.md("getverbinfo takes 2 arguments")
+
+  let objd = args[0]
+  var obj: MObject
+  checkType(objd, dObj)
+  extractObject(obj, objd)
+
+  let verbdescd = args[1]
+  checkType(verbdescd, dStr)
+  let verbdesc = verbdescd.strVal
+
+  let verb = obj.getVerb(verbdesc)
+  if verb == nil:
+    return E_VERBNF.md("verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
+
+  checkRead(owner, verb)
+
+  return extractInfo(verb)
+
 # (move what dest)
 defBuiltin "move":
   if args.len != 2:
