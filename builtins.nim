@@ -542,6 +542,36 @@ defBuiltin "setverbargs":
 
   return args[0]
 
+# (addverb obj info args)
+defBuiltin "addverb":
+  if args.len != 3:
+    return E_ARGS.md("addverb takes 3 arguments")
+
+  let objd = evalD(args[0])
+  checkForError(objd)
+  let obj = extractObject(objd)
+
+  let infod = evalD(args[1])
+  checkForError(infod)
+  checkType(infod, dList)
+  let info = verbInfoFromInput(infod.listVal)
+
+  let argsd = evalD(args[2])
+  checkForError(argsd)
+  checkType(argsd, dList)
+  let args = verbArgsFromInput(argsd.listVal)
+
+  var verb = newVerb(
+    names = "unnamed verb",
+    owner = nil
+  )
+  verb.setInfo(info)
+  verb.setArgs(args)
+
+  obj.verbs.add(verb)
+
+  return objd
+
 # (move what dest)
 defBuiltin "move":
   if args.len != 2:
