@@ -146,6 +146,15 @@ suite "evaluator":
     world.add(unworthy)
     unworthy.level = 3
 
+    var verb = newVerb(
+      names = "verb name",
+      owner = root,
+      doSpec = oNone,
+      prepSpec = pNone,
+      ioSpec = oNone
+    )
+    root.verbs.add(verb)
+
     root.setPropR("name", "root")
 
     var symtable = initSymbolTable()
@@ -261,14 +270,6 @@ suite "evaluator":
     check result.isType(dErr)
 
   test "verbs statement works":
-    var verb = newVerb(
-      names = "verb name",
-      owner = root,
-      doSpec = oNone,
-      prepSpec = pNone,
-      ioSpec = oNone
-    )
-    root.verbs.add(verb)
     var result = evalS("(verbs #1)", worthy)
     check ($result == "@[\"verb name\"]")
 
