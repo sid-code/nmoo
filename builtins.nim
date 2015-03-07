@@ -410,27 +410,32 @@ defBuiltin "verbs":
 
   return res.md
 
+
 # (getverbinfo obj verb-desc)
 defBuiltin "getverbinfo":
   if args.len != 2:
     return E_ARGS.md("getverbinfo takes 2 arguments")
 
-  let objd = evalD(args[0])
-  checkForError(objd)
-  let obj = extractObject(objd)
-
-  let verbdescd = evalD(args[1])
-  checkForError(verbdescd)
-  checkType(verbdescd, dStr)
-  let verbdesc = verbdescd.strVal
-
-  let verb = obj.getVerb(verbdesc)
-  if verb == nil:
-    return E_VERBNF.md("verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
-
+  let verb = getVerbOn(args[0], args[1])
   checkRead(owner, verb)
 
   return extractInfo(verb)
+
+# (setverbinfo obj verb-desc newinfo)
+defBuiltin "setverbinfo":
+  if args.len != 3:
+    return E_ARGS.md("setverbinfo takes 3 arguments")
+
+  let verb = getVerbOn(args[0], args[1])
+  checkWrite(owner, verb)
+
+  let infod = evalD(args[2])
+  checkForError(infod)
+  checkType(infod, dList)
+  let info = verbInfoFromInput(infod.listVal)
+
+  verb.setInfo(info)
+  return args[0]
 
 # (move what dest)
 defBuiltin "move":
