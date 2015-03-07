@@ -376,7 +376,7 @@ defBuiltin "props":
   checkType(objd, dObj)
   extractObject(obj, objd)
 
-  checkRead(caller, obj)
+  checkRead(owner, obj)
 
   var res: seq[MData] = @[]
   for p in obj.props:
@@ -395,7 +395,7 @@ defBuiltin "verbs":
   checkType(objd, dObj)
   extractObject(obj, objd)
 
-  checkRead(caller, obj)
+  checkRead(owner, obj)
 
   var res: seq[MData] = @[]
   for v in obj.verbs:
