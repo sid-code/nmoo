@@ -32,12 +32,13 @@ template checkType(value: MData, expected: MDataType, ifnot: MError = E_ARGS)
   if not value.isType(expected):
     return ifnot.md("expected argument of type " & $expected & " instead got " & $value.dType)
 
-template extractObject(where: expr, objd: MData) {.immediate.} =
+template extractObject(objd: MData): MObject {.immediate.} =
+  checkType(objd, dObj)
   let obj = world.dataToObj(objd)
   if obj == nil:
     return E_ARGS.md("invalid object " & $objd)
 
-  where = obj
+  obj
 
 template checkOwn(obj, what: MObject) =
   if not obj.owns(what):
@@ -162,10 +163,9 @@ defBuiltin "getprop":
   if not args.len == 2:
     return E_ARGS.md("getprop takes exactly 2 arguments")
 
-  let objd = args[0]
-  checkType(objd, dObj)
-  var obj: MObject
-  extractObject(obj, objd)
+  let objd = evalD(args[0])
+  checkForError(objd)
+  let obj = extractObject(objd)
 
   let propd = args[1]
   checkType(propd, dStr)
@@ -185,15 +185,15 @@ defBuiltin "setprop":
   if not args.len == 3:
     return E_ARGS.md("setprop takes exactly 3 arguments")
 
-  let objd = args[0]
-  checkType(objd, dObj)
-  var obj: MObject
-  extractObject(obj, objd)
-
+  let objd = evalD(args[0])
+  checkForError(objd)
+  let obj = extractObject(objd)
 
   let
-    propd = args[1]
+    propd = evalD(args[1])
     newVal = args[2]
+
+  checkForError(propd)
   checkType(propd, dStr)
   let
     prop = propd.strVal
@@ -251,9 +251,7 @@ template propInfoFromInput(info: seq[MData]): PropInfo =
 
   let ownerd = evalD(info[0])
   checkForError(ownerd)
-  checkType(ownerd, dObj)
-  var ownero: MObject
-  extractObject(ownero, ownerd)
+  let ownero = extractObject(ownerd)
   result.owner = ownero
 
   let permsd = evalD(info[1])
@@ -279,9 +277,7 @@ template verbInfoFromInput(info: seq[MData]): VerbInfo =
 
   let ownerd = evalD(info[0])
   checkForError(ownerd)
-  checkType(ownerd, dObj)
-  var ownero: MObject
-  extractObject(ownero, ownerd)
+  let ownero = extractObject(ownerd)
   result.owner = ownero
 
   let permsd = evalD(info[1])
@@ -307,13 +303,12 @@ defBuiltin "getpropinfo":
   if not args.len == 2:
     return E_ARGS.md("getpropinfo takes exactly 2 arguments")
 
-  let objd = args[0]
-  checkType(objd, dObj)
-  var obj: MObject
-  extractObject(obj, objd)
+  let objd = evalD(args[0])
+  checkForError(objd)
+  let obj = extractObject(objd)
 
-  let propd = args[1]
-  checkType(propd, dStr)
+  let propd = evalD(args[1])
+  checkForError(propd)
   let
     prop = propd.strVal
     propObj = obj.getProp(prop)
@@ -334,12 +329,12 @@ defBuiltin "setpropinfo":
   if not args.len == 3:
     return E_ARGS.md("setpropinfo takes exactly 3 arguments")
 
-  let objd = args[0]
-  checkType(objd, dObj)
-  var obj: MObject
-  extractObject(obj, objd)
+  let objd = evalD(args[0])
+  checkForError(objd)
+  let obj = extractObject(objd)
 
-  let propd = args[1]
+  let propd = evalD(args[1])
+  checkForError(args[1])
   checkType(propd, dStr)
   let
     prop = propd.strVal
@@ -351,7 +346,8 @@ defBuiltin "setpropinfo":
   checkWrite(owner, propObj)
 
   # validate the property info
-  let propinfod = args[2]
+  let propinfod = evalD(args[2])
+  checkForError(propinfod)
   checkType(propinfod, dList)
   let
     propinfo = propinfod.listVal
@@ -372,10 +368,9 @@ defBuiltin "props":
   if args.len != 1:
     return E_ARGS.md("props takes 1 argument")
 
-  let objd = args[0]
-  var obj: MObject
-  checkType(objd, dObj)
-  extractObject(obj, objd)
+  let objd = evalD(args[0])
+  checkForError(objd)
+  let obj = extractObject(objd)
 
   checkRead(owner, obj)
 
@@ -391,10 +386,9 @@ defBuiltin "verbs":
   if args.len != 1:
     return E_ARGS.md("verbs takes 1 argument")
 
-  let objd = args[0]
-  var obj: MObject
-  checkType(objd, dObj)
-  extractObject(obj, objd)
+  let objd = evalD(args[0])
+  checkForError(objd)
+  let obj = extractObject(objd)
 
   checkRead(owner, obj)
 
@@ -409,12 +403,12 @@ defBuiltin "getverbinfo":
   if args.len != 2:
     return E_ARGS.md("getverbinfo takes 2 arguments")
 
-  let objd = args[0]
-  var obj: MObject
-  checkType(objd, dObj)
-  extractObject(obj, objd)
+  let objd = evalD(args[0])
+  checkForError(objd)
+  let obj = extractObject(objd)
 
-  let verbdescd = args[1]
+  let verbdescd = evalD(args[1])
+  checkForError(verbdescd)
   checkType(verbdescd, dStr)
   let verbdesc = verbdescd.strVal
 
@@ -438,13 +432,9 @@ defBuiltin "move":
   checkForError(whatd)
   checkForError(destd)
 
-  checkType(whatd, dObj)
-  var what: MObject
-  extractObject(what, whatd)
-
-  checkType(destd, dObj)
-  var dest: MObject
-  extractObject(dest, destd)
+  var
+    what = extractObject(whatd)
+    dest = extractObject(destd)
 
   checkOwn(owner, what)
 
