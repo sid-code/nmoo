@@ -303,6 +303,13 @@ suite "evaluator":
     check verb.prepSpec == pInFront
     check verb.ioSpec == oAny
 
+  test "addverb statement works":
+    var result = evalS("(addverb #1 (#1 \"rw\" \"cool varb\") (\"none\" \"with\" \"this\"))")
+    result = evalS("(getverbinfo #1 \"cool\")")
+    check ($result == "@[#1, \"rw\", \"cool varb\"]")
+    result = evalS("(getverbargs #1 \"cool\")")
+    check ($result == "@[\"none\", \"with/using\", \"this\"]")
+
   test "try statement works":
     var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")
     check result.isType(dInt)
