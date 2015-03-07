@@ -431,7 +431,6 @@ defBuiltin "getpropinfo":
 # newinfo is like result from getpropinfo but can
 # optionally have a third element specifying a new
 # name for the property
-
 defBuiltin "setpropinfo":
   if not args.len == 3:
     return E_ARGS.md("setpropinfo takes exactly 3 arguments")
