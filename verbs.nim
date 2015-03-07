@@ -193,6 +193,11 @@ proc handleCommand*(obj: MObject, command: string): MData =
     else:
       if v.doSpec == oNone:
         discard
+      elif v.doSpec == oStr:
+        if doString.len == 0:
+          continue
+        else:
+          discard
       else:
         continue
 
@@ -211,6 +216,11 @@ proc handleCommand*(obj: MObject, command: string): MData =
     else:
       if v.ioSpec == oNone:
         discard
+      elif v.ioSpec == oStr:
+        if doString.len == 0:
+          continue
+        else:
+          discard
       else:
         continue
 
