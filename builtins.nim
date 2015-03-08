@@ -647,9 +647,8 @@ defBuiltin "try":
   # here we do manual error handling
   if tryClause.isType(dErr):
     var newSymtable = symtable
-    newSymtable["error"] = tryClause
+    newSymtable["error"] = tryClause.errMsg.md
     let exceptClause = evalD(args[1], st = newSymtable)
-
     checkForError(exceptClause)
     return exceptClause
 
