@@ -127,7 +127,7 @@ proc peek(parser: MParser, distance: int = 0): Token =
   let index = parser.tindex + distance
   if index >= parser.tokens.len:
     raise newException(MParseError, "ran out of tokens unexpectedly")
-  parser.tokens[parser.tindex + distance]
+  parser.tokens[index]
 
 proc consume(parser: var MParser, ttype: TokenType): Token =
   let tok = parser.getToken()
