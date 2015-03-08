@@ -161,9 +161,9 @@ proc handleCommand*(obj: MObject, command: string): MData =
     prep = parsed.prep
     rest = parsed.rest
 
-    doQuery = obj.query(doString)
-    ioQuery = obj.query(ioString)
-    restQuery = obj.query(rest)
+    doQuery = obj.query(doString.toLower())
+    ioQuery = obj.query(ioString.toLower())
+    restQuery = obj.query(rest.toLower())
 
   var
     world = obj.getWorld()
