@@ -184,7 +184,7 @@ proc truthy*(datum: MData): bool =
 
 proc byID*(world: World, id: ObjID): MObject =
   let idint = id.int
-  if idint > world.objects.len:
+  if idint >= world.objects.len:
     return nil
   else:
     return world.objects[id.int]
