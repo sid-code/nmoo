@@ -7,6 +7,8 @@ type
     objects: seq[MObject]
     verbObj*: MObject # object that holds global verbs
 
+  OutputProc = proc(obj: MObject, msg: string)
+
   MObject* = ref object
     id: ObjID
     world: World
@@ -25,7 +27,7 @@ type
     pubRead*: bool
     fertile*: bool
 
-    output*: proc(msg: string)
+    output*: OutputProc
 
   MProperty* = ref object
     name*: string
@@ -188,9 +190,9 @@ proc byID*(world: World, id: ObjID): MObject =
 proc dataToObj*(world: World, objd: MData): MObject =
   world.byID(objd.objVal)
 
-proc makeOutputProc(obj: MObject): proc (m: string) =
-  return proc (m: string) {.closure.} =
-    echo "<#$1>: $2" % [$obj.getID(), m]
+proc defaultOutput(obj: MObject, m: string) =
+  echo "sent to #$1: $2" % [$obj.getID(), m]
+
 
 proc blankObject*: MObject =
   result = MObject(
@@ -205,12 +207,11 @@ proc blankObject*: MObject =
     pubRead: true,
     pubWrite: false,
     fertile: true,
-    output: nil
+    output: defaultOutput
   )
-  result.output = makeOutputProc(result)
 
 proc send*(obj: MObject, msg: string) =
-  obj.output(msg)
+  obj.output(obj, msg)
 
 
 proc newProperty*(
