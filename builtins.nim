@@ -81,12 +81,15 @@ proc genCall(fun: MData, args: seq[MData]): MData =
   return (resList & args).md
 
 defBuiltin "echo":
-  var newArgs: seq[MData] = @[]
+  var
+    newArgs: seq[MData] = @[]
+    sendstr = ""
   for arg in args:
     let res = evalD(arg)
     checkForError(res)
-    caller.send(res.toEchoString())
+    sendstr &= res.toEchoString()
     newArgs.add(res)
+  caller.send(sendstr)
   return newArgs.md
 
 defBuiltin "do":
