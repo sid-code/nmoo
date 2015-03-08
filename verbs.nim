@@ -229,7 +229,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
       if v.ioSpec == oNone:
         discard
       elif v.ioSpec == oStr:
-        if doString.len == 0:
+        if ioString.len == 0:
           continue
         else:
           discard
