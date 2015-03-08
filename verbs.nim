@@ -30,7 +30,9 @@ const
     (pFor, "for"), (pFor, "about"),
     (pIs, "is"),
     (pAs, "as"),
-    (pOff, "off"), (pOff, "off of")
+    (pOff, "off"), (pOff, "off of"),
+
+    (pNone, "none")
   ]
 
 proc newParsedCommand: ParsedCommand =

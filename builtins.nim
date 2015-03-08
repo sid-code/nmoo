@@ -201,8 +201,6 @@ proc prepSpecToStr(psp: PrepType): string =
 
 proc strToPrepSpec(psps: string): tuple[success: bool, result: PrepType] =
   let pspsLower = psps.toLower()
-  if pspsLower == "none":
-    return (true, pNone)
 
   for prep in Prepositions:
     let (ptype, image) = prep
