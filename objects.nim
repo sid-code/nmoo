@@ -107,6 +107,12 @@ proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
 template setPropR*(obj: MObject, name: string, newVal: expr) =
   discard obj.setProp(name, newVal.md)
 
+proc setPropRec*(obj: MObject, name: string, newVal: MData): seq[MProperty] =
+  result = @[]
+  result.add(obj.setProp(name, newVal))
+  for child in obj.children:
+    result.add(child.setPropRec(name, newVal))
+
 proc getLocation*(obj: MObject): MObject =
   let world = obj.getWorld()
   if world == nil: return nil

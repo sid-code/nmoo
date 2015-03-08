@@ -424,11 +424,11 @@ defBuiltin "setprop":
 
   if oldProp == nil:
     owner.checkWrite(obj)
-    var propObj = obj.setProp(prop, newVal)
+    for addedProp in obj.setPropRec(prop, newVal):
+      # If the property didn't exist before, we want its owner to be us,
+      # not the object that it belongs to.
+      addedProp.owner = owner
 
-    # If the property didn't exist before, we want its owner to be us,
-    # not the object that it belongs to.
-    propObj.owner = owner
   else:
     var propObj = obj.getProp(prop)
     owner.checkWrite(propObj)
