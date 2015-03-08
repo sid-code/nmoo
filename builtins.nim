@@ -737,8 +737,8 @@ defBuiltin "map":
     return E_ARGS.md("map takes 2 arguments")
 
   let
-    listd = args[0]
-    lamb = args[1]
+    lamb = args[0]
+    listd = args[1]
 
   checkType(listd, dList)
   let list = listd.listVal
@@ -756,9 +756,9 @@ defBuiltin "reduce":
     return E_ARGS.md("reduce takes 3 arguments")
 
   let
-    start = args[0]
-    listd = args[1]
-    lamb = args[2]
+    lamb = args[0]
+    start = args[1]
+    listd = args[2]
 
   checkType(listd, dList)
   let list = listD.listVal

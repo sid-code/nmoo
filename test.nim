@@ -394,20 +394,20 @@ suite "evaluator":
     check result.isType(dErr)
 
   test "map statement works":
-    var result = evalS("(map (1 2 3 4) do)")
+    var result = evalS("(map do (1 2 3 4))")
     check result.isType(dList)
     check result.listVal.len == 4
 
-    result = evalS("(map (1 2 3 4) (lambda (x) (do x)))")
+    result = evalS("(map (lambda (x) (do x)) (1 2 3 4))")
     check result.isType(dList)
     check result.listVal.len == 4
 
   test "reduce statement works":
-    var result = evalS("(reduce 0 (1 2 3 4) +)")
+    var result = evalS("(reduce + 0 (1 2 3 4))")
     check result.isType(dInt)
     check result.intVal == 10
 
-    result = evalS("(reduce 0 (1 3 5 7) (lambda (x y) (+ x (* 2 y))))")
+    result = evalS("(reduce (lambda (x y) (+ x (* 2 y))) 0 (1 3 5 7))")
     check result.isType(dInt)
     check result.intVal == 32
 
