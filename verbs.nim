@@ -161,6 +161,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
 
     doQuery = obj.query(doString)
     ioQuery = obj.query(ioString)
+    restQuery = obj.query(rest)
 
   var
     world = obj.getWorld()
@@ -178,13 +179,22 @@ proc handleCommand*(obj: MObject, command: string): MData =
     if v.prepSpec != pNone and v.prepSpec != prep.ptype:
       continue
 
-    if doQuery.len > 0:
+    var
+      useddoQuery = doQuery
+      useddoString = doString
+
+    if v.prepSpec == pNone:
+      useddoQuery = restQuery
+      useddoString = rest
+      symtable["dobjstr"] = useddoString.md
+
+    if useddoQuery.len > 0:
       if v.doSpec == oAny:
-        symtable["dobj"] = doQuery[0].md
+        symtable["dobj"] = useddoQuery[0].md
       elif v.doSpec == oStr:
         discard
       elif v.doSpec == oThis:
-        if doQuery[0] != o:
+        if useddoQuery[0] != o:
           continue
         else:
           symtable["dobj"] = o.md
@@ -194,7 +204,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
       if v.doSpec == oNone:
         discard
       elif v.doSpec == oStr:
-        if doString.len == 0:
+        if useddoString.len == 0:
           continue
         else:
           discard
