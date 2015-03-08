@@ -441,3 +441,12 @@ suite "evaluator":
     result = evalS("(+ 3 (- 2 1))")
     check result.isType(dInt)
     check result.intVal == 4
+
+  test "cat statement works":
+    var result = evalS("(cat (1 2 3) (2 3 4))")
+    check result.isType(dList)
+    check result.listVal.len == 6
+
+    result = evalS("(cat \"abc\" \"def\")")
+    check result.isType(dStr)
+    check result.strVal == "abcdef"
