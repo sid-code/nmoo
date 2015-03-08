@@ -762,8 +762,9 @@ defBuiltin "reduce":
 
   let
     lamb = args[0]
-    listd = if alen == 2: args[1] else: args[2]
+    listd = evalD(if alen == 2: args[1] else: args[2])
 
+  checkForError(listd)
   checkType(listd, dList)
   var list = listD.listVal
   if list.len == 0:
@@ -771,10 +772,12 @@ defBuiltin "reduce":
 
   var start: MData
   if alen == 2:
-    start = list[0]
+    start = evalD(list[0])
     list = list[1 .. -1]
   elif alen == 3:
-    start = args[1]
+    start = evalD(args[1])
+
+  checkForError(start)
 
   var res: MData = start
   for el in list:
