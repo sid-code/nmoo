@@ -238,5 +238,6 @@ proc handleCommand*(obj: MObject, command: string): MData =
 
     return v.call(world, obj, symtable)
 
+  obj.send("Sorry, I couldn't understand that")
   return nilD
 
