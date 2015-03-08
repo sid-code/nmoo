@@ -1,3 +1,5 @@
+# The interpreter of the scripting language used in the system
+
 import types, objects, tables, strutils, math, sequtils
 
 type

@@ -1,3 +1,6 @@
+# When the world handles a command, it needs to resolve strings passed by
+# the player such as "clock" in "get clock". This resolution is done here.
+
 import types, objects, sequtils, strutils
 
 

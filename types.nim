@@ -1,3 +1,7 @@
+# This file contains the types used throughout the system.
+# It also contains some constructors and utility procs that are used
+# everywhere.
+
 import strutils, tables
 
 type

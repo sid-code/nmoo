@@ -1,3 +1,5 @@
+# Here are all of the builtin functions that verbs can call
+
 import types, objects, verbs, scripting, strutils, tables, sequtils
 
 template defBuiltin(name: string, body: stmt) {.immediate.} =

@@ -1,3 +1,5 @@
+# This file has methods for manipulating objects and their properties
+
 import types, sequtils, strutils
 
 proc getStrProp*(obj: MObject, name: string): string
