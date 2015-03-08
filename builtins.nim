@@ -596,6 +596,25 @@ defBuiltin "addverb":
 
   return objd
 
+# (setverbcode obj verb-desc newcode)
+defBuiltin "setverbcode":
+  if args.len != 3:
+    return E_ARGS.md("setverbcode takes 3 arguments")
+
+  let verb = getVerbOn(args[0], args[1])
+  checkWrite(owner, verb)
+
+  let newCode = evalD(args[2])
+  checkForError(newCode)
+  checkType(newCode, dStr)
+
+  try:
+    verb.setCode(newCode.strVal)
+    return nilD
+  except MParseError:
+    let msg = getCurrentExceptionMsg()
+    return E_PARSE.md("code failed to parse: $1" % msg)
+
 # (move what dest)
 defBuiltin "move":
   if args.len != 2:
