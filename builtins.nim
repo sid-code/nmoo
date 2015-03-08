@@ -805,3 +805,30 @@ defArithmeticOperator("+", `+`)
 defArithmeticOperator("-", `-`)
 defArithmeticOperator("*", `*`)
 defArithmeticOperator("/", `/`)
+
+# (cat str1 str2 ...)
+# (cat list1 list2 ...)
+# concats any number of strings or lists in a list
+# use (call cat (str-list/list-list)) to call it with a list
+defBuiltin "cat":
+  if args.len < 1:
+    return E_ARGS.md("cat needs at least one string")
+
+  let typ = args[0].dtype
+  if typ == dStr:
+    var total = ""
+    for argd in args:
+      let arg = evalD(argd)
+      checkForError(arg)
+      total &= arg.toEchoString()
+    return total.md
+  elif typ == dList:
+    var total: seq[MData] = @[]
+    for argd in args:
+      let arg = evalD(argd)
+      checkForError(arg)
+      checkType(arg, dList)
+      total.add(arg.listVal)
+    return total.md
+  else:
+    return E_ARGS.md("cat only concatenates strings or lists")
