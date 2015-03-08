@@ -407,6 +407,10 @@ suite "evaluator":
     check result.isType(dInt)
     check result.intVal == 10
 
+    result = evalS("(reduce + (1 2 3 4))")
+    check result.isType(dInt)
+    check result.intVal == 10
+
     result = evalS("(reduce (lambda (x y) (+ x (* 2 y))) 0 (1 3 5 7))")
     check result.isType(dInt)
     check result.intVal == 32

@@ -752,16 +752,25 @@ defBuiltin "map":
 
 #(reduce start list func)
 defBuiltin "reduce":
-  if args.len != 3:
-    return E_ARGS.md("reduce takes 3 arguments")
+  let alen = args.len
+  if alen != 2 and alen != 3:
+    return E_ARGS.md("reduce takes 2 or 3 arguments")
 
   let
     lamb = args[0]
-    start = args[1]
-    listd = args[2]
+    listd = if alen == 2: args[1] else: args[2]
 
   checkType(listd, dList)
-  let list = listD.listVal
+  var list = listD.listVal
+  if list.len == 0:
+    return nilD
+
+  var start: MData
+  if alen == 2:
+    start = list[0]
+    list = list[1 .. -1]
+  elif alen == 3:
+    start = args[1]
 
   var res: MData = start
   for el in list:
