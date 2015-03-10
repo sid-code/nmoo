@@ -870,3 +870,20 @@ defBuiltin "cat":
     return total.md
   else:
     return E_ARGS.md("cat only concatenates strings or lists")
+
+# (cons el list)
+defBuiltin "cons":
+  if args.len != 2:
+    return E_ARGS.md("cons takes 2 arguments")
+
+  let el = evalD(args[0])
+  checkForError(el)
+
+  let listd = evalD(args[1])
+  checkForError(listd)
+  checkType(listd, dList)
+
+  var list = listd.listVal
+
+  list.insert(el, 0)
+  return list.md
