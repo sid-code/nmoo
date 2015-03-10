@@ -454,3 +454,8 @@ suite "evaluator":
     result = evalS("(cat \"abc\" \"def\")")
     check result.isType(dStr)
     check result.strVal == "abcdef"
+
+  test "cons statement works":
+    var result = evalS("(cons 1 (1 2))")
+    check result.isType(dList)
+    check result.listVal.len == 3
