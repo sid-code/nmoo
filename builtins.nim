@@ -847,6 +847,21 @@ defArithmeticOperator("-", `-`)
 defArithmeticOperator("*", `*`)
 defArithmeticOperator("/", `/`)
 
+# (= a b)
+defBuiltin "=":
+  if args.len != 2:
+    return E_ARGS.md("= takes 2 arguments")
+
+  let a = evalD(args[0])
+  checkForError(a)
+  let b = evalD(args[1])
+  checkForError(b)
+
+  if a == b:
+    return 1.md
+  else:
+    return 0.md
+
 # (cat str1 str2 ...)
 # (cat list1 list2 ...)
 # concats any number of strings or lists in a list
