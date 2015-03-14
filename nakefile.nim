@@ -1,14 +1,18 @@
-import nake, tables
+import nake
 
 const
   DefaultOptions = "--verbosity:0"
+  MainDeps =
+    @["types", "objects", "scripting", "querying", "verbs", "builtins"]
+  Exes = {
+    "main": MainDeps,
+    "test": MainDeps
+  }
 
-var Exes = initTable[string, seq[string]]()
-Exes["test"] = @["types", "objects", "scripting", "querying", "verbs", "builtins"]
-Exes["main"] = @["types", "objects"]
 
 task defaultTask, "builds everything":
-  for exe, deps in Exes:
+  for info in Exes:
+    let (exe, deps) = info
     runTask(exe)
 
 
@@ -29,7 +33,8 @@ proc simpleBuild(name: string, deps: seq[string]) =
       echo name & " is up to date"
 
 task "clean", "removes executables":
-  for exe, deps in Exes:
+  for info in Exes:
+    let (exe, deps) = info
     echo "removing " & exe
     removeFile(exe)
 
@@ -41,5 +46,6 @@ task "tests", "run tests":
   direShell("./test")
 
 
-for exe, deps in Exes:
+for info in Exes:
+  let (exe, deps) = info
   simpleBuild(exe, deps)
