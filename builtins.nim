@@ -763,8 +763,11 @@ defBuiltin "map":
     return E_ARGS.md("map takes 2 arguments")
 
   let
-    lamb = args[0]
-    listd = args[1]
+    lamb = evalD(args[0])
+    listd = evalD(args[1])
+
+  checkForError(lamb)
+  checkForError(listd)
 
   checkType(listd, dList)
   let list = listd.listVal
