@@ -312,13 +312,11 @@ suite "evaluator":
 
   test "try statement works":
     var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")
-    check result.isType(dInt)
-    check result.intVal == 4 # for good measure
+    check result == 4.md # for good measure
 
     result = evalS("(try \"no error here!\" (echo \"incorrect except fire\") 4)")
 
-    check result.isType(dInt)
-    check result.intVal == 4
+    check result == 4.md
 
   test "move statement works":
     var genericContainer = root.createChild()
@@ -379,16 +377,13 @@ suite "evaluator":
 
   test "istype statement works":
     var result = evalS("(istype \"abc\" \"str\")")
-    check result.isType(dInt)
-    check result.intVal == 1
+    check result == 1.md
 
     result = evalS("(istype 3 \"int\")")
-    check result.isType(dInt)
-    check result.intVal == 1
+    check result == 1.md
 
     result = evalS("(istype 3 \"str\")")
-    check result.isType(dInt)
-    check result.intVal == 0
+    check result == 0.md
 
     result = evalS("(istype 3 \"doodoo\")")
     check result.isType(dErr)
@@ -404,47 +399,36 @@ suite "evaluator":
 
   test "reduce statement works":
     var result = evalS("(reduce + 0 (1 2 3 4))")
-    check result.isType(dInt)
-    check result.intVal == 10
+    check result == 10.md
 
     result = evalS("(reduce + (1 2 3 4))")
-    check result.isType(dInt)
-    check result.intVal == 10
+    check result == 10.md
 
     result = evalS("(reduce (lambda (x y) (+ x (* 2 y))) 0 (1 3 5 7))")
-    check result.isType(dInt)
-    check result.intVal == 32
+    check result == 32.md
 
   test "arithmetic works":
     var result = evalS("(+ 3 4)")
-    check result.isType(dInt)
-    check result.intVal == 7
+    check result == 7.md
 
     result = evalS("(+ 3.0 4)")
-    check result.isType(dFloat)
-    check result.floatVal == 7.0
+    check result == 7.0.md
 
     result = evalS("(- 4 2)")
-    check result.isType(dInt)
-    check result.intVal == 2
+    check result == 2.md
 
     result = evalS("(* 4 2)")
-    check result.isType(dInt)
-    check result.intVal == 8
+    check result == 8.md
 
     result = evalS("(/ 4 2)")
-    check result.isType(dInt)
-    check result.intVal == 2
+    check result == 2.md
     result = evalS("(/ 4 3)")
-    check result.isType(dInt)
-    check result.intVal == 1
+    check result == 1.md
     result = evalS("(/ 3 4.0)")
-    check result.isType(dFloat)
-    check result.floatVal == 0.75
+    check result == 0.75.md
 
     result = evalS("(+ 3 (- 2 1))")
-    check result.isType(dInt)
-    check result.intVal == 4
+    check result == 4.md
 
   test "= statement works":
     var result = evalS("(= 3 3)")
