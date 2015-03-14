@@ -446,6 +446,16 @@ suite "evaluator":
     check result.isType(dInt)
     check result.intVal == 4
 
+  test "= statement works":
+    var result = evalS("(= 3 3)")
+    check result == 1.md
+
+    result = evalS("(= (3 3 \"cat\") (3 3 \"cat\"))")
+    check result == 1.md
+
+    result = evalS("(= (3 3 \"cat\" 4) (3 3 \"cat\"))")
+    check result == 0.md
+
   test "cat statement works":
     var result = evalS("(cat (1 2 3) (2 3 4))")
     check result.isType(dList)
