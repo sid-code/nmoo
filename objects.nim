@@ -206,8 +206,9 @@ proc add*(world: World, obj: MObject) =
   obj.setWorld(world)
   objs[].add(obj)
 
-proc createWorld*: World =
+proc createWorld*(name: string): World =
   result = newWorld()
+  result.name = name
   var verbObj = blankObject()
   result.add(verbObj)
   result.verbObj = verbObj
