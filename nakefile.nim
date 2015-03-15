@@ -1,7 +1,7 @@
 import nake
 
 const
-  DefaultOptions = "--verbosity:0"
+  DefaultOptions = "--verbosity:0 --hint[XDeclaredButNotUsed]:off"
   MainDeps =
     @["types", "objects", "scripting", "querying", "verbs", "builtins", "persist"]
   Exes = {
