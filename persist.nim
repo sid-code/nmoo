@@ -211,7 +211,7 @@ proc getObjectFile(worldName: string, id: int): string =
 
 proc persist*(world: World, obj: MObject) =
   let fileName = getObjectFile(world.name, obj.getID().int)
-  if not existsFile(fileName):
+  if not existsDir(getWorldDir(world.name)):
     return
 
   let file = open(fileName, fmWrite)
