@@ -1,4 +1,4 @@
-import types, objects, querying, verbs, builtins, rdstdin, strutils
+import types, objects, querying, verbs, builtins, rdstdin, strutils, persist
 
 var world = createWorld("min")
 var root = blankObject()
@@ -66,6 +66,8 @@ var eval = newVerb(
 eval.setCode("(try (echo \"=> \" (eval dobjstr)) (echo error))")
 world.verbObj.verbs.add(eval)
 player.level = 0
+
+persistWorld(world)
 
 while true:
   let command = readLineFromStdin("> ").strip()
