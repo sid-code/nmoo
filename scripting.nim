@@ -209,6 +209,6 @@ proc toCodeStr*(parsed: MData): string =
     result.add(list.map(toCodeStr).join(" "))
     result.add(')')
   elif parsed.isType(dSym):
-    result.add(($parsed)[1 .. -2])
+    result.add(($parsed)[1 .. -1])
   else:
     result.add($parsed)
