@@ -10,6 +10,9 @@ const
     "setupmin": MainDeps
   }
 
+var forceRefresh = false
+proc needsRefreshH(f1, f2: string): bool =
+  forceRefresh or f1.needsRefresh(f2)
 
 task defaultTask, "builds everything":
   for info in Exes:
@@ -22,9 +25,9 @@ proc simpleBuild(name: string, deps: seq[string]) =
     var refresh = false
     for dep in deps:
       let depName = dep & ".nim"
-      refresh = refresh or name.needsRefresh(depName)
+      refresh = refresh or name.needsRefreshH(depName)
 
-    refresh = refresh or name.needsRefresh(sourceFile)
+    refresh = refresh or name.needsRefreshH(sourceFile)
 
     if refresh:
       if direShell(nimExe, DefaultOptions, "c", name):
