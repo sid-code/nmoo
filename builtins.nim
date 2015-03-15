@@ -426,7 +426,8 @@ defBuiltin "setprop":
 
   if oldProp == nil:
     owner.checkWrite(obj)
-    for addedProp in obj.setPropRec(prop, newVal):
+    for tup in obj.setPropRec(prop, newVal):
+      let (moddedObj, addedProp) = tup
       # If the property didn't exist before, we want its owner to be us,
       # not the object that it belongs to.
       addedProp.owner = owner

@@ -109,9 +109,10 @@ proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
 template setPropR*(obj: MObject, name: string, newVal: expr) =
   discard obj.setProp(name, newVal.md)
 
-proc setPropRec*(obj: MObject, name: string, newVal: MData): seq[MProperty] =
+proc setPropRec*(obj: MObject, name: string, newVal: MData):
+                 seq[tuple[o: MObject, p: MProperty]] =
   result = @[]
-  result.add(obj.setProp(name, newVal))
+  result.add((obj, obj.setProp(name, newVal)))
   for child in obj.children:
     result.add(child.setPropRec(name, newVal))
 
