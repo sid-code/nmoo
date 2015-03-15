@@ -25,7 +25,7 @@ test "== operator works for MData":
 
 suite "object tests":
   setup:
-    var world = createWorld()
+    var world = createWorld("test")
     var root = blankObject()
     world.add(root)
     root.owner = root
@@ -135,7 +135,7 @@ suite "parser":
 
 suite "evaluator":
   setup:
-    var world = createWorld()
+    var world = createWorld("test")
     var root = blankObject()
     world.add(root)
 

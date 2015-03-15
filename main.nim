@@ -1,6 +1,6 @@
 import types, objects, querying, verbs, builtins, rdstdin, strutils
 
-var world = createWorld()
+var world = createWorld("min")
 var root = blankObject()
 root.level = 0
 world.add(root)
