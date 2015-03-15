@@ -16,7 +16,7 @@ type
 
   MObject* = ref object
     id: ObjID
-    world: World
+    world*: World
     isPlayer*: bool
     owner*: MObject
 
