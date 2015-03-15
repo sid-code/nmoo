@@ -203,7 +203,7 @@ proc readObject(world: World, stream: File) =
 
   obj.world = world
 
-proc getWorldDir(name: string): string =
+proc getWorldDir*(name: string): string =
   "worlds" / name
 
 proc getObjectFile(worldName: string, id: int): string =
