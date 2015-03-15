@@ -3,7 +3,7 @@ import nake
 const
   DefaultOptions = "--verbosity:0"
   MainDeps =
-    @["types", "objects", "scripting", "querying", "verbs", "builtins"]
+    @["types", "objects", "scripting", "querying", "verbs", "builtins", "persist"]
   Exes = {
     "main": MainDeps,
     "test": MainDeps
