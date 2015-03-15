@@ -304,11 +304,11 @@ suite "evaluator":
     check verb.ioSpec == oAny
 
   test "addverb statement works":
-    var result = evalS("(addverb #1 (#1 \"rw\" \"cool varb\") (\"none\" \"with\" \"this\"))")
+    var result = evalS("(addverb #1 \"cool varb\")")
     result = evalS("(getverbinfo #1 \"cool\")")
-    check ($result == "@[#1, \"rw\", \"cool varb\"]")
+    check ($result == "@[#1, \"rx\", \"cool varb\"]")
     result = evalS("(getverbargs #1 \"cool\")")
-    check ($result == "@[\"none\", \"with/using\", \"this\"]")
+    check ($result == "@[\"none\", \"none\", \"none\"]")
 
   test "try statement works":
     var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")

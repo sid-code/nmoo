@@ -567,32 +567,26 @@ defBuiltin "setverbargs":
 
   return args[0]
 
-# (addverb obj info args)
+# (addverb obj names)
 defBuiltin "addverb":
-  if args.len != 3:
-    return E_ARGS.md("addverb takes 3 arguments")
+  if args.len != 2:
+    return E_ARGS.md("addverb takes 2 arguments")
 
   let objd = evalD(args[0])
   checkForError(objd)
   let obj = extractObject(objd)
 
-  let infod = evalD(args[1])
-  checkForError(infod)
-  checkType(infod, dList)
-  let info = verbInfoFromInput(infod.listVal)
-
-  let argsd = evalD(args[2])
-  checkForError(argsd)
-  checkType(argsd, dList)
-  let args = verbArgsFromInput(argsd.listVal)
+  let namesd = evalD(args[1])
+  checkForError(namesd)
+  checkType(namesd, dStr)
+  let names = namesd.strVal
 
   var verb = newVerb(
-    names = "unnamed verb",
-    owner = nil
+    names = names,
+    owner = caller,
   )
-  verb.setInfo(info)
-  verb.setArgs(args)
 
+  #TODO: abstract this away to deal with children
   obj.verbs.add(verb)
 
   return objd
