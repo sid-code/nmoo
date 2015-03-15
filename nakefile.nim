@@ -6,7 +6,8 @@ const
     @["types", "objects", "scripting", "querying", "verbs", "builtins", "persist"]
   Exes = {
     "main": MainDeps,
-    "test": MainDeps
+    "test": MainDeps,
+    "setupmin": MainDeps
   }
 
 
@@ -14,7 +15,6 @@ task defaultTask, "builds everything":
   for info in Exes:
     let (exe, deps) = info
     runTask(exe)
-
 
 proc simpleBuild(name: string, deps: seq[string]) =
   task name, "builds " & name:
@@ -44,6 +44,13 @@ task "clean", "removes executables":
 task "tests", "run tests":
   runTask("test")
   direShell("./test")
+
+task "setup", "sets up a minimal world":
+  runTask("setupmin")
+  stdout.write "setting up a minimal world to use (worlds/min)... "
+  direShell("./setupmin")
+  echo "done!"
+  echo "use this world by running \"main\" (nake main && ./main)"
 
 
 for info in Exes:
