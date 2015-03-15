@@ -113,9 +113,13 @@ proc toData(token: Token): MData =
       result = image.mds
 
 proc newParser*(code: string): MParser =
+  var fixedCode = code.strip()
+  if fixedCode.len == 0:
+    fixedCode = "()"
+
   MParser(
-    code: code,
-    tokens: lex(code),
+    code: fixedCode,
+    tokens: lex(fixedCode),
     tindex: 0
   )
 
