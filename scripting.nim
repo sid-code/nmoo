@@ -206,10 +206,8 @@ proc toCodeStr*(parsed: MData): string =
   if parsed.isType(dList):
     var list = parsed.listVal
     result.add('(')
-    for el in list:
-      result.add(toCodeStr(el))
-      result.add(' ')
-    result[result.len - 1] = ')'
+    result.add(list.map(toCodeStr).join(" "))
+    result.add(')')
   elif parsed.isType(dSym):
     result.add(($parsed)[1 .. -2])
   else:
