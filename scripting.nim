@@ -199,4 +199,18 @@ proc eval*(exp: MData, world: var World, caller, owner: MObject,
   else:
     return E_BUILTIN.md("undefined builtin: $1" % sym)
 
+## DISPLAYING PARSED CODE
 
+proc toCodeStr*(parsed: MData): string =
+  result = ""
+  if parsed.isType(dList):
+    var list = parsed.listVal
+    result.add('(')
+    for el in list:
+      result.add(toCodeStr(el))
+      result.add(' ')
+    result[result.len - 1] = ')'
+  elif parsed.isType(dSym):
+    result.add(($parsed)[1 .. -2])
+  else:
+    result.add($parsed)
