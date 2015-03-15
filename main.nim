@@ -67,7 +67,7 @@ eval.setCode("(try (echo \"=> \" (eval dobjstr)) (echo error))")
 world.verbObj.verbs.add(eval)
 player.level = 0
 
-persistWorld(world)
+world.persist()
 
 while true:
   let command = readLineFromStdin("> ").strip()

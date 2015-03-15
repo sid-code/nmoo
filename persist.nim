@@ -203,32 +203,39 @@ proc readObject(world: World, stream: File) =
 
   obj.world = world
 
-proc persistObject*(world: World, obj: MObject) =
-  let 
-    fileName = "worlds" / world.name / $obj.getID()
-    file = open(fileName, fmWrite)
+proc getWorldDir(name: string): string =
+  "worlds" / name
+
+proc getObjectFile(worldName: string, id: int): string =
+  getWorldDir(worldName) / $id
+
+proc persist*(world: World, obj: MObject) =
+  let fileName = getObjectFile(world.name, obj.getID().int)
+  if not existsFile(fileName):
+    return
+
+  let file = open(fileName, fmWrite)
 
   file.write(dumpObject(obj))
 
   file.close()
 
-proc persistWorld*(world: World) =
-  createDir("worlds" / world.name)
-
-  for obj in world.getObjects()[]:
-    if obj != nil:
-      persistObject(world, obj)
+proc persist*(world: World) =
+  if existsDir(getWorldDir(world.name)):
+    for obj in world.getObjects()[]:
+      if obj != nil:
+        world.persist(obj)
 
 proc loadWorld*(name: string): World =
   result = createWorld(name)
-  let dir = "worlds" / name
+  let dir = getWorldDir(name)
   var objs = result.getObjects()
   for file in walkFiles(dir / "*"):
     let
       obj = blankObject()
       (p, fname) = splitPath(file)
       id = parseInt(fname)
-    
+
     obj.setID(id.id)
     
     discard p
