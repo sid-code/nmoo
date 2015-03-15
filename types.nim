@@ -225,7 +225,7 @@ proc newProperty*(
   name: string,
   val: MData,
   owner: MObject,
-  inherited: bool,
+  inherited: bool = false,
   copyVal: bool = false,
 
   pubRead: bool = true,
