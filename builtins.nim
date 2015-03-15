@@ -1,6 +1,6 @@
 # Here are all of the builtin functions that verbs can call
 
-import types, objects, verbs, scripting, strutils, tables, sequtils
+import types, objects, verbs, scripting, persist, strutils, tables, sequtils
 
 template defBuiltin(name: string, body: stmt) {.immediate.} =
   var bproc: BuiltinProc = proc (args: var seq[MData], world: var World,
@@ -361,7 +361,7 @@ proc setArgs(verb: MVerb, args: VerbArgs) =
   verb.prepSpec = args.prepSpec
   verb.ioSpec = args.ioSpec
 
-template getPropOn(objd, propd: MData): MProperty =
+template getPropOn(objd, propd: MData): tuple[o: Mobject, p: MProperty] =
   let objd2 = evalD(objd)
   checkForError(objd2)
   let obj = extractObject(objd2)
@@ -376,9 +376,9 @@ template getPropOn(objd, propd: MData): MProperty =
   if propObj == nil:
     return E_PROPNF.md("property $1 not found on $2" % [propName, $obj.toObjStr()])
 
-  propObj
+  (obj, propObj)
 
-template getVerbOn(objd, verbdescd: MData): MVerb =
+template getVerbOn(objd, verbdescd: MData): tuple[o: MObject, v: MVerb] =
   let objd2 = evalD(objd)
   checkForError(objd2)
   let obj = extractObject(objd2)
@@ -392,14 +392,14 @@ template getVerbOn(objd, verbdescd: MData): MVerb =
   if verb == nil:
     return E_VERBNF.md("verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
 
-  verb
+  (obj, verb)
 
 # (getprop what propname)
 defBuiltin "getprop":
   if not args.len == 2:
     return E_ARGS.md("getprop takes exactly 2 arguments")
 
-  let propObj = getPropOn(args[0], args[1])
+  let (obj, propObj) = getPropOn(args[0], args[1])
 
   checkRead(owner, propObj)
 
@@ -431,11 +431,13 @@ defBuiltin "setprop":
       # If the property didn't exist before, we want its owner to be us,
       # not the object that it belongs to.
       addedProp.owner = owner
+      world.persist(moddedObj)
 
   else:
     var propObj = obj.getProp(prop)
     owner.checkWrite(propObj)
     propObj.val = newVal
+    world.persist(obj)
 
   return newVal
 
@@ -446,7 +448,7 @@ defBuiltin "getpropinfo":
   if not args.len == 2:
     return E_ARGS.md("getpropinfo takes exactly 2 arguments")
 
-  let propObj = getPropOn(args[0], args[1])
+  let (obj, propObj) = getPropOn(args[0], args[1])
 
   checkRead(owner, propObj)
 
@@ -461,7 +463,7 @@ defBuiltin "setpropinfo":
   if not args.len == 3:
     return E_ARGS.md("setpropinfo takes exactly 3 arguments")
 
-  let propObj = getPropOn(args[0], args[1])
+  let (obj, propObj) = getPropOn(args[0], args[1])
 
   checkWrite(owner, propObj)
 
@@ -474,6 +476,8 @@ defBuiltin "setpropinfo":
     info = propInfoFromInput(propinfo)
 
   propObj.setInfo(info)
+  world.persist(obj)
+
 
   return args[0]
 
@@ -519,7 +523,7 @@ defBuiltin "getverbinfo":
   if args.len != 2:
     return E_ARGS.md("getverbinfo takes 2 arguments")
 
-  let verb = getVerbOn(args[0], args[1])
+  let (obj, verb) = getVerbOn(args[0], args[1])
   checkRead(owner, verb)
 
   return extractInfo(verb)
@@ -529,7 +533,7 @@ defBuiltin "setverbinfo":
   if args.len != 3:
     return E_ARGS.md("setverbinfo takes 3 arguments")
 
-  let verb = getVerbOn(args[0], args[1])
+  let (obj, verb) = getVerbOn(args[0], args[1])
   checkWrite(owner, verb)
 
   let infod = evalD(args[2])
@@ -538,6 +542,7 @@ defBuiltin "setverbinfo":
   let info = verbInfoFromInput(infod.listVal)
 
   verb.setInfo(info)
+  world.persist(obj)
   return args[0]
 
 # (getverbargs obj verb-desc)
@@ -545,7 +550,7 @@ defBuiltin "getverbargs":
   if args.len != 2:
     return E_ARGS.md("getverbargs takes 2 arguments")
 
-  let verb = getVerbOn(args[0], args[1])
+  let (obj, verb) = getVerbOn(args[0], args[1])
   checkRead(owner, verb)
 
   return extractArgs(verb)
@@ -555,7 +560,7 @@ defBuiltin "setverbargs":
   if args.len != 3:
     return E_ARGS.md("setverbargs takes 3 arguments")
 
-  let verb = getVerbOn(args[0], args[1])
+  let (obj, verb) = getVerbOn(args[0], args[1])
   checkWrite(owner, verb)
 
   let argsInfod = evalD(args[2])
@@ -564,6 +569,7 @@ defBuiltin "setverbargs":
 
   let argsInfo = verbArgsFromInput(argsInfod.listVal)
   verb.setArgs(argsInfo)
+  world.persist(obj)
 
   return args[0]
 
@@ -588,6 +594,7 @@ defBuiltin "addverb":
 
   #TODO: abstract this away to deal with children
   obj.verbs.add(verb)
+  world.persist(obj)
 
   return objd
 
@@ -596,7 +603,7 @@ defBuiltin "setverbcode":
   if args.len != 3:
     return E_ARGS.md("setverbcode takes 3 arguments")
 
-  let verb = getVerbOn(args[0], args[1])
+  let (obj, verb) = getVerbOn(args[0], args[1])
   checkWrite(owner, verb)
 
   let newCode = evalD(args[2])
@@ -605,6 +612,7 @@ defBuiltin "setverbcode":
 
   try:
     verb.setCode(newCode.strVal)
+    world.persist(obj)
     return nilD
   except MParseError:
     let msg = getCurrentExceptionMsg()
@@ -654,6 +662,8 @@ defBuiltin "move":
     discard oldLoc.verbCall("exitfunc", caller, whatlist)
 
   discard dest.verbCall("enterfunc", caller, whatlist)
+  world.persist(what)
+  world.persist(dest)
   return what.md
 
 
