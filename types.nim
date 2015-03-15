@@ -8,6 +8,7 @@ type
 
   ObjID* = distinct int
   World* = ref object
+    name*: string
     objects: seq[MObject]
     verbObj*: MObject # object that holds global verbs
 
