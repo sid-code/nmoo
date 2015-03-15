@@ -67,6 +67,7 @@ proc parseCommand(str: string): ParsedCommand =
       result.ioString = result.rest[prepLoc + result.prep.image.len + 1 .. -1]
 
 proc setCode*(verb: MVerb, newCode: string) =
+  verb.code = newCode
   var parser = newParser(newCode)
   verb.parsed = parser.parseList()
 
