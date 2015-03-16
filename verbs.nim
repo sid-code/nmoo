@@ -131,6 +131,21 @@ proc addVerbRec*(obj: MObject, verb: MVerb): seq[tuple[o: MObject, v: MVerb]] =
   result.add((obj, obj.addVerb(verb)))
   for child in obj.children:
     result.add(child.addVerbRec(verb))
+
+proc delVerb*(obj: MObject, verb: MVerb): MVerb =
+  for i, v in obj.verbs:
+    if v == verb:
+      obj.verbs.delete(i)
+      return verb
+
+  return nil
+
+proc delVerbRec*(obj: MObject, verb: MVerb): seq[tuple[o: MObject, v: MVerb]] =
+  result = @[]
+  result.add((obj, obj.delVerb(verb)))
+  for child in obj.children:
+    result.add(child.delVerbRec(verb))
+
 iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] =
   var searchSpace = obj.getVicinity()
 
