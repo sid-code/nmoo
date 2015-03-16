@@ -188,9 +188,9 @@ proc readObject(world: World, stream: File) =
   
   obj.setID(id)
   obj.isPlayer = readNum(stream) == 1
+  obj.level = readNum(stream)
   obj.owner = readObjectID(world, stream)
 
-  obj.level = readNum(stream)
   let (pr, pw, fert) = unpack3(readNum(stream))
   obj.pubRead = pr
   obj.pubWrite = pw
