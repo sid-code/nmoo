@@ -599,6 +599,24 @@ defBuiltin "addverb":
 
   return objd
 
+# (delverb obj verb)
+defBuiltin "delverb":
+  if args.len != 2:
+    return E_ARGS.md("delverb takes 2 arguments")
+
+  let (obj, verb) = getVerbOn(args[0], args[1])
+
+  if verb == nil or verb.inherited:
+    return E_VERBNF.md("$1 does not define a verb \"$2\"" % [obj.toObjStr, $args[1]])
+
+  for tup in obj.delVerbRec(verb):
+    let (moddedObj, deletedVerb) = tup
+    discard deletedVerb
+    world.persist(moddedObj)
+
+  return obj.md
+
+
 # (setverbcode obj verb-desc newcode)
 defBuiltin "setverbcode":
   if args.len != 3:
