@@ -122,6 +122,15 @@ proc getVerb*(obj: MObject, name: string): MVerb =
 
   return nil
 
+proc addVerb*(obj: MObject, verb: MVerb): MVerb =
+  obj.verbs.add(verb)
+  return verb
+
+proc addVerbRec*(obj: MObject, verb: MVerb): seq[tuple[o: MObject, v: MVerb]] =
+  result = @[]
+  result.add((obj, obj.addVerb(verb)))
+  for child in obj.children:
+    result.add(child.addVerbRec(verb))
 iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] =
   var searchSpace = obj.getVicinity()
 
