@@ -41,6 +41,40 @@ one of the only things it has in common with Lisp. This might change, however.
 It's just supposed to be a flexible but very simple imperative DSL for describing
 what objects should do.
 
+## Using
+
+There's not much to use, but here's what can be done.
+
+The only dependency for this project is `nake` (`nimble install nake`)
+
+Clone the repository, build the executables with the following command:
+
+```
+$ nake
+```
+
+Setup a minimal world:
+
+```
+$ nake setup
+```
+
+Run the tests:
+
+```
+$ ./tests
+```
+
+(can also be done with `nake tests`)
+
+Run the main test program:
+```
+$ ./main
+```
+
+In the main test program, you'll be greeted with a friendly `>` prompt. The only
+command built in is `eval` so you can mess around with the scripting language.
+
 ## License
 
 MIT
