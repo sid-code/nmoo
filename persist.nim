@@ -4,6 +4,7 @@ import types, objects, scripting, verbs, os, sequtils, strutils
 #
 # id
 # isPlayer
+# owner
 # level
 # pubRead pubWrite fertile (3-bit number)
 #
@@ -91,6 +92,7 @@ proc dumpObject*(obj: MObject): string =
   result.addLine($obj.getID())
   result.addLine(dumpBool(obj.isPlayer))
   result.addLine($obj.level)
+  result.addLine(dumpObjID(obj.owner))
   result.addLine($pack(obj.pubRead, obj.pubWrite, obj.fertile))
   result.addLine(dumpObjID(obj.parent))
   result.addLine(obj.children.map(dumpObjID).join(" "))
@@ -116,7 +118,18 @@ proc readData(stream: File): MData =
     result = resultd.listVal
 
   return result[0]
-  
+
+proc readObjectID(world: World, stream: File, default: MObject = world.verbObj):
+                  MObject =
+  let id = readNum(stream)
+  if id == -1:
+    return world.verbObj
+
+  result = world.byID(id.id)
+  if result == nil:
+    return world.verbObj
+  else:
+    return result
 
 proc readProp(world: World, stream: File): MProperty =
   result = newProperty(
@@ -126,7 +139,8 @@ proc readProp(world: World, stream: File): MProperty =
   )
   result.name = stream.readLine().strip()
   result.val = readData(stream)
-  result.owner = world.byID(readNum(stream).id)
+  result.owner = readObjectID(world, stream)
+
   result.inherited = readNum(stream) == 1
   result.copyVal = readNum(stream) == 1
   let (pr, pw, oip) = unpack3(readNum(stream))
@@ -152,7 +166,8 @@ proc readVerb(world: World, stream: File): MVerb =
 
   result.setCode(code)
   
-  result.owner = world.byID(readNum(stream).id)
+  result.owner = readObjectID(world, stream)
+
   result.inherited = readNum(stream) == 1
   let specs = stream.readLine().split(" ")
   doAssert(specs.len == 3)
@@ -173,17 +188,15 @@ proc readObject(world: World, stream: File) =
   
   obj.setID(id)
   obj.isPlayer = readNum(stream) == 1
+  obj.owner = readObjectID(world, stream)
+
   obj.level = readNum(stream)
   let (pr, pw, fert) = unpack3(readNum(stream))
   obj.pubRead = pr
   obj.pubWrite = pw
   obj.fertile = fert
 
-  let parentID = readNum(stream)
-  if parentID == -1:
-    obj.parent = nil
-  else:
-    obj.parent = world.byID(parentID.id)
+  obj.parent = readObjectID(world, stream, nil)
 
   obj.children = @[]
   let children = stream.readLine().split(" ")
