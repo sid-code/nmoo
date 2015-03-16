@@ -310,6 +310,14 @@ suite "evaluator":
     result = evalS("(getverbargs #1 \"cool\")")
     check ($result == "@[\"none\", \"none\", \"none\"]")
 
+  test "delverb statement works":
+    var result = evalS("(addverb #1 \"cool varb\")")
+    let beforelen = root.verbs.len
+    result = evalS("(delverb #1 \"cool\")")
+    let afterlen = root.verbs.len
+
+    check beforelen == afterlen + 1
+
   test "try statement works":
     var result = evalS("(try (echo unbound) 4 (echo \"incorrect finally fire\"))")
     check result == 4.md # for good measure
