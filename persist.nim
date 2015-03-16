@@ -219,8 +219,11 @@ proc readObject(world: World, stream: File) =
 proc getWorldDir*(name: string): string =
   "worlds" / name
 
+proc getObjectDir*(name: string): string =
+  getWorldDir(name) / "objects"
+
 proc getObjectFile(worldName: string, id: int): string =
-  getWorldDir(worldName) / $id
+  getObjectDir(worldName) / $id
 
 proc persist*(world: World, obj: MObject) =
   let fileName = getObjectFile(world.name, obj.getID().int)
@@ -235,13 +238,14 @@ proc persist*(world: World, obj: MObject) =
 
 proc persist*(world: World) =
   if existsDir(getWorldDir(world.name)):
+    createDir(getObjectDir(world.name))
     for obj in world.getObjects()[]:
       if obj != nil:
         world.persist(obj)
 
 proc loadWorld*(name: string): World =
   result = createWorld(name)
-  let dir = getWorldDir(name)
+  let dir = getObjectDir(name)
   var objs = result.getObjects()
   for file in walkFiles(dir / "*"):
     let
