@@ -592,9 +592,10 @@ defBuiltin "addverb":
     owner = caller,
   )
 
-  #TODO: abstract this away to deal with children
-  obj.verbs.add(verb)
-  world.persist(obj)
+  for tup in obj.addVerbRec(verb):
+    let (moddedObj, addedVerb) = tup
+    discard addedVerb
+    world.persist(moddedObj)
 
   return objd
 
