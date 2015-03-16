@@ -396,7 +396,7 @@ template getVerbOn(objd, verbdescd: MData): tuple[o: MObject, v: MVerb] =
 
 # (getprop what propname)
 defBuiltin "getprop":
-  if not args.len == 2:
+  if args.len != 2:
     return E_ARGS.md("getprop takes exactly 2 arguments")
 
   let (obj, propObj) = getPropOn(args[0], args[1])
@@ -407,7 +407,7 @@ defBuiltin "getprop":
 
 # (setprop what propname newprop)
 defBuiltin "setprop":
-  if not args.len == 3:
+  if args.len != 3:
     return E_ARGS.md("setprop takes exactly 3 arguments")
 
   let objd = evalD(args[0])
@@ -445,7 +445,7 @@ defBuiltin "setprop":
 # result is (owner perms)
 # perms is [rwc]
 defBuiltin "getpropinfo":
-  if not args.len == 2:
+  if args.len != 2:
     return E_ARGS.md("getpropinfo takes exactly 2 arguments")
 
   let (obj, propObj) = getPropOn(args[0], args[1])
@@ -460,7 +460,7 @@ defBuiltin "getpropinfo":
 # optionally have a third element specifying a new
 # name for the property
 defBuiltin "setpropinfo":
-  if not args.len == 3:
+  if args.len != 3:
     return E_ARGS.md("setpropinfo takes exactly 3 arguments")
 
   let (obj, propObj) = getPropOn(args[0], args[1])
