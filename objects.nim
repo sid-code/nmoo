@@ -109,12 +109,20 @@ proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
 template setPropR*(obj: MObject, name: string, newVal: expr) =
   discard obj.setProp(name, newVal.md)
 
-proc setPropRec*(obj: MObject, name: string, newVal: MData):
+proc setPropRec*(obj: MObject, name: string, newVal: MData,
+                 recursed: bool = false):
                  seq[tuple[o: MObject, p: MProperty]] =
   result = @[]
-  result.add((obj, obj.setProp(name, newVal)))
+  var prop = obj.setProp(name, newVal)
+
+  if recursed: # If we're recursing, then it's being inherited
+    prop.inherited = true
+
+  result.add((obj, prop))
+
   for child in obj.children:
-    result.add(child.setPropRec(name, newVal))
+    result.add(child.setPropRec(name, newVal, true))
+
 proc delProp*(obj: MObject, prop: MProperty): MProperty =
   for idx, pr in obj.props:
     if pr.name == prop.name:
