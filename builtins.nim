@@ -397,7 +397,7 @@ template getVerbOn(objd, verbdescd: MData): tuple[o: MObject, v: MVerb] =
 # (getprop what propname)
 defBuiltin "getprop":
   if args.len != 2:
-    return E_ARGS.md("getprop takes exactly 2 arguments")
+    return E_ARGS.md("getprop takes 2 arguments")
 
   let (obj, propObj) = getPropOn(args[0], args[1])
 
@@ -408,7 +408,7 @@ defBuiltin "getprop":
 # (setprop what propname newprop)
 defBuiltin "setprop":
   if args.len != 3:
-    return E_ARGS.md("setprop takes exactly 3 arguments")
+    return E_ARGS.md("setprop takes 3 arguments")
 
   let objd = evalD(args[0])
   checkForError(objd)
@@ -463,7 +463,7 @@ defBuiltin "delprop":
 # perms is [rwc]
 defBuiltin "getpropinfo":
   if args.len != 2:
-    return E_ARGS.md("getpropinfo takes exactly 2 arguments")
+    return E_ARGS.md("getpropinfo takes 2 arguments")
 
   let (obj, propObj) = getPropOn(args[0], args[1])
 
@@ -478,7 +478,7 @@ defBuiltin "getpropinfo":
 # name for the property
 defBuiltin "setpropinfo":
   if args.len != 3:
-    return E_ARGS.md("setpropinfo takes exactly 3 arguments")
+    return E_ARGS.md("setpropinfo takes 3 arguments")
 
   let (obj, propObj) = getPropOn(args[0], args[1])
 
@@ -657,7 +657,7 @@ defBuiltin "setverbcode":
 # (move what dest)
 defBuiltin "move":
   if args.len != 2:
-    return E_ARGS.md("move takes exactly 2 arguments")
+    return E_ARGS.md("move takes 2 arguments")
 
   let
     whatd = evalD(args[0])
