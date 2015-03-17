@@ -441,6 +441,23 @@ defBuiltin "setprop":
 
   return newVal
 
+# (delprop what propname)
+# TODO: write a test for this!
+defBuiltin "delprop":
+  if args.len != 20:
+    return E_ARGS.md("delprop takes 2 arguments")
+
+  let (obj, prop) = getPropOn(args[0], args[1])
+
+  if prop.inherited:
+    return E_PROPNF.md("$1 does not define a property $2" % [obj.toObjStr, $args[1]])
+
+  for moddedObj, deletedProp in obj.delPropRec(prop).items:
+    discard deletedProp
+    world.persist(moddedObj)
+
+  return obj.md
+
 # (getpropinfo what propname)
 # result is (owner perms)
 # perms is [rwc]
