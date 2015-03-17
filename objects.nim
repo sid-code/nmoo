@@ -115,6 +115,20 @@ proc setPropRec*(obj: MObject, name: string, newVal: MData):
   result.add((obj, obj.setProp(name, newVal)))
   for child in obj.children:
     result.add(child.setPropRec(name, newVal))
+proc delProp*(obj: MObject, prop: MProperty): MProperty =
+  for idx, pr in obj.props:
+    if pr.name == prop.name:
+      system.delete(obj.props, idx)
+      return prop
+
+proc delPropRec*(obj: MObject, prop: MProperty):
+    seq[tuple[o: MObject, p: MProperty]] =
+  result = @[]
+  result.add((obj, obj.delProp(prop)))
+
+  for child in obj.children:
+    result.add(child.delPropRec(prop))
+
 
 proc getLocation*(obj: MObject): MObject =
   let world = obj.getWorld()
