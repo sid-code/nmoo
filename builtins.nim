@@ -594,7 +594,8 @@ defBuiltin "addverb":
 
   for tup in obj.addVerbRec(verb):
     let (moddedObj, addedVerb) = tup
-    discard addedVerb
+    if moddedObj != obj:
+      addedVerb.inherited = true
     world.persist(moddedObj)
 
   return objd
