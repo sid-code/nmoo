@@ -130,7 +130,9 @@ proc addVerbRec*(obj: MObject, verb: MVerb): seq[tuple[o: MObject, v: MVerb]] =
   result = @[]
   result.add((obj, obj.addVerb(verb)))
   for child in obj.children:
-    result.add(child.addVerbRec(verb.copy))
+    var verbCopy = verb.copy
+    verbCopy.inherited = true
+    result.add(child.addVerbRec(verbCopy))
 
 proc delVerb*(obj: MObject, verb: MVerb): MVerb =
   for i, v in obj.verbs:
