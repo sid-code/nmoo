@@ -608,7 +608,7 @@ defBuiltin "delverb":
   let (obj, verb) = getVerbOn(args[0], args[1])
 
   if verb == nil or verb.inherited:
-    return E_VERBNF.md("$1 does not define a verb \"$2\"" % [obj.toObjStr, $args[1]])
+    return E_VERBNF.md("$1 does not define a verb $2" % [obj.toObjStr, $args[1]])
 
   for tup in obj.delVerbRec(verb):
     let (moddedObj, deletedVerb) = tup
