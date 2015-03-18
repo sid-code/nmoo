@@ -2,17 +2,16 @@
 
 import types, objects, verbs, scripting, persist, strutils, tables, sequtils
 
-template defBuiltin(name: string, body: stmt) {.immediate.} =
-  var bproc: BuiltinProc = proc (args: seq[MData], world: World,
-                                 caller, owner: MObject, symtable: SymbolTable): MData =
-    # to provide a simpler call to eval (note the optional args)
-    proc evalD(e: MData, w: World = world, c: MObject = caller,
-               o: MObject = owner, st: SymbolTable = symtable): MData =
-      eval(e, w, c, o, st)
+template defBuiltin(name: string, body: stmt) {.immediate, dirty.} =
+  scripting.builtins[name] =
+    proc (args: seq[MData], world: World, caller, owner: MObject,
+          symtable: SymbolTable): MData =
+      # to provide a simpler call to eval (note the optional args)
+      proc evalD(e: MData, w: World = world, c: MObject = caller,
+                 o: MObject = owner, st: SymbolTable = symtable): MData =
+        eval(e, w, c, o, st)
 
-    body
-
-  scripting.builtins[name] = bproc
+      body
 
 proc strToType(str: string): tuple[b: bool, t: MDataType] =
   case str.toLower():
