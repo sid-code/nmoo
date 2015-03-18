@@ -3,10 +3,10 @@
 import types, objects, verbs, scripting, persist, strutils, tables, sequtils
 
 template defBuiltin(name: string, body: stmt) {.immediate.} =
-  var bproc: BuiltinProc = proc (args: var seq[MData], world: var World,
+  var bproc: BuiltinProc = proc (args: seq[MData], world: World,
                                  caller, owner: MObject, symtable: SymbolTable): MData =
     # to provide a simpler call to eval (note the optional args)
-    proc evalD(e: MData, w: var World = world, c: MObject = caller,
+    proc evalD(e: MData, w: World = world, c: MObject = caller,
                o: MObject = owner, st: SymbolTable = symtable): MData =
       eval(e, w, c, o, st)
 

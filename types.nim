@@ -103,7 +103,7 @@ type
     E_PARSE
 
   SymbolTable* = Table[string, MData]
-  BuiltinProc* = proc(args: var seq[MData], world: var World,
+  BuiltinProc* = proc(args: seq[MData], world: World,
                       caller, owner: MObject, symtable: SymbolTable): MData
 
 proc initSymbolTable*: SymbolTable = initTable[string, MData]()

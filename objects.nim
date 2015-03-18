@@ -178,7 +178,7 @@ proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]
 
 
 
-proc addToContents*(obj: MObject, newMember: var MObject): bool =
+proc addToContents*(obj: MObject, newMember: MObject): bool =
   var (has, contents) = obj.getRawContents();
   if has:
     contents.add(newMember.md)
@@ -187,7 +187,7 @@ proc addToContents*(obj: MObject, newMember: var MObject): bool =
   else:
     return false
 
-proc removeFromContents(obj: MObject, member: var MObject): bool =
+proc removeFromContents(obj: MObject, member: MObject): bool =
   var (has, contents) = obj.getRawContents();
 
   if has:
@@ -240,13 +240,13 @@ proc createWorld*(name: string): World =
 proc size*(world: World): int =
   world.getObjects()[].len
 
-proc delete*(world: var World, obj: MObject) =
+proc delete*(world: World, obj: MObject) =
   var objs = world.getObjects()
   var idx = obj.getID().int
 
   objs[idx] = nil
 
-proc changeParent*(obj: var MObject, newParent: var MObject) =
+proc changeParent*(obj: MObject, newParent: MObject) =
   if not newParent.fertile:
     return
 
@@ -279,7 +279,7 @@ proc changeParent*(obj: var MObject, newParent: var MObject) =
   obj.parent = newParent
   newParent.children.add(obj)
 
-proc createChild*(parent: var MObject): MObject =
+proc createChild*(parent: MObject): MObject =
   if not parent.fertile:
     return nil
 
@@ -296,7 +296,7 @@ proc createChild*(parent: var MObject): MObject =
   newObj.changeParent(parent)
   return newObj
 
-proc moveTo*(obj: var MObject, newLoc: var MObject): bool =
+proc moveTo*(obj: MObject, newLoc: MObject): bool =
   var loc = obj.getLocation()
   if loc == newLoc:
     return false

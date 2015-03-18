@@ -173,7 +173,7 @@ proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
   else:
     return symtable[symVal]
 
-proc eval*(exp: MData, world: var World, caller, owner: MObject,
+proc eval*(exp: MData, world: World, caller, owner: MObject,
            symtable: SymbolTable = initSymbolTable()): MData =
   if not exp.isType(dList):
     if exp.isType(dSym):
