@@ -796,8 +796,7 @@ defBuiltin "call":
   else:
     return E_ARGS.md("call's first argument must be a builtin symbol or a lambda")
 
-# (map list func)
-# this builtin lets (call) validate the "function" passed
+# (map func list)
 defBuiltin "map":
   if args.len != 2:
     return E_ARGS.md("map takes 2 arguments")
