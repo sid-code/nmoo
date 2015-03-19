@@ -461,3 +461,21 @@ suite "evaluator":
     var result = evalS("(cons 1 (1 2))")
     check result.isType(dList)
     check result.listVal.len == 3
+
+  test "len statement works":
+    var result = evalS("(len (1 \"a\" (1 2 3)))")
+
+    check result == 3.md
+
+  test "head statement works":
+    var result = evalS("(head (1 2 3 4))")
+    check result == 1.md
+
+  test "tail statement works":
+    var result = evalS("(tail (1 2 3 4))")
+    check result.isType(dList)
+    check result.listVal.len == 3
+
+    result = evalS("(tail ())")
+    check result.isType(dList)
+    check result.listVal.len == 0
