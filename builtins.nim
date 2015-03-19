@@ -944,3 +944,40 @@ defBuiltin "cons":
 
   list.insert(el, 0)
   return list.md
+
+# (head list)
+defBuiltin "head":
+  if args.len != 1:
+    return E_ARGS.md("head takes 1 argument")
+
+  let listd = evalD(args[0])
+  checkForError(listd)
+  let list = listd.listVal
+  if list.len == 0:
+    return nilD
+
+  return list[0]
+
+# (tail list)
+defBuiltin "tail":
+  if args.len != 1:
+    return E_ARGS.md("tail takes 1 argument")
+
+  let listd = evalD(args[0])
+  checkForError(listd)
+  let list = listd.listVal
+  if list.len == 0:
+    return @[].md
+
+  return list[1 .. -1].md
+
+# (len list)
+defBuiltin "len":
+  if args.len != 1:
+    return E_ARGS.md("len takes 1 argument")
+
+  let listd = evalD(args[0])
+  checkForError(listd)
+  let list = listd.listVal
+
+  return list.len.md
