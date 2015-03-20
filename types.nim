@@ -99,6 +99,7 @@ type
     E_FMOVE,
     E_PROPNF,
     E_VERBNF,
+    E_BOUNDS,
 
     E_PARSE
 
