@@ -12,7 +12,7 @@ proc getProp*(obj: MObject, name: string): MProperty
 
 ## Permissions handling
 
-proc isWizard(obj: MObject): bool = obj.level == 0
+proc isWizard*(obj: MObject): bool = obj.level == 0
 
 proc owns*(who, obj: MObject): bool {.inline.} =
   who.isWizard() or obj.owner == who
