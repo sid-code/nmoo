@@ -947,23 +947,6 @@ defBuiltin "cat":
   else:
     return E_ARGS.md("cat only concatenates strings or lists")
 
-# (cons el list)
-defBuiltin "cons":
-  if args.len != 2:
-    return E_ARGS.md("cons takes 2 arguments")
-
-  let el = evalD(args[0])
-  checkForError(el)
-
-  let listd = evalD(args[1])
-  checkForError(listd)
-  checkType(listd, dList)
-
-  var list = listd.listVal
-
-  list.insert(el, 0)
-  return list.md
-
 # (head list)
 defBuiltin "head":
   if args.len != 1:
@@ -1000,3 +983,127 @@ defBuiltin "len":
   let list = listd.listVal
 
   return list.len.md
+
+# (insert list index new-el)
+defBuiltin "insert":
+  if args.len != 3:
+    return E_ARGS.md("insert takes 3 arguments")
+
+  let listd = evalD(args[0])
+  checkForError(listd)
+  checkType(listd, dList)
+
+  let indexd = evalD(args[1])
+  checkForError(indexd)
+  checkType(indexd, dInt)
+
+  let el = evalD(args[2])
+  checkForError(el)
+
+  var
+    list = listd.listVal
+    index = indexd.intVal
+
+  try:
+    list.insert(el, index)
+  except IndexError:
+    return E_BOUNDS.md("index $1 is out of bounds" % [$index])
+
+  return list.md
+
+# (delete list index)
+defBuiltin "delete":
+  if args.len != 2:
+    return E_ARGS.md("delete takes 2 arguments")
+
+  let listd = evalD(args[0])
+  checkForError(listd)
+  checkType(listd, dList)
+
+  let indexd = evalD(args[1])
+  checkForError(indexd)
+  checkType(indexd, dInt)
+
+  var
+    list = listd.listVal
+    index = indexd.intVal
+
+  try:
+    system.delete(list, index)
+  except IndexError:
+    return E_BOUNDS.md("index $1 is out of bounds" % [$index])
+
+  return list.md
+
+# (set list index replacement)
+# TODO: eliminate code duplication between this, insert, and delete
+#  (is this even possible)
+defBuiltin "set":
+  if args.len != 3:
+    return E_ARGS.md("set takes 3 arguments")
+
+  let listd = evalD(args[0])
+  checkForError(listd)
+  checkType(listd, dList)
+
+  let indexd = evalD(args[1])
+  checkForError(indexd)
+  checkType(indexd, dInt)
+
+  let el = evalD(args[2])
+  checkForError(el)
+
+  var
+    list = listd.listVal
+    index = indexd.intVal
+
+  try:
+    list[index] = el
+  except IndexError:
+    return E_BOUNDS.md("index $1 is out of bounds" % [$index])
+
+  return list.md
+
+defBuiltin "get":
+  if args.len != 2:
+    return E_ARGS.md("get takes 2 arguments")
+
+  let listd = evalD(args[0])
+  checkForError(listd)
+  checkType(listd, dList)
+
+  let indexd = evalD(args[1])
+  checkForError(indexd)
+  checkType(indexd, dInt)
+
+  var
+    list = listd.listVal
+    index = indexd.intVal
+
+  try:
+    return list[index]
+  except:
+    return E_BOUNDS.md("index $1 is out of bounds" % [$index])
+
+# (push list new-el)
+# adds to end
+defBuiltin "push":
+  if args.len != 2:
+    return E_ARGS.md("push takes 2 arguments")
+
+  let listd = evalD(args[0])
+  checkForError(listd)
+  checkType(listd, dList)
+
+  let el = evalD(args[1])
+  checkForError(el)
+
+  var list = listd.listVal
+
+  list.add(el)
+  return list.md
+
+# (unshift list el)
+defBuiltin "unshift":
+  # piggyback off insert
+  return evalD(@["insert".mds, args[0], args[1], 0.md].md)
