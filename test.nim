@@ -474,8 +474,8 @@ suite "evaluator":
     check result.isType(dStr)
     check result.strVal == "abcdef"
 
-  test "cons statement works":
-    var result = evalS("(cons 1 (1 2))")
+  test "unshift statement works":
+    var result = evalS("(unshift (1 2) 1)")
     check result.isType(dList)
     check result.listVal.len == 3
 
@@ -496,3 +496,27 @@ suite "evaluator":
     result = evalS("(tail ())")
     check result.isType(dList)
     check result.listVal.len == 0
+
+  test "delete statement works":
+    var result = evalS("(delete (1 2 1 1) 3)")
+    check result == @[1.md, 2.md, 1.md].md
+
+  test "insert statement works":
+    var result = evalS("(insert (1 1) 1 2)")
+    check result == @[1.md, 2.md, 1.md].md
+
+  test "push statement works":
+    var result = evalS("(push (1 2) 1)")
+    check result == @[1.md, 2.md, 1.md].md
+
+  test "set statement works":
+    var result = evalS("(set (1 2 3) 9 4)")
+    check result.isType(dErr)
+    check result.errVal == E_BOUNDS
+
+    result = evalS("(set (1 2 3) 2 1)")
+    check result == @[1.md, 2.md, 1.md].md
+
+  test "get statement works":
+    var result = evalS("(get (1 2 3) 1)")
+    check result == 2.md
