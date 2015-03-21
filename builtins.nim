@@ -446,7 +446,7 @@ defBuiltin "setprop":
 # (delprop what propname)
 # TODO: write a test for this!
 defBuiltin "delprop":
-  if args.len != 20:
+  if args.len != 2:
     return E_ARGS.md("delprop takes 2 arguments")
 
   let (obj, prop) = getPropOn(args[0], args[1])
