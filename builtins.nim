@@ -71,6 +71,9 @@ template checkRead(obj: MObject, what: MVerb) =
 template checkWrite(obj: MObject, what: MVerb) =
   if not obj.canWrite(what):
     return E_PERM.md(obj.toObjStr() & " cannot write verb: " & what.names)
+template checkExecute(obj: MObject, what: MVerb) =
+  if not obj.canExecute(verb):
+    return E_PERM.md(obj.toObjStr() & " cannot execute verb: " & what.names)
 
 proc genCall(fun: MData, args: seq[MData]): MData =
   var resList: seq[MData]
