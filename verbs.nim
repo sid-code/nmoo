@@ -161,20 +161,23 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
       if obj.canExecute(v):
         yield (o, v)
 
-proc verbCall*(owner: MObject, name: string, caller: MObject, args: seq[MData]): MData =
+proc verbCallRaw*(owner: MObject, verb: MVerb, caller: MObject, args: seq[MData]): MData =
   var
     world = caller.getWorld()
     symtable = initSymbolTable()
 
   doAssert(world != nil)
 
-
   symtable["caller"] = caller.md
   symtable["args"] = args.md
+  return verb.call(world, caller, symtable)
+
+
+proc verbCall*(owner: MObject, name: string, caller: MObject, args: seq[MData]): MData =
 
   for v in matchingVerbs(owner, name):
     if caller.canExecute(v):
-      return v.call(world, caller, symtable)
+      return owner.verbCallRaw(v, caller, args)
 
   return nilD
 

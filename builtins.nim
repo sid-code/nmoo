@@ -799,6 +799,22 @@ defBuiltin "call":
   else:
     return E_ARGS.md("call's first argument must be a builtin symbol or a lambda")
 
+# (verbcall obj verb-desc (arg0 arg1 arg2 ...))
+defBuiltin "verbcall":
+  if args.len != 3:
+    return E_ARGS.md("verbcall takes 3 arguments")
+
+  let (obj, verb) = getVerbOn(args[0], args[1])
+
+  let cargsd = evalD(args[2])
+  checkForError(cargsd)
+  checkType(cargsd, dList)
+  let cargs = cargsd.listVal
+
+  owner.checkExecute(verb)
+
+  return obj.verbCallRaw(verb, caller, cargs)
+
 # (map func list)
 defBuiltin "map":
   if args.len != 2:
