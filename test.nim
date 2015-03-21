@@ -383,6 +383,23 @@ suite "evaluator":
     check result.isType(dList)
     check result.listVal.len == 2
 
+  test "verbcall statement works":
+    var obj = root.createChild()
+    world.add(obj)
+
+    var fverb = newVerb(
+      names = "funcverb",
+      owner = obj,
+    )
+
+    fverb.setCode("(get args 0)")
+    discard obj.addVerb(fverb)
+
+    symtable["obj"] = obj.md
+
+    var result = evalS("(verbcall obj \"funcverb\" (3 4 5))")
+    check result == 3.md
+
   test "istype statement works":
     var result = evalS("(istype \"abc\" \"str\")")
     check result == 1.md
