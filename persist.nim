@@ -112,7 +112,7 @@ proc readNum(stream: File): int =
 proc readData(stream: File): MData =
   let line = stream.readLine().strip()
   var parser = newParser(line)
-  
+
   let
     resultd = parser.parseList()
     result = resultd.listVal
@@ -165,7 +165,7 @@ proc readVerb(world: World, stream: File): MVerb =
     curLine = stream.readLine()
 
   result.setCode(code)
-  
+
   result.owner = readObjectID(world, stream)
 
   result.inherited = readNum(stream) == 1
@@ -185,7 +185,7 @@ proc readVerb(world: World, stream: File): MVerb =
 proc readObject(world: World, stream: File) =
   let id = readNum(stream).id
   var obj = world.byID(id)
-  
+
   obj.setID(id)
   obj.isPlayer = readNum(stream) == 1
   obj.level = readNum(stream)
@@ -203,7 +203,7 @@ proc readObject(world: World, stream: File) =
   for child in children:
     let childID = parseInt(child)
     obj.children.add(world.byID(childID.id))
-  
+
   obj.props = @[]
   let numProps = readNum(stream)
   for i in 0 .. numProps - 1:
@@ -247,19 +247,25 @@ proc loadWorld*(name: string): World =
   result = createWorld(name)
   let dir = getObjectDir(name)
   var objs = result.getObjects()
+  var maxid = 0
   for file in walkFiles(dir / "*"):
     let
       obj = blankObject()
       (p, fname) = splitPath(file)
       id = parseInt(fname)
 
+    if id > maxid:
+      maxid = id
+
     obj.setID(id.id)
-    
+
     discard p
     if id >= objs[].len:
       setLen(objs[], id * 2)
 
     objs[id] = obj
+
+  setLen(objs[], maxid + 1)
 
   for file in walkFiles(dir / "*"):
     let fh = open(file, fmRead)
