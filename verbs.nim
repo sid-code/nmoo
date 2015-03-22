@@ -1,14 +1,15 @@
 # this file is for everything from command parsing to command handling
 # not just verbs
 
-import types, objects, querying, scripting, strutils, tables
+import types, objects, querying, scripting, strutils, tables, pegs
 
 type
 
   Preposition = tuple[ptype: PrepType, image: string]
   ParsedCommand = object
     verb: string
-    rest: string
+    rest: seq[string]
+    fixedRest: seq[string]
     doString: string
     ioString: string
     prep: Preposition
@@ -35,36 +36,100 @@ const
     (pNone, "none")
   ]
 
+### Utilities
+proc objSpecToStr*(osp: ObjSpec): string =
+  ($osp).toLower[1 .. -1]
+
+proc strToObjSpec*(osps: string): tuple[success: bool, result: ObjSpec] =
+  let realSpec = "o" & osps[0].toUpper & osps[1 .. -1]
+  try:
+    return (true, parseEnum[ObjSpec](realSpec))
+  except:
+    return (false, oNone)
+
+proc prepSpecToStr*(psp: PrepType): string =
+  var images: seq[string] = @[]
+  for prep in Prepositions:
+    let (ptype, image) = prep
+    if ptype == psp:
+      images.add(image)
+
+  return images.join("/")
+
+proc strToPrepSpec*(psps: string): tuple[success: bool, result: PrepType] =
+  let pspsLower = psps.toLower()
+
+  for prep in Prepositions:
+    let (ptype, image) = prep
+    if image == pspsLower:
+      return (true, ptype)
+
+  return (false, pNone)
+
+proc shellwords(str: string): seq[string] =
+  newSeq(result, 0)
+  let
+    shellword = peg"""\" ( "\\" . / [^"] )* \" / \S+"""
+
+  for match in str.findAll(shellword):
+    result.add(match)
+
+### End utilities
+
 proc newParsedCommand: ParsedCommand =
-  ParsedCommand(verb: "", rest: "", doString: "", ioString: "", prep: (pNone, ""))
+  ParsedCommand(
+    verb: "",
+    rest: @[],
+    fixedRest: @[],
+    doString: "",
+    ioString: "",
+    prep: (pNone, "")
+  )
 
 proc parseCommand(str: string): ParsedCommand =
-  let firstSpace = str.find(' ')
-  var prepLoc = 0
+  let
+    words = shellwords(str)
+    fixup = peg"""\\{.} / \"{[^\\] / $}"""
+    fixedWords = words.map(
+      proc (w: string): string =
+        w.replacef(fixup, "$1"))
 
-  result = newParsedCommand()
+  if words.len == 0:
+    raise newException(Exception, "command cannot be an empty string!")
 
-  if firstSpace == -1:
-    result.verb = str[0 .. firstSpace]
-  else:
-    result.verb = str[0 .. firstSpace - 1]
+  result.verb = fixedWords[0]
+  result.rest = words[1 .. -1]
+  result.fixedRest = fixedWords[1 .. -1]
 
-  if firstSpace == -1:
-    result.rest = ""
-  else:
-    result.rest = str[firstSpace + 1 .. -1]
+  var
+    i = 1
+    doString = ""
+    ioString = ""
 
-    for prep in Prepositions:
-      prepLoc = result.rest.find(prep.image)
-      if prepLoc > -1:
-        result.prep = prep
-        break
+  while i < fixedWords.len:
+    let word = fixedWords[i]
+    i += 1
 
-    if prepLoc == -1:
-      result.doString = result.rest
+    let (success, ptype) = strToPrepSpec(word)
+    if success:
+      result.prep = (ptype, word)
+      break
     else:
-      result.doString = result.rest[0 .. prepLoc - 2]
-      result.ioString = result.rest[prepLoc + result.prep.image.len + 1 .. -1]
+      doString.add(" ")
+      doString.add(word)
+
+  # The [1 .. -1] subscript is necessary because the string will
+  # have a leading space
+  result.doString = doString[1 .. -1]
+
+  while i < fixedWords.len:
+    let word = fixedWords[i]
+    i += 1
+
+    ioString.add(" ")
+    ioString.add(word)
+
+  result.ioString = ioString[1 .. -1]
 
 proc setCode*(verb: MVerb, newCode: string) =
   verb.code = newCode
@@ -191,23 +256,25 @@ proc handleCommand*(obj: MObject, command: string): MData =
     ioString = parsed.ioString
     prep = parsed.prep
     rest = parsed.rest
+    restStr = rest.join(" ")
 
     doQuery = obj.query(doString.toLower())
     ioQuery = obj.query(ioString.toLower())
-    restQuery = obj.query(rest.toLower())
+    restQuery = obj.query(restStr.toLower())
 
   var
     world = obj.getWorld()
     symtable = initSymbolTable()
 
   symtable["caller"] = obj.md
+  symtable["args"] = rest.map(proc (x: string): MData = x.md).md
+  symtable["argstr"] = restStr.md
 
   for o, v in vicinityVerbs(obj, verb):
     symtable["dobjstr"] = doString.md
     symtable["iobjstr"] = ioString.md
     symtable["dobj"] = nilD
     symtable["iobj"] = nilD
-    symtable["argstr"] = rest.md
 
     if v.prepSpec != pNone and v.prepSpec != prep.ptype:
       continue
@@ -218,7 +285,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
 
     if v.prepSpec == pNone:
       useddoQuery = restQuery
-      useddoString = rest
+      useddoString = restStr
       symtable["dobjstr"] = useddoString.md
 
     if useddoQuery.len > 0:
