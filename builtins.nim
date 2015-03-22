@@ -418,10 +418,12 @@ defBuiltin "setprop":
 
   let
     propd = evalD(args[1])
-    newVal = args[2]
+    newVal = evalD(args[2])
 
   checkForError(propd)
   checkType(propd, dStr)
+
+  checkForError(newVal)
   let
     prop = propd.strVal
     oldProp = obj.getProp(prop)
