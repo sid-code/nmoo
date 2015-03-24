@@ -178,7 +178,7 @@ defBuiltin "cond":
       let condVal = evalD(larg[0])
       checkForError(condVal)
       if condVal.truthy:
-        return larg[1]
+        return evalD(larg[1])
       else:
         continue
 
