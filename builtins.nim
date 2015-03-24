@@ -677,6 +677,43 @@ defBuiltin "move":
   world.persist(dest)
   return what.md
 
+# (create parent new-owner)
+# creates a child of the object given
+# owner is set to executor of code
+#   (in the case of verbs, the owner of the verb)
+#
+# # TODO: write a test for this
+defBuiltin "create":
+  let alen = args.len
+  if alen != 1 and alen != 2:
+    return E_ARGS.md("create takes 1 or 2 arguments")
+
+  let parent = extractObject(args[0])
+
+  var newOwner: MObject
+  if alen == 2:
+    newOwner = extractObject(args[1])
+
+    if newOwner != owner and not owner.isWizard():
+      return E_PERM.md("non-wizards can only set themselves as the owner of objects")
+  else:
+    newOwner = owner
+
+  if not parent.fertile and (owner.owns(parent) or owner.isWizard()):
+    return E_PERM.md("$1 is not fertile" % [parent.toObjStr()])
+
+  # TODO: Quotas
+
+  let newObj = parent.createChild()
+  world.add(newObj)
+  newObj.setPropR("name", "child of $1" % [$parent.md])
+
+  discard newObj.verbCall("initialize", owner, @[])
+
+  newObj.owner = newOwner
+  # TODO: some way to keep track of an object's owner objects
+
+  return newObj.md
 
 # (try (what) (except) (finally))
 defBuiltin "try":
