@@ -18,7 +18,6 @@ type
     tokens: seq[Token]
     tindex: int
 
-
 proc `$`*(token: Token): string =
   token.image
 ## LEXER
@@ -185,7 +184,6 @@ proc eval*(exp: MData, world: World, caller, owner: MObject,
   if listv.len == 0 or not listv[0].isType(dSym):
     return exp
 
-
   var listvr = listv[1 .. -1]
   for idx, el in listvr:
     if el.isType(dSym):
@@ -195,8 +193,7 @@ proc eval*(exp: MData, world: World, caller, owner: MObject,
       else:
         listvr[idx] = val
 
-  let
-    sym = listv[0].symVal
+  let sym = listv[0].symVal
 
   if builtins.hasKey(sym):
     return builtins[sym](listvr, world, caller, owner, symtable)
