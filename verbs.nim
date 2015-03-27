@@ -235,6 +235,7 @@ proc verbCallRaw*(owner: MObject, verb: MVerb, caller: MObject, args: seq[MData]
 
   symtable["caller"] = caller.md
   symtable["args"] = args.md
+  symtable["self"] = owner.md
   return verb.call(world, caller, symtable)
 
 
@@ -271,6 +272,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
   symtable["argstr"] = restStr.md
 
   for o, v in vicinityVerbs(obj, verb):
+    symtable["self"] = o.md
     symtable["dobjstr"] = doString.md
     symtable["iobjstr"] = ioString.md
     symtable["dobj"] = nilD
