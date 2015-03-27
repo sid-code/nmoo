@@ -163,6 +163,9 @@ proc parseList*(parser: var MParser): MData =
 
 var builtins* = initTable[string, BuiltinProc]()
 
+proc builtinExists*(name: string): bool =
+  builtins.hasKey(name)
+
 proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
   if not symtable.hasKey(symVal):
     if not builtins.hasKey(symVal):
