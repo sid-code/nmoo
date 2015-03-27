@@ -4,6 +4,9 @@ let
   world = loadWorld("min")
   player = world.getObjects()[8]
 
+player.output = proc(obj: MObject, msg: string) =
+  echo msg
+
 while true:
   let command = readLineFromStdin("> ").strip()
 
