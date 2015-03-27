@@ -336,7 +336,10 @@ proc handleCommand*(obj: MObject, command: string): MData =
       else:
         continue
 
-    return v.call(world, obj, symtable)
+    let res = v.call(world, obj, symtable)
+    if res.isType(dErr):
+      obj.send($res)
+    return res
 
   obj.send("Sorry, I couldn't understand that")
   return nilD
