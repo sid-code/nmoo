@@ -140,7 +140,7 @@ defSpecial "lambda":
   let labelLocation = compiler.subrs.len
   compiler.subrs.add(ins(inLABEL, compiler.symgen.genSym().mds))
 
-  for bound in bounds:
+  for bound in bounds.reversed():
     checkType(bound, dSym)
     let name = bound.symVal
     let index = compiler.symtable.defSymbol(name)
@@ -161,7 +161,7 @@ defSpecial "lambda":
   compiler.real.delete(realBeforeSize, realAfterSize - 1)
   compiler.subrs.add(addedReal)
 
-  for bound in bounds.reversed():
+  for bound in bounds:
     let name = bound.symVal
     let index = compiler.symtable.getSymbol(name)
     compiler.subrs.add(ins(inREM, index.md))
