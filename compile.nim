@@ -169,10 +169,10 @@ template addLabel(compiler: MCompiler, section: expr): MData =
 proc render(compiler: MCompiler): tuple[entry: int, code: seq[Instruction]] =
   ## Remove all label references and replace them
   ## with numbers that refer to there they jump to
-  ## 
+  ##
   ## Instructions that still use labels:
   ##   J0, JN0, LPUSH
-  
+
   var labels = newCSymTable()
   var code = compiler.subrs & compiler.real
   let entry = compiler.subrs.len
@@ -193,7 +193,7 @@ proc render(compiler: MCompiler): tuple[entry: int, code: seq[Instruction]] =
 
   code.add(ins(inHALT))
   return (entry, code)
-      
+
 defSpecial "lambda":
   verifyArgs("lambda", args, @[dList, dNil])
 
@@ -296,11 +296,11 @@ type
     code:      seq[Instruction]
     pc:        int                ## Program counter
     callstack: seq[int]
-    
+
     world:     World
     owner:     MObject
     caller:    MObject
-    
+
     done: bool
     suspended: bool
     restartTime: int
@@ -399,7 +399,7 @@ impl inCALL:
   elif what.isType(dSym):
     # It's a builtin call
     let builtinName = what.symVal
-    
+
     # builtinName is guaranteed to hold a valid builtin
     let bproc = scripting.builtins[builtinName]
     let args = task.collect(numArgs)
@@ -413,7 +413,7 @@ impl inCALL:
       # Figure out what to do with the error
     else:
       task.spush(res)
-    
+
   else:
     raise newException(Exception, "cannot call '$1'" % [$what])
 
@@ -475,9 +475,9 @@ when isMainModule:
   # (do (lambda (x y) (+ x y)) (lambda (z a b c) (lambda (w) (echo w z))))
   # """)
   var parser = newParser("""
-  (let ((addThree 
+  (let ((addThree
             (let ((makeAdder
-                    (lambda (x) 
+                    (lambda (x)
                       (lambda (y)
                         (+ x y)))))
 
@@ -501,5 +501,5 @@ when isMainModule:
     #echo task.symtables
     #echo task.pc
   echo task.stack
-  
+
 
