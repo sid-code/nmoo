@@ -12,6 +12,7 @@ type
     inSTO, inGET, inGGET, inCLIST,
     inPOPL, inPUSHL, inLEN, inSWAP, inSWAP3, inSPLAT,
     inMENV, inGENV,
+    inTRY, inETRY
     inHALT
 
   SymGen = ref object
@@ -171,7 +172,7 @@ proc render(compiler: MCompiler): tuple[entry: int, code: seq[Instruction]] =
   ## with numbers that refer to there they jump to
   ##
   ## Instructions that still use labels:
-  ##   J0, JN0, JMP, LPUSH
+  ##   J0, JN0, JMP, LPUSH, TRY
 
   var labels = newCSymTable()
   var code = compiler.subrs & compiler.real
@@ -190,6 +191,9 @@ proc render(compiler: MCompiler): tuple[entry: int, code: seq[Instruction]] =
         code[idx] = ins(inst.itype, jumpLoc.md)
     elif inst.itype == inLPUSH:
       code[idx] = ins(inPUSH, labels[op.symVal].md)
+    elif inst.itype == inTRY:
+      let newLabels = op.listVal.map(proc(x: MData): MData = labels[x.symVal].md).md
+      code[idx] = ins(inTRY, newLabels)
 
   code.add(ins(inHALT))
   return (entry, code)
@@ -283,6 +287,24 @@ defSpecial "let":
     compiler.real.add(ins(inSTO, symIndex.md))
 
   compiler.codeGen(args[1])
+
+defSpecial "try":
+  let alen = args.len
+  if alen != 2 and alen != 3:
+    compileError("try: 2 or 3 arguments required")
+
+  let exceptLabel = compiler.symgen.genSym().mds
+  let endLabel = compiler.symgen.genSym().mds
+  compiler.real.add(ins(inTRY, @[exceptLabel].md))
+  compiler.codeGen(args[0])
+  compiler.real.add(ins(inJMP, endLabel))
+  compiler.real.add(ins(inLABEL, exceptLabel))
+  compiler.codeGen(args[1])
+  compiler.real.add(ins(inLABEL, endLabel))
+  compiler.real.add(ins(inETRY))
+  if alen == 3:
+    compiler.codeGen(args[2])
+
 ## VM (Task)
 
 type
@@ -290,7 +312,7 @@ type
   Frame = ref object
     symtable:   VSymTable
     calledFrom: int
-    tries:      seq[tuple[exc: int, fin: int]]
+    tries:      seq[int]
 
   Task = ref object
     stack:     seq[MData]
@@ -299,7 +321,7 @@ type
     code:      seq[Instruction]
     pc:        int                ## Program counter
 
-    frames: seq[Frame]
+    frames:    seq[Frame]
 
     world:     World
     owner:     MObject
@@ -323,6 +345,7 @@ proc pushFrame(task: Task, symtable: VSymTable) =
   task.frames.add(frame)
 
 proc popFrame(task: Task) =
+  task.pc = task.curFrame().calledFrom
   discard task.frames.pop()
 
 proc spush(task: Task, what: MData) = task.stack.add(what)
@@ -332,6 +355,23 @@ proc collect(task: Task, num: int): seq[MData] =
   for i in 0 .. num - 1:
     discard i
     result.insert(task.spop(), 0)
+
+proc doError(task: Task, error: MData) =
+  # unwind the stack
+  while task.frames.len > 0:
+    let tries = task.curFrame().tries
+
+    if tries.len == 0:
+      task.popFrame()
+      continue
+
+    let top = tries[tries.len - 1]
+    task.pc = top
+    return
+
+  task.spush(error)
+  task.done = true
+
 
 var instImpls = initTable[InstructionType, InstructionProc]()
 
@@ -409,8 +449,9 @@ impl inCALL:
       )
       task.pc = jmploc.intVal
     else:
-      discard
-      # Figure out what to do with the error
+      task.doError(E_ARGS.md(
+        "lambda expected $1 args but got $2" %
+          [$expectedNumArgs, $numArgs]))
   elif what.isType(dSym):
     # It's a builtin call
     let builtinName = what.symVal
@@ -424,8 +465,7 @@ impl inCALL:
     let res = bproc(args, task.world, task.owner, task.caller, task.globals)
 
     if res.isType(dErr):
-      discard
-      # Figure out what to do with the error
+      task.doError(res)
     else:
       task.spush(res)
 
@@ -433,9 +473,7 @@ impl inCALL:
     raise newException(Exception, "cannot call '$1'" % [$what])
 
 impl inRET:
-  let backto = task.curFrame().calledFrom
   task.popFrame()
-  task.pc = backto
 
 impl inACALL:
   let what = task.spop()
@@ -445,6 +483,13 @@ impl inACALL:
     task.spush(arg)
   task.spush(what)
   instImpls[inCALL](task, args.len.md)
+
+impl inTRY:
+  let labels = operand.listVal
+  task.curFrame().tries.add(labels[0].intVal)
+
+impl inETRY:
+  discard task.curFrame.tries.pop()
 
 impl inHALT:
   task.done = true
