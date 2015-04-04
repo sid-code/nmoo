@@ -7,7 +7,7 @@ type
     operand: MData
 
   InstructionType = enum
-    inPUSH, inCALL, inACALL, inLABEL, inRET, inJ0, inJN0,
+    inPUSH, inCALL, inACALL, inLABEL, inRET, inJ0, inJN0, inJMP,
     inLPUSH, # strictly for labels - gets replaced by the renderer
     inSTO, inGET, inGGET, inCLIST,
     inPOPL, inPUSHL, inLEN, inSWAP, inSWAP3, inSPLAT,
@@ -171,7 +171,7 @@ proc render(compiler: MCompiler): tuple[entry: int, code: seq[Instruction]] =
   ## with numbers that refer to there they jump to
   ##
   ## Instructions that still use labels:
-  ##   J0, JN0, LPUSH
+  ##   J0, JN0, JMP, LPUSH
 
   var labels = newCSymTable()
   var code = compiler.subrs & compiler.real
@@ -183,7 +183,7 @@ proc render(compiler: MCompiler): tuple[entry: int, code: seq[Instruction]] =
 
   for idx, inst in code:
     let op = inst.operand
-    if inst.itype == inJ0 or inst.itype == inJN0:
+    if inst.itype == inJ0 or inst.itype == inJN0 or inst.itype == inJMP:
       if op.isType(dSym):
         let label = op.symVal
         let jumpLoc = labels[label]
@@ -372,6 +372,10 @@ impl inJN0:
   let what = task.spop()
   if what != 0.md:
     task.pc = where
+
+impl inJMP:
+  let where = operand.intVal
+  task.pc = where
 
 impl inGGET:
   let name = operand.symVal
