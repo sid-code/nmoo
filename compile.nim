@@ -201,7 +201,6 @@ defSpecial "lambda":
 
   let labelName = compiler.addLabel(subrs)
 
-  compiler.subrs.add(ins(inGENV))
   for bound in bounds.reversed():
     checkType(bound, dSym)
     let name = bound.symVal
@@ -288,14 +287,19 @@ defSpecial "let":
 
 type
   VSymTable = TableRef[int, MData]
+  Frame = ref object
+    symtable:   VSymTable
+    calledFrom: int
+    tries:      seq[tuple[exc: int, fin: int]]
+
   Task = ref object
     stack:     seq[MData]
-    stStack:   seq[VSymTable]     ## Stack of symbol tables
     symtables: seq[VSymTable]     ## All of the symbol tables
     globals:   SymbolTable        ## Same type as used by parser
     code:      seq[Instruction]
     pc:        int                ## Program counter
-    callstack: seq[int]
+
+    frames: seq[Frame]
 
     world:     World
     owner:     MObject
@@ -309,7 +313,17 @@ type
   InstructionProc = proc(task: Task, operand: MData)
 
 proc newVSymTable: VSymTable = newTable[int, MData]()
-proc curST(task: Task): VSymTable = task.stStack[task.stStack.len - 1]
+proc curFrame(task: Task): Frame =
+  task.frames[task.frames.len - 1]
+proc curST(task: Task): VSymTable =
+  task.curFrame().symtable
+
+proc pushFrame(task: Task, symtable: VSymTable) =
+  let frame = Frame(symtable: symtable, calledFrom: task.pc, tries: @[])
+  task.frames.add(frame)
+
+proc popFrame(task: Task) =
+  discard task.frames.pop()
 
 proc spush(task: Task, what: MData) = task.stack.add(what)
 proc spop(task: Task): MData = task.stack.pop()
@@ -376,10 +390,6 @@ impl inMENV:
   task.symtables.add(newST)
   task.spush(pos.md)
 
-impl inGENV:
-  let envIndex = task.spop().intVal
-  task.stStack.add(task.symtables[envIndex])
-
 impl inCALL:
   let what = task.spop()
   let numArgs = operand.intVal
@@ -390,8 +400,9 @@ impl inCALL:
     let env = lcall[1]
     let expectedNumArgs = lcall[2].intVal
     if expectedNumArgs == numArgs:
-      task.spush(env)
-      task.callstack.add(task.pc)
+      task.pushFrame(
+        symtable = task.symtables[env.intVal]
+      )
       task.pc = jmploc.intVal
     else:
       discard
@@ -418,9 +429,10 @@ impl inCALL:
     raise newException(Exception, "cannot call '$1'" % [$what])
 
 impl inRET:
-  let backto = task.callstack.pop()
-  discard task.stStack.pop()
+  let backto = task.curFrame().calledFrom
+  task.popFrame()
   task.pc = backto
+
 impl inACALL:
   let what = task.spop()
   let argsd = task.spop()
@@ -450,14 +462,14 @@ proc taskFromCompiler(compiler: MCompiler, world: World, owner: MObject,
                       caller: MObject, globals = initSymbolTable()): Task =
   let st = newVSymTable()
   let (entry, code) = compiler.render
-  return Task(
+  var task = Task(
     stack: @[],
-    stStack: @[st],
     symtables: @[st],
     globals: globals,
     code: code,
     pc: entry,
-    callstack: @[],
+
+    frames: @[],
 
     world: world,
     owner: owner,
@@ -469,6 +481,9 @@ proc taskFromCompiler(compiler: MCompiler, world: World, owner: MObject,
     tickCount: 0
 
   )
+
+  task.pushFrame(newVSymTable())
+  return task
 
 when isMainModule:
   # var parser = newParser("""
@@ -501,5 +516,4 @@ when isMainModule:
     #echo task.symtables
     #echo task.pc
   echo task.stack
-
 
