@@ -502,7 +502,7 @@ proc step(task: Task) =
   if instImpls.hasKey(itype):
     instImpls[itype](task, operand)
   else:
-    return
+    raise newException(Exception, "instruction '$1' not implemented" % [$itype])
 
   task.pc += 1
   task.tickCount += 1
