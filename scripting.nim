@@ -210,7 +210,8 @@ template defBuiltin*(name: string, body: stmt) {.immediate, dirty.} =
       # to provide a simpler call to eval (note the optional args)
       proc evalD(e: MData, w: World = world, c: MObject = caller,
                  o: MObject = owner, st: SymbolTable = symtable): MData =
-        eval(e, w, c, o, st)
+        return e # Disabled
+        # eval(e, w, c, o, st)
 
       body
 

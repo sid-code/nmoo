@@ -14,8 +14,9 @@ proc strToType(str: string): tuple[b: bool, t: MDataType] =
     else: return (false, dInt)
 
 template checkForError(value: MData) {.immediate.} =
-  if value.isType(dErr):
-    return value
+  discard # Disabled
+  #if value.isType(dErr):
+  #  return value
 
 template checkType(value: MData, expected: MDataType, ifnot: MError = E_ARGS)
           {.immediate.} =
