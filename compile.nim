@@ -47,7 +47,7 @@ template ins(typ: InstructionType): Instruction =
 proc hash(itype: InstructionType): auto = ord(itype).hash
 
 proc `$`(ins: Instruction): string =
-  let itypeStr = ($ins.itype)[2 .. -1]
+  let itypeStr = ($ins.itype)[2 .. ^1]
   if ins.operand == nilD:
     return itypeStr & "\t"
   else:
@@ -129,11 +129,11 @@ proc codeGen(compiler: MCompiler, code: seq[MData]) =
     let name = first.symVal
     if specialExists(name):
       let
-        args = code[1 .. -1]
+        args = code[1 .. ^1]
         prok = compile.specials[name]
       prok(compiler, args)
     elif builtinExists(name):
-      for arg in code[1 .. -1]:
+      for arg in code[1 .. ^1]:
         compiler.codeGen(arg)
       compiler.real.add(ins(inPUSH, first))
       compiler.real.add(ins(inCALL, (code.len - 1).md))

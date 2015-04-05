@@ -746,7 +746,7 @@ defBuiltin "lambda":
     return E_ARGS.md("lambda taking $1 arguments given $2 instead" %
             [$numBound, $(alen - 2)])
 
-  let lambdaArgs = args[2 .. -1]
+  let lambdaArgs = args[2 .. ^1]
   for idx, symd in boundl:
     checkType(symd, dSym)
     let sym = symd.symVal
@@ -784,7 +784,7 @@ defBuiltin "call":
 
   let execd = args[0]
   if execd.isType(dSym):
-    let stmt = (@[execd] & args[1 .. -1]).md
+    let stmt = (@[execd] & args[1 .. ^1]).md
 
     return evalD(stmt)
   elif execd.isType(dList):
@@ -792,7 +792,7 @@ defBuiltin "call":
     if lambl.len != 3:
       return E_ARGS.md("call: invalid lambda")
 
-    lambl = lambl & args[1 .. -1]
+    lambl = lambl & args[1 .. ^1]
 
     return evalD(lambl.md)
   else:
@@ -855,7 +855,7 @@ defBuiltin "reduce":
   var start: MData
   if alen == 2:
     start = evalD(list[0])
-    list = list[1 .. -1]
+    list = list[1 .. ^1]
   elif alen == 3:
     start = evalD(args[1])
 
@@ -970,7 +970,7 @@ defBuiltin "tail":
   if list.len == 0:
     return @[].md
 
-  return list[1 .. -1].md
+  return list[1 .. ^1].md
 
 # (len list)
 defBuiltin "len":
