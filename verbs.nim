@@ -38,10 +38,10 @@ const
 
 ### Utilities
 proc objSpecToStr*(osp: ObjSpec): string =
-  ($osp).toLower[1 .. -1]
+  ($osp).toLower[1 .. ^1]
 
 proc strToObjSpec*(osps: string): tuple[success: bool, result: ObjSpec] =
-  let realSpec = "o" & osps[0].toUpper & osps[1 .. -1]
+  let realSpec = "o" & osps[0].toUpper & osps[1 .. ^1]
   try:
     return (true, parseEnum[ObjSpec](realSpec))
   except:
@@ -98,8 +98,8 @@ proc parseCommand(str: string): ParsedCommand =
     raise newException(Exception, "command cannot be an empty string!")
 
   result.verb = fixedWords[0]
-  result.rest = words[1 .. -1]
-  result.fixedRest = fixedWords[1 .. -1]
+  result.rest = words[1 .. ^1]
+  result.fixedRest = fixedWords[1 .. ^1]
 
   var
     i = 1
@@ -118,9 +118,9 @@ proc parseCommand(str: string): ParsedCommand =
       doString.add(" ")
       doString.add(word)
 
-  # The [1 .. -1] subscript is necessary because the string will
+  # The [1 .. ^1] subscript is necessary because the string will
   # have a leading space
-  result.doString = doString[1 .. -1]
+  result.doString = doString[1 .. ^1]
 
   while i < fixedWords.len:
     let word = fixedWords[i]
@@ -129,7 +129,7 @@ proc parseCommand(str: string): ParsedCommand =
     ioString.add(" ")
     ioString.add(word)
 
-  result.ioString = ioString[1 .. -1]
+  result.ioString = ioString[1 .. ^1]
 
 proc setCode*(verb: MVerb, newCode: string) =
   verb.code = newCode

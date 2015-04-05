@@ -3,7 +3,6 @@
 
 import types, objects, sequtils, strutils
 
-
 proc startsWith(s1, s2: string): bool =
   if s1.len < s2.len: return false
 
@@ -51,7 +50,7 @@ proc query*(obj: MObject, str: string): seq[MObject] =
     if str[0] == '#':
       try:
         let
-          id = parseInt(str[1 .. -1]).id
+          id = parseInt(str[1 .. ^1]).id
           fobj = world.byID(id)
         if fobj != nil:
           result.add(fobj)
