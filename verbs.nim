@@ -1,7 +1,8 @@
 # this file is for everything from command parsing to command handling
 # not just verbs
 
-import types, objects, querying, scripting, strutils, tables, pegs
+import types, objects, querying, scripting, compile
+import strutils, tables, pegs
 
 type
 
@@ -131,11 +132,6 @@ proc parseCommand(str: string): ParsedCommand =
 
   result.ioString = ioString[1 .. ^1]
 
-proc setCode*(verb: MVerb, newCode: string) =
-  verb.code = newCode
-  var parser = newParser(newCode)
-  verb.parsed = parser.parseList()
-
 proc nameMatchesStr(name: string, str: string): bool =
   if name == "*": return true
 
@@ -164,9 +160,6 @@ proc nameMatchesStr(name: string, str: string): bool =
     j += 1
 
   return name.len == str.len or ci == '*' or tolerateSize
-
-proc call(verb: MVerb, world: var World, caller: MObject, symtable: SymbolTable): MData =
-  eval(verb.parsed, world, caller, verb.owner, symtable)
 
 proc matchesName(verb: MVerb, str: string): bool =
   let names = verb.names.split(" ")
@@ -226,6 +219,9 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
       if obj.canExecute(v):
         yield (o, v)
 
+proc call(verb: MVerb, world: var World, caller: MObject, symtable: SymbolTable): MData =
+  world.addTask(verb.owner, caller, symtable, verb.compiled)
+
 proc verbCallRaw*(owner: MObject, verb: MVerb, caller: MObject, args: seq[MData]): MData =
   var
     world = caller.getWorld()
@@ -247,6 +243,9 @@ proc verbCall*(owner: MObject, name: string, caller: MObject, args: seq[MData]):
 
   return nilD
 
+proc setCode*(verb: MVerb, newCode: string) =
+  verb.code = newCode
+  verb.compiled = compileCode(newCode).render
 
 proc handleCommand*(obj: MObject, command: string): MData =
 

@@ -11,6 +11,7 @@ type
     name*: string
     objects: seq[MObject]
     verbObj*: MObject # object that holds global verbs
+    tasks*: seq[Task]
 
   OutputProc = proc(obj: MObject, msg: string)
 
@@ -60,7 +61,7 @@ type
     inherited*: bool
 
     code*: string # This has to be public but don't use it, use setCode
-    parsed*: MData
+    compiled*: CpOutput
 
     doSpec*: ObjSpec
     ioSpec*: ObjSpec
@@ -106,6 +107,62 @@ type
   SymbolTable* = Table[string, MData]
   BuiltinProc* = proc(args: seq[MData], world: World,
                       caller, owner: MObject, symtable: SymbolTable): MData
+
+  Instruction* = object
+    itype*: InstructionType
+    operand*: MData
+
+  InstructionType* = enum
+    inPUSH, inCALL, inACALL, inLABEL, inRET, inJ0, inJN0, inJMP,
+    inLPUSH, # strictly for labels - gets replaced by the renderer
+    inSTO, inGET, inGGET, inCLIST,
+    inPOPL, inPUSHL, inLEN, inSWAP, inSWAP3, inSPLAT,
+    inMENV, inGENV,
+    inTRY, inETRY
+    inHALT
+
+  SymGen* = ref object
+    ## Used for generating label names
+    counter*: int
+    prefix*: string
+
+  CSymTable* = Table[string, int]
+
+  MCompiler* = ref object
+    subrs*, real*: seq[Instruction]
+    symtable*: CSymTable
+    symgen*: SymGen
+
+  SpecialProc* = proc(compiler: MCompiler, args: seq[MData])
+
+  CompilerError* = object of Exception
+
+  VSymTable* = TableRef[int, MData]
+  Frame* = ref object
+    symtable*:   VSymTable
+    calledFrom*: int
+    tries*:      seq[int]
+
+  Task* = ref object
+    stack*:     seq[MData]
+    symtables*: seq[VSymTable]     ## All of the symbol tables
+    globals*:   SymbolTable        ## Same type as used by parser
+    code*:      seq[Instruction]
+    pc*:        int                ## Program counter
+
+    frames*:    seq[Frame]
+
+    world*:     World
+    owner*:     MObject
+    caller*:    MObject
+
+    done*: bool
+    suspended*: bool
+    restartTime*: int
+    tickCount*: int
+
+  InstructionProc* = proc(task: Task, operand: MData)
+  CpOutput* = tuple[entry: int, code: seq[Instruction]]
 
 proc initSymbolTable*: SymbolTable = initTable[string, MData]()
 
@@ -251,7 +308,7 @@ proc newVerb*(
   inherited: bool = false,
 
   code: string = "",
-  parsed: MData = nilD,
+  compiled: CpOutput = (0, nil),
 
   doSpec: ObjSpec = oNone,
   ioSpec: ObjSpec = oNone,
@@ -267,7 +324,7 @@ proc newVerb*(
     inherited: inherited,
 
     code: code,
-    parsed: nilD,
+    compiled: compiled,
 
     doSpec: doSpec,
     ioSpec: ioSpec,
@@ -298,7 +355,7 @@ proc copy*(verb: MVerb): MVerb =
     owner: verb.owner,
     inherited: verb.inherited,
     code: verb.code,
-    parsed: verb.parsed,
+    compiled: verb.compiled,
 
     doSpec: verb.doSpec,
     ioSpec: verb.ioSpec,
@@ -310,7 +367,7 @@ proc copy*(verb: MVerb): MVerb =
   )
 
 proc newWorld*: World =
-  World( objects: @[], verbObj: nil )
+  World( objects: @[], verbObj: nil, tasks: @[] )
 
 proc getObjects*(world: World): ptr seq[MObject] =
   addr world.objects

@@ -1,6 +1,7 @@
 # This file has methods for manipulating objects and their properties
 
 import types, sequtils, strutils
+# NOTE: verbs is imported later on!
 
 proc getStrProp*(obj: MObject, name: string): string
 proc getAliases*(obj: MObject): seq[string]
@@ -8,7 +9,7 @@ proc getLocation*(obj: MObject): MObject
 proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]]
 proc getPropVal*(obj: MObject, name: string): MData
 proc setProp*(obj: MObject, name: string, newVal: MData): MProperty
-proc getProp*(obj: MObject, name: string): MProperty
+proc addTask*(world: World, owner, caller: MObject, symtable: SymbolTable, code: CpOutput)
 
 ## Permissions handling
 
@@ -200,6 +201,18 @@ proc removeFromContents(obj: MObject, member: MObject): bool =
   else:
     return false
 
+proc moveTo*(obj: MObject, newLoc: MObject): bool =
+  var loc = obj.getLocation()
+  if loc == newLoc:
+    return false
+  if loc != nil:
+    discard loc.removeFromContents(obj)
+
+  if newLoc.addToContents(obj):
+    obj.setPropR("location", newLoc)
+    return true
+  else:
+    return false
 
 proc getAliases*(obj: MObject): seq[string] =
   let aliases = obj.getPropVal("aliases")
@@ -235,7 +248,6 @@ proc createWorld*(name: string): World =
   var verbObj = blankObject()
   result.add(verbObj)
   result.verbObj = verbObj
-
 
 proc size*(world: World): int =
   world.getObjects()[].len
@@ -296,17 +308,9 @@ proc createChild*(parent: MObject): MObject =
   newObj.changeParent(parent)
   return newObj
 
-proc moveTo*(obj: MObject, newLoc: MObject): bool =
-  var loc = obj.getLocation()
-  if loc == newLoc:
-    return false
-  if loc != nil:
-    discard loc.removeFromContents(obj)
+import tasks
 
-  if newLoc.addToContents(obj):
-    obj.setPropR("location", newLoc)
-    return true
-  else:
-    return false
-
+proc addTask*(world: World, owner, caller: MObject, symtable: SymbolTable, code: CpOutput) =
+  let newTask = task(code, world, owner, caller, symtable)
+  world.tasks.add(newTask)
 

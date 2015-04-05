@@ -80,7 +80,7 @@ proc toData(token: Token): MData =
   let
     image = token.image
     leader = image[0]
-    rest = image[1 .. -1]
+    rest = image[1 .. ^1]
 
   case leader:
     of '#':
@@ -94,7 +94,7 @@ proc toData(token: Token): MData =
     of '\'':
       result = rest.mds
     of '"':
-      result = rest[0 .. -2].md
+      result = rest[0 .. ^2].md
     of Digits, '-', '.':
       if image == "-": # special case
         result = "-".mds
@@ -187,7 +187,7 @@ proc eval*(exp: MData, world: World, caller, owner: MObject,
   if listv.len == 0 or not listv[0].isType(dSym):
     return exp
 
-  var listvr = listv[1 .. -1]
+  var listvr = listv[1 .. ^1]
   for idx, el in listvr:
     if el.isType(dSym):
       let val = resolveSymbol(el.symVal, symtable)
@@ -225,6 +225,6 @@ proc toCodeStr*(parsed: MData): string =
     result.add(list.map(toCodeStr).join(" "))
     result.add(')')
   elif parsed.isType(dSym):
-    result.add(($parsed)[1 .. -1])
+    result.add(($parsed)[1 .. ^1])
   else:
     result.add($parsed)

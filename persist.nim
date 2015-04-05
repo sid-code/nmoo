@@ -1,4 +1,4 @@
-import types, objects, scripting, verbs, os, sequtils, strutils
+import types, objects, verbs, scripting, os, sequtils, strutils
 
 # object format:
 #
@@ -32,7 +32,6 @@ import types, objects, scripting, verbs, os, sequtils, strutils
 # inherited
 # doSpec prepSpec ioSpec (sep'd by spaces)
 # pubRead pubWrite pubExec (3-bit number)
-
 
 template addLine(orig, newLine: string) =
   orig &= newLine
@@ -242,6 +241,8 @@ proc persist*(world: World) =
     for obj in world.getObjects()[]:
       if obj != nil:
         world.persist(obj)
+
+    # TODO: persist tasks
 
 proc loadWorld*(name: string): World =
   result = createWorld(name)

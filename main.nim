@@ -1,4 +1,4 @@
-import types, objects, querying, verbs, builtins, rdstdin, strutils, persist
+import types, objects, querying, verbs, builtins, persist, rdstdin, strutils
 
 let
   world = loadWorld("min")
