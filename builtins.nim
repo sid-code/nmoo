@@ -178,37 +178,37 @@ defBuiltin "cond":
   return E_BADCOND.md
 
 proc extractInfo(prop: MProperty): MData =
-  var result: seq[MData] = @[]
-  result.add(prop.owner.md)
+  var res: seq[MData] = @[]
+  res.add(prop.owner.md)
 
   var perms = ""
   if prop.pubRead: perms &= "r"
   if prop.pubWrite: perms &= "w"
   if prop.ownerIsParent: perms &= "c"
 
-  result.add(perms.md)
-  return result.md
+  res.add(perms.md)
+  return res.md
 
 proc extractInfo(verb: MVerb): MData =
-  var result: seq[MData] = @[]
-  result.add(verb.owner.md)
+  var res: seq[MData] = @[]
+  res.add(verb.owner.md)
 
   var perms = ""
   if verb.pubRead: perms &= "r"
   if verb.pubWrite: perms &= "w"
   if verb.pubExec: perms &= "x"
 
-  result.add(perms.md)
-  result.add(verb.names.md)
-  return result.md
+  res.add(perms.md)
+  res.add(verb.names.md)
+  return res.md
 
 proc extractArgs(verb: MVerb): MData =
-  var result: seq[MData] = @[]
-  result.add(objSpecToStr(verb.doSpec).md)
-  result.add(prepSpecToStr(verb.prepSpec).md)
-  result.add(objSpecToStr(verb.ioSpec).md)
+  var res: seq[MData] = @[]
+  res.add(objSpecToStr(verb.doSpec).md)
+  res.add(prepSpecToStr(verb.prepSpec).md)
+  res.add(objSpecToStr(verb.ioSpec).md)
 
-  return result.md
+  return res.md
 
 type
   PropInfo = tuple[owner: MObject, perms: string, newName: string]
@@ -219,53 +219,53 @@ template propInfoFromInput(info: seq[MData]): PropInfo =
   if info.len != 2 and info.len != 3:
     return E_ARGS.md("property info must be a list of size 2 or 3")
 
-  var result: PropInfo
+  var res: PropInfo
 
   let ownerd = evalD(info[0])
   checkForError(ownerd)
   let ownero = extractObject(ownerd)
-  result.owner = ownero
+  res.owner = ownero
 
   let permsd = evalD(info[1])
   checkForError(permsd)
   checkType(permsd, dStr)
   let perms = permsd.strVal
-  result.perms = perms
+  res.perms = perms
 
   if info.len == 3:
     let newNamed = evalD(info[2])
     checkForError(newNamed)
     checkType(newNamed, dStr)
     let newName = newNamed.strVal
-    result.newName = newName
+    res.newName = newName
 
-  result
+  res
 
 template verbInfoFromInput(info: seq[MData]): VerbInfo =
   if info.len != 2 and info.len != 3:
     return E_ARGS.md("verb info must be a list of size 2 or 3")
 
-  var result: VerbInfo
+  var res: VerbInfo
 
   let ownerd = evalD(info[0])
   checkForError(ownerd)
   let ownero = extractObject(ownerd)
-  result.owner = ownero
+  res.owner = ownero
 
   let permsd = evalD(info[1])
   checkForError(permsd)
   checkType(permsd, dStr)
   let perms = permsd.strVal
-  result.perms = perms
+  res.perms = perms
 
   if info.len == 3:
     let newNamed = evalD(info[2])
     checkForError(newNamed)
     checkType(newNamed, dStr)
     let newName = newNamed.strVal
-    result.newName = newName
+    res.newName = newName
 
-  result
+  res
 
 template objSpecFromData(ospd: MData): ObjSpec =
   let specd = evalD(ospd)
