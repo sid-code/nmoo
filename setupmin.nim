@@ -39,7 +39,7 @@ var room = genericRoom.createChild()
 world.add(room)
 room.setPropR("name", "a room")
 
-var genericPlayer = genericThing.createChild()
+var genericPlayer = genericContainer.createChild()
 world.add(genericPlayer)
 genericPlayer.setPropR("name", "generic player")
 
@@ -63,7 +63,7 @@ var eval = newVerb(
   prepSpec = pNone,
   ioSpec = oNone
 )
-eval.setCode("(try (echo \"=> \" (eval dobjstr)) (echo error))")
+eval.setCode("""(eval (cat "(try (echo \"=> \" " dobjstr ") (echo \"eval error: \" error))"))""")
 world.verbObj.verbs.add(eval)
 player.level = 0
 
