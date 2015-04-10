@@ -165,6 +165,9 @@ type
     restartTime*: int
     tickCount*: int
 
+    callback*: TaskCallbackProc
+
+  TaskCallbackProc* = proc(task: Task, top: MData)
   InstructionProc* = proc(task: Task, operand: MData)
   CpOutput* = tuple[entry: int, code: seq[Instruction]]
 
