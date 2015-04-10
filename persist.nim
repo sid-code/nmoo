@@ -1,4 +1,4 @@
-import types, objects, verbs, scripting, os, sequtils, strutils
+import types, objects, verbs, scripting, os, sequtils, strutils, marshal
 
 # object format:
 #
@@ -103,6 +103,19 @@ proc dumpObject*(obj: MObject): string =
   for verb in obj.verbs:
     result.add(dumpVerb(verb))
     result.addLine(".")
+
+proc dumpTask(task: Task): string =
+  result = ""
+  let owner = task.owner
+  let caller = task.caller
+
+  task.owner = nil
+  task.caller = nil
+  task.world = nil
+
+  result.addLine($$task)
+  result.addLine($owner.getID())
+  result.addLine($caller.getID())
 
 proc readNum(stream: File): int =
   let line = stream.readLine().strip()
@@ -215,6 +228,16 @@ proc readObject(world: World, stream: File) =
 
   obj.world = world
 
+proc readTask(world: World, stream: File) =
+  let task = to[Task](stream.readLine())
+  task.owner = readObjectID(world, stream)
+  task.caller = readObjectID(world, stream)
+  world.tasks.add(task)
+
+proc readExtras(world: World, stream: File) =
+  let ctr = readNum(stream)
+  world.taskIDCounter = ctr
+
 proc getWorldDir*(name: string): string =
   "worlds" / name
 
@@ -224,35 +247,62 @@ proc getObjectDir*(name: string): string =
 proc getObjectFile(worldName: string, id: int): string =
   getObjectDir(worldName) / $id
 
+proc getTaskDir(name: string): string =
+  getWorldDir(name) / "tasks"
+
+proc getTaskFile(name: string, id: int): string =
+  getTaskDir(name) / $id
+
+proc getExtrasFile(name: string): string =
+  getWorldDir(name) / "extras"
+
 proc persist*(world: World, obj: MObject) =
   let fileName = getObjectFile(world.name, obj.getID().int)
-  if not existsDir(getWorldDir(world.name)):
-    return
-
   let file = open(fileName, fmWrite)
-
   file.write(dumpObject(obj))
+  file.close()
 
+proc persist*(world: World, task: Task) =
+  let fileName = getTaskFile(world.name, task.id)
+  let file = open(fileName, fmWrite)
+  file.write(dumpTask(task))
+  file.close()
+
+proc persistExtras(world: World) =
+  let fileName = getExtrasFile(world.name)
+  let file = open(fileName, fmWrite)
+  file.write($world.taskIDCounter)
   file.close()
 
 proc persist*(world: World) =
   if existsDir(getWorldDir(world.name)):
+    world.persistExtras()
+
     createDir(getObjectDir(world.name))
     for obj in world.getObjects()[]:
       if obj != nil:
         world.persist(obj)
-
-    # TODO: persist tasks
+    createDir(getTaskDir(world.name))
+    for task in world.tasks:
+      world.persist(task)
 
 proc loadWorld*(name: string): World =
   result = createWorld(name)
   let dir = getObjectDir(name)
   var objs = result.getObjects()
   var maxid = 0
-  for file in walkFiles(dir / "*"):
+
+  let extrasFileName = getExtrasFile(name)
+  let extrasFile = open(extrasFileName, fmRead)
+
+  readExtras(result, extrasFile)
+
+  extrasFile.close()
+
+  for fileName in walkFiles(dir / "*"):
     let
       obj = blankObject()
-      (p, fname) = splitPath(file)
+      (p, fname) = splitPath(fileName)
       id = parseInt(fname)
 
     if id > maxid:
@@ -268,10 +318,19 @@ proc loadWorld*(name: string): World =
 
   setLen(objs[], maxid + 1)
 
-  for file in walkFiles(dir / "*"):
-    let fh = open(file, fmRead)
-    readObject(result, fh)
-    fh.close()
+  for fileName in walkFiles(dir / "*"):
+    let file = open(fileName, fmRead)
+    readObject(result, file)
+    file.close()
+
+  let taskdir = getTaskDir(name)
+  for fileName in walkFiles(taskdir / "*"):
+    let file = open(fileName, fmRead)
+    readTask(result, file)
+    file.close()
+
+    # tasks are ephemeral
+    removeFile(fileName)
 
   result.verbObj = objs[0]
 
