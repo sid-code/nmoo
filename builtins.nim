@@ -724,6 +724,8 @@ defBuiltin "create":
   newObj.owner = newOwner
   # TODO: some way to keep track of an object's owner objects
 
+  world.persist(newObj)
+
   return newObj.md
 
 # (try (what) (except) (finally))
