@@ -114,10 +114,10 @@ type
     operand*: MData
 
   InstructionType* = enum
-    inPUSH, inCALL, inACALL, inLABEL, inRET, inJ0, inJN0, inJMP,
+    inPUSH, inCALL, inACALL, inLABEL, inRET, inJ0, inJN0, inJMP, inPOP,
     inLPUSH, # strictly for labels - gets replaced by the renderer
     inSTO, inGET, inGGET, inCLIST,
-    inPOPL, inPUSHL, inLEN, inSWAP, inSWAP3, inSPLAT,
+    inPOPL, inPUSHL, inLEN, inSWAP, inSWAP3, inREV,
     inMENV, inGENV,
     inTRY, inETRY
     inHALT
