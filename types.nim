@@ -137,7 +137,7 @@ type
 
   SpecialProc* = proc(compiler: MCompiler, args: seq[MData])
 
-  CompilerError* = object of Exception
+  MCompileError* = object of Exception
 
   VSymTable* = TableRef[int, MData]
   Frame* = ref object
