@@ -9,7 +9,9 @@ proc getLocation*(obj: MObject): MObject
 proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]]
 proc getPropVal*(obj: MObject, name: string): MData
 proc setProp*(obj: MObject, name: string, newVal: MData): MProperty
-proc addTask*(world: World, owner, caller: MObject, symtable: SymbolTable, code: CpOutput)
+proc addTask*(world: World, owner, caller: MObject,
+              symtable: SymbolTable, code: CpOutput,
+              callback: TaskCallbackProc = nil)
 
 ## Permissions handling
 
@@ -308,7 +310,26 @@ proc createChild*(parent: MObject): MObject =
 
 import tasks
 
-proc addTask*(world: World, owner, caller: MObject, symtable: SymbolTable, code: CpOutput) =
-  let newTask = task(code, world, owner, caller, symtable)
+proc tick*(world: World) =
+  for idx, task in world.tasks:
+    task.step()
+    if task.done:
+      system.delete(world.tasks, idx)
+
+proc addTask*(world: World, owner, caller: MObject,
+              symtable: SymbolTable, code: CpOutput,
+              callback: TaskCallbackProc = nil) =
+
+  let newTask = task(
+    id = world.taskIDCounter,
+    compiled = code,
+    world = world,
+    owner = owner,
+    caller = caller,
+    globals = symtable,
+    callback = callback)
+  world.taskIDCounter += 1
+
   world.tasks.add(newTask)
 
+proc numTasks*(world: World): int = world.tasks.len
