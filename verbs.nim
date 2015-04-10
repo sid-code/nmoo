@@ -219,10 +219,12 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
       if obj.canExecute(v):
         yield (o, v)
 
-proc call(verb: MVerb, world: var World, caller: MObject, symtable: SymbolTable): MData =
-  world.addTask(verb.owner, caller, symtable, verb.compiled)
+proc call(verb: MVerb, world: World, caller: MObject,
+          symtable: SymbolTable, callback: TaskCallbackProc = nil) =
+  world.addTask(verb.owner, caller, symtable, verb.compiled, callback)
 
-proc verbCallRaw*(owner: MObject, verb: MVerb, caller: MObject, args: seq[MData]): MData =
+proc verbCallRaw*(owner: MObject, verb: MVerb, caller: MObject,
+                  args: seq[MData], callback: TaskCallbackProc = nil) =
   var
     world = caller.getWorld()
     symtable = initSymbolTable()
@@ -232,23 +234,24 @@ proc verbCallRaw*(owner: MObject, verb: MVerb, caller: MObject, args: seq[MData]
   symtable["caller"] = caller.md
   symtable["args"] = args.md
   symtable["self"] = owner.md
-  return verb.call(world, caller, symtable)
 
+  verb.call(world, caller, symtable, callback)
 
-proc verbCall*(owner: MObject, name: string, caller: MObject, args: seq[MData]): MData =
+proc verbCall*(owner: MObject, name: string, caller: MObject,
+               args: seq[MData], callback: TaskCallbackProc = nil): bool =
 
   for v in matchingVerbs(owner, name):
     if caller.canExecute(v):
-      return owner.verbCallRaw(v, caller, args)
-
-  return nilD
+      owner.verbCallRaw(v, caller, args, callback)
+      return true
+  return false
 
 proc setCode*(verb: MVerb, newCode: string) =
   verb.code = newCode
-  verb.compiled = compileCode(newCode).render
+  let compiler = compileCode(newCode)
+  verb.compiled = compiler.render
 
 proc handleCommand*(obj: MObject, command: string): MData =
-
   let
     parsed = parseCommand(command)
     verb = parsed.verb
@@ -335,10 +338,13 @@ proc handleCommand*(obj: MObject, command: string): MData =
       else:
         continue
 
-    let res = v.call(world, obj, symtable)
-    if res.isType(dErr):
-      obj.send($res)
-    return res
+    proc callback(task: Task, res: MData) =
+      if res.isType(dErr):
+        obj.send("Error while executing $1:$2 - $3" %
+          [o.toObjStr(), verb, $res])
+
+    v.call(world, obj, symtable, callback)
+    return
 
   obj.send("Sorry, I couldn't understand that")
   return nilD
