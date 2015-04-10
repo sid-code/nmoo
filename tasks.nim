@@ -1,5 +1,12 @@
-import types, compile, scripting, builtins, tables, hashes, strutils
+import types, compile, scripting, tables, hashes, strutils
+from algorithm import reversed
 ## VM (Task)
+
+# Some procs that builtins.nim needs
+proc suspend*(task: Task)
+proc resume*(task: Task)
+
+import builtins
 
 proc hash(itype: InstructionType): auto = ord(itype).hash
 
@@ -29,13 +36,16 @@ proc doError(task: Task, error: MData) =
   # unwind the stack
   while task.frames.len > 0:
     let tries = task.curFrame().tries
-
+    
     if tries.len == 0:
       task.popFrame()
       continue
 
     let top = tries[tries.len - 1]
+
     task.pc = top
+    task.spush(error)
+
     return
 
   task.spush(error)
@@ -48,6 +58,13 @@ template impl(itype: InstructionType, body: stmt) {.immediate, dirty.} =
   instImpls[itype] =
     proc(task: Task, operand: MData) =
       body
+
+proc top(task: Task): MData =
+  let size = task.stack.len
+  if size == 0:
+    return nilD
+  else:
+    return task.stack[size - 1]
 
 # Implementation of instructions
 #
@@ -66,6 +83,9 @@ impl inSTO:
 
 impl inPUSH:
   task.spush(operand)
+
+impl inPOP:
+  discard task.spop()
 
 impl inLABEL:
   discard #this is a dummy instruction
@@ -88,9 +108,11 @@ impl inJMP:
 
 impl inGGET:
   let name = operand.symVal
-  let value = task.globals[name]
-
-  task.spush(value)
+  if task.globals.hasKey(name):
+    let value = task.globals[name]
+    task.spush(value)
+  else:
+    task.doError(E_BUILTIN.md("unbound symbol '$1'" % name))
 
 impl inCLIST:
   let size = operand.intVal
@@ -125,18 +147,26 @@ impl inCALL:
     # It's a builtin call
     let builtinName = what.symVal
 
-    # builtinName is guaranteed to hold a valid builtin
-    let bproc = scripting.builtins[builtinName]
-    let args = task.collect(numArgs)
+    if scripting.builtins.hasKey(builtinName):
+      let bproc = scripting.builtins[builtinName]
+      let args = task.collect(numArgs)
 
-    # we pass in task.globals as the symtable because some builtins
-    # ask for "caller" etc
-    let res = bproc(args, task.world, task.owner, task.caller, task.globals)
+      # we pass in task.globals as the symtable because some builtins
+      # ask for "caller" etc
+      let res = bproc(
+        args = args,
+        world = task.world,
+        caller = task.caller,
+        owner = task.owner,
+        symtable = task.globals,
+        task = task)
 
-    if res.isType(dErr):
-      task.doError(res)
+      if res.isType(dErr):
+        task.doError(res)
+      else:
+        task.spush(res)
     else:
-      task.spush(res)
+      task.doError(E_BUILTIN.md("unknown builtin '$1'" % builtinName))
 
   else:
     raise newException(Exception, "cannot call '$1'" % [$what])
@@ -153,6 +183,52 @@ impl inACALL:
   task.spush(what)
   instImpls[inCALL](task, args.len.md)
 
+# extremely niche instruction, used for
+# reversing lists by the map instruction
+impl inREV:
+  var list = task.spop().listVal
+  task.spush(list.reversed().md)
+
+impl inPOPL:
+  var list = task.spop().listVal
+  let last =
+    if list.len == 0:
+      nilD
+    else:
+      list.pop()
+
+  task.spush(list.md)
+  task.spush(last)
+
+impl inPUSHL:
+  let newVal = task.spop()
+  var list = task.spop().listVal
+
+  list.add(newVal)
+  task.spush(list.md)
+
+impl inLEN:
+  var list = task.top().listVal
+  task.spush(list.len.md)
+
+impl inSWAP:
+  let
+    a = task.spop()
+    b = task.spop()
+
+  task.spush(a)
+  task.spush(b)
+
+impl inSWAP3:
+  let
+    a = task.spop()
+    b = task.spop()
+    c = task.spop()
+
+  task.spush(b)
+  task.spush(a)
+  task.spush(c)
+
 impl inTRY:
   let labels = operand.listVal
   task.curFrame().tries.add(labels[0].intVal)
@@ -163,24 +239,41 @@ impl inETRY:
 impl inHALT:
   task.done = true
 
+proc finish(task: Task) =
+  let callback = task.callback
+  if callback != nil:
+    callback(task, task.top())
+
+proc suspend*(task: Task) = task.suspended = true
+proc resume*(task: Task) = task.suspended = false
+
 proc step*(task: Task) =
+  if task.suspended: return
+
   let inst = task.code[task.pc]
   let itype = inst.itype
   let operand = inst.operand
 
   if instImpls.hasKey(itype):
+    GC_disable()
     instImpls[itype](task, operand)
+    GC_enable()
   else:
     raise newException(Exception, "instruction '$1' not implemented" % [$itype])
+
+  if task.done:
+    task.finish()
 
   task.pc += 1
   task.tickCount += 1
 
-proc task*(compiled: CpOutput, world: World, owner: MObject,
-                       caller: MObject, globals = initSymbolTable()): Task =
+proc task*(id: int, compiled: CpOutput, world: World, owner: MObject,
+           caller: MObject, globals = initSymbolTable(),
+           callback: TaskCallbackProc): Task =
   let st = newVSymTable()
   let (entry, code) = compiled
   var task = Task(
+    id: id,
     stack: @[],
     symtables: @[st],
     globals: globals,
@@ -196,7 +289,9 @@ proc task*(compiled: CpOutput, world: World, owner: MObject,
     done: false,
     suspended: false,
     restartTime: 0,
-    tickCount: 0
+    tickCount: 0,
+    
+    callback: callback
 
   )
 

@@ -36,7 +36,7 @@ proc `$`(ins: Instruction): string =
   else:
     return "$1\t$2" % [itypeStr, ins.operand.toCodeStr()]
 
-proc `$`(compiler: MCompiler): string =
+proc `$`*(compiler: MCompiler): string =
   var slines: seq[string] = @[]
   let all = compiler.subrs & compiler.real
   for ins in all:
@@ -50,7 +50,7 @@ proc `$`(compiler: MCompiler): string =
   return slines.join("\n")
 
 proc compileError(msg: string) =
-  raise newException(CompilerError, "Compiler error: " & msg)
+  raise newException(MCompileError, "Compiler error: " & msg)
 
 proc getSymbol(symtable: CSymTable, name: string): int =
   if symtable.hasKey(name):
@@ -60,17 +60,13 @@ proc getSymbol(symtable: CSymTable, name: string): int =
 
 proc getSymInst(symtable: CSymTable, name: string): Instruction =
   try:
-    let index = symtable.getSymbol(name)
-    return ins(inGET, index.md)
+    if builtinExists(name):
+      return ins(inPUSH, name.mds)
+    else:
+      let index = symtable.getSymbol(name)
+      return ins(inGET, index.md)
   except:
     return ins(inGGET, name.mds)
-
-proc augmentWith(c1, c2: MCompiler) =
-  c1.subrs.add(c2.subrs)
-  c1.real.add(c2.real)
-
-template addCode(what: expr) {.immediate.} =
-  augmentWith(codeGen(what, symtable, symgen))
 
 var specials = initTable[string, SpecialProc]()
 proc specialExists(name: string): bool =
@@ -100,8 +96,6 @@ proc codeGen*(compiler: MCompiler, code: seq[MData]) =
   if code.len == 0:
     compiler.real.add(ins(inCLIST, 0.md))
     return
-
-  var symtable = compiler.symtable
 
   let first = code[0]
 
@@ -206,7 +200,6 @@ defSpecial "lambda":
 
   for bound in bounds:
     let name = bound.symVal
-    let index = compiler.symtable.getSymbol(name)
     compiler.symtable.del(name)
   compiler.subrs.add(ins(inRET))
   compiler.subrs.add(addedSubrs)
@@ -224,18 +217,23 @@ defSpecial "map":
 
   let index = compiler.symtable.defSymbol("__mapfn")
   compiler.real.add(ins(inSTO, index.md))
-  compiler.real.add(ins(inCLIST, 0.md))
   compiler.codeGen(args[1])
+  compiler.real.add(ins(inREV))
+  compiler.real.add(ins(inCLIST, 0.md))
   let labelLocation = compiler.addLabel(real)
+  let afterLocation = compiler.symgen.genSym().mds
+  compiler.real.add(ins(inSWAP))
+  compiler.real.add(ins(inLEN))
+  compiler.real.add(ins(inJ0, afterLocation))
   compiler.real.add(ins(inPOPL))
   compiler.real.add(ins(inGET, index.md))
   compiler.real.add(ins(inCALL, 1.md))
   compiler.real.add(ins(inSWAP3))
   compiler.real.add(ins(inSWAP))
   compiler.real.add(ins(inPUSHL))
-  compiler.real.add(ins(inSWAP))
-  compiler.real.add(ins(inLEN))
-  compiler.real.add(ins(inJ0, labelLocation))
+  compiler.real.add(ins(inJMP, labelLocation))
+  compiler.real.add(ins(inLABEL, afterLocation))
+  compiler.real.add(ins(inPOP))
 
 defSpecial "call":
   verifyArgs("call", args, @[dNil, dNil])
@@ -277,6 +275,8 @@ defSpecial "try":
   compiler.codeGen(args[0])
   compiler.real.add(ins(inJMP, endLabel))
   compiler.real.add(ins(inLABEL, exceptLabel))
+  let errorIndex = compiler.symtable.defSymbol("error")
+  compiler.real.add(ins(inSTO, errorIndex.md))
   compiler.codeGen(args[1])
   compiler.real.add(ins(inLABEL, endLabel))
   compiler.real.add(ins(inETRY))
