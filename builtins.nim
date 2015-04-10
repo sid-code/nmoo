@@ -366,6 +366,7 @@ defBuiltin "getprop":
     return E_ARGS.md("getprop takes 2 arguments")
 
   let (obj, propObj) = getPropOn(args[0], args[1])
+  discard obj
 
   checkRead(owner, propObj)
 
@@ -434,6 +435,7 @@ defBuiltin "getpropinfo":
     return E_ARGS.md("getpropinfo takes 2 arguments")
 
   let (obj, propObj) = getPropOn(args[0], args[1])
+  discard obj
 
   checkRead(owner, propObj)
 
@@ -509,6 +511,7 @@ defBuiltin "getverbinfo":
     return E_ARGS.md("getverbinfo takes 2 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
+  discard obj
   checkRead(owner, verb)
 
   return extractInfo(verb)
@@ -536,6 +539,7 @@ defBuiltin "getverbargs":
     return E_ARGS.md("getverbargs takes 2 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
+  discard obj
   checkRead(owner, verb)
 
   return extractArgs(verb)
