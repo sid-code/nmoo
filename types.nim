@@ -12,6 +12,7 @@ type
     objects: seq[MObject]
     verbObj*: MObject # object that holds global verbs
     tasks*: seq[Task]
+    taskIDCounter*: int
 
   OutputProc = proc(obj: MObject, msg: string)
 
