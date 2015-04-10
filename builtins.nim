@@ -1,6 +1,7 @@
 # Here are all of the builtin functions that verbs can call
 
-import types, objects, verbs, scripting, persist, strutils, tables, sequtils
+import types, objects, verbs, scripting, persist, compile, tasks
+import strutils, tables, sequtils
 
 proc strToType(str: string): tuple[b: bool, t: MDataType] =
   case str.toLower():
