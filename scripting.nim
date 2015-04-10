@@ -199,21 +199,9 @@ proc eval*(exp: MData, world: World, caller, owner: MObject,
   let sym = listv[0].symVal
 
   if builtins.hasKey(sym):
-    return builtins[sym](listvr, world, caller, owner, symtable)
+    return builtins[sym](listvr, world, caller, owner, symtable, nil)
   else:
     return E_BUILTIN.md("undefined builtin: $1" % sym)
-
-template defBuiltin*(name: string, body: stmt) {.immediate, dirty.} =
-  scripting.builtins[name] =
-    proc (args: seq[MData], world: World, caller, owner: MObject,
-          symtable: SymbolTable): MData =
-      # to provide a simpler call to eval (note the optional args)
-      proc evalD(e: MData, w: World = world, c: MObject = caller,
-                 o: MObject = owner, st: SymbolTable = symtable): MData =
-        return e # Disabled
-        # eval(e, w, c, o, st)
-
-      body
 
 ## DISPLAYING PARSED CODE
 
@@ -228,3 +216,18 @@ proc toCodeStr*(parsed: MData): string =
     result.add(($parsed)[1 .. ^1])
   else:
     result.add($parsed)
+
+# defining builtins
+
+template defBuiltin*(name: string, body: stmt) {.immediate, dirty.} =
+  scripting.builtins[name] =
+    proc (args: seq[MData], world: World, caller, owner: MObject,
+          symtable: SymbolTable, task: Task = nil): MData =
+      # to provide a simpler call to eval (note the optional args)
+      proc evalD(e: MData, w: World = world, c: MObject = caller,
+                 o: MObject = owner, st: SymbolTable = symtable): MData =
+        return e # Disabled
+        # eval(e, w, c, o, st)
+
+      body
+
