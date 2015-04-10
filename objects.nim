@@ -80,11 +80,11 @@ proc setPropChildCopy*(obj: MObject, name: string, newVal: bool): bool =
     return false
 
 proc getPropVal*(obj: MObject, name: string): MData =
-  var result = obj.getProp(name)
-  if result == nil:
+  var res = obj.getProp(name)
+  if res == nil:
     nilD
   else:
-    result.val
+    res.val
 
 proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
   var p = obj.getProp(name)
@@ -164,16 +164,16 @@ proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]
   let world = obj.getWorld()
   if world == nil: return (false, @[])
 
-  var result: seq[MObject] = @[]
+  var res: seq[MObject] = @[]
 
   var (has, contents) = obj.getRawContents();
 
   if has:
     for o in contents:
       if o.isType(dObj):
-        result.add(world.byID(o.objVal))
+        res.add(world.byID(o.objVal))
 
-    return (true, result)
+    return (true, res)
   else:
     return (false, @[])
 
@@ -216,14 +216,12 @@ proc moveTo*(obj: MObject, newLoc: MObject): bool =
 
 proc getAliases*(obj: MObject): seq[string] =
   let aliases = obj.getPropVal("aliases")
-  var result: seq[string] = @[]
+  newSeq(result, 0)
 
   if aliases.isType(dList):
     for o in aliases.listVal:
       if o.isType(dStr):
         result.add(o.strVal)
-
-  return result
 
 proc getStrProp*(obj: MObject, name: string): string =
   let datum = obj.getPropVal(name)
