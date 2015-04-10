@@ -1,4 +1,4 @@
-import types, objects, querying, verbs, builtins, persist, rdstdin, strutils
+import types, objects, querying, verbs, builtins, persist, os, strutils
 
 let
   world = loadWorld("min")
@@ -7,8 +7,13 @@ let
 player.output = proc(obj: MObject, msg: string) =
   echo msg
 
-while true:
-  let command = readLineFromStdin("> ").strip()
+let command = commandLineParams().join(" ")
+discard player.handleCommand(command)
+while world.numTasks() > 0:
+  world.tick()
 
-  if command.len == 0: continue
-  discard player.handleCommand(command).isType(dNil)
+# while true:
+#   let command = readLineFromStdin("> ").strip()
+#
+#   if command.len == 0: continue
+#   discard player.handleCommand(command).isType(dNil)
