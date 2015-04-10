@@ -646,32 +646,46 @@ defBuiltin "move":
 
   let whatlist = @[what.md]
 
-  let acc = dest.verbCall("accept", caller, whatlist)
+  task.suspend()
 
-  if not acc.truthy:
-    return E_NACC.md("moving $1 to $2 refused" % [what.toObjStr(), dest.toObjStr()])
+  proc callback(innerTask: Task, acc: MData) =
+    task.resume()
+    if not acc.truthy:
+      caller.send($E_NACC.md("moving $1 to $2 refused" % [what.toObjStr(), dest.toObjStr()]))
 
-  # check for recursive move
-  var conductor = dest
+    # check for recursive move
+    var conductor = dest
 
-  while conductor != nil:
-    if conductor == what:
-      return E_RECMOVE.md("moving $1 to $2 is recursive" % [what.toObjStr(), dest.toObjStr()])
-    conductor = conductor.getLocation()
+    while conductor != nil:
+      if conductor == what:
+        caller.send($E_RECMOVE.md("moving $1 to $2 is recursive" % [what.toObjStr(), dest.toObjStr()]))
+      conductor = conductor.getLocation()
 
-  var moveSucceeded = what.moveTo(dest)
+    var moveSucceeded = what.moveTo(dest)
 
-  if not moveSucceeded:
-    return E_FMOVE.md("moving $1 to $2 failed (it could already be at $2)" %
-          [what.toObjStr(), dest.toObjStr()])
+    if not moveSucceeded:
+      caller.send($E_FMOVE.md("moving $1 to $2 failed (it could already be at $2)" %
+            [what.toObjStr(), dest.toObjStr()]))
 
-  let oldLoc = what.getLocation()
-  if oldLoc != nil:
-    discard oldLoc.verbCall("exitfunc", caller, whatlist)
+    let oldLoc = what.getLocation()
 
-  discard dest.verbCall("enterfunc", caller, whatlist)
-  world.persist(what)
-  world.persist(dest)
+    proc persistOldLoc(task: Task, res: MData) = world.persist(oldLoc)
+    proc persistDestAndWhat(task: Task, res: MData) =
+      world.persist(dest)
+      world.persist(what)
+
+    if oldLoc != nil:
+      if not oldLoc.verbCall("exitfunc", caller, whatlist, persistOldLoc):
+        # If there was no verb, we still need to call the callback
+        persistOldLoc(task, 1.md)
+
+    if not dest.verbCall("enterfunc", caller, whatlist, persistDestAndWhat):
+      # If there was no verb, we still need to call the callback
+      persistDestAndWhat(task, 1.md)
+
+  if not dest.verbCall("accept", caller, whatlist, callback):
+    # If there was no verb, we still need to call the callback
+    callback(task, 1.md)
   return what.md
 
 # (create parent new-owner)
