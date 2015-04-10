@@ -836,7 +836,7 @@ defBuiltin "verbcall":
 
   owner.checkExecute(verb)
 
-  return obj.verbCallRaw(verb, caller, cargs)
+  obj.verbCallRaw(verb, caller, cargs)
 
 # (map func list)
 defBuiltin "map":
