@@ -107,7 +107,8 @@ type
 
   SymbolTable* = Table[string, MData]
   BuiltinProc* = proc(args: seq[MData], world: World,
-                      caller, owner: MObject, symtable: SymbolTable): MData
+                      caller, owner: MObject, symtable: SymbolTable,
+                      task: Task): MData
 
   Instruction* = object
     itype*: InstructionType
