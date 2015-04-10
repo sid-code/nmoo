@@ -127,9 +127,9 @@ proc readData(stream: File): MData =
 
   let
     resultd = parser.parseList()
-    result = resultd.listVal
+    res = resultd.listVal
 
-  return result[0]
+  return res[0]
 
 proc readObjectID(world: World, stream: File, default: MObject = world.verbObj):
                   MObject =
