@@ -107,13 +107,15 @@ defBuiltin "eval":
   if evalStr[0] != '(':
     evalStr = '(' & evalStr & ')'
 
-  var parser = newParser(evalStr)
   try:
-    let parsed = parser.parseList()
-    return evalD(parsed, o = caller)
+    let compiler = compileCode(evalStr)
+    world.addTask(owner, caller, symtable, compiler.render, nil)
   except MParseError:
     let msg = getCurrentExceptionMsg()
     return E_PARSE.md("code failed to parse: $1" % msg)
+  except MCompileError:
+    let msg = getCurrentExceptionMsg()
+    return E_PARSE.md("compile error: $1" % msg)
 
 defBuiltin "slet": # single let
   if args.len != 2:
