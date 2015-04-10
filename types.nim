@@ -146,6 +146,8 @@ type
     tries*:      seq[int]
 
   Task* = ref object
+    id*: int
+
     stack*:     seq[MData]
     symtables*: seq[VSymTable]     ## All of the symbol tables
     globals*:   SymbolTable        ## Same type as used by parser
@@ -369,7 +371,7 @@ proc copy*(verb: MVerb): MVerb =
   )
 
 proc newWorld*: World =
-  World( objects: @[], verbObj: nil, tasks: @[] )
+  World( objects: @[], verbObj: nil, tasks: @[], taskIDCounter: 0 )
 
 proc getObjects*(world: World): ptr seq[MObject] =
   addr world.objects
