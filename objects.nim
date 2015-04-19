@@ -312,9 +312,16 @@ import tasks
 
 proc tick*(world: World) =
   for idx, task in world.tasks:
-    task.step()
-    if task.done:
+    try:
+      task.step()
+      if task.done:
+        system.delete(world.tasks, idx)
+    except:
+      let exception = getCurrentException()
+      task.done = true
       system.delete(world.tasks, idx)
+      echo exception.repr
+      raise exception
 
 proc addTask*(world: World, owner, caller: MObject,
               symtable: SymbolTable, code: CpOutput,
