@@ -28,7 +28,7 @@ proc processClient(client: AsyncSocket) {.async.} =
     discard client.send(msg & "\c\L")
 
   player.output = ssend
-  
+
   while true:
     var line = await client.recvLine()
     line = line.strip()
