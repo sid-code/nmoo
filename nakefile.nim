@@ -3,11 +3,22 @@ import nake
 const
   DefaultOptions = "--verbosity:0 --hint[XDeclaredButNotUsed]:off"
   MainDeps =
-    @["types", "objects", "scripting", "querying", "verbs", "builtins", "persist"]
+    @[
+      "types",
+      "objects",
+      "scripting",
+      "querying",
+      "verbs",
+      "builtins",
+      "persist",
+      "compile",
+      "tasks"
+    ]
   Exes = {
     "main": MainDeps,
     "test": MainDeps,
-    "setupmin": MainDeps
+    "setupmin": MainDeps,
+    "server": MainDeps
   }
 
 var forceRefresh = false
