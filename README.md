@@ -64,16 +64,24 @@ Run the tests:
 ```
 $ ./tests
 ```
+(Note: due to the recent switch from an interpreter to a compiler, hardly any of
+these will even pass.)
 
-(can also be done with `nake tests`)
-
-Run the main test program:
 ```
-$ ./main
+$ ./server
 ```
 
-In the main test program, you'll be greeted with a friendly `>` prompt. The only
-command built in is `eval` so you can mess around with the scripting language.
+You can connect to it with the details provided. The only command implemented is
+"eval", so you can mess around with the scripting language.
+
+Note: The server polls every 10ms and this is also the interval between each task
+tick (when an instruction is executed). This means that verbs will run ridiculously
+slowly. I'll change it later when I'm confident that the compiler and the VM are
+working properly.
+
+
+The main program is in a constant state of flux and therefore has no well defined
+behavior. Today it does this and tomorrow it might do something else. Don't use it.
 
 ## License
 
