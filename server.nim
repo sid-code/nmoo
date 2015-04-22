@@ -38,7 +38,7 @@ proc processClient(client: AsyncSocket) {.async.} =
 
 var server: AsyncSocket
 const
-  host = "192.168.0.8"
+  host = "localhost"
   port = 4444
 
 proc serve() {.async.} =
