@@ -1,5 +1,4 @@
 import types, compile, scripting, tables, hashes, strutils
-from algorithm import reversed
 ## VM (Task)
 
 # Some procs that builtins.nim needs
@@ -182,6 +181,12 @@ impl inACALL:
     task.spush(arg)
   task.spush(what)
   instImpls[inCALL](task, args.len.md)
+
+# algorithm.reversed is broken
+proc reversed[T](list: seq[T]): seq[T] =
+  newSeq(result, 0)
+  for i in countdown(list.len - 1, 0):
+    result.add(list[i])
 
 # extremely niche instruction, used for
 # reversing lists by the map instruction
