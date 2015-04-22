@@ -321,7 +321,10 @@ proc tick*(world: World) =
       task.done = true
       system.delete(world.tasks, idx)
       echo exception.repr
-      raise exception
+      task.caller.send("There was an internal error while executing a task you called.")
+      task.caller.send("Here is what it says: " & exception.msg)
+      task.caller.send("This error is due to a server bug.")
+      # raise exception
 
 proc addTask*(world: World, owner, caller: MObject,
               symtable: SymbolTable, code: CpOutput,
