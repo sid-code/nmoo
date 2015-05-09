@@ -4,6 +4,8 @@ import types, compile, scripting, tables, hashes, strutils
 # Some procs that builtins.nim needs
 proc suspend*(task: Task)
 proc resume*(task: Task)
+proc spush*(task: Task, what: MData) = task.stack.add(what)
+proc spop*(task: Task): MData = task.stack.pop()
 
 import builtins
 
@@ -23,8 +25,6 @@ proc popFrame(task: Task) =
   task.pc = task.curFrame().calledFrom
   discard task.frames.pop()
 
-proc spush(task: Task, what: MData) = task.stack.add(what)
-proc spop(task: Task): MData = task.stack.pop()
 proc collect(task: Task, num: int): seq[MData] =
   newSeq(result, 0)
   for i in 0 .. num - 1:

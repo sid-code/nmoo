@@ -836,7 +836,14 @@ defBuiltin "verbcall":
 
   owner.checkExecute(verb)
 
-  obj.verbCallRaw(verb, caller, cargs)
+  task.suspend()
+  obj.verbCallRaw(verb, caller, cargs, proc(innerTask: Task, top: MData) =
+    # throw away that nil (return of this proc)
+    discard task.spop()
+    task.spush(top)
+    # TODO: increment current task's quotas by the amount of ticks innerTask used
+    task.resume())
+  return nilD
 
 # (map func list)
 defBuiltin "map":
