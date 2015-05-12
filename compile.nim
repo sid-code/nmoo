@@ -283,3 +283,42 @@ defSpecial "try":
   if alen == 3:
     compiler.codeGen(args[2])
 
+defSpecial "cond":
+  let endLabel = compiler.symgen.genSym().mds
+
+  var branchLabels: seq[MData] = @[]
+  var hadElseClause = false
+
+  for arg in args:
+    if not arg.isType(dList):
+      compileError("cond: each argument to cond must be a list")
+    let larg = arg.listVal
+    if larg.len == 0 or larg.len > 2:
+      compileError("cond: each argument to cond must be of length 1 or 2")
+
+    if larg.len == 1:
+      hadElseClause = true
+      break
+
+    let condLabel = compiler.symgen.genSym().mds
+    branchLabels.add(condLabel)
+
+    compiler.codeGen(larg[0])
+    compiler.real.add(ins(inJN0, condLabel))
+
+  compiler.real.add(ins(inJMP, endLabel))
+
+  if not hadElseClause:
+    compileError("cond: else clause required")
+
+  for idx, arg in args:
+    let larg = arg.listVal
+    if larg.len == 1:
+      compiler.real.add(ins(inLABEL, endLabel))
+      compiler.codeGen(larg[0])
+      break
+
+    let condLabel = branchLabels[idx]
+    compiler.real.add(ins(inLABEL, condLabel))
+    compiler.codeGen(larg[1])
+    compiler.real.add(ins(inJMP, endLabel))
