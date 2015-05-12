@@ -314,8 +314,8 @@ defSpecial "cond":
   for idx, arg in args:
     let larg = arg.listVal
     if larg.len == 1:
-      compiler.real.add(ins(inLABEL, endLabel))
       compiler.codeGen(larg[0])
+      compiler.real.add(ins(inLABEL, endLabel))
       break
 
     let condLabel = branchLabels[idx]
