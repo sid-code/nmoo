@@ -260,9 +260,7 @@ proc step*(task: Task) =
   let operand = inst.operand
 
   if instImpls.hasKey(itype):
-    GC_disable()
     instImpls[itype](task, operand)
-    GC_enable()
   else:
     raise newException(Exception, "instruction '$1' not implemented" % [$itype])
 
