@@ -1,4 +1,4 @@
-import types, objects, querying, verbs, builtins, persist, os, strutils
+import types, objects, querying, verbs, builtins, persist, os, strutils, rdstdin
 
 let
   world = loadWorld("min")
@@ -7,13 +7,20 @@ let
 player.output = proc(obj: MObject, msg: string) =
   echo msg
 
-let command = commandLineParams().join(" ")
-discard player.handleCommand(command)
-while world.numTasks() > 0:
-  world.tick()
+proc myEscape(s: string): string =
+  s.replace("\"", "\\\"")
 
-# while true:
-#   let command = readLineFromStdin("> ").strip()
-#
-#   if command.len == 0: continue
-#   discard player.handleCommand(command).isType(dNil)
+while true:
+  var command = readLineFromStdin("> ").strip()
+
+  if command.contains("<>"):
+    discard os.execShellCmd("vim edit.tmp")
+    command = command.replace("<>", readFile("edit.tmp").myEscape())
+
+  if command.len == 0: continue
+
+  discard player.handleCommand(command).isType(dNil)
+  while world.numTasks() > 0:
+    world.tick()
+
+removeFile("edit.tmp")
