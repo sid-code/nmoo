@@ -285,6 +285,7 @@ defSpecial "try":
 
 defSpecial "cond":
   let endLabel = compiler.symgen.genSym().mds
+  let elseLabel = compiler.symgen.genSym().mds
 
   var branchLabels: seq[MData] = @[]
   var hadElseClause = false
@@ -306,7 +307,7 @@ defSpecial "cond":
     compiler.codeGen(larg[0])
     compiler.real.add(ins(inJN0, condLabel))
 
-  compiler.real.add(ins(inJMP, endLabel))
+  compiler.real.add(ins(inJMP, elseLabel))
 
   if not hadElseClause:
     compileError("cond: else clause required")
@@ -314,6 +315,7 @@ defSpecial "cond":
   for idx, arg in args:
     let larg = arg.listVal
     if larg.len == 1:
+      compiler.real.add(ins(inLABEL, elseLabel))
       compiler.codeGen(larg[0])
       compiler.real.add(ins(inLABEL, endLabel))
       break
