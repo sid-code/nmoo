@@ -626,6 +626,15 @@ defBuiltin "setverbcode":
     let msg = getCurrentExceptionMsg()
     return E_PARSE.md("code failed to parse: $1" % msg)
 
+defBuiltin "getverbcode":
+  if args.len != 2:
+    return E_ARGS.md("getverbcode takes 2 arguments")
+
+  let (obj, verb) = getVerbOn(args[0], args[1])
+  checkRead(owner, verb)
+
+  return verb.code.md
+
 # (move what dest)
 defBuiltin "move":
   if args.len != 2:
