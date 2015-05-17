@@ -173,7 +173,7 @@ proc readVerb(world: World, stream: File): MVerb =
     curLine = ""
 
   while curLine != ".":
-    code &= curLine
+    code &= curLine & "\n"
     curLine = stream.readLine()
 
   result.setCode(code)
