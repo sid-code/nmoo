@@ -173,7 +173,7 @@ type
 
 proc initSymbolTable*: SymbolTable = initTable[string, MData]()
 
-let nilD* = MData(dtype: dNil, nilVal: 1)
+const nilD* = MData(dtype: dNil, nilVal: 1)
 
 proc id*(x: int): ObjID = ObjID(x)
 proc getID*(obj: MObject): ObjID = obj.id
