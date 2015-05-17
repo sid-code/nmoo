@@ -81,7 +81,4 @@ try:
     world.tick()
     poll(10)
 finally:
-  let exception = getCurrentException()
   cleanUp()
-  echo exception.repr
-  raise exception
