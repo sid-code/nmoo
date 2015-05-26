@@ -739,6 +739,13 @@ defBuiltin "create":
 
   return newObj.md
 
+defBuiltin "parent":
+  if args.len != 1:
+    return E_ARGS.md("parent takes 1 argument")
+
+  let obj = extractObject(args[0])
+  return obj.parent.md
+
 # (try (what) (except) (finally))
 defBuiltin "try":
   let alen = args.len
