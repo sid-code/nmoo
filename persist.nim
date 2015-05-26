@@ -79,7 +79,7 @@ proc dumpProperty(prop: MProperty): string =
 proc dumpVerb(verb: MVerb): string =
   result = ""
   result.addLine(verb.names)
-  result.addLine(verb.code)
+  result.addLine(verb.code.strip())
   result.addLine(".")
   result.addLine(dumpObjID(verb.owner))
   result.addLine(dumpBool(verb.inherited))
