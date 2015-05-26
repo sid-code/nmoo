@@ -581,6 +581,8 @@ defBuiltin "addverb":
     owner = caller,
   )
 
+  verb.setCode("")
+
   for tup in obj.addVerbRec(verb):
     let (moddedObj, addedVerb) = tup
     discard addedVerb
