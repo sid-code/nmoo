@@ -1,4 +1,4 @@
-import types, objects, querying, verbs, builtins, persist, os, strutils, rdstdin
+import types, objects, querying, verbs, builtins, persist, os, strutils, rdstdin, re
 
 let
   world = loadWorld("min")
@@ -16,6 +16,30 @@ while true:
   if command.contains("<>"):
     discard os.execShellCmd("vim edit.tmp")
     command = command.replace("<>", readFile("edit.tmp").myEscape())
+
+  if command =~ re"vedit (.+?):(.*)":
+    try:
+      echo matches.repr
+      let objID = parseInt(matches[0][2..^1])
+      let verbname = matches[1]
+
+      let obj = world.getObjects()[objID]
+      let verb = obj.getVerb(verbname)
+      let code = verb.code
+
+      writeFile("edit.tmp", code)
+      discard os.execShellCmd("vim edit.tmp")
+      let newCode = readFile("edit.tmp")
+
+      verb.setCode(newCode)
+      echo "Succesfully edited verb '$1'" % verbname
+      world.persist()
+
+
+    except:
+      echo "There was a problem editing the verb."
+
+    continue
 
   if command.len == 0: continue
 
