@@ -1059,6 +1059,31 @@ defBuiltin "len":
   else:
     return E_ARGS.md("len takes either a string or a list")
 
+# (substr string start end)
+defBuiltin "substr":
+  if args.len != 3:
+    return E_ARGS.md("substr takes 3 argument")
+
+  let strd = args[0]
+  checkType(strd, dStr)
+  let str = strd.strVal
+
+  let startd = args[1]
+  checkType(startd, dInt)
+  let start = startd.intVal
+
+  let endd = args[2]
+  checkType(endd, dInt)
+  let endv = endd.intVal # end is a reserved word
+
+  if start < 0:
+    return E_ARGS.md("start index must be greater than 0")
+
+  if endv >= 0:
+    return str[start .. endv].md
+  else:
+    return str[start .. ^ -endv].md
+
 
 
 # (insert list index new-el)
