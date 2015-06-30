@@ -1002,11 +1002,22 @@ defBuiltin "head":
 
   let listd = evalD(args[0])
   checkForError(listd)
-  let list = listd.listVal
-  if list.len == 0:
-    return nilD
 
-  return list[0]
+  if listd.isType(dList):
+    let list = listd.listVal
+    if list.len == 0:
+      return @[].md
+
+    return list[0]
+  elif listd.isType(dStr):
+    let str = listd.strVal
+    if str.len == 0:
+      return "".md
+
+    return str[0 .. 0].md
+  else:
+    return E_ARGS.md("head takes either a string or a list")
+
 
 # (tail list)
 defBuiltin "tail":
@@ -1015,11 +1026,20 @@ defBuiltin "tail":
 
   let listd = evalD(args[0])
   checkForError(listd)
-  let list = listd.listVal
-  if list.len == 0:
-    return @[].md
+  if listd.isType(dList):
+    let list = listd.listVal
+    if list.len == 0:
+      return @[].md
 
-  return list[1 .. ^1].md
+    return list[1 .. ^1].md
+  elif listd.isType(dStr):
+    let str = listd.strVal
+    if str.len == 0:
+      return "".md
+
+    return str[1 .. ^1].md
+  else:
+    return E_ARGS.md("tail takes either a string or a list")
 
 # (len list)
 defBuiltin "len":
@@ -1028,9 +1048,18 @@ defBuiltin "len":
 
   let listd = evalD(args[0])
   checkForError(listd)
-  let list = listd.listVal
+  if listd.isType(dList):
+    let list = listd.listVal
 
-  return list.len.md
+    return list.len.md
+  elif listd.isType(dStr):
+    let str = listd.strVal
+
+    return str.len.md
+  else:
+    return E_ARGS.md("len takes either a string or a list")
+
+
 
 # (insert list index new-el)
 defBuiltin "insert":
