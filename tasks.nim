@@ -301,37 +301,3 @@ proc task*(id: int, compiled: CpOutput, world: World, owner: MObject,
   task.pushFrame(newVSymTable())
   return task
 
-when isMainModule:
-  # var parser = newParser("""
-  # (do (lambda (x y) (+ x y)) (lambda (z a b c) (lambda (w) (echo w z))))
-  # """)
-  # (let ((addThree
-  #           (let ((makeAdder
-  #                   (lambda (x)
-  #                     (lambda (y)
-  #                       (+ "hi" y)))))
-
-  #              (call makeAdder (3)))))
-
-  #     (call addThree (5)))
-  var parser = newParser("""
-  (let ((x (lambda () (+ "hi" 4))))
-    (try (call x ()) (4)))
-  """)
-
-  var compiler = MCompiler(
-    real: @[],
-    subrs: @[],
-    symtable: newCSymTable(),
-    symgen: newSymGen())
-  compiler.codeGen(parser.parseList())
-  var task = compiler.task(nil, nil, nil)
-  echo compiler
-  while not task.done:
-    #echo task.code[task.pc]
-    task.step()
-    #echo task.stack
-    #echo task.symtables
-    #echo task.pc
-  echo task.stack
-
