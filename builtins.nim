@@ -916,7 +916,11 @@ defBuiltin "reduce":
 
   return res
 
-template defArithmeticOperator(name: string, op: proc(x: float, y: float): float) {.immediate.} =
+type
+  BinFloatOp = proc(x: float, y: float): float
+  BinIntOp = proc(x: int, y: int): int
+
+template defArithmeticOperator(name: string, op: BinFloatOp) {.immediate.} =
   defBuiltin name:
     if args.len != 2:
       return E_ARGS.md("$1 takes 2 arguments" % name)
