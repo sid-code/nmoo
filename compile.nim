@@ -49,6 +49,9 @@ proc `$`*(compiler: MCompiler): string =
 
   return slines.join("\n")
 
+proc makeSymbol(compiler: MCompiler): MData =
+  compiler.symgen.genSym().mds
+
 proc compileError(msg: string) =
   raise newException(MCompileError, "Compiler error: " & msg)
 
@@ -133,7 +136,7 @@ template defSymbol(symtable: CSymTable, name: string): int =
   index
 
 template addLabel(compiler: MCompiler, section: expr): MData =
-  let name = compiler.symgen.genSym().mds
+  let name = compiler.makeSymbol()
 
   compiler.`section`.add(ins(inLABEL, name))
 
@@ -221,7 +224,7 @@ defSpecial "map":
   compiler.real.add(ins(inREV))
   compiler.real.add(ins(inCLIST, 0.md))
   let labelLocation = compiler.addLabel(real)
-  let afterLocation = compiler.symgen.genSym().mds
+  let afterLocation = compiler.makeSymbol()
   compiler.real.add(ins(inSWAP))
   compiler.real.add(ins(inLEN))
   compiler.real.add(ins(inJ0, afterLocation))
@@ -269,8 +272,8 @@ defSpecial "try":
   if alen != 2 and alen != 3:
     compileError("try: 2 or 3 arguments required")
 
-  let exceptLabel = compiler.symgen.genSym().mds
-  let endLabel = compiler.symgen.genSym().mds
+  let exceptLabel = compiler.makeSymbol()
+  let endLabel = compiler.makeSymbol()
   compiler.real.add(ins(inTRY, @[exceptLabel].md))
   compiler.codeGen(args[0])
   compiler.real.add(ins(inJMP, endLabel))
@@ -284,8 +287,8 @@ defSpecial "try":
     compiler.codeGen(args[2])
 
 defSpecial "cond":
-  let endLabel = compiler.symgen.genSym().mds
-  let elseLabel = compiler.symgen.genSym().mds
+  let endLabel = compiler.makeSymbol()
+  let elseLabel = compiler.makeSymbol()
 
   var branchLabels: seq[MData] = @[]
   var hadElseClause = false
@@ -301,7 +304,7 @@ defSpecial "cond":
       hadElseClause = true
       break
 
-    let condLabel = compiler.symgen.genSym().mds
+    let condLabel = compiler.makeSymbol()
     branchLabels.add(condLabel)
 
     compiler.codeGen(larg[0])
