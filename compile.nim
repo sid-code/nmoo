@@ -156,7 +156,7 @@ proc render*(compiler: MCompiler): CpOutput =
 
   for idx, inst in code:
     let op = inst.operand
-    if inst.itype == inJ0 or inst.itype == inJN0 or inst.itype == inJMP:
+    if inst.itype in {inJ0, inJN0, inJMP}:
       if op.isType(dSym):
         let label = op.symVal
         let jumpLoc = labels[label]
