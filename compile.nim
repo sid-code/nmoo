@@ -327,3 +327,23 @@ defSpecial "cond":
     compiler.real.add(ins(inLABEL, condLabel))
     compiler.codeGen(larg[1])
     compiler.real.add(ins(inJMP, endLabel))
+
+# FIXME: this is completely broken
+defSpecial "call-cc":
+  verifyArgs("call-cc", args, @[dNil])
+  let retLabel = compiler.makeSymbol()
+
+  compiler.codeGen(args[0])
+  compiler.real.add(ins(inPUSH, 1.md))
+  let continuation = compiler.addLabel(subrs)
+
+  compiler.subrs.add(ins(inSTO, 0.md))
+  compiler.subrs.add(ins(inGET, 0.md))
+  compiler.subrs.add(ins(inRETJ, retLabel))
+  compiler.real.add(ins(inLPUSH, continuation))
+  compiler.real.add(ins(inMENV))
+  compiler.real.add(ins(inPUSH, 1.md))
+  compiler.real.add(ins(inCLIST, 3.md))
+  compiler.real.add(ins(inCALL, 1.md))
+
+  compiler.real.add(ins(inLABEL, retLabel))
