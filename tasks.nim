@@ -173,6 +173,10 @@ impl inCALL:
 impl inRET:
   task.popFrame()
 
+impl inRETJ:
+  task.popFrame()
+  task.pc = operand.intVal
+
 impl inACALL:
   let what = task.spop()
   let argsd = task.spop()
