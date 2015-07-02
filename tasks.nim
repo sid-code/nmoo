@@ -35,7 +35,7 @@ proc doError(task: Task, error: MData) =
   # unwind the stack
   while task.frames.len > 0:
     let tries = task.curFrame().tries
-    
+
     if tries.len == 0:
       task.popFrame()
       continue
@@ -297,7 +297,7 @@ proc task*(id: int, compiled: CpOutput, world: World, owner: MObject,
     suspended: false,
     restartTime: 0,
     tickCount: 0,
-    
+
     callback: callback
 
   )
