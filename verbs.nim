@@ -269,6 +269,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
     world = obj.getWorld()
     symtable = newSymbolTable()
 
+  symtable["cmd"] = command.md
   symtable["caller"] = obj.md
   symtable["args"] = rest.map(proc (x: string): MData = x.md).md
   symtable["argstr"] = restStr.md
