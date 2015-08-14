@@ -25,6 +25,10 @@ while true:
 
       let obj = world.getObjects()[objID]
       let verb = obj.getVerb(verbname)
+      if verb == nil:
+        echo verbName
+        raise newException(Exception, "Verb doesn't exist")
+
       let code = verb.code
 
       writeFile("edit.tmp", code)
