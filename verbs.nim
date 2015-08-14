@@ -227,7 +227,7 @@ proc verbCallRaw*(owner: MObject, verb: MVerb, caller: MObject,
                   args: seq[MData], callback: TaskCallbackProc = nil) =
   var
     world = caller.getWorld()
-    symtable = initSymbolTable()
+    symtable = newSymbolTable()
 
   doAssert(world != nil)
 
@@ -267,7 +267,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
 
   var
     world = obj.getWorld()
-    symtable = initSymbolTable()
+    symtable = newSymbolTable()
 
   symtable["caller"] = obj.md
   symtable["args"] = rest.map(proc (x: string): MData = x.md).md

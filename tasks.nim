@@ -275,7 +275,7 @@ proc step*(task: Task) =
   task.tickCount += 1
 
 proc task*(id: int, compiled: CpOutput, world: World, owner: MObject,
-           caller: MObject, globals = initSymbolTable(),
+           caller: MObject, globals = newSymbolTable(),
            callback: TaskCallbackProc): Task =
   let st = newVSymTable()
   let (entry, code) = compiled

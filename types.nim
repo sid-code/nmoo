@@ -172,7 +172,7 @@ type
   InstructionProc* = proc(task: Task, operand: MData)
   CpOutput* = tuple[entry: int, code: seq[Instruction]]
 
-proc initSymbolTable*: SymbolTable = initTable[string, MData]()
+proc newSymbolTable*: SymbolTable = initTable[string, MData]()
 
 const nilD* = MData(dtype: dNil, nilVal: 1)
 

@@ -157,7 +157,7 @@ suite "evaluator":
 
     root.setPropR("name", "root")
 
-    var symtable = initSymbolTable()
+    var symtable = newSymbolTable()
     proc evalS(code: string, who: MObject = root): MData =
       var parser = newParser(code)
       let

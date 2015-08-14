@@ -176,7 +176,7 @@ proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
     return symtable[symVal]
 
 proc eval*(exp: MData, world: World, caller, owner: MObject,
-           symtable: SymbolTable = initSymbolTable()): MData =
+           symtable: SymbolTable = newSymbolTable()): MData =
   if not exp.isType(dList):
     if exp.isType(dSym):
       return resolveSymbol(exp.symVal, symtable)
