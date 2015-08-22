@@ -22,13 +22,6 @@ genericContainer.setPropR("contents", @[])
 var nowhere = genericContainer.createChild()
 world.add(nowhere)
 
-var genericThing = root.createChild()
-
-world.add(genericThing)
-genericThing.setPropR("name", "generic thing")
-
-genericContainer.changeParent(genericThing)
-
 var genericRoom = genericContainer.createChild()
 world.add(genericRoom)
 genericRoom.setPropR("name", "generic room")
