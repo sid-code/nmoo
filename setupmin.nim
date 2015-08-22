@@ -1,4 +1,5 @@
-import types, objects, querying, verbs, persist, builtins, rdstdin, strutils, os
+import types, objects, querying, verbs, persist, builtins
+import rdstdin, strutils, os, tables
 
 var world = createWorld("min")
 var root = blankObject()
@@ -67,5 +68,12 @@ eval.setCode("""(eval (cat "(try (echo \"=> \" " dobjstr ") (echo \"eval error: 
 world.verbObj.verbs.add(eval)
 player.level = 0
 
-createDir(getObjectDir("min"))
+world.globalSymtable["$verbobj"] = world.verbObj.md
+world.globalSymtable["$root"] = root.md
+world.globalSymtable["$nowhere"] = nowhere.md
+world.globalSymtable["$container"] = genericContainer.md
+world.globalSymtable["$player"] = genericPlayer.md
+world.globalSymtable["$room"] = genericRoom.md
+
+createDir(getObjectDir(name))
 world.persist()
