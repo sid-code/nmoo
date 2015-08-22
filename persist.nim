@@ -1,4 +1,5 @@
-import types, objects, verbs, scripting, os, sequtils, strutils, marshal
+import types, objects, verbs, scripting, os, sequtils, strutils, marshal, tables
+from scripting import toCodeStr
 
 # object format:
 #
@@ -234,9 +235,17 @@ proc readTask(world: World, stream: File) =
   task.caller = readObjectID(world, stream)
   world.tasks.add(task)
 
-proc readExtras(world: World, stream: File) =
+proc readObjectCount(world: World, stream: File) =
   let ctr = readNum(stream)
   world.taskIDCounter = ctr
+
+proc readGSymtable(world: World, stream: File) =
+  world.globalSymtable = newSymbolTable()
+  var key = stream.readLine()
+  while key != ".":
+    let val = stream.readData()
+    world.globalSymtable[key] = val
+    key = stream.readLine()
 
 proc getWorldDir*(name: string): string =
   "worlds" / name
@@ -253,8 +262,14 @@ proc getTaskDir(name: string): string =
 proc getTaskFile(name: string, id: int): string =
   getTaskDir(name) / $id
 
-proc getExtrasFile(name: string): string =
-  getWorldDir(name) / "extras"
+proc getExtraFile(name: string, fileName: string): string =
+  getWorldDir(name) / fileName
+
+proc getObjectCountFile(name: string): string =
+  getExtraFile(name, "objcount")
+
+proc getGSymtableFile(name: string): string =
+  getExtraFile(name, "gsymtable")
 
 proc persist*(world: World, obj: MObject) =
   let fileName = getObjectFile(world.name, obj.getID().int)
@@ -268,15 +283,26 @@ proc persist*(world: World, task: Task) =
   file.write(dumpTask(task))
   file.close()
 
-proc persistExtras(world: World) =
-  let fileName = getExtrasFile(world.name)
+proc persistObjectCount(world: World) =
+  let fileName = getObjectCountFile(world.name)
   let file = open(fileName, fmWrite)
-  file.write($world.taskIDCounter)
+  file.write($world.taskIDCounter & "\n")
+  file.close()
+
+proc persistGSymtable(world: World) =
+  let fileName = getGSymtableFile(world.name)
+  let file = open(fileName, fmWrite)
+  for key, val in world.globalSymtable.pairs:
+    file.write(key & "\n")
+    file.write(@[val].md.toCodeStr() & "\n")
+
+  file.write(".\n\n") # footer
   file.close()
 
 proc persist*(world: World) =
   if existsDir(getWorldDir(world.name)):
-    world.persistExtras()
+    world.persistObjectCount()
+    world.persistGSymtable()
 
     createDir(getObjectDir(world.name))
     for obj in world.getObjects()[]:
@@ -292,12 +318,13 @@ proc loadWorld*(name: string): World =
   var objs = result.getObjects()
   var maxid = 0
 
-  let extrasFileName = getExtrasFile(name)
-  let extrasFile = open(extrasFileName, fmRead)
+  let objcountFile = open(getObjectCountFile(name), fmRead)
+  readObjectCount(result, objcountFile)
+  objcountFile.close()
 
-  readExtras(result, extrasFile)
-
-  extrasFile.close()
+  let gsymtableFile = open(getGSymtableFile(name), fmRead)
+  readGSymtable(result, gsymtableFile)
+  gsymtableFile.close()
 
   for fileName in walkFiles(dir / "*"):
     let
