@@ -249,6 +249,9 @@ proc verbCall*(owner: MObject, name: string, caller: MObject,
 proc setCode*(verb: MVerb, newCode: string) =
   verb.code = newCode
   let compiler = compileCode(newCode)
+  when defined(debug):
+    echo verb.names
+    echo compiler
   verb.compiled = compiler.render
 
 proc handleCommand*(obj: MObject, command: string): MData =
