@@ -746,6 +746,24 @@ defBuiltin "parent":
   let obj = extractObject(args[0])
   return obj.parent.md
 
+defBuiltin "setparent":
+  if args.len != 2:
+    return E_ARGS.md("setparent takes 2 arguments")
+
+  var obj = extractObject(args[0])
+  let newParent = extractObject(args[1])
+
+  var conductor = newParent
+
+  # TODO: explain this condition
+  while conductor != conductor.parent:
+    conductor = conductor.parent
+    if conductor == obj:
+      return E_RECMOVE.md("parenting cannot create cycles of length greater than 1!")
+
+  obj.parent = newParent
+  return newParent.md
+
 # (try (what) (except) (finally))
 defBuiltin "try":
   let alen = args.len
