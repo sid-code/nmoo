@@ -1,4 +1,4 @@
-import types, objects, querying, verbs, builtins, persist, os, strutils, rdstdin, re
+import types, objects, querying, verbs, builtins, persist, os, strutils, rdstdin, re, tables
 
 let
   world = loadWorld("min")
@@ -20,10 +20,11 @@ while true:
   if command =~ re"vedit (.+?):(.*)":
     try:
       echo matches.repr
-      let objID = parseInt(matches[0][2..^1])
       let verbname = matches[1]
 
-      let obj = world.getObjects()[objID]
+      let objs = player.query(matches[0].strip(), global = true)
+      let obj = objs[0]
+
       let verb = obj.getVerb(verbname)
       if verb == nil:
         echo verbName
