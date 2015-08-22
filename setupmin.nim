@@ -49,7 +49,7 @@ player.setPropR("name", "the player")
 discard player.moveTo(room)
 
 var eval = newVerb(
-  names =  "eval",
+  names = "eval",
   owner = root,
 
   pubRead = true,
