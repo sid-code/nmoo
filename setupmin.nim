@@ -1,7 +1,10 @@
 import types, objects, querying, verbs, persist, builtins
 import rdstdin, strutils, os, tables
 
-var world = createWorld("min")
+let args = commandLineParams()
+let name = if args.len == 1: args[0] else: "min"
+
+var world = createWorld(name)
 var root = blankObject()
 root.level = 0
 world.add(root)
