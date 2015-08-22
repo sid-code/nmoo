@@ -267,7 +267,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
 
   var
     world = obj.getWorld()
-    symtable = newSymbolTable()
+    symtable = world.globalSymtable
 
   symtable["cmd"] = command.md
   symtable["caller"] = obj.md

@@ -13,6 +13,7 @@ type
     verbObj*: MObject # object that holds global verbs
     tasks*: seq[Task]
     taskIDCounter*: int
+    globalSymtable*: SymbolTable
 
   OutputProc = proc(obj: MObject, msg: string)
 
@@ -375,7 +376,7 @@ proc copy*(verb: MVerb): MVerb =
   )
 
 proc newWorld*: World =
-  World( objects: @[], verbObj: nil, tasks: @[], taskIDCounter: 0 )
+  World( objects: @[], verbObj: nil, tasks: @[], taskIDCounter: 0, globalSymtable: newSymbolTable() )
 
 proc getObjects*(world: World): ptr seq[MObject] =
   addr world.objects
