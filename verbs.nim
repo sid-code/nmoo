@@ -254,7 +254,14 @@ proc setCode*(verb: MVerb, newCode: string) =
     echo compiler
   verb.compiled = compiler.render
 
+proc preprocess(command: string): string =
+  if command[0] == '(':
+    return "eval " & command
+  return command
+
 proc handleCommand*(obj: MObject, command: string): MData =
+  let command = preprocess(command)
+
   let
     parsed = parseCommand(command)
     verb = parsed.verb
