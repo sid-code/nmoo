@@ -990,6 +990,14 @@ defBuiltin "=":
   else:
     return 0.md
 
+# tostring function
+# ($ obj) returns "#6", for example
+defBuiltin "$":
+  if args.len != 1:
+    return E_ARGS.md("$ takes 1 argument")
+
+  return args[0].toCodeStr().md
+
 # (cat str1 str2 ...)
 # (cat list1 list2 ...)
 # concats any number of strings or lists in a list
