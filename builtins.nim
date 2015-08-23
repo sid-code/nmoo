@@ -327,7 +327,7 @@ proc setArgs(verb: MVerb, args: VerbArgs) =
   verb.prepSpec = args.prepSpec
   verb.ioSpec = args.ioSpec
 
-template getPropOn(objd, propd: MData): tuple[o: Mobject, p: MProperty] =
+template getPropOn(objd, propd: MData, die = true): tuple[o: Mobject, p: MProperty] =
   let objd2 = evalD(objd)
   checkForError(objd2)
   let obj = extractObject(objd2)
@@ -340,11 +340,14 @@ template getPropOn(objd, propd: MData): tuple[o: Mobject, p: MProperty] =
     propObj = obj.getProp(propName)
 
   if propObj == nil:
-    return E_PROPNF.md("property $1 not found on $2" % [propName, $obj.toObjStr()])
+    if die:
+      return E_PROPNF.md("property $1 not found on $2" % [propName, $obj.toObjStr()])
+    else:
+      return nilD
 
   (obj, propObj)
 
-template getVerbOn(objd, verbdescd: MData): tuple[o: MObject, v: MVerb] =
+template getVerbOn(objd, verbdescd: MData, die = true): tuple[o: MObject, v: MVerb] =
   let objd2 = evalD(objd)
   checkForError(objd2)
   let obj = extractObject(objd2)
@@ -356,7 +359,10 @@ template getVerbOn(objd, verbdescd: MData): tuple[o: MObject, v: MVerb] =
 
   let verb = obj.getVerb(verbdesc)
   if verb == nil:
-    return E_VERBNF.md("verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
+    if die:
+      return E_VERBNF.md("verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
+    else:
+      return nilD
 
   (obj, verb)
 
@@ -863,7 +869,9 @@ defBuiltin "verbcall":
   if args.len != 3:
     return E_ARGS.md("verbcall takes 3 arguments")
 
-  let (obj, verb) = getVerbOn(args[0], args[1])
+  # the die = false prevents it from returning an error if the verb is not found.
+  # If the verb is not found, this builtin returns nilD.
+  let (obj, verb) = getVerbOn(args[0], args[1], die = false)
 
   let cargsd = evalD(args[2])
   checkForError(cargsd)
