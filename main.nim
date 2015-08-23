@@ -19,7 +19,6 @@ while true:
 
   if command =~ re"vedit (.+?):(.*)":
     try:
-      echo matches.repr
       let verbname = matches[1]
 
       let objs = player.query(matches[0].strip(), global = true)
@@ -27,7 +26,6 @@ while true:
 
       let verb = obj.getVerb(verbname)
       if verb == nil:
-        echo verbName
         raise newException(Exception, "Verb doesn't exist")
 
       let code = verb.code
