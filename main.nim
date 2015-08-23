@@ -14,7 +14,7 @@ while true:
   var command = readLineFromStdin("> ").strip()
 
   if command.contains("<>"):
-    discard os.execShellCmd("vim edit.tmp")
+    discard os.execShellCmd("vim edit.tmp -c 'set syntax=scheme'")
     command = command.replace("<>", readFile("edit.tmp").myEscape())
 
   if command =~ re"vedit (.+?):(.*)":
