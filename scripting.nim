@@ -73,31 +73,30 @@ proc lex*(code: string): seq[Token] =
 
 ## PARSER
 
-proc toData(token: Token): MData =
-  if token.ttype != ATOM_TOK: return nilD
-  result = nilD
-
+proc toData(image: string): MData =
   let
-    image = token.image
     leader = image[0]
     rest = image[1 .. ^1]
 
   case leader:
     of '#':
+      if image.contains(":"):
+        return image.mds
+
       try:
         let num = parseInt(rest)
-        result = num.ObjID.md
+        return num.ObjID.md
       except OverflowError:
         raise newException(MParseError, "object id overflow " & image)
       except ValueError:
         raise newException(MParseError, "invalid object " & image)
     of '\'':
-      result = rest.mds
+      return rest.mds
     of '"':
-      result = rest[0 .. ^2].md
+      return rest[0 .. ^2].md
     of Digits, '-', '.':
       if image == "-": # special case
-        result = "-".mds
+        return "-".mds
       else:
         try:
           if '.' in image or 'e' in image:
@@ -109,7 +108,12 @@ proc toData(token: Token): MData =
         except ValueError:
           raise newException(MParseError, "malformed number " & image)
     else:
-      result = image.mds
+      return image.mds
+
+
+proc toData(token: Token): MData =
+  if token.ttype != ATOM_TOK: return nilD
+  return token.image.toData()
 
 proc newParser*(code: string): MParser =
   var fixedCode = code.strip()
@@ -154,6 +158,19 @@ proc parseList*(parser: var MParser): MData =
       resultL.add(parser.consume(ATOM_TOK).toData())
     next = parser.peek()
   discard parser.consume(CPAREN_TOK)
+
+  # Shorthand syntax: (obj:verb arg1 arg2 ...) => (verbcall obj "verb" (arg1 arg2 ...))
+  if resultL.len > 0:
+    let first = resultL[0]
+    if first.isType(dSym):
+      let name = first.symVal
+      let split = name.split(":")
+      if split.len > 1:
+        if resultL.len > 1:
+          resultL[1..^1] = [resultL[1..^1].md]
+        resultL[0] = split[0].toData()
+        resultL.insert(split[1].md, 1)
+        resultL.insert("verbcall".mds, 0)
 
   return resultL.md
 
