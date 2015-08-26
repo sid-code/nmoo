@@ -328,6 +328,11 @@ defSpecial "cond":
     compiler.codeGen(larg[1])
     compiler.real.add(ins(inJMP, endLabel))
 
+defSpecial "if":
+  if args.len != 3:
+    compileError("if takes 3 arguments (condition, if-true, if-false)")
+  compiler.codeGen(@["cond".mds, @[args[0], args[1]].md, @[args[2]].md].md)
+
 # FIXME: this is completely broken
 defSpecial "call-cc":
   verifyArgs("call-cc", args, @[dNil])
