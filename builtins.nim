@@ -888,7 +888,7 @@ defBuiltin "verbcall":
 
   # the die = false prevents it from returning an error if the verb is not found.
   # If the verb is not found, this builtin returns nilD.
-  let (obj, verb) = getVerbOn(args[0], args[1], die = false)
+  let (obj, verb) = getVerbOn(args[0], args[1])
 
   let cargsd = evalD(args[2])
   checkForError(cargsd)
