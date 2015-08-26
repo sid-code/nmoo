@@ -75,6 +75,12 @@ proc genCall(fun: MData, args: seq[MData]): MData =
 
   return (resList & args).md
 
+proc toEchoString*(x: MData): string =
+  if x.isType(dStr):
+    x.strVal
+  else:
+    x.toCodeStr()
+
 defBuiltin "echo":
   var
     newArgs: seq[MData] = @[]
