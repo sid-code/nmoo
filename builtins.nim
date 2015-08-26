@@ -511,7 +511,7 @@ defBuiltin "verbs":
   checkRead(owner, obj)
 
   var res: seq[MData] = @[]
-  for v in obj.verbs:
+  for v in obj.allVerbs():
     res.add(v.names.md)
 
   return res.md

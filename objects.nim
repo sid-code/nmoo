@@ -265,7 +265,6 @@ proc changeParent*(obj: MObject, newParent: MObject) =
   if obj.parent != nil:
     # delete currently inherited properties
     obj.props.keepItIf(not it.inherited)
-    obj.verbs.keepItIf(not it.inherited)
 
     # remove this from old parent's children
     obj.parent.children.keepItIf(it != obj)
@@ -282,11 +281,6 @@ proc changeParent*(obj: MObject, newParent: MObject) =
 
 
     obj.props.add(pc)
-
-  for v in newParent.verbs:
-    var vc = v.copy
-    vc.inherited = true
-    obj.verbs.add(vc)
 
   obj.parent = newParent
   newParent.children.add(obj)

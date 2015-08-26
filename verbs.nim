@@ -169,8 +169,17 @@ proc matchesName(verb: MVerb, str: string): bool =
 
   return false
 
+proc allVerbsHelper(obj: MObject, collector: var seq[MVerb]) =
+  collector.add(obj.verbs)
+  if obj.parent != obj:
+    allVerbsHelper(obj.parent, collector)
+
+proc allVerbs*(obj: MObject): seq[MVerb] =
+  newSeq(result, 0)
+  allVerbsHelper(obj, result)
+
 iterator matchingVerbs(obj: MObject, name: string): MVerb =
-  for v in obj.verbs:
+  for v in obj.allVerbs():
     if v.matchesName(name):
       yield v
 
