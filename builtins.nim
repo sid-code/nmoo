@@ -595,10 +595,16 @@ defBuiltin "addverb":
 
   verb.setCode("")
 
-  for tup in obj.addVerbRec(verb):
-    let (moddedObj, addedVerb) = tup
-    discard addedVerb
-    world.persist(moddedObj)
+  discard obj.addVerb(verb)
+  world.persist(obj)
+
+  # The following is commented out because verbs are now checked
+  # recursively and no longer need to be added recursively.
+
+  # for tup in obj.addVerbRec(verb):
+  #   let (moddedObj, addedVerb) = tup
+  #   discard addedVerb
+  #   world.persist(moddedObj)
 
   return objd
 
@@ -612,10 +618,15 @@ defBuiltin "delverb":
   if verb == nil or verb.inherited:
     return E_VERBNF.md("$1 does not define a verb $2" % [obj.toObjStr, $args[1]])
 
-  for tup in obj.delVerbRec(verb):
-    let (moddedObj, deletedVerb) = tup
-    discard deletedVerb
-    world.persist(moddedObj)
+  discard obj.delVerb(verb)
+  world.persist(obj)
+
+  # See "addverb" for why the following is commented out
+
+  # for tup in obj.delVerbRec(verb):
+  #   let (moddedObj, deletedVerb) = tup
+  #   discard deletedVerb
+  #   world.persist(moddedObj)
 
   return obj.md
 
