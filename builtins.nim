@@ -100,7 +100,10 @@ defBuiltin "do":
     checkForError(res)
     newArgs.add(res)
 
-  return newArgs.md
+  if newArgs.len > 0:
+    return newArgs[^1]
+  else:
+    return @[].md
 
 defBuiltin "eval":
   if args.len != 1:
