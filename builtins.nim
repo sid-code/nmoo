@@ -886,8 +886,14 @@ defBuiltin "call":
 
 # (verbcall obj verb-desc (arg0 arg1 arg2 ...))
 defBuiltin "verbcall":
-  if args.len != 3:
-    return E_ARGS.md("verbcall takes 3 arguments")
+  var args = args
+  case args.len
+    of 2:
+      args.add(@[].md)
+    of 3:
+      discard
+    else:
+      return E_ARGS.md("verbcall takes 2 or 3 arguments")
 
   # the die = false prevents it from returning an error if the verb is not found.
   # If the verb is not found, this builtin returns nilD.
