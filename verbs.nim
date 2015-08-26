@@ -243,6 +243,7 @@ proc verbCallRaw*(owner: MObject, verb: MVerb, caller: MObject,
   symtable["caller"] = caller.md
   symtable["args"] = args.md
   symtable["self"] = owner.md
+  symtable["verb"] = verb.names.md
 
   verb.call(world, caller, symtable, callback)
 
@@ -289,6 +290,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
     symtable = world.globalSymtable
 
   symtable["cmd"] = command.md
+  symtable["verb"] = verb.md
   symtable["caller"] = obj.md
   symtable["args"] = rest.map(proc (x: string): MData = x.md).md
   symtable["argstr"] = restStr.md
