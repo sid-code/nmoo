@@ -78,9 +78,19 @@ proc toData(image: string): MData =
     leader = image[0]
     rest = image[1 .. ^1]
 
+  # Shorthand: obj.propname expands to (getprop obj "propname")
+  if '.' in image and leader notin {'"', '\''}:
+    let parts = image.split('.')
+    if parts.len > 1:
+      let obj = parts[0..^2].join(".").toData()
+      let propname = parts[^1].md
+      return @["getprop".mds, obj, propname].md
+    else:
+      raise newException(MParseError, "misplaced dot in " & image)
+
   case leader:
     of '#':
-      if image.contains(":"):
+      if ':' in image:
         return image.mds
 
       try:
