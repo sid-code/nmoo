@@ -164,12 +164,12 @@ proc parseList*(parser: var MParser): MData =
     let first = resultL[0]
     if first.isType(dSym):
       let name = first.symVal
-      let split = name.split(":")
-      if split.len > 1:
+      let parts = name.split(":")
+      if parts.len > 1:
         if resultL.len > 1:
           resultL[1..^1] = [resultL[1..^1].md]
-        resultL[0] = split[0].toData()
-        resultL.insert(split[1].md, 1)
+        resultL[0] = parts[0].toData()
+        resultL.insert(parts[1].md, 1)
         resultL.insert("verbcall".mds, 0)
 
   return resultL.md
