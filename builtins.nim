@@ -772,6 +772,13 @@ defBuiltin "parent":
   let obj = extractObject(args[0])
   return obj.parent.md
 
+defBuiltin "children":
+  if args.len != 1:
+    return E_ARGS.md("children takes 1 argument")
+
+  let obj = extractObject(args[0])
+  return obj.children.map(proc (x: MObject): MData = x.md).md
+
 defBuiltin "setparent":
   if args.len != 2:
     return E_ARGS.md("setparent takes 2 arguments")
