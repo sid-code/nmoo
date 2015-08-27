@@ -111,7 +111,7 @@ impl inGGET:
     let value = task.globals[name]
     task.spush(value)
   else:
-    task.doError(E_BUILTIN.md("unbound symbol '$1'" % name))
+    task.doError(E_UNBOUND.md("unbound symbol '$1'" % name))
 
 impl inCLIST:
   let size = operand.intVal
