@@ -185,7 +185,7 @@ proc builtinExists*(name: string): bool =
 
 proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
   if not symtable.hasKey(symVal):
-    if not builtins.hasKey(symVal):
+    if not builtinExists(symVal):
       return E_UNBOUND.md("unbound symbol '$1'" % symVal)
     else:
       return symVal.mds
