@@ -109,15 +109,17 @@ proc codeGen*(compiler: MCompiler, code: seq[MData]) =
         args = code[1 .. ^1]
         prok = compile.specials[name]
       prok(compiler, args)
-    else:
+      return
+    elif builtinExists(name):
       for arg in code[1 .. ^1]:
         compiler.codeGen(arg)
       compiler.real.add(ins(inPUSH, first))
       compiler.real.add(ins(inCALL, (code.len - 1).md))
-  else:
-    for data in code:
-      compiler.codeGen(data)
-    compiler.real.add(ins(inCLIST, code.len.md))
+      return
+
+  for data in code:
+    compiler.codeGen(data)
+  compiler.real.add(ins(inCLIST, code.len.md))
 
 proc codeGen*(compiler: MCompiler, data: MData) =
   if data.isType(dList):
