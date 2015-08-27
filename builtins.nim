@@ -1277,6 +1277,19 @@ defBuiltin "push":
   return list.md
 
 # (unshift list el)
+# adds to beginning
 defBuiltin "unshift":
-  # piggyback off insert
-  return evalD(@["insert".mds, args[0], args[1], 0.md].md)
+  if args.len != 2:
+    return E_ARGS.md("insert takes 2 arguments")
+
+  let listd = evalD(args[0])
+  checkForError(listd)
+  checkType(listd, dList)
+
+  let el = evalD(args[1])
+  checkForError(el)
+
+  var list = listd.listVal
+
+  list.insert(el, 0)
+  return list.md
