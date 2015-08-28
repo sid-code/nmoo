@@ -77,6 +77,7 @@ type
     dInt, dFloat, dStr, dSym, dErr, dList, dObj, dNil
 
   MData* = object
+    pos*: CodePosition
     case dtype*: MDataType
       of dInt: intVal*: int
       of dFloat: floatVal*: float
@@ -88,6 +89,8 @@ type
       of dList: listVal*: seq[MData]
       of dObj: objVal*: ObjID
       of dNil: nilVal*: int # dummy
+
+  CodePosition* = tuple[line: int, col: int]
 
   MError* = enum
     E_NONE,
@@ -109,7 +112,7 @@ type
   SymbolTable* = Table[string, MData]
   BuiltinProc* = proc(args: seq[MData], world: World,
                       caller, owner: MObject, symtable: SymbolTable,
-                      task: Task): MData
+                      pos: CodePosition, task: Task): MData
 
   Instruction* = object
     itype*: InstructionType

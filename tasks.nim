@@ -157,6 +157,7 @@ impl inCALL:
         world = task.world,
         caller = task.caller,
         owner = task.owner,
+        pos = what.pos,
         symtable = task.globals,
         task = task)
 

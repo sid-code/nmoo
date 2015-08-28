@@ -10,6 +10,7 @@ type
   Token = object
     ttype: TokenType
     image: string
+    pos: CodePosition
 
   MParseError* = object of Exception
 
@@ -20,11 +21,19 @@ type
 
 proc `$`*(token: Token): string =
   token.image
+
+proc nextCol(pos: var CodePosition) =
+  pos.col += 1
+
+proc nextLine(pos: var CodePosition) =
+  pos.line += 1
+  pos.col = 1
+
 ## LEXER
 
 template addtoken {.immediate.} =
   result.add(curToken)
-  curToken = Token(ttype: ATOM_TOK, image: "")
+  curToken = Token(ttype: ATOM_TOK, image: "", pos: pos)
 
 template addword {.immediate.} =
   if curWord.len > 0:
@@ -41,7 +50,10 @@ proc lex*(code: string): seq[Token] =
     strMode = false
     skipNext = false
 
+    pos: CodePosition = (1, 1)
+
   for idx, c in code & " ":
+    pos.nextCol()
     if strMode:
       if c == '"' and not skipNext:
         curWord &= "\""
@@ -55,6 +67,8 @@ proc lex*(code: string): seq[Token] =
     else:
       if c in Whitespace:
         addword()
+        if c & "" == "\n": # why nim
+          pos.nextLine()
       elif c == '(':
         addword()
         curToken.ttype = OPAREN_TOK
@@ -123,7 +137,9 @@ proc toData(image: string): MData =
 
 proc toData(token: Token): MData =
   if token.ttype != ATOM_TOK: return nilD
-  return token.image.toData()
+  var data = token.image.toData()
+  data.pos = token.pos
+  return data
 
 proc newParser*(code: string): MParser =
   var fixedCode = code.strip()
@@ -226,7 +242,7 @@ proc eval*(exp: MData, world: World, caller, owner: MObject,
   let sym = listv[0].symVal
 
   if builtins.hasKey(sym):
-    return builtins[sym](listvr, world, caller, owner, symtable, nil)
+    return builtins[sym](listvr, world, caller, owner, symtable, (0, 0), nil)
   else:
     return E_BUILTIN.md("undefined builtin: $1" % sym)
 
@@ -249,7 +265,7 @@ proc toCodeStr*(parsed: MData): string =
 template defBuiltin*(name: string, body: stmt) {.immediate, dirty.} =
   scripting.builtins[name] =
     proc (args: seq[MData], world: World, caller, owner: MObject,
-          symtable: SymbolTable, task: Task = nil): MData =
+          symtable: SymbolTable, pos: CodePosition, task: Task = nil): MData =
       # to provide a simpler call to eval (note the optional args)
       proc evalD(e: MData, w: World = world, c: MObject = caller,
                  o: MObject = owner, st: SymbolTable = symtable): MData =

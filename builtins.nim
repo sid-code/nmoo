@@ -19,52 +19,56 @@ template checkForError(value: MData) {.immediate.} =
   #if value.isType(dErr):
   #  return value
 
+template runtimeError(error: MError, message: string) =
+  return error.md("line $#, col $#: $#" % [$pos.line, $pos.col, message])
+
 template checkType(value: MData, expected: MDataType, ifnot: MError = E_ARGS)
           {.immediate.} =
   if not value.isType(expected):
-    return ifnot.md("expected argument of type " & $expected & " instead got " & $value.dType)
+    runtimeError(ifnot,
+      "expected argument of type " & $expected & " instead got " & $value.dType)
 
 template extractObject(objd: MData): MObject {.immediate.} =
   checkType(objd, dObj)
   let obj = world.dataToObj(objd)
   if obj == nil:
-    return E_ARGS.md("invalid object " & $objd)
+    runtimeError(E_ARGS, "invalid object " & $objd)
 
   obj
 
 template checkOwn(obj, what: MObject) =
   if not obj.owns(what):
-    return E_PERM.md(obj.toObjStr() & " doesn't own " & what.toObjStr())
+    runtimeError(E_PERM, obj.toObjStr() & " doesn't own " & what.toObjStr())
 
 template checkOwn(obj: MObject, prop: MProperty) =
   if not obj.owns(prop):
-    return E_PERM.md(obj.toObjStr() & " doesn't own " & prop.name)
+    runtimeError(E_PERM, obj.toObjStr() & " doesn't own " & prop.name)
 
 template checkOwn(obj: MObject, verb: MVerb) =
   if not obj.owns(verb):
-    return E_PERM.md(obj.toObjStr() & " doesn't own " & verb.name)
+    runtimeError(E_PERM, obj.toObjStr() & " doesn't own " & verb.name)
 
 template checkRead(obj, what: MObject) =
   if not obj.canRead(what):
-    return E_PERM.md(obj.toObjStr() & " cannot read " & what.toObjStr())
+    runtimeError(E_PERM, obj.toObjStr() & " cannot read " & what.toObjStr())
 template checkWrite(obj, what: MObject) =
   if not obj.canWrite(what):
-    return E_PERM.md(obj.toObjStr() & " cannot write " & what.toObjStr())
+    runtimeError(E_PERM, obj.toObjStr() & " cannot write " & what.toObjStr())
 template checkRead(obj: MObject, what: MProperty) =
   if not obj.canRead(what):
-    return E_PERM.md(obj.toObjStr() & " cannot read property: " & what.name)
+    runtimeError(E_PERM, obj.toObjStr() & " cannot read property: " & what.name)
 template checkWrite(obj: MObject, what: MProperty) =
   if not obj.canWrite(what):
-    return E_PERM.md(obj.toObjStr() & " cannot write property: " & what.name)
+    runtimeError(E_PERM, obj.toObjStr() & " cannot write property: " & what.name)
 template checkRead(obj: MObject, what: MVerb) =
   if not obj.canRead(what):
-    return E_PERM.md(obj.toObjStr() & " cannot read verb: " & what.names)
+    runtimeError(E_PERM, obj.toObjStr() & " cannot read verb: " & what.names)
 template checkWrite(obj: MObject, what: MVerb) =
   if not obj.canWrite(what):
-    return E_PERM.md(obj.toObjStr() & " cannot write verb: " & what.names)
+    runtimeError(E_PERM, obj.toObjStr() & " cannot write verb: " & what.names)
 template checkExecute(obj: MObject, what: MVerb) =
   if not obj.canExecute(verb):
-    return E_PERM.md(obj.toObjStr() & " cannot execute verb: " & what.names)
+    runtimeError(E_PERM, obj.toObjStr() & " cannot execute verb: " & what.names)
 
 proc genCall(fun: MData, args: seq[MData]): MData =
   var resList: seq[MData]
@@ -107,7 +111,7 @@ defBuiltin "do":
 
 defBuiltin "eval":
   if args.len != 1:
-    return E_ARGS.md("eval takes one argument")
+    runtimeError(E_ARGS, "eval takes one argument")
 
   let argd = evalD(args[0])
   checkForError(argd)
@@ -121,19 +125,19 @@ defBuiltin "eval":
     world.addTask(owner, caller, symtable, compiler.render, nil)
   except MParseError:
     let msg = getCurrentExceptionMsg()
-    return E_PARSE.md("code failed to parse: $1" % msg)
+    runtimeError(E_PARSE, "code failed to parse: $1" % msg)
   except MCompileError:
     let msg = getCurrentExceptionMsg()
-    return E_PARSE.md("compile error: $1" % msg)
+    runtimeError(E_PARSE, "compile error: $1" % msg)
 
 defBuiltin "slet": # single let
   if args.len != 2:
-    return E_ARGS.md("slet expects two arguments")
+    runtimeError(E_ARGS, "slet expects two arguments")
 
   let first = args[0]
   checkType(first, dList)
   if first.listVal.len != 2:
-    return E_ARGS.md("slet's first argument is a tuple (symbol value-to-bind)")
+    runtimeError(E_ARGS, "slet's first argument is a tuple (symbol value-to-bind)")
 
   let newStmt = @[ "let".mds, @[first].md, args[1] ].md
   return evalD(newStmt)
@@ -152,10 +156,10 @@ defBuiltin "let":
   let asmtList = args[0].listVal
   for asmt in asmtList:
     if not asmt.isType(dList):
-      return E_ARGS.md("let takes a list of assignments")
+      runtimeError(E_ARGS, "let takes a list of assignments")
     let pair = asmt.listVal
     if not pair.len == 2:
-      return E_ARGS.md("each assignment in the list must be a tuple (symbol value-to-bind)")
+      runtimeError(E_ARGS, "each assignment in the list must be a tuple (symbol value-to-bind)")
     checkType(pair[0], dSym)
 
     let
@@ -172,7 +176,7 @@ defBuiltin "cond":
     checkType(arg, dList)
     let larg = arg.listVal
     if larg.len == 0 or larg.len > 2:
-      return E_ARGS.md("each argument to cond must be of length 1 or 2")
+      runtimeError(E_ARGS, "each argument to cond must be of length 1 or 2")
 
     if larg.len == 1:
       return larg[0]
@@ -226,7 +230,7 @@ type
 
 template propInfoFromInput(info: seq[MData]): PropInfo =
   if info.len != 2 and info.len != 3:
-    return E_ARGS.md("property info must be a list of size 2 or 3")
+    runtimeError(E_ARGS, "property info must be a list of size 2 or 3")
 
   var res: PropInfo
 
@@ -252,7 +256,7 @@ template propInfoFromInput(info: seq[MData]): PropInfo =
 
 template verbInfoFromInput(info: seq[MData]): VerbInfo =
   if info.len != 2 and info.len != 3:
-    return E_ARGS.md("verb info must be a list of size 2 or 3")
+    runtimeError(E_ARGS, "verb info must be a list of size 2 or 3")
 
   var res: VerbInfo
 
@@ -285,7 +289,7 @@ template objSpecFromData(ospd: MData): ObjSpec =
     (success, spec) = strToObjSpec(str)
 
   if not success:
-    return E_ARGS.md("invalid object spec '$1'" % str)
+    runtimeError(E_ARGS, "invalid object spec '$1'" % str)
 
   spec
 
@@ -298,13 +302,13 @@ template prepSpecFromData(pspd: MData): PrepType =
     (success, spec) = strToPrepSpec(str)
 
   if not success:
-    return E_ARGS.md("invalid preposition spec '$1'" % str)
+    runtimeError(E_ARGS, "invalid preposition spec '$1'" % str)
 
   spec
 
 template verbArgsFromInput(info: seq[MData]): VerbArgs =
   if info.len != 3:
-    return E_ARGS.md("verb args must be a list of size 3")
+    runtimeError(E_ARGS, "verb args must be a list of size 3")
 
   var result: VerbArgs
   result.doSpec = objSpecFromData(info[0])
@@ -350,7 +354,7 @@ template getPropOn(objd, propd: MData, die = true): tuple[o: Mobject, p: MProper
 
   if propObj == nil:
     if die:
-      return E_PROPNF.md("property $1 not found on $2" % [propName, $obj.toObjStr()])
+      runtimeError(E_PROPNF, "property $1 not found on $2" % [propName, $obj.toObjStr()])
     else:
       return nilD
 
@@ -369,7 +373,7 @@ template getVerbOn(objd, verbdescd: MData, die = true): tuple[o: MObject, v: MVe
   let verb = obj.getVerb(verbdesc)
   if verb == nil:
     if die:
-      return E_VERBNF.md("verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
+      runtimeError(E_VERBNF, "verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
     else:
       return nilD
 
@@ -378,7 +382,7 @@ template getVerbOn(objd, verbdescd: MData, die = true): tuple[o: MObject, v: MVe
 # (getprop what propname)
 defBuiltin "getprop":
   if args.len != 2:
-    return E_ARGS.md("getprop takes 2 arguments")
+    runtimeError(E_ARGS, "getprop takes 2 arguments")
 
   let (obj, propObj) = getPropOn(args[0], args[1])
   discard obj
@@ -390,7 +394,7 @@ defBuiltin "getprop":
 # (setprop what propname newprop)
 defBuiltin "setprop":
   if args.len != 3:
-    return E_ARGS.md("setprop takes 3 arguments")
+    runtimeError(E_ARGS, "setprop takes 3 arguments")
 
   let objd = evalD(args[0])
   checkForError(objd)
@@ -429,12 +433,12 @@ defBuiltin "setprop":
 # TODO: write a test for this!
 defBuiltin "delprop":
   if args.len != 2:
-    return E_ARGS.md("delprop takes 2 arguments")
+    runtimeError(E_ARGS, "delprop takes 2 arguments")
 
   let (obj, prop) = getPropOn(args[0], args[1])
 
   if prop.inherited:
-    return E_PROPNF.md("$1 does not define a property $2" % [obj.toObjStr, $args[1]])
+    runtimeError(E_PROPNF, "$1 does not define a property $2" % [obj.toObjStr, $args[1]])
 
   for moddedObj, deletedProp in obj.delPropRec(prop).items:
     discard deletedProp
@@ -447,7 +451,7 @@ defBuiltin "delprop":
 # perms is [rwc]
 defBuiltin "getpropinfo":
   if args.len != 2:
-    return E_ARGS.md("getpropinfo takes 2 arguments")
+    runtimeError(E_ARGS, "getpropinfo takes 2 arguments")
 
   let (obj, propObj) = getPropOn(args[0], args[1])
   discard obj
@@ -463,7 +467,7 @@ defBuiltin "getpropinfo":
 # name for the property
 defBuiltin "setpropinfo":
   if args.len != 3:
-    return E_ARGS.md("setpropinfo takes 3 arguments")
+    runtimeError(E_ARGS, "setpropinfo takes 3 arguments")
 
   let (obj, propObj) = getPropOn(args[0], args[1])
 
@@ -487,7 +491,7 @@ defBuiltin "setpropinfo":
 # returns a list of obj's properties
 defBuiltin "props":
   if args.len != 1:
-    return E_ARGS.md("props takes 1 argument")
+    runtimeError(E_ARGS, "props takes 1 argument")
 
   let objd = evalD(args[0])
   checkForError(objd)
@@ -505,7 +509,7 @@ defBuiltin "props":
 # returns a list of obj's verbs' names
 defBuiltin "verbs":
   if args.len != 1:
-    return E_ARGS.md("verbs takes 1 argument")
+    runtimeError(E_ARGS, "verbs takes 1 argument")
 
   let objd = evalD(args[0])
   checkForError(objd)
@@ -523,7 +527,7 @@ defBuiltin "verbs":
 # (getverbinfo obj verb-desc)
 defBuiltin "getverbinfo":
   if args.len != 2:
-    return E_ARGS.md("getverbinfo takes 2 arguments")
+    runtimeError(E_ARGS, "getverbinfo takes 2 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
   discard obj
@@ -534,7 +538,7 @@ defBuiltin "getverbinfo":
 # (setverbinfo obj verb-desc newinfo)
 defBuiltin "setverbinfo":
   if args.len != 3:
-    return E_ARGS.md("setverbinfo takes 3 arguments")
+    runtimeError(E_ARGS, "setverbinfo takes 3 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
   checkWrite(owner, verb)
@@ -551,7 +555,7 @@ defBuiltin "setverbinfo":
 # (getverbargs obj verb-desc)
 defBuiltin "getverbargs":
   if args.len != 2:
-    return E_ARGS.md("getverbargs takes 2 arguments")
+    runtimeError(E_ARGS, "getverbargs takes 2 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
   discard obj
@@ -562,7 +566,7 @@ defBuiltin "getverbargs":
 # (setverbargs obj verb-desc (objspec prepspec objspec))
 defBuiltin "setverbargs":
   if args.len != 3:
-    return E_ARGS.md("setverbargs takes 3 arguments")
+    runtimeError(E_ARGS, "setverbargs takes 3 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
   checkWrite(owner, verb)
@@ -580,7 +584,7 @@ defBuiltin "setverbargs":
 # (addverb obj names)
 defBuiltin "addverb":
   if args.len != 2:
-    return E_ARGS.md("addverb takes 2 arguments")
+    runtimeError(E_ARGS, "addverb takes 2 arguments")
 
   let objd = evalD(args[0])
   checkForError(objd)
@@ -614,12 +618,12 @@ defBuiltin "addverb":
 # (delverb obj verb)
 defBuiltin "delverb":
   if args.len != 2:
-    return E_ARGS.md("delverb takes 2 arguments")
+    runtimeError(E_ARGS, "delverb takes 2 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
 
   if verb == nil or verb.inherited:
-    return E_VERBNF.md("$1 does not define a verb $2" % [obj.toObjStr, $args[1]])
+    runtimeError(E_VERBNF, "$1 does not define a verb $2" % [obj.toObjStr, $args[1]])
 
   discard obj.delVerb(verb)
   world.persist(obj)
@@ -637,7 +641,7 @@ defBuiltin "delverb":
 # (setverbcode obj verb-desc newcode)
 defBuiltin "setverbcode":
   if args.len != 3:
-    return E_ARGS.md("setverbcode takes 3 arguments")
+    runtimeError(E_ARGS, "setverbcode takes 3 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
   checkWrite(owner, verb)
@@ -652,11 +656,11 @@ defBuiltin "setverbcode":
     return nilD
   except MParseError:
     let msg = getCurrentExceptionMsg()
-    return E_PARSE.md("code failed to parse: $1" % msg)
+    runtimeError(E_PARSE, "code failed to parse: $1" % msg)
 
 defBuiltin "getverbcode":
   if args.len != 2:
-    return E_ARGS.md("getverbcode takes 2 arguments")
+    runtimeError(E_ARGS, "getverbcode takes 2 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
   checkRead(owner, verb)
@@ -666,7 +670,7 @@ defBuiltin "getverbcode":
 # (move what dest)
 defBuiltin "move":
   if args.len != 2:
-    return E_ARGS.md("move takes 2 arguments")
+    runtimeError(E_ARGS, "move takes 2 arguments")
 
   let
     whatd = evalD(args[0])
@@ -734,7 +738,7 @@ defBuiltin "move":
 defBuiltin "create":
   let alen = args.len
   if alen != 1 and alen != 2:
-    return E_ARGS.md("create takes 1 or 2 arguments")
+    runtimeError(E_ARGS, "create takes 1 or 2 arguments")
 
   let parent = extractObject(args[0])
 
@@ -743,12 +747,12 @@ defBuiltin "create":
     newOwner = extractObject(args[1])
 
     if newOwner != owner and not owner.isWizard():
-      return E_PERM.md("non-wizards can only set themselves as the owner of objects")
+      runtimeError(E_PERM, "non-wizards can only set themselves as the owner of objects")
   else:
     newOwner = owner
 
   if not parent.fertile and (owner.owns(parent) or owner.isWizard()):
-    return E_PERM.md("$1 is not fertile" % [parent.toObjStr()])
+    runtimeError(E_PERM, "$1 is not fertile" % [parent.toObjStr()])
 
   # TODO: Quotas
 
@@ -767,21 +771,21 @@ defBuiltin "create":
 
 defBuiltin "parent":
   if args.len != 1:
-    return E_ARGS.md("parent takes 1 argument")
+    runtimeError(E_ARGS, "parent takes 1 argument")
 
   let obj = extractObject(args[0])
   return obj.parent.md
 
 defBuiltin "children":
   if args.len != 1:
-    return E_ARGS.md("children takes 1 argument")
+    runtimeError(E_ARGS, "children takes 1 argument")
 
   let obj = extractObject(args[0])
   return obj.children.map(proc (x: MObject): MData = x.md).md
 
 defBuiltin "setparent":
   if args.len != 2:
-    return E_ARGS.md("setparent takes 2 arguments")
+    runtimeError(E_ARGS, "setparent takes 2 arguments")
 
   var obj = extractObject(args[0])
   let newParent = extractObject(args[1])
@@ -792,7 +796,7 @@ defBuiltin "setparent":
   while conductor != conductor.parent:
     conductor = conductor.parent
     if conductor == obj:
-      return E_RECMOVE.md("parenting cannot create cycles of length greater than 1!")
+      runtimeError(E_RECMOVE, "parenting cannot create cycles of length greater than 1!")
 
   obj.parent = newParent
   return newParent.md
@@ -801,7 +805,7 @@ defBuiltin "setparent":
 defBuiltin "try":
   let alen = args.len
   if not (alen == 2 or alen == 3):
-    return E_ARGS.md("try takes 2 or 3 arguments")
+    runtimeError(E_ARGS, "try takes 2 or 3 arguments")
 
   let tryClause = evalD(args[0])
 
@@ -822,7 +826,7 @@ defBuiltin "try":
 defBuiltin "lambda":
   let alen = args.len
   if alen < 2:
-    return E_ARGS.md("lambda takes 2 or more arguments")
+    runtimeError(E_ARGS, "lambda takes 2 or more arguments")
 
   if alen == 2:
     return (@["lambda".mds] & args).md
@@ -836,7 +840,7 @@ defBuiltin "lambda":
     numBound = boundl.len
 
   if alen != 2 + numBound:
-    return E_ARGS.md("lambda taking $1 arguments given $2 instead" %
+    runtimeError(E_ARGS, "lambda taking $1 arguments given $2 instead" %
             [$numBound, $(alen - 2)])
 
   let lambdaArgs = args[2 .. ^1]
@@ -853,7 +857,7 @@ defBuiltin "lambda":
 #   int, float, str, sym, obj, list, err
 defBuiltin "istype":
   if args.len != 2:
-    return E_ARGS.md("istype takes 2 arguments")
+    runtimeError(E_ARGS, "istype takes 2 arguments")
 
   let
     what = args[0]
@@ -862,7 +866,7 @@ defBuiltin "istype":
 
   let (valid, typedVal) = strToType(typed.strVal)
   if not valid:
-    return E_ARGS.md("'$1' is not a valid data type" % typed.strVal)
+    runtimeError(E_ARGS, "'$1' is not a valid data type" % typed.strVal)
 
   if what.isType(typedVal):
     return 1.md
@@ -873,7 +877,7 @@ defBuiltin "istype":
 # forces evaluation (is this a good way to do it?)
 defBuiltin "call":
   if args.len < 1:
-    return E_ARGS.md("call takes one or more argument (lambda then arguments)")
+    runtimeError(E_ARGS, "call takes one or more argument (lambda then arguments)")
 
   let execd = args[0]
   if execd.isType(dSym):
@@ -883,13 +887,13 @@ defBuiltin "call":
   elif execd.isType(dList):
     var lambl = execd.listVal
     if lambl.len != 3:
-      return E_ARGS.md("call: invalid lambda")
+      runtimeError(E_ARGS, "call: invalid lambda")
 
     lambl = lambl & args[1 .. ^1]
 
     return evalD(lambl.md)
   else:
-    return E_ARGS.md("call's first argument must be a builtin symbol or a lambda")
+    runtimeError(E_ARGS, "call's first argument must be a builtin symbol or a lambda")
 
 # (verbcall obj verb-desc (arg0 arg1 arg2 ...))
 defBuiltin "verbcall":
@@ -900,7 +904,7 @@ defBuiltin "verbcall":
     of 3:
       discard
     else:
-      return E_ARGS.md("verbcall takes 2 or 3 arguments")
+      runtimeError(E_ARGS, "verbcall takes 2 or 3 arguments")
 
   # the die = false prevents it from returning an error if the verb is not found.
   # If the verb is not found, this builtin returns nilD.
@@ -925,7 +929,7 @@ defBuiltin "verbcall":
 # (map func list)
 defBuiltin "map":
   if args.len != 2:
-    return E_ARGS.md("map takes 2 arguments")
+    runtimeError(E_ARGS, "map takes 2 arguments")
 
   let
     lamb = evalD(args[0])
@@ -948,7 +952,7 @@ defBuiltin "map":
 defBuiltin "reduce":
   let alen = args.len
   if alen != 2 and alen != 3:
-    return E_ARGS.md("reduce takes 2 or 3 arguments")
+    runtimeError(E_ARGS, "reduce takes 2 or 3 arguments")
 
   let
     lamb = args[0]
@@ -982,7 +986,7 @@ type
 template defArithmeticOperator(name: string, op: BinFloatOp) {.immediate.} =
   defBuiltin name:
     if args.len != 2:
-      return E_ARGS.md("$1 takes 2 arguments" % name)
+      runtimeError(E_ARGS, "$1 takes 2 arguments" % name)
 
     var lhsd = evalD(args[0])
     checkForError(lhsd)
@@ -998,13 +1002,13 @@ template defArithmeticOperator(name: string, op: BinFloatOp) {.immediate.} =
     elif lhsd.isType(dFloat):
       lhs = lhsd.floatVal
     else:
-      return E_ARGS.md("invalid number " & $lhsd)
+      runtimeError(E_ARGS, "invalid number " & $lhsd)
     if rhsd.isType(dInt):
       rhs = rhsd.intVal.float
     elif rhsd.isType(dFloat):
       rhs = rhsd.floatVal
     else:
-      return E_ARGS.md("invalid number " & $rhsd)
+      runtimeError(E_ARGS, "invalid number " & $rhsd)
 
     if lhsd.isType(dInt) and rhsd.isType(dInt):
       return op(lhs, rhs).int.md
@@ -1019,7 +1023,7 @@ defArithmeticOperator("/", `/`)
 # (= a b)
 defBuiltin "=":
   if args.len != 2:
-    return E_ARGS.md("= takes 2 arguments")
+    runtimeError(E_ARGS, "= takes 2 arguments")
 
   let a = evalD(args[0])
   checkForError(a)
@@ -1035,7 +1039,7 @@ defBuiltin "=":
 # ($ obj) returns "#6", for example
 defBuiltin "$":
   if args.len != 1:
-    return E_ARGS.md("$ takes 1 argument")
+    runtimeError(E_ARGS, "$ takes 1 argument")
 
   return args[0].toCodeStr().md
 
@@ -1045,7 +1049,7 @@ defBuiltin "$":
 # use (call cat (str-list/list-list)) to call it with a list
 defBuiltin "cat":
   if args.len < 1:
-    return E_ARGS.md("cat needs at least one string")
+    runtimeError(E_ARGS, "cat needs at least one string")
 
   let typ = args[0].dtype
   if typ == dStr:
@@ -1064,12 +1068,12 @@ defBuiltin "cat":
       total.add(arg.listVal)
     return total.md
   else:
-    return E_ARGS.md("cat only concatenates strings or lists")
+    runtimeError(E_ARGS, "cat only concatenates strings or lists")
 
 # (head list)
 defBuiltin "head":
   if args.len != 1:
-    return E_ARGS.md("head takes 1 argument")
+    runtimeError(E_ARGS, "head takes 1 argument")
 
   let listd = evalD(args[0])
   checkForError(listd)
@@ -1087,13 +1091,13 @@ defBuiltin "head":
 
     return str[0 .. 0].md
   else:
-    return E_ARGS.md("head takes either a string or a list")
+    runtimeError(E_ARGS, "head takes either a string or a list")
 
 
 # (tail list)
 defBuiltin "tail":
   if args.len != 1:
-    return E_ARGS.md("tail takes 1 argument")
+    runtimeError(E_ARGS, "tail takes 1 argument")
 
   let listd = evalD(args[0])
   checkForError(listd)
@@ -1110,12 +1114,12 @@ defBuiltin "tail":
 
     return str[1 .. ^1].md
   else:
-    return E_ARGS.md("tail takes either a string or a list")
+    runtimeError(E_ARGS, "tail takes either a string or a list")
 
 # (len list)
 defBuiltin "len":
   if args.len != 1:
-    return E_ARGS.md("len takes 1 argument")
+    runtimeError(E_ARGS, "len takes 1 argument")
 
   let listd = evalD(args[0])
   checkForError(listd)
@@ -1128,12 +1132,12 @@ defBuiltin "len":
 
     return str.len.md
   else:
-    return E_ARGS.md("len takes either a string or a list")
+    runtimeError(E_ARGS, "len takes either a string or a list")
 
 # (substr string start end)
 defBuiltin "substr":
   if args.len != 3:
-    return E_ARGS.md("substr takes 3 argument")
+    runtimeError(E_ARGS, "substr takes 3 argument")
 
   let strd = args[0]
   checkType(strd, dStr)
@@ -1148,7 +1152,7 @@ defBuiltin "substr":
   let endv = endd.intVal # end is a reserved word
 
   if start < 0:
-    return E_ARGS.md("start index must be greater than 0")
+    runtimeError(E_ARGS, "start index must be greater than 0")
 
   if endv >= 0:
     return str[start .. endv].md
@@ -1160,7 +1164,7 @@ defBuiltin "substr":
 # (insert list index new-el)
 defBuiltin "insert":
   if args.len != 3:
-    return E_ARGS.md("insert takes 3 arguments")
+    runtimeError(E_ARGS, "insert takes 3 arguments")
 
   let listd = evalD(args[0])
   checkForError(listd)
@@ -1180,14 +1184,14 @@ defBuiltin "insert":
   try:
     list.insert(el, index)
   except IndexError:
-    return E_BOUNDS.md("index $1 is out of bounds" % [$index])
+    runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
   return list.md
 
 # (delete list index)
 defBuiltin "delete":
   if args.len != 2:
-    return E_ARGS.md("delete takes 2 arguments")
+    runtimeError(E_ARGS, "delete takes 2 arguments")
 
   let listd = evalD(args[0])
   checkForError(listd)
@@ -1204,7 +1208,7 @@ defBuiltin "delete":
   try:
     system.delete(list, index)
   except IndexError:
-    return E_BOUNDS.md("index $1 is out of bounds" % [$index])
+    runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
   return list.md
 
@@ -1213,7 +1217,7 @@ defBuiltin "delete":
 #  (is this even possible)
 defBuiltin "set":
   if args.len != 3:
-    return E_ARGS.md("set takes 3 arguments")
+    runtimeError(E_ARGS, "set takes 3 arguments")
 
   let listd = evalD(args[0])
   checkForError(listd)
@@ -1233,13 +1237,13 @@ defBuiltin "set":
   try:
     list[index] = el
   except IndexError:
-    return E_BOUNDS.md("index $1 is out of bounds" % [$index])
+    runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
   return list.md
 
 defBuiltin "get":
   if args.len != 2:
-    return E_ARGS.md("get takes 2 arguments")
+    runtimeError(E_ARGS, "get takes 2 arguments")
 
   let listd = evalD(args[0])
   checkForError(listd)
@@ -1256,13 +1260,13 @@ defBuiltin "get":
   try:
     return list[index]
   except:
-    return E_BOUNDS.md("index $1 is out of bounds" % [$index])
+    runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
 # (push list new-el)
 # adds to end
 defBuiltin "push":
   if args.len != 2:
-    return E_ARGS.md("push takes 2 arguments")
+    runtimeError(E_ARGS, "push takes 2 arguments")
 
   let listd = evalD(args[0])
   checkForError(listd)
@@ -1280,7 +1284,7 @@ defBuiltin "push":
 # adds to beginning
 defBuiltin "unshift":
   if args.len != 2:
-    return E_ARGS.md("insert takes 2 arguments")
+    runtimeError(E_ARGS, "insert takes 2 arguments")
 
   let listd = evalD(args[0])
   checkForError(listd)
