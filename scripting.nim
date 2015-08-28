@@ -22,15 +22,15 @@ proc `$`*(token: Token): string =
   token.image
 ## LEXER
 
-template ADD {.immediate.} =
+template addtoken {.immediate.} =
   result.add(curToken)
   curToken = Token(ttype: ATOM_TOK, image: "")
 
-template ADDWORD {.immediate.} =
+template addword {.immediate.} =
   if curWord.len > 0:
     curToken.ttype = ATOM_TOK
     curToken.image = curWord
-    ADD()
+    addtoken()
     curWord = ""
 
 proc lex*(code: string): seq[Token] =
@@ -54,17 +54,17 @@ proc lex*(code: string): seq[Token] =
 
     else:
       if c in Whitespace:
-        ADDWORD()
+        addword()
       elif c == '(':
-        ADDWORD()
+        addword()
         curToken.ttype = OPAREN_TOK
         curToken.image = "("
-        ADD()
+        addtoken()
       elif c == ')':
-        ADDWORD()
+        addword()
         curToken.ttype = CPAREN_TOK
         curToken.image = ")"
-        ADD()
+        addtoken()
       elif c == '"':
         curWord = "\""
         strMode = true
