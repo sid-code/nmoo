@@ -15,6 +15,8 @@ type
     taskIDCounter*: int
     globalSymtable*: SymbolTable
 
+  InvalidWorldError* = object of Exception
+
   OutputProc = proc(obj: MObject, msg: string)
 
   MObject* = ref object
