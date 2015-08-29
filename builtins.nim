@@ -740,6 +740,40 @@ defBuiltin "create":
 
   return newObj.md
 
+# (recycle obj)
+#
+# Destroys obj
+defBuiltin "recycle":
+  if args.len != 1:
+    runtimeError(E_ARGS, "recycle takes 1 argument")
+
+  let obj = extractObject(args[0])
+  checkOwn(owner, obj)
+
+  let children = obj.children
+  let parent = obj.parent
+  for child in children:
+    child.changeParent(parent)
+
+  let nowhered = world.getGlobal("$nowhere")
+  let nowhere = extractObject(nowhered)
+
+  let (has, contents) = obj.getContents()
+  if has:
+    for contained in contents:
+      let moveResult = builtinCall("move", @[contained.md, nowhered])
+      checkForError(moveResult) # One of the rare times we need to check for errors
+
+  proc callback(innerTask: Task = task, top: MData = nilD) =
+    # Destroy the object
+    discard obj.moveTo(nowhere)
+    discard nowhere.removeFromContents(obj)
+    world.delete(obj)
+    world.persist()
+
+  if not obj.verbCall("recycle", owner, @[], callback):
+    callback()
+
 defBuiltin "parent":
   if args.len != 1:
     runtimeError(E_ARGS, "parent takes 1 argument")
