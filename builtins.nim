@@ -802,6 +802,8 @@ defBuiltin "setparent":
       runtimeError(E_RECMOVE, "parenting cannot create cycles of length greater than 1!")
 
   obj.parent = newParent
+  world.persist(obj)
+
   return newParent.md
 
 # (try (what) (except) (finally))
