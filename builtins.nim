@@ -700,7 +700,10 @@ defBuiltin "move":
     while conductor != nil:
       if conductor == what:
         caller.send($E_RECMOVE.md("moving $1 to $2 is recursive" % [what.toObjStr(), dest.toObjStr()]))
-      conductor = conductor.getLocation()
+      let loc = conductor.getLocation()
+      if loc == conductor:
+        break
+      conductor = loc
 
     var moveSucceeded = what.moveTo(dest)
 
