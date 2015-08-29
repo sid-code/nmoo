@@ -14,10 +14,9 @@ proc strToType(str: string): tuple[b: bool, t: MDataType] =
     of "nil": return (true, dNil)
     else: return (false, dInt)
 
-template checkForError(value: MData) {.immediate.} =
-  discard #disabled
-  #if value.isType(dErr):
-  #  return value
+template checkForError(value: MData) =
+  if value.isType(dErr):
+    return value
 
 template runtimeError(error: MError, message: string) =
   return error.md("line $#, col $#: $#" % [$pos.line, $pos.col, message])
@@ -91,7 +90,6 @@ defBuiltin "echo":
     sendstr = ""
   for arg in args:
     let res = evalD(arg)
-    checkForError(res)
     sendstr &= res.toEchoString()
     newArgs.add(res)
   caller.send(sendstr)
@@ -101,7 +99,6 @@ defBuiltin "do":
   var newArgs: seq[MData] = @[]
   for arg in args:
     let res = evalD(arg)
-    checkForError(res)
     newArgs.add(res)
 
   if newArgs.len > 0:
@@ -114,7 +111,6 @@ defBuiltin "eval":
     runtimeError(E_ARGS, "eval takes one argument")
 
   let argd = evalD(args[0])
-  checkForError(argd)
   checkType(argd, dStr)
   var evalStr = argd.strVal
   if evalStr[0] != '(':
@@ -166,7 +162,6 @@ defBuiltin "let":
       symName = pair[0].symVal
       setVal = evalD(pair[1], st = newSymtable)
 
-    checkForError(setVal)
     newSymtable[symName] = setVal
 
   return evalD(args[1], st = newSymtable)
@@ -182,7 +177,6 @@ defBuiltin "cond":
       return larg[0]
     else:
       let condVal = evalD(larg[0])
-      checkForError(condVal)
       if condVal.truthy:
         return evalD(larg[1])
       else:
@@ -235,19 +229,16 @@ template propInfoFromInput(info: seq[MData]): PropInfo =
   var res: PropInfo
 
   let ownerd = evalD(info[0])
-  checkForError(ownerd)
   let ownero = extractObject(ownerd)
   res.owner = ownero
 
   let permsd = evalD(info[1])
-  checkForError(permsd)
   checkType(permsd, dStr)
   let perms = permsd.strVal
   res.perms = perms
 
   if info.len == 3:
     let newNamed = evalD(info[2])
-    checkForError(newNamed)
     checkType(newNamed, dStr)
     let newName = newNamed.strVal
     res.newName = newName
@@ -261,19 +252,16 @@ template verbInfoFromInput(info: seq[MData]): VerbInfo =
   var res: VerbInfo
 
   let ownerd = evalD(info[0])
-  checkForError(ownerd)
   let ownero = extractObject(ownerd)
   res.owner = ownero
 
   let permsd = evalD(info[1])
-  checkForError(permsd)
   checkType(permsd, dStr)
   let perms = permsd.strVal
   res.perms = perms
 
   if info.len == 3:
     let newNamed = evalD(info[2])
-    checkForError(newNamed)
     checkType(newNamed, dStr)
     let newName = newNamed.strVal
     res.newName = newName
@@ -282,7 +270,6 @@ template verbInfoFromInput(info: seq[MData]): VerbInfo =
 
 template objSpecFromData(ospd: MData): ObjSpec =
   let specd = evalD(ospd)
-  checkForError(specd)
   checkType(specd, dStr)
   let
     str = specd.strVal
@@ -295,7 +282,6 @@ template objSpecFromData(ospd: MData): ObjSpec =
 
 template prepSpecFromData(pspd: MData): PrepType =
   let specd = evalD(pspd)
-  checkForError(specd)
   checkType(specd, dStr)
   let
     str = specd.strVal
@@ -342,11 +328,9 @@ proc setArgs(verb: MVerb, args: VerbArgs) =
 
 template getPropOn(objd, propd: MData, die = true): tuple[o: Mobject, p: MProperty] =
   let objd2 = evalD(objd)
-  checkForError(objd2)
   let obj = extractObject(objd2)
 
   let propd2 = evalD(propd)
-  checkForError(propd)
   checkType(propd2, dStr)
   let
     propName = propd.strVal
@@ -362,11 +346,9 @@ template getPropOn(objd, propd: MData, die = true): tuple[o: Mobject, p: MProper
 
 template getVerbOn(objd, verbdescd: MData, die = true): tuple[o: MObject, v: MVerb] =
   let objd2 = evalD(objd)
-  checkForError(objd2)
   let obj = extractObject(objd2)
 
   let verbdescd2 = evalD(verbdescd)
-  checkForError(verbdescd2)
   checkType(verbdescd2, dStr)
   let verbdesc = verbdescd2.strVal
 
@@ -397,17 +379,14 @@ defBuiltin "setprop":
     runtimeError(E_ARGS, "setprop takes 3 arguments")
 
   let objd = evalD(args[0])
-  checkForError(objd)
   let obj = extractObject(objd)
 
   let
     propd = evalD(args[1])
     newVal = evalD(args[2])
 
-  checkForError(propd)
   checkType(propd, dStr)
 
-  checkForError(newVal)
   let
     prop = propd.strVal
     oldProp = obj.getProp(prop)
@@ -475,7 +454,6 @@ defBuiltin "setpropinfo":
 
   # validate the property info
   let propinfod = evalD(args[2])
-  checkForError(propinfod)
   checkType(propinfod, dList)
   let
     propinfo = propinfod.listVal
@@ -494,7 +472,6 @@ defBuiltin "props":
     runtimeError(E_ARGS, "props takes 1 argument")
 
   let objd = evalD(args[0])
-  checkForError(objd)
   let obj = extractObject(objd)
 
   checkRead(owner, obj)
@@ -512,7 +489,6 @@ defBuiltin "verbs":
     runtimeError(E_ARGS, "verbs takes 1 argument")
 
   let objd = evalD(args[0])
-  checkForError(objd)
   let obj = extractObject(objd)
 
   checkRead(owner, obj)
@@ -544,7 +520,6 @@ defBuiltin "setverbinfo":
   checkWrite(owner, verb)
 
   let infod = evalD(args[2])
-  checkForError(infod)
   checkType(infod, dList)
   let info = verbInfoFromInput(infod.listVal)
 
@@ -572,7 +547,6 @@ defBuiltin "setverbargs":
   checkWrite(owner, verb)
 
   let argsInfod = evalD(args[2])
-  checkForError(argsInfod)
   checkType(argsInfod, dList)
 
   let argsInfo = verbArgsFromInput(argsInfod.listVal)
@@ -587,11 +561,9 @@ defBuiltin "addverb":
     runtimeError(E_ARGS, "addverb takes 2 arguments")
 
   let objd = evalD(args[0])
-  checkForError(objd)
   let obj = extractObject(objd)
 
   let namesd = evalD(args[1])
-  checkForError(namesd)
   checkType(namesd, dStr)
   let names = namesd.strVal
 
@@ -647,7 +619,6 @@ defBuiltin "setverbcode":
   checkWrite(owner, verb)
 
   let newCode = evalD(args[2])
-  checkForError(newCode)
   checkType(newCode, dStr)
 
   try:
@@ -675,9 +646,6 @@ defBuiltin "move":
   let
     whatd = evalD(args[0])
     destd = evalD(args[1])
-
-  checkForError(whatd)
-  checkForError(destd)
 
   var
     what = extractObject(whatd)
@@ -819,12 +787,10 @@ defBuiltin "try":
     var newSymtable = symtable
     newSymtable["error"] = tryClause.errMsg.md
     let exceptClause = evalD(args[1], st = newSymtable)
-    checkForError(exceptClause)
     return exceptClause
 
   if alen == 3:
     let finallyClause = evalD(args[2])
-    checkForError(finallyClause)
     return finallyClause
 
 # (lambda (var) (expr-in-var))
@@ -916,7 +882,6 @@ defBuiltin "verbcall":
   let (obj, verb) = getVerbOn(args[0], args[1])
 
   let cargsd = evalD(args[2])
-  checkForError(cargsd)
   checkType(cargsd, dList)
   let cargs = cargsd.listVal
 
@@ -940,9 +905,6 @@ defBuiltin "map":
     lamb = evalD(args[0])
     listd = evalD(args[1])
 
-  checkForError(lamb)
-  checkForError(listd)
-
   checkType(listd, dList)
   let list = listd.listVal
   var newList: seq[MData] = @[]
@@ -963,7 +925,6 @@ defBuiltin "reduce":
     lamb = args[0]
     listd = evalD(if alen == 2: args[1] else: args[2])
 
-  checkForError(listd)
   checkType(listd, dList)
   var list = listD.listVal
   if list.len == 0:
@@ -976,7 +937,6 @@ defBuiltin "reduce":
   elif alen == 3:
     start = evalD(args[1])
 
-  checkForError(start)
 
   var res: MData = start
   for el in list:
@@ -994,9 +954,7 @@ template defArithmeticOperator(name: string, op: BinFloatOp) {.immediate.} =
       runtimeError(E_ARGS, "$1 takes 2 arguments" % name)
 
     var lhsd = evalD(args[0])
-    checkForError(lhsd)
     var rhsd = evalD(args[1])
-    checkForError(rhsd)
 
     var
       lhs: float
@@ -1031,9 +989,7 @@ defBuiltin "=":
     runtimeError(E_ARGS, "= takes 2 arguments")
 
   let a = evalD(args[0])
-  checkForError(a)
   let b = evalD(args[1])
-  checkForError(b)
 
   if a == b:
     return 1.md
@@ -1061,14 +1017,12 @@ defBuiltin "cat":
     var total = ""
     for argd in args:
       let arg = evalD(argd)
-      checkForError(arg)
       total &= arg.toEchoString()
     return total.md
   elif typ == dList:
     var total: seq[MData] = @[]
     for argd in args:
       let arg = evalD(argd)
-      checkForError(arg)
       checkType(arg, dList)
       total.add(arg.listVal)
     return total.md
@@ -1081,7 +1035,6 @@ defBuiltin "head":
     runtimeError(E_ARGS, "head takes 1 argument")
 
   let listd = evalD(args[0])
-  checkForError(listd)
 
   if listd.isType(dList):
     let list = listd.listVal
@@ -1105,7 +1058,6 @@ defBuiltin "tail":
     runtimeError(E_ARGS, "tail takes 1 argument")
 
   let listd = evalD(args[0])
-  checkForError(listd)
   if listd.isType(dList):
     let list = listd.listVal
     if list.len == 0:
@@ -1127,7 +1079,6 @@ defBuiltin "len":
     runtimeError(E_ARGS, "len takes 1 argument")
 
   let listd = evalD(args[0])
-  checkForError(listd)
   if listd.isType(dList):
     let list = listd.listVal
 
@@ -1172,15 +1123,12 @@ defBuiltin "insert":
     runtimeError(E_ARGS, "insert takes 3 arguments")
 
   let listd = evalD(args[0])
-  checkForError(listd)
   checkType(listd, dList)
 
   let indexd = evalD(args[1])
-  checkForError(indexd)
   checkType(indexd, dInt)
 
   let el = evalD(args[2])
-  checkForError(el)
 
   var
     list = listd.listVal
@@ -1199,11 +1147,9 @@ defBuiltin "delete":
     runtimeError(E_ARGS, "delete takes 2 arguments")
 
   let listd = evalD(args[0])
-  checkForError(listd)
   checkType(listd, dList)
 
   let indexd = evalD(args[1])
-  checkForError(indexd)
   checkType(indexd, dInt)
 
   var
@@ -1225,15 +1171,12 @@ defBuiltin "set":
     runtimeError(E_ARGS, "set takes 3 arguments")
 
   let listd = evalD(args[0])
-  checkForError(listd)
   checkType(listd, dList)
 
   let indexd = evalD(args[1])
-  checkForError(indexd)
   checkType(indexd, dInt)
 
   let el = evalD(args[2])
-  checkForError(el)
 
   var
     list = listd.listVal
@@ -1251,11 +1194,9 @@ defBuiltin "get":
     runtimeError(E_ARGS, "get takes 2 arguments")
 
   let listd = evalD(args[0])
-  checkForError(listd)
   checkType(listd, dList)
 
   let indexd = evalD(args[1])
-  checkForError(indexd)
   checkType(indexd, dInt)
 
   var
@@ -1274,11 +1215,9 @@ defBuiltin "push":
     runtimeError(E_ARGS, "push takes 2 arguments")
 
   let listd = evalD(args[0])
-  checkForError(listd)
   checkType(listd, dList)
 
   let el = evalD(args[1])
-  checkForError(el)
 
   var list = listd.listVal
 
@@ -1292,11 +1231,9 @@ defBuiltin "unshift":
     runtimeError(E_ARGS, "insert takes 2 arguments")
 
   let listd = evalD(args[0])
-  checkForError(listd)
   checkType(listd, dList)
 
   let el = evalD(args[1])
-  checkForError(el)
 
   var list = listd.listVal
 
