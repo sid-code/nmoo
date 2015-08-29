@@ -346,3 +346,18 @@ proc addTask*(world: World, owner, caller: MObject,
   world.tasks.add(newTask)
 
 proc numTasks*(world: World): int = world.tasks.len
+
+# Check if there is a nowhere object
+proc checkNowhere(world: World) =
+  if world.globalSymtable.hasKey("$nowhere"):
+    let nowhered = world.globalSymtable["$nowhere"]
+    if nowhered.isType(dObj):
+      let nowhere = world.dataToObj(nowhered)
+      if nowhere.getProp("contents") != nil:
+        return
+
+  raise newException(InvalidWorldError, "there is no $nowhere object in the global symtable")
+
+# This checks if the world is fit to be used
+proc check*(world: World) =
+  world.checkNowhere()
