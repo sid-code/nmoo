@@ -1,6 +1,6 @@
 # This file has methods for manipulating objects and their properties
 
-import types, sequtils, strutils
+import types, sequtils, strutils, tables
 # NOTE: verbs is imported later on!
 
 proc getStrProp*(obj: MObject, name: string): string
@@ -257,6 +257,15 @@ proc delete*(world: World, obj: MObject) =
   var idx = obj.getID().int
 
   objs[idx] = nil
+
+proc setGlobal*(world: World, key: string, value: MData) =
+  world.globalSymtable[key] = value
+
+proc getGlobal*(world: World, key: string): MData =
+  if world.globalSymtable.hasKey(key):
+    world.globalSymtable[key]
+  else:
+    nilD
 
 proc changeParent*(obj: MObject, newParent: MObject) =
   if not newParent.fertile:
