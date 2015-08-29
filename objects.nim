@@ -190,7 +190,7 @@ proc addToContents*(obj: MObject, newMember: MObject): bool =
   else:
     return false
 
-proc removeFromContents(obj: MObject, member: MObject): bool =
+proc removeFromContents*(obj: MObject, member: MObject): bool =
   var (has, contents) = obj.getRawContents();
 
   if has:
