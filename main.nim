@@ -4,6 +4,8 @@ let
   world = loadWorld("min")
   player = world.getObjects()[8]
 
+world.check()
+
 player.output = proc(obj: MObject, msg: string) =
   echo msg
 
