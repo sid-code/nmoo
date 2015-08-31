@@ -353,10 +353,14 @@ proc checkNowhere(world: World) =
     let nowhered = world.globalSymtable["$nowhere"]
     if nowhered.isType(dObj):
       let nowhere = world.dataToObj(nowhered)
-      if nowhere.getProp("contents") != nil:
+      if nowhere.getProp("contents") == nil:
+        raise newException(InvalidWorldError, "the $nowhere object needs to have contents")
+      else:
         return
-
-  raise newException(InvalidWorldError, "there is no $nowhere object in the global symtable")
+    else:
+      raise newException(InvalidWorldError, "$nowhere needs to be an object")
+  else:
+    raise newException(InvalidWorldError, "there is no $nowhere object in the global symtable")
 
 # This checks if the world is fit to be used
 proc check*(world: World) =
