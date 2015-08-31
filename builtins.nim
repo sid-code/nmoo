@@ -19,7 +19,7 @@ template checkForError(value: MData) =
     return value
 
 template runtimeError(error: MError, message: string) =
-  return error.md("line $#, col $#: $#" % [$pos.line, $pos.col, message])
+  return error.md("line $#, col $#: $#" % [$pos.line, $pos.col, message]).pack
 
 template checkType(value: MData, expected: MDataType, ifnot: MError = E_ARGS)
           {.immediate.} =
@@ -93,7 +93,7 @@ defBuiltin "echo":
     sendstr &= res.toEchoString()
     newArgs.add(res)
   caller.send(sendstr)
-  return newArgs.md
+  return newArgs.md.pack
 
 defBuiltin "do":
   var newArgs: seq[MData] = @[]
@@ -102,9 +102,9 @@ defBuiltin "do":
     newArgs.add(res)
 
   if newArgs.len > 0:
-    return newArgs[^1]
+    return newArgs[^1].pack
   else:
-    return @[].md
+    return @[].md.pack
 
 defBuiltin "eval":
   if args.len != 1:
@@ -118,7 +118,7 @@ defBuiltin "eval":
 
   try:
     let compiler = compileCode(evalStr)
-    world.addTask(owner, caller, symtable, compiler.render, nil)
+    world.addTask("eval", owner, caller, symtable, compiler.render)
   except MParseError:
     let msg = getCurrentExceptionMsg()
     runtimeError(E_PARSE, "code failed to parse: $1" % msg)
@@ -136,14 +136,14 @@ defBuiltin "slet": # single let
     runtimeError(E_ARGS, "slet's first argument is a tuple (symbol value-to-bind)")
 
   let newStmt = @[ "let".mds, @[first].md, args[1] ].md
-  return evalD(newStmt)
+  return evalD(newStmt).pack
 
 
 defBuiltin "let":
   # First argument: list of pairs
   # Second argument: expression to evaluate with the symbol table
   if args.len != 2:
-    return E_ARGS.md
+    return E_ARGS.md.pack
 
   checkType(args[0], dList)
 
@@ -164,7 +164,7 @@ defBuiltin "let":
 
     newSymtable[symName] = setVal
 
-  return evalD(args[1], st = newSymtable)
+  return evalD(args[1], st = newSymtable).pack
 
 defBuiltin "cond":
   for arg in args:
@@ -174,15 +174,15 @@ defBuiltin "cond":
       runtimeError(E_ARGS, "each argument to cond must be of length 1 or 2")
 
     if larg.len == 1:
-      return larg[0]
+      return larg[0].pack
     else:
       let condVal = evalD(larg[0])
       if condVal.truthy:
-        return evalD(larg[1])
+        return evalD(larg[1]).pack
       else:
         continue
 
-  return E_BADCOND.md
+  return E_BADCOND.md.pack
 
 proc extractInfo(prop: MProperty): MData =
   var res: seq[MData] = @[]
@@ -340,7 +340,7 @@ template getPropOn(objd, propd: MData, die = true): tuple[o: Mobject, p: MProper
     if die:
       runtimeError(E_PROPNF, "property $1 not found on $2" % [propName, $obj.toObjStr()])
     else:
-      return nilD
+      return nilD.pack
 
   (obj, propObj)
 
@@ -357,7 +357,7 @@ template getVerbOn(objd, verbdescd: MData, die = true): tuple[o: MObject, v: MVe
     if die:
       runtimeError(E_VERBNF, "verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
     else:
-      return nilD
+      return nilD.pack
 
   (obj, verb)
 
@@ -371,7 +371,7 @@ defBuiltin "getprop":
 
   checkRead(owner, propObj)
 
-  return propObj.val
+  return propObj.val.pack
 
 # (setprop what propname newprop)
 defBuiltin "setprop":
@@ -406,7 +406,7 @@ defBuiltin "setprop":
     propObj.val = newVal
     world.persist(obj)
 
-  return newVal
+  return newVal.pack
 
 # (delprop what propname)
 # TODO: write a test for this!
@@ -423,7 +423,7 @@ defBuiltin "delprop":
     discard deletedProp
     world.persist(moddedObj)
 
-  return obj.md
+  return obj.md.pack
 
 # (getpropinfo what propname)
 # result is (owner perms)
@@ -437,7 +437,7 @@ defBuiltin "getpropinfo":
 
   checkRead(owner, propObj)
 
-  return extractInfo(propObj)
+  return extractInfo(propObj).pack
 
 
 # (setpropinfo what propname newinfo)
@@ -463,10 +463,10 @@ defBuiltin "setpropinfo":
   world.persist(obj)
 
 
-  return args[0]
+  return args[0].pack
 
 # (props obj)
-# returns a list of obj's properties
+# returns a list of obj's properties.pack
 defBuiltin "props":
   if args.len != 1:
     runtimeError(E_ARGS, "props takes 1 argument")
@@ -480,7 +480,7 @@ defBuiltin "props":
   for p in obj.props:
     res.add(p.name.md)
 
-  return res.md
+  return res.md.pack
 
 # (verbs obj)
 # returns a list of obj's verbs' names
@@ -497,7 +497,7 @@ defBuiltin "verbs":
   for v in obj.allVerbs():
     res.add(v.names.md)
 
-  return res.md
+  return res.md.pack
 
 
 # (getverbinfo obj verb-desc)
@@ -509,7 +509,7 @@ defBuiltin "getverbinfo":
   discard obj
   checkRead(owner, verb)
 
-  return extractInfo(verb)
+  return extractInfo(verb).pack
 
 # (setverbinfo obj verb-desc newinfo)
 defBuiltin "setverbinfo":
@@ -525,7 +525,7 @@ defBuiltin "setverbinfo":
 
   verb.setInfo(info)
   world.persist(obj)
-  return args[0]
+  return args[0].pack
 
 # (getverbargs obj verb-desc)
 defBuiltin "getverbargs":
@@ -536,7 +536,7 @@ defBuiltin "getverbargs":
   discard obj
   checkRead(owner, verb)
 
-  return extractArgs(verb)
+  return extractArgs(verb).pack
 
 # (setverbargs obj verb-desc (objspec prepspec objspec))
 defBuiltin "setverbargs":
@@ -553,7 +553,7 @@ defBuiltin "setverbargs":
   verb.setArgs(argsInfo)
   world.persist(obj)
 
-  return args[0]
+  return args[0].pack
 
 # (addverb obj names)
 defBuiltin "addverb":
@@ -585,7 +585,7 @@ defBuiltin "addverb":
   #   discard addedVerb
   #   world.persist(moddedObj)
 
-  return objd
+  return objd.pack
 
 # (delverb obj verb)
 defBuiltin "delverb":
@@ -607,7 +607,7 @@ defBuiltin "delverb":
   #   discard deletedVerb
   #   world.persist(moddedObj)
 
-  return obj.md
+  return obj.md.pack
 
 
 # (setverbcode obj verb-desc newcode)
@@ -624,7 +624,7 @@ defBuiltin "setverbcode":
   try:
     verb.setCode(newCode.strVal)
     world.persist(obj)
-    return nilD
+    return nilD.pack
   except MParseError:
     let msg = getCurrentExceptionMsg()
     runtimeError(E_PARSE, "code failed to parse: $1" % msg)
@@ -636,11 +636,11 @@ defBuiltin "getverbcode":
   let (obj, verb) = getVerbOn(args[0], args[1])
   checkRead(owner, verb)
 
-  return verb.code.md
+  return verb.code.md.pack
 
 # (move what dest)
 defBuiltin "move":
-  if args.len != 2:
+  if args.len < 2: # We are actually allowed more arguments in later phases
     runtimeError(E_ARGS, "move takes 2 arguments")
 
   let
@@ -651,54 +651,57 @@ defBuiltin "move":
     what = extractObject(whatd)
     dest = extractObject(destd)
 
-  checkOwn(owner, what)
+  var phase = phase # So we can change it
 
-  let whatlist = @[what.md]
+  if phase == 0: # Check for acceptance
+    if args.len != 2:
+      runtimeError(E_ARGS, "move takes 2 arguments")
 
-  task.suspend()
+    checkOwn(owner, what)
 
-  proc callback(innerTask: Task, acc: MData) =
-    task.resume()
-    if not acc.truthy:
-      caller.send($E_NACC.md("moving $1 to $2 refused" % [what.toObjStr(), dest.toObjStr()]))
+    let whatlist = @[what.md]
 
-    # check for recursive move
+    let success = dest.verbCall("accept", caller, whatlist, task.id)
+    if not success: # We were not able to call the verb
+      runtimeError(E_FMOVE, "$2 didn't accept $1" % [dest.toObjStr(), what.toObjStr()])
+
+    return 1.pack
+
+  if phase == 1: # Check for recursive move and call exitfunc
+    let accepted = args[2]
+    if not accepted.truthy:
+      runtimeError(E_FMOVE, "$2 didn't accept $1" % [dest.toObjStr(), what.toObjStr()])
+
     var conductor = dest
 
     while conductor != nil:
       if conductor == what:
-        caller.send($E_RECMOVE.md("moving $1 to $2 is recursive" % [what.toObjStr(), dest.toObjStr()]))
+        runtimeError(E_RECMOVE, "moving $1 to $2 is recursive" % [what.toObjStr(), dest.toObjStr()])
       let loc = conductor.getLocation()
       if loc == conductor:
         break
       conductor = loc
 
-    var moveSucceeded = what.moveTo(dest)
-
-    if not moveSucceeded:
-      caller.send($E_FMOVE.md("moving $1 to $2 failed (it could already be at $2)" %
-            [what.toObjStr(), dest.toObjStr()]))
-
     let oldLoc = what.getLocation()
 
-    proc persistOldLoc(task: Task, res: MData) = world.persist(oldLoc)
-    proc persistDestAndWhat(task: Task, res: MData) =
-      world.persist(dest)
-      world.persist(what)
+    if oldLoc == nil:
+      phase += 1
+    else:
+      let success = oldLoc.verbCall("exitfunc", caller, @[what.md], task.id)
+      if success:
+        return 2.pack
+      else:
+        phase += 1
 
-    if oldLoc != nil:
-      if not oldLoc.verbCall("exitfunc", caller, whatlist, persistOldLoc):
-        # If there was no verb, we still need to call the callback
-        persistOldLoc(task, 1.md)
+  if phase == 2:
+    var moveSucceeded = what.moveTo(dest)
+    if not moveSucceeded:
+      runtimeError(E_FMOVE, "moving $1 to $2 failed (it could already be at $2)" %
+            [what.toObjStr(), dest.toObjStr()])
 
-    if not dest.verbCall("enterfunc", caller, whatlist, persistDestAndWhat):
-      # If there was no verb, we still need to call the callback
-      persistDestAndWhat(task, 1.md)
-
-  if not dest.verbCall("accept", caller, whatlist, callback):
-    # If there was no verb, we still need to call the callback
-    callback(task, 1.md)
-  return what.md
+    # Discard because it doesn't really matter what happens now, the move is complete
+    discard dest.verbCall("enterfunc", caller, @[what.md], task.id)
+    return what.md.pack
 
 # (create parent new-owner)
 # creates a child of the object given
@@ -738,7 +741,7 @@ defBuiltin "create":
 
   world.persist(newObj)
 
-  return newObj.md
+  return newObj.md.pack
 
 # (recycle obj)
 #
@@ -761,8 +764,7 @@ defBuiltin "recycle":
   let (has, contents) = obj.getContents()
   if has:
     for contained in contents:
-      let moveResult = builtinCall("move", @[contained.md, nowhered])
-      checkForError(moveResult) # One of the rare times we need to check for errors
+      discard
 
   proc callback(innerTask: Task = task, top: MData = nilD) =
     # Destroy the object
@@ -771,22 +773,22 @@ defBuiltin "recycle":
     world.delete(obj)
     world.persist()
 
-  if not obj.verbCall("recycle", owner, @[], callback):
-    callback()
+  #if not obj.verbCall("recycle", owner, @[], callback):
+  #  callback()
 
 defBuiltin "parent":
   if args.len != 1:
     runtimeError(E_ARGS, "parent takes 1 argument")
 
   let obj = extractObject(args[0])
-  return obj.parent.md
+  return obj.parent.md.pack
 
 defBuiltin "children":
   if args.len != 1:
     runtimeError(E_ARGS, "children takes 1 argument")
 
   let obj = extractObject(args[0])
-  return obj.children.map(proc (x: MObject): MData = x.md).md
+  return obj.children.map(proc (x: MObject): MData = x.md).md.pack
 
 defBuiltin "setparent":
   if args.len != 2:
@@ -806,7 +808,7 @@ defBuiltin "setparent":
   obj.parent = newParent
   world.persist(obj)
 
-  return newParent.md
+  return newParent.md.pack
 
 # (try (what) (except) (finally))
 defBuiltin "try":
@@ -821,11 +823,11 @@ defBuiltin "try":
     var newSymtable = symtable
     newSymtable["error"] = tryClause.errMsg.md
     let exceptClause = evalD(args[1], st = newSymtable)
-    return exceptClause
+    return exceptClause.pack
 
   if alen == 3:
     let finallyClause = evalD(args[2])
-    return finallyClause
+    return finallyClause.pack
 
 # (lambda (var) (expr-in-var))
 defBuiltin "lambda":
@@ -834,7 +836,7 @@ defBuiltin "lambda":
     runtimeError(E_ARGS, "lambda takes 2 or more arguments")
 
   if alen == 2:
-    return (@["lambda".mds] & args).md
+    return (@["lambda".mds] & args).md.pack
 
   var newSymtable = symtable
   let boundld = args[0]
@@ -855,7 +857,7 @@ defBuiltin "lambda":
     newSymtable[sym] = lambdaArgs[idx]
 
   let expression = args[1]
-  return evalD(expression, st = newSymtable)
+  return evalD(expression, st = newSymtable).pack
 
 # (istype thingy typedesc)
 # typedesc is a string:
@@ -874,9 +876,9 @@ defBuiltin "istype":
     runtimeError(E_ARGS, "'$1' is not a valid data type" % typed.strVal)
 
   if what.isType(typedVal):
-    return 1.md
+    return 1.md.pack
   else:
-    return 0.md
+    return 0.md.pack
 
 # (call lambda-or-builtin args)
 # forces evaluation (is this a good way to do it?)
@@ -888,7 +890,7 @@ defBuiltin "call":
   if execd.isType(dSym):
     let stmt = (@[execd] & args[1 .. ^1]).md
 
-    return evalD(stmt)
+    return evalD(stmt).pack
   elif execd.isType(dList):
     var lambl = execd.listVal
     if lambl.len != 3:
@@ -896,7 +898,7 @@ defBuiltin "call":
 
     lambl = lambl & args[1 .. ^1]
 
-    return evalD(lambl.md)
+    return evalD(lambl.md).pack
   else:
     runtimeError(E_ARGS, "call's first argument must be a builtin symbol or a lambda")
 
@@ -908,27 +910,31 @@ defBuiltin "verbcall":
       args.add(@[].md)
     of 3:
       discard
+    of 4:
+      discard
     else:
       runtimeError(E_ARGS, "verbcall takes 2 or 3 arguments")
 
-  # the die = false prevents it from returning an error if the verb is not found.
-  # If the verb is not found, this builtin returns nilD.
   let (obj, verb) = getVerbOn(args[0], args[1])
 
-  let cargsd = evalD(args[2])
-  checkType(cargsd, dList)
-  let cargs = cargsd.listVal
+  if phase == 0:
+    if args.len > 3:
+      runtimeError(E_ARGS, "verbcall takes 2 or 3 arguments")
 
-  owner.checkExecute(verb)
+    let cargsd = args[2]
+    checkType(cargsd, dList)
+    let cargs = cargsd.listVal
 
-  task.suspend()
-  obj.verbCallRaw(verb, caller, cargs, proc(innerTask: Task, top: MData) =
-    # throw away that nil (return of this proc)
-    discard task.spop()
-    task.spush(top)
+    owner.checkExecute(verb)
+
+    task.suspend()
+    obj.verbCallRaw(verb, caller, cargs, task.id)
+    return 1.pack
+  if phase == 1:
+    let verbResult = args[^1]
+
+    return verbResult.pack
     # TODO: increment current task's quotas by the amount of ticks innerTask used
-    task.resume())
-  return nilD
 
 # (map func list)
 defBuiltin "map":
@@ -947,7 +953,7 @@ defBuiltin "map":
     var singleResult: MData = evalD(genCall(lamb, @[el]))
     newList.add(singleResult)
 
-  return newList.md
+  return newList.md.pack
 
 #(reduce start list func)
 defBuiltin "reduce":
@@ -962,7 +968,7 @@ defBuiltin "reduce":
   checkType(listd, dList)
   var list = listD.listVal
   if list.len == 0:
-    return nilD
+    return nilD.pack
 
   var start: MData
   if alen == 2:
@@ -976,7 +982,7 @@ defBuiltin "reduce":
   for el in list:
     res = evalD(genCall(lamb, @[res, el]))
 
-  return res
+  return res.pack
 
 type
   BinFloatOp = proc(x: float, y: float): float
@@ -1008,9 +1014,9 @@ template defArithmeticOperator(name: string, op: BinFloatOp) {.immediate.} =
       runtimeError(E_ARGS, "invalid number " & $rhsd)
 
     if lhsd.isType(dInt) and rhsd.isType(dInt):
-      return op(lhs, rhs).int.md
+      return op(lhs, rhs).int.md.pack
     else:
-      return op(lhs, rhs).md
+      return op(lhs, rhs).md.pack
 
 defArithmeticOperator("+", `+`)
 defArithmeticOperator("-", `-`)
@@ -1026,9 +1032,9 @@ defBuiltin "=":
   let b = evalD(args[1])
 
   if a == b:
-    return 1.md
+    return 1.md.pack
   else:
-    return 0.md
+    return 0.md.pack
 
 # tostring function
 # ($ obj) returns "#6", for example
@@ -1036,7 +1042,7 @@ defBuiltin "$":
   if args.len != 1:
     runtimeError(E_ARGS, "$ takes 1 argument")
 
-  return args[0].toCodeStr().md
+  return args[0].toCodeStr().md.pack
 
 # (cat str1 str2 ...)
 # (cat list1 list2 ...)
@@ -1052,14 +1058,14 @@ defBuiltin "cat":
     for argd in args:
       let arg = evalD(argd)
       total &= arg.toEchoString()
-    return total.md
+    return total.md.pack
   elif typ == dList:
     var total: seq[MData] = @[]
     for argd in args:
       let arg = evalD(argd)
       checkType(arg, dList)
       total.add(arg.listVal)
-    return total.md
+    return total.md.pack
   else:
     runtimeError(E_ARGS, "cat only concatenates strings or lists")
 
@@ -1073,15 +1079,15 @@ defBuiltin "head":
   if listd.isType(dList):
     let list = listd.listVal
     if list.len == 0:
-      return @[].md
+      return @[].md.pack
 
-    return list[0]
+    return list[0].pack
   elif listd.isType(dStr):
     let str = listd.strVal
     if str.len == 0:
-      return "".md
+      return "".md.pack
 
-    return str[0 .. 0].md
+    return str[0 .. 0].md.pack
   else:
     runtimeError(E_ARGS, "head takes either a string or a list")
 
@@ -1095,15 +1101,15 @@ defBuiltin "tail":
   if listd.isType(dList):
     let list = listd.listVal
     if list.len == 0:
-      return @[].md
+      return @[].md.pack
 
-    return list[1 .. ^1].md
+    return list[1 .. ^1].md.pack
   elif listd.isType(dStr):
     let str = listd.strVal
     if str.len == 0:
-      return "".md
+      return "".md.pack
 
-    return str[1 .. ^1].md
+    return str[1 .. ^1].md.pack
   else:
     runtimeError(E_ARGS, "tail takes either a string or a list")
 
@@ -1116,11 +1122,11 @@ defBuiltin "len":
   if listd.isType(dList):
     let list = listd.listVal
 
-    return list.len.md
+    return list.len.md.pack
   elif listd.isType(dStr):
     let str = listd.strVal
 
-    return str.len.md
+    return str.len.md.pack
   else:
     runtimeError(E_ARGS, "len takes either a string or a list")
 
@@ -1145,9 +1151,9 @@ defBuiltin "substr":
     runtimeError(E_ARGS, "start index must be greater than 0")
 
   if endv >= 0:
-    return str[start .. endv].md
+    return str[start .. endv].md.pack
   else:
-    return str[start .. ^ -endv].md
+    return str[start .. ^ -endv].md.pack
 
 
 
@@ -1173,7 +1179,7 @@ defBuiltin "insert":
   except IndexError:
     runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
-  return list.md
+  return list.md.pack
 
 # (delete list index)
 defBuiltin "delete":
@@ -1195,7 +1201,7 @@ defBuiltin "delete":
   except IndexError:
     runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
-  return list.md
+  return list.md.pack
 
 # (set list index replacement)
 # TODO: eliminate code duplication between this, insert, and delete
@@ -1221,7 +1227,7 @@ defBuiltin "set":
   except IndexError:
     runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
-  return list.md
+  return list.md.pack
 
 defBuiltin "get":
   if args.len != 2:
@@ -1238,7 +1244,7 @@ defBuiltin "get":
     index = indexd.intVal
 
   try:
-    return list[index]
+    return list[index].pack
   except:
     runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
@@ -1256,7 +1262,7 @@ defBuiltin "push":
   var list = listd.listVal
 
   list.add(el)
-  return list.md
+  return list.md.pack
 
 # (unshift list el)
 # adds to beginning
@@ -1272,4 +1278,4 @@ defBuiltin "unshift":
   var list = listd.listVal
 
   list.insert(el, 0)
-  return list.md
+  return list.md.pack

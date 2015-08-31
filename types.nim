@@ -92,6 +92,16 @@ type
       of dObj: objVal*: ObjID
       of dNil: nilVal*: int # dummy
 
+  PackageType* = enum
+    ptData, ptCall
+
+  Package* = object
+    case ptype*: PackageType
+      of ptData:
+        val*: MData
+      of ptCall:
+        phase*: int
+
   CodePosition* = tuple[line: int, col: int]
 
   MError* = enum
@@ -114,7 +124,7 @@ type
   SymbolTable* = Table[string, MData]
   BuiltinProc* = proc(args: seq[MData], world: World,
                       caller, owner: MObject, symtable: SymbolTable,
-                      pos: CodePosition, task: Task): MData
+                      pos: CodePosition, phase: int, task: Task): Package
 
   Instruction* = object
     itype*: InstructionType
@@ -154,6 +164,7 @@ type
 
   Task* = ref object
     id*: int
+    name*: string
 
     stack*:     seq[MData]
     symtables*: seq[VSymTable]     ## All of the symbol tables
@@ -172,9 +183,14 @@ type
     restartTime*: int
     tickCount*: int
 
-    callback*: TaskCallbackProc
+    hasCallPackage*: bool
+    callPackage*: Package
+    builtinToCall*: MData
+    builtinArgs*: seq[MData]
+    callbackResult*: MData
 
-  TaskCallbackProc* = proc(task: Task, top: MData)
+    callback*: int
+
   InstructionProc* = proc(task: Task, operand: MData)
   CpOutput* = tuple[entry: int, code: seq[Instruction]]
 
@@ -197,6 +213,9 @@ proc md*(x: MError, s: string): MData = MData(dtype: dErr, errVal: x, errMsg: s)
 proc md*(x: seq[MData]): MData = MData(dtype: dList, listVal: x)
 proc md*(x: ObjID): MData = MData(dtype: dObj, objVal: x)
 proc md*(x: MObject): MData = x.id.md
+
+proc pack*(x: MData): Package = Package(ptype: ptData, val: x)
+proc pack*(phase: int): Package = Package(ptype: ptCall, phase: phase)
 
 proc blank*(dt: MDataType): MData =
   case dt:

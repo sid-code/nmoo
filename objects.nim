@@ -9,9 +9,8 @@ proc getLocation*(obj: MObject): MObject
 proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]]
 proc getPropVal*(obj: MObject, name: string): MData
 proc setProp*(obj: MObject, name: string, newVal: MData): MProperty
-proc addTask*(world: World, owner, caller: MObject,
-              symtable: SymbolTable, code: CpOutput,
-              callback: TaskCallbackProc = nil)
+proc addTask*(world: World, name: string, owner, caller: MObject,
+              symtable: SymbolTable, code: CpOutput, callback = -1)
 
 ## Permissions handling
 
@@ -329,12 +328,12 @@ proc tick*(world: World) =
       task.caller.send("This error is due to a server bug.")
       # raise exception
 
-proc addTask*(world: World, owner, caller: MObject,
-              symtable: SymbolTable, code: CpOutput,
-              callback: TaskCallbackProc = nil) =
+proc addTask*(world: World, name: string, owner, caller: MObject,
+              symtable: SymbolTable, code: CpOutput, callback = -1) =
 
   let newTask = task(
     id = world.taskIDCounter,
+    name = name,
     compiled = code,
     world = world,
     owner = owner,

@@ -49,6 +49,44 @@ proc doError(task: Task, error: MData) =
 
   task.spush(error)
   task.done = true
+  task.caller.send("Task $# failed due to error:" % [task.name])
+  task.caller.send($error)
+
+proc setCallPackage(task: Task, package: Package, builtin: MData, args: seq[MData]) =
+  task.hasCallPackage = true
+  task.callPackage = package
+  task.builtinToCall = builtin
+  task.builtinArgs = args
+  task.suspend()
+
+proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
+  let builtinName = builtin.symVal
+  if builtinExists(builtinName):
+    let bproc = scripting.builtins[builtinName]
+
+    # we pass in task.globals as the symtable because some builtins
+    # ask for "caller" etc
+    let res = bproc(
+      args = args,
+      world = task.world,
+      caller = task.caller,
+      owner = task.owner,
+      pos = builtin.pos,
+      symtable = task.globals,
+      phase = phase,
+      task = task)
+
+    if res.ptype == ptData:
+      let val = res.val
+
+      if val.isType(dErr):
+        task.doError(val)
+      else:
+        task.spush(val)
+    elif res.ptype == ptCall:
+      task.setCallPackage(res, builtin, args)
+  else:
+    task.doError(E_BUILTIN.md("unknown builtin '$1'" % builtinName))
 
 
 var instImpls = initTable[InstructionType, InstructionProc]()
@@ -134,9 +172,7 @@ impl inCALL:
     let env = lcall[1]
     let expectedNumArgs = lcall[2].intVal
     if expectedNumArgs == numArgs:
-      task.pushFrame(
-        symtable = task.symtables[env.intVal]
-      )
+      task.pushFrame(symtable = task.symtables[env.intVal])
       task.pc = jmploc.intVal
     else:
       task.doError(E_ARGS.md(
@@ -144,30 +180,8 @@ impl inCALL:
           [$expectedNumArgs, $numArgs]))
   elif what.isType(dSym):
     # It's a builtin call
-    let builtinName = what.symVal
-
-    if scripting.builtins.hasKey(builtinName):
-      let bproc = scripting.builtins[builtinName]
-      let args = task.collect(numArgs)
-
-      # we pass in task.globals as the symtable because some builtins
-      # ask for "caller" etc
-      let res = bproc(
-        args = args,
-        world = task.world,
-        caller = task.caller,
-        owner = task.owner,
-        pos = what.pos,
-        symtable = task.globals,
-        task = task)
-
-      if res.isType(dErr):
-        task.doError(res)
-      else:
-        task.spush(res)
-    else:
-      task.doError(E_BUILTIN.md("unknown builtin '$1'" % builtinName))
-
+    let args = task.collect(numArgs)
+    task.builtinCall(what, args)
   else:
     raise newException(Exception, "cannot call '$1'" % [$what])
 
@@ -249,39 +263,64 @@ impl inETRY:
 impl inHALT:
   task.done = true
 
+proc getTaskByID*(world: World, id: int): Task =
+  for task in world.tasks:
+    if task.id == id:
+      return task
+
+  return nil
+
 proc finish(task: Task) =
   let callback = task.callback
-  if callback != nil:
-    callback(task, task.top())
+  if callback >= 0:
+    let cbTask = task.world.getTaskByID(callback)
+    if cbTask != nil:
+      cbTask.callbackResult = task.top()
+      cbTask.resume()
+    else:
+      # TODO what to do here?
+      discard
 
 proc suspend*(task: Task) = task.suspended = true
 proc resume*(task: Task) = task.suspended = false
 
+proc doCallPackage(task: Task) =
+  let phase = task.callPackage.phase
+  let sym = task.builtinToCall
+  var args = task.builtinArgs
+  args.add(task.callbackResult)
+
+  task.hasCallPackage = false
+  task.builtinCall(sym, args, phase = phase)
+
 proc step*(task: Task) =
   if task.suspended: return
 
-  let inst = task.code[task.pc]
-  let itype = inst.itype
-  let operand = inst.operand
-
-  if instImpls.hasKey(itype):
-    instImpls[itype](task, operand)
+  if task.hasCallPackage:
+    task.doCallPackage()
   else:
-    raise newException(Exception, "instruction '$1' not implemented" % [$itype])
+    let inst = task.code[task.pc]
+    let itype = inst.itype
+    let operand = inst.operand
 
-  if task.done:
-    task.finish()
+    if instImpls.hasKey(itype):
+      instImpls[itype](task, operand)
+    else:
+      raise newException(Exception, "instruction '$1' not implemented" % [$itype])
 
-  task.pc += 1
-  task.tickCount += 1
+    if task.done:
+      task.finish()
 
-proc task*(id: int, compiled: CpOutput, world: World, owner: MObject,
-           caller: MObject, globals = newSymbolTable(),
-           callback: TaskCallbackProc): Task =
+    task.pc += 1
+    task.tickCount += 1
+
+proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObject,
+           caller: MObject, globals = newSymbolTable(), callback: int): Task =
   let st = newVSymTable()
   let (entry, code) = compiled
   var task = Task(
     id: id,
+    name: name,
     stack: @[],
     symtables: @[st],
     globals: globals,
@@ -298,6 +337,12 @@ proc task*(id: int, compiled: CpOutput, world: World, owner: MObject,
     suspended: false,
     restartTime: 0,
     tickCount: 0,
+
+    hasCallPackage: false,
+    callPackage: nilD.pack,
+    builtinToCall: "".mds,
+    builtinArgs: @[],
+    callbackResult: nilD,
 
     callback: callback
 

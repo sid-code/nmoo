@@ -228,12 +228,13 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
       if obj.canExecute(v):
         yield (o, v)
 
-proc call(verb: MVerb, world: World, caller: MObject,
-          symtable: SymbolTable, callback: TaskCallbackProc = nil) =
-  world.addTask(verb.owner, caller, symtable, verb.compiled, callback)
+proc call(verb: MVerb, world: World, holder, caller: MObject,
+          symtable: SymbolTable, callback = -1) =
+  let name = "$#:$#" % [holder.toObjStr(), verb.names]
+  world.addTask(name, verb.owner, caller, symtable, verb.compiled, callback)
 
-proc verbCallRaw*(owner: MObject, verb: MVerb, caller: MObject,
-                  args: seq[MData], callback: TaskCallbackProc = nil) =
+proc verbCallRaw*(holder: MObject, verb: MVerb, caller: MObject,
+                  args: seq[MData], callback = -1) =
   var
     world = caller.getWorld()
     symtable = newSymbolTable()
@@ -242,13 +243,13 @@ proc verbCallRaw*(owner: MObject, verb: MVerb, caller: MObject,
 
   symtable["caller"] = caller.md
   symtable["args"] = args.md
-  symtable["self"] = owner.md
+  symtable["self"] = holder.md
   symtable["verb"] = verb.names.md
 
-  verb.call(world, caller, symtable, callback)
+  verb.call(world, holder, caller, symtable, callback)
 
 proc verbCall*(owner: MObject, name: string, caller: MObject,
-               args: seq[MData], callback: TaskCallbackProc = nil): bool =
+               args: seq[MData], callback = -1): bool =
 
   for v in matchingVerbs(owner, name):
     if caller.canExecute(v):
@@ -360,12 +361,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
       else:
         continue
 
-    proc callback(task: Task, res: MData) =
-      if res.isType(dErr):
-        obj.send("Error while executing $1:$2 - $3" %
-          [o.toObjStr(), verb, $res])
-
-    v.call(world, obj, symtable, callback)
+    v.call(world, holder = o, caller = obj, symtable = symtable)
     return
 
   obj.send("Sorry, I couldn't understand that")
