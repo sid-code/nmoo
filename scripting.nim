@@ -93,7 +93,7 @@ proc toData(image: string): MData =
     rest = image[1 .. ^1]
 
   # Shorthand: obj.propname expands to (getprop obj "propname")
-  if '.' in image and leader notin {'"', '\''}:
+  if '.' in image and leader notin {'"', '\'', '-', '.'} and leader notin Digits:
     let parts = image.split('.')
     if parts.len > 1:
       let obj = parts[0..^2].join(".").toData()
