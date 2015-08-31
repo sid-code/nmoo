@@ -126,64 +126,6 @@ defBuiltin "eval":
     let msg = getCurrentExceptionMsg()
     runtimeError(E_PARSE, "compile error: $1" % msg)
 
-defBuiltin "slet": # single let
-  if args.len != 2:
-    runtimeError(E_ARGS, "slet expects two arguments")
-
-  let first = args[0]
-  checkType(first, dList)
-  if first.listVal.len != 2:
-    runtimeError(E_ARGS, "slet's first argument is a tuple (symbol value-to-bind)")
-
-  let newStmt = @[ "let".mds, @[first].md, args[1] ].md
-  return evalD(newStmt).pack
-
-
-defBuiltin "let":
-  # First argument: list of pairs
-  # Second argument: expression to evaluate with the symbol table
-  if args.len != 2:
-    return E_ARGS.md.pack
-
-  checkType(args[0], dList)
-
-  var newSymtable = symtable
-
-  let asmtList = args[0].listVal
-  for asmt in asmtList:
-    if not asmt.isType(dList):
-      runtimeError(E_ARGS, "let takes a list of assignments")
-    let pair = asmt.listVal
-    if not pair.len == 2:
-      runtimeError(E_ARGS, "each assignment in the list must be a tuple (symbol value-to-bind)")
-    checkType(pair[0], dSym)
-
-    let
-      symName = pair[0].symVal
-      setVal = evalD(pair[1], st = newSymtable)
-
-    newSymtable[symName] = setVal
-
-  return evalD(args[1], st = newSymtable).pack
-
-defBuiltin "cond":
-  for arg in args:
-    checkType(arg, dList)
-    let larg = arg.listVal
-    if larg.len == 0 or larg.len > 2:
-      runtimeError(E_ARGS, "each argument to cond must be of length 1 or 2")
-
-    if larg.len == 1:
-      return larg[0].pack
-    else:
-      let condVal = evalD(larg[0])
-      if condVal.truthy:
-        return evalD(larg[1]).pack
-      else:
-        continue
-
-  return E_BADCOND.md.pack
-
 proc extractInfo(prop: MProperty): MData =
   var res: seq[MData] = @[]
   res.add(prop.owner.md)
@@ -810,55 +752,6 @@ defBuiltin "setparent":
 
   return newParent.md.pack
 
-# (try (what) (except) (finally))
-defBuiltin "try":
-  let alen = args.len
-  if not (alen == 2 or alen == 3):
-    runtimeError(E_ARGS, "try takes 2 or 3 arguments")
-
-  let tryClause = evalD(args[0])
-
-  # here we do manual error handling
-  if tryClause.isType(dErr):
-    var newSymtable = symtable
-    newSymtable["error"] = tryClause.errMsg.md
-    let exceptClause = evalD(args[1], st = newSymtable)
-    return exceptClause.pack
-
-  if alen == 3:
-    let finallyClause = evalD(args[2])
-    return finallyClause.pack
-
-# (lambda (var) (expr-in-var))
-defBuiltin "lambda":
-  let alen = args.len
-  if alen < 2:
-    runtimeError(E_ARGS, "lambda takes 2 or more arguments")
-
-  if alen == 2:
-    return (@["lambda".mds] & args).md.pack
-
-  var newSymtable = symtable
-  let boundld = args[0]
-  checkType(boundld, dList)
-
-  let
-    boundl = boundld.listVal
-    numBound = boundl.len
-
-  if alen != 2 + numBound:
-    runtimeError(E_ARGS, "lambda taking $1 arguments given $2 instead" %
-            [$numBound, $(alen - 2)])
-
-  let lambdaArgs = args[2 .. ^1]
-  for idx, symd in boundl:
-    checkType(symd, dSym)
-    let sym = symd.symVal
-    newSymtable[sym] = lambdaArgs[idx]
-
-  let expression = args[1]
-  return evalD(expression, st = newSymtable).pack
-
 # (istype thingy typedesc)
 # typedesc is a string:
 #   int, float, str, sym, obj, list, err
@@ -935,54 +828,6 @@ defBuiltin "verbcall":
 
     return verbResult.pack
     # TODO: increment current task's quotas by the amount of ticks innerTask used
-
-# (map func list)
-defBuiltin "map":
-  if args.len != 2:
-    runtimeError(E_ARGS, "map takes 2 arguments")
-
-  let
-    lamb = evalD(args[0])
-    listd = evalD(args[1])
-
-  checkType(listd, dList)
-  let list = listd.listVal
-  var newList: seq[MData] = @[]
-
-  for el in list:
-    var singleResult: MData = evalD(genCall(lamb, @[el]))
-    newList.add(singleResult)
-
-  return newList.md.pack
-
-#(reduce start list func)
-defBuiltin "reduce":
-  let alen = args.len
-  if alen != 2 and alen != 3:
-    runtimeError(E_ARGS, "reduce takes 2 or 3 arguments")
-
-  let
-    lamb = args[0]
-    listd = evalD(if alen == 2: args[1] else: args[2])
-
-  checkType(listd, dList)
-  var list = listD.listVal
-  if list.len == 0:
-    return nilD.pack
-
-  var start: MData
-  if alen == 2:
-    start = evalD(list[0])
-    list = list[1 .. ^1]
-  elif alen == 3:
-    start = evalD(args[1])
-
-
-  var res: MData = start
-  for el in list:
-    res = evalD(genCall(lamb, @[res, el]))
-
-  return res.pack
 
 type
   BinFloatOp = proc(x: float, y: float): float
