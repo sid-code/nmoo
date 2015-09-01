@@ -294,7 +294,7 @@ template getVerbOn(objd, verbdescd: MData, die = true): tuple[o: MObject, v: MVe
   checkType(verbdescd2, dStr)
   let verbdesc = verbdescd2.strVal
 
-  let verb = obj.getVerb(verbdesc)
+  let verb = obj.getVerb(verbdesc, all = false)
   if verb == nil:
     if die:
       runtimeError(E_VERBNF, "verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
@@ -436,7 +436,7 @@ defBuiltin "verbs":
   checkRead(owner, obj)
 
   var res: seq[MData] = @[]
-  for v in obj.allVerbs():
+  for v in obj.verbs:
     res.add(v.names.md)
 
   return res.md.pack
