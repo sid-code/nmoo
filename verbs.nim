@@ -178,13 +178,14 @@ proc allVerbs*(obj: MObject): seq[MVerb] =
   newSeq(result, 0)
   allVerbsHelper(obj, result)
 
-iterator matchingVerbs(obj: MObject, name: string): MVerb =
-  for v in obj.allVerbs():
+iterator matchingVerbs(obj: MObject, name: string, all = true): MVerb =
+  let searchSpace = if all: obj.allVerbs() else: obj.verbs
+  for v in searchSpace:
     if v.matchesName(name):
       yield v
 
-proc getVerb*(obj: MObject, name: string): MVerb =
-  for v in matchingVerbs(obj, name):
+proc getVerb*(obj: MObject, name: string, all = true): MVerb =
+  for v in matchingVerbs(obj, name, all):
     return v
 
   return nil
