@@ -240,6 +240,70 @@ defSpecial "map":
   compiler.real.add(ins(inLABEL, afterLocation))
   compiler.real.add(ins(inPOP))
 
+proc genFold(compiler: MCompiler, fn, default, list: MData,
+             useDefault = true, left = true) =
+
+  compiler.codeGen(fn)
+
+  let index = compiler.symtable.defSymbol("__redfn")
+  compiler.real.add(ins(inSTO, index.md))
+  compiler.codeGen(list)                         # list
+
+  let after = compiler.makeSymbol()
+  let emptyList = compiler.makeSymbol()
+  if not useDefault:
+    compiler.real.add(ins(inLEN))                # list len
+    compiler.real.add(ins(inJ0, emptyList))      # list
+
+  if left:
+    compiler.real.add(ins(inREV))                # list-rev
+
+  if useDefault:
+    compiler.codeGen(default)
+  else:
+    compiler.real.add(ins(inPOPL))               # list-rev last
+
+  compiler.real.add(ins(inSWAP))                 # last list-rev
+
+  let loop = compiler.addLabel(real)
+  compiler.real.add(ins(inLEN))                  # last list-rev len
+  compiler.real.add(ins(inJ0, after))            # last list-rev
+  compiler.real.add(ins(inPOPL))                 # last1 list-rev last2
+  compiler.real.add(ins(inSWAP3))                # list-rev last2 last1
+  compiler.real.add(ins(inSWAP))                 # list-rev last1 last2
+  compiler.real.add(ins(inGET, index.md))        # list-rev last1 last2 fn
+  compiler.real.add(ins(inCALL, 2.md))           # list-rev result
+  compiler.real.add(ins(inSWAP))                 # result list-rev
+  compiler.real.add(ins(inJMP, loop))
+
+  if not useDefault:
+    compiler.real.add(ins(inLABEL, emptyList))
+    compiler.codeGen(default)
+    compiler.real.add(ins(inSWAP)) # So that the pop at the end pops off the empty list
+
+  compiler.real.add(ins(inLABEL, after))
+  compiler.real.add(ins(inPOP))                  # result
+
+defSpecial "reduce-left":
+  verifyArgs("reduce-left", args, @[dNil, dNil, dNil])
+
+  compiler.genFold(args[0], args[1], args[2], useDefault = false, left = true)
+
+defSpecial "reduce-right":
+  verifyArgs("reduce-right", args, @[dNil, dNil, dNil])
+
+  compiler.genFold(args[0], args[1], args[2], useDefault = false, left = false)
+
+defSpecial "foldl":
+  verifyArgs("foldr", args, @[dNil, dNil, dNil])
+
+  compiler.genFold(args[0], args[1], args[2], useDefault = true, left = true)
+
+defSpecial "foldr":
+  verifyArgs("foldl", args, @[dNil, dNil, dNil])
+
+  compiler.genFold(args[0], args[1], args[2], useDefault = true, left = false)
+
 defSpecial "call":
   verifyArgs("call", args, @[dNil, dNil])
   compiler.codeGen(args[1])
