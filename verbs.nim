@@ -194,8 +194,7 @@ proc addVerbRec*(obj: MObject, verb: MVerb): seq[tuple[o: MObject, v: MVerb]] =
 
 proc delVerb*(obj: MObject, verb: MVerb): MVerb =
   for i, v in obj.verbs:
-    # TODO: make a better way to check for verb equality
-    if v.names == verb.names:
+    if v == verb:
       obj.verbs.delete(i)
       return verb
 
