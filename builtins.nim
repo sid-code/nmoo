@@ -69,15 +69,6 @@ template checkExecute(obj: MObject, what: MVerb) =
   if not obj.canExecute(verb):
     runtimeError(E_PERM, obj.toObjStr() & " cannot execute verb: " & what.names)
 
-proc genCall(fun: MData, args: seq[MData]): MData =
-  var resList: seq[MData]
-  if fun.isType(dSym):
-    resList = @[fun]
-  else:
-    resList = @["call".mds, fun]
-
-  return (resList & args).md
-
 proc toEchoString*(x: MData): string =
   if x.isType(dStr):
     x.strVal
