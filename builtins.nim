@@ -736,7 +736,12 @@ defBuiltin "setparent":
 
   var conductor = newParent
 
-  # TODO: explain this condition
+  # An object can parent itself but cannot parent a different object that
+  # parents it. This is because having #0 parent of #0 and #1 parent of #1
+  # is useful. This is an important decision that can go awry later though.
+  #
+  # Note that the original LambdaMOO doesn't allow for recursive parenting
+  # at all.
   while conductor != conductor.parent:
     conductor = conductor.parent
     if conductor == obj:
