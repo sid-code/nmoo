@@ -567,6 +567,8 @@ defBuiltin "getverbcode":
     runtimeError(E_ARGS, "getverbcode takes 2 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
+  discard obj
+
   checkRead(owner, verb)
 
   return verb.code.md.pack
