@@ -277,7 +277,9 @@ template getPropOn(objd, propd: MData, die = true): tuple[o: Mobject, p: MProper
 
   (obj, propObj)
 
-template getVerbOn(objd, verbdescd: MData, die = true): tuple[o: MObject, v: MVerb] =
+template getVerbOn(objd, verbdescd: MData, die = true,
+                   all = false): tuple[o: MObject, v: MVerb] =
+
   let objd2 = evalD(objd)
   let obj = extractObject(objd2)
 
@@ -285,7 +287,7 @@ template getVerbOn(objd, verbdescd: MData, die = true): tuple[o: MObject, v: MVe
   checkType(verbdescd2, dStr)
   let verbdesc = verbdescd2.strVal
 
-  let verb = obj.getVerb(verbdesc, all = false)
+  let verb = obj.getVerb(verbdesc, all)
   if verb == nil:
     if die:
       runtimeError(E_VERBNF, "verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
@@ -801,7 +803,7 @@ defBuiltin "verbcall":
     else:
       runtimeError(E_ARGS, "verbcall takes 2 or 3 arguments")
 
-  let (obj, verb) = getVerbOn(args[0], args[1])
+  let (obj, verb) = getVerbOn(args[0], args[1], all = true)
 
   if phase == 0:
     if args.len > 3:
