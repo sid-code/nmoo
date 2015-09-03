@@ -203,22 +203,10 @@ proc parseList*(parser: var MParser): MData =
   return resultL.md
 
 
-
-## EVALUATOR
-
 var builtins* = initTable[string, BuiltinProc]()
 
 proc builtinExists*(name: string): bool =
   builtins.hasKey(name)
-
-proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
-  if not symtable.hasKey(symVal):
-    if not builtinExists(symVal):
-      return E_UNBOUND.md("unbound symbol '$1'" % symVal)
-    else:
-      return symVal.mds
-  else:
-    return symtable[symVal]
 
 ## DISPLAYING PARSED CODE
 

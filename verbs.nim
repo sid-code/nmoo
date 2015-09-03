@@ -77,16 +77,6 @@ proc shellwords(str: string): seq[string] =
 
 ### End utilities
 
-proc newParsedCommand: ParsedCommand =
-  ParsedCommand(
-    verb: "",
-    rest: @[],
-    fixedRest: @[],
-    doString: "",
-    ioString: "",
-    prep: (pNone, "")
-  )
-
 proc parseCommand(str: string): ParsedCommand =
   let
     words = shellwords(str)
