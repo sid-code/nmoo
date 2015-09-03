@@ -278,8 +278,11 @@ proc finish(task: Task) =
       cbTask.callbackResult = task.top()
       cbTask.resume()
     else:
-      # TODO what to do here?
-      discard
+      # I've decided that a warning here should suffice. The maintainer should
+      # make sure that the task's callback isn't crucial to the operation of
+      # the system, and if it is, then debug more.
+
+      echo "Warning: callback for task '$#' didn't exist." % [task.name]
 
 proc suspend*(task: Task) = task.suspended = true
 proc resume*(task: Task) = task.suspended = false
