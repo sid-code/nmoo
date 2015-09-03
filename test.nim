@@ -159,11 +159,12 @@ suite "evaluator":
 
     var symtable = newSymbolTable()
     proc evalS(code: string, who: MObject = root): MData =
-      var parser = newParser(code)
-      let
-        parsed = parser.parseList()
+      return nilD
+      # var parser = newParser(code)
+      # let
+      #   parsed = parser.parseList()
 
-      return eval(parsed, world, who, who, symtable)
+      # return eval(parsed, world, who, who, symtable)
 
   test "let statement binds symbols locally":
     let result = evalS("""

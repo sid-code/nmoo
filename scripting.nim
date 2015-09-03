@@ -220,36 +220,6 @@ proc resolveSymbol(symVal: string, symtable: SymbolTable): MData =
   else:
     return symtable[symVal]
 
-proc eval*(exp: MData, world: World, caller, owner: MObject,
-           symtable: SymbolTable = newSymbolTable()): MData =
-  if not exp.isType(dList):
-    if exp.isType(dSym):
-      return resolveSymbol(exp.symVal, symtable)
-    else:
-      return exp
-
-  var listv = exp.listVal
-  if listv.len == 0 or not listv[0].isType(dSym):
-    return exp
-
-  var listvr = listv[1 .. ^1]
-  for idx, el in listvr:
-    if el.isType(dSym):
-      let val = resolveSymbol(el.symVal, symtable)
-      if val.isType(dErr):
-        return val
-      else:
-        listvr[idx] = val
-
-  let sym = listv[0].symVal
-
-  if builtins.hasKey(sym):
-    # I'm done maintaining this useless function so...
-    #return builtins[sym](listvr, world, caller, owner, symtable, (0, 0), nil).val
-    return 0.md
-  else:
-    return E_BUILTIN.md("undefined builtin: $1" % sym)
-
 ## DISPLAYING PARSED CODE
 
 proc toCodeStr*(parsed: MData): string =
