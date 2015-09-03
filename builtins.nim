@@ -344,7 +344,6 @@ defBuiltin "setprop":
   return newVal.pack
 
 # (delprop what propname)
-# TODO: write a test for this!
 defBuiltin "delprop":
   if args.len != 2:
     runtimeError(E_ARGS, "delprop takes 2 arguments")
@@ -645,7 +644,6 @@ defBuiltin "move":
 # owner is set to executor of code
 #   (in the case of verbs, the owner of the verb)
 #
-# # TODO: write a test for this
 defBuiltin "create":
   let alen = args.len
   if alen != 1 and alen != 2:
