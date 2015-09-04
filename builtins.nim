@@ -99,7 +99,7 @@ defBuiltin "do":
 
 defBuiltin "eval":
   if args.len != 1:
-    runtimeError(E_ARGS, "eval takes one argument")
+    runtimeError(E_ARGS, "eval takes 1 argument")
 
   let argd = evalD(args[0])
   checkType(argd, dStr)
