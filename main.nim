@@ -1,4 +1,4 @@
-import types, objects, querying, verbs, builtins, persist
+import types, objects, querying, verbs, builtins, persist, rdstdin
 import os, strutils, nre, options, tables
 
 let
@@ -14,8 +14,7 @@ proc myEscape(s: string): string =
   s.replace("\"", "\\\"")
 
 while true:
-  stdout.write("> ")
-  var command = stdin.readLine().strip()
+  var command = readLineFromStdin("> ").strip()
 
   if command.contains("<>"):
     discard os.execShellCmd("vim edit.tmp")
