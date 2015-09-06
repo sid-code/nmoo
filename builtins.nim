@@ -589,6 +589,8 @@ defBuiltin "move":
 
   var phase = phase # So we can change it
 
+  let oldLoc = what.getLocation()
+
   if phase == 0: # Check for acceptance
     if args.len != 2:
       runtimeError(E_ARGS, "move takes 2 arguments")
@@ -599,14 +601,14 @@ defBuiltin "move":
 
     let success = dest.verbCall("accept", caller, whatlist, task.id)
     if not success: # We were not able to call the verb
-      runtimeError(E_FMOVE, "$2 didn't accept $1" % [dest.toObjStr(), what.toObjStr()])
+      runtimeError(E_FMOVE, "$1 didn't accept $2" % [dest.toObjStr(), what.toObjStr()])
 
     return 1.pack
 
   if phase == 1: # Check for recursive move and call exitfunc
     let accepted = args[2]
     if not accepted.truthy:
-      runtimeError(E_FMOVE, "$2 didn't accept $1" % [dest.toObjStr(), what.toObjStr()])
+      runtimeError(E_FMOVE, "$1 didn't accept $2" % [dest.toObjStr(), what.toObjStr()])
 
     var conductor = dest
 
@@ -617,8 +619,6 @@ defBuiltin "move":
       if loc == conductor:
         break
       conductor = loc
-
-    let oldLoc = what.getLocation()
 
     if oldLoc == nil:
       phase += 1
@@ -631,6 +631,12 @@ defBuiltin "move":
 
   if phase == 2:
     var moveSucceeded = what.moveTo(dest)
+
+    world.persist(what)
+    world.persist(dest)
+    if oldLoc != nil:
+      world.persist(oldLoc)
+
     if not moveSucceeded:
       runtimeError(E_FMOVE, "moving $1 to $2 failed (it could already be at $2)" %
             [what.toObjStr(), dest.toObjStr()])
