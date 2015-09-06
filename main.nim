@@ -1,4 +1,5 @@
-import types, objects, querying, verbs, builtins, persist, os, strutils, re, tables
+import types, objects, querying, verbs, builtins, persist
+import os, strutils, nre, options, tables
 
 let
   world = loadWorld("min")
@@ -20,8 +21,11 @@ while true:
     discard os.execShellCmd("vim edit.tmp")
     command = command.replace("<>", readFile("edit.tmp").myEscape())
 
-  if command =~ re"vedit (.+?):(.*)":
+  let match = command.match(re"vedit (.+?):(.*)")
+
+  if match.isSome:
     try:
+      let matches = match.get.captures
       let verbname = matches[1]
 
       let objs = player.query(matches[0].strip(), global = true)
