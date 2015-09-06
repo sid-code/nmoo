@@ -1,4 +1,4 @@
-import types, objects, querying, verbs, builtins, persist, os, strutils, rdstdin, re, tables
+import types, objects, querying, verbs, builtins, persist, os, strutils, re, tables
 
 let
   world = loadWorld("min")
@@ -13,7 +13,8 @@ proc myEscape(s: string): string =
   s.replace("\"", "\\\"")
 
 while true:
-  var command = readLineFromStdin("> ").strip()
+  stdout.write("> ")
+  var command = stdin.readLine().strip()
 
   if command.contains("<>"):
     discard os.execShellCmd("vim edit.tmp")
