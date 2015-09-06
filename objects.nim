@@ -204,8 +204,6 @@ proc removeFromContents*(obj: MObject, member: MObject): bool =
 
 proc moveTo*(obj: MObject, newLoc: MObject): bool =
   var loc = obj.getLocation()
-  if loc == newLoc:
-    return true
   if loc != nil:
     discard loc.removeFromContents(obj)
 
