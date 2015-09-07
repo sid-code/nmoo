@@ -669,7 +669,7 @@ defBuiltin "create":
 
   let newObj = parent.createChild()
   world.add(newObj)
-  newObj.setPropR("name", "child of $1" % [$parent.md])
+  newObj.setPropR("name", "child of $1 ($2)" % [$parent.md, $newObj.md])
 
   discard newObj.verbCall("initialize", owner, @[])
 
