@@ -256,6 +256,9 @@ proc getObjectDir*(name: string): string =
 proc getObjectFile(worldName: string, id: int): string =
   getObjectDir(worldName) / $id
 
+proc getTrashDir(name: string): string =
+  getWorldDir(name) / "trash"
+
 proc getTaskDir(name: string): string =
   getWorldDir(name) / "tasks"
 
@@ -305,12 +308,21 @@ proc persist*(world: World) =
     world.persistGSymtable()
 
     createDir(getObjectDir(world.name))
-    for obj in world.getObjects()[]:
-      if obj != nil:
+
+    let trashDir = getTrashDir(world.name)
+    createDir(trashDir)
+
+    for idx, obj in world.getObjects()[]:
+      if obj == nil:
+        let deadObject = getobjectFile(world.name, idx)
+        if fileExists(deadObject):
+          moveFile(deadObject, trashDir / $idx)
+      else:
         world.persist(obj)
     createDir(getTaskDir(world.name))
-    for task in world.tasks:
-      world.persist(task)
+    # This is broken so I'll temporarily disable it
+    # for task in world.tasks:
+    #   world.persist(task)
 
 proc loadWorld*(name: string): World =
   result = createWorld(name)

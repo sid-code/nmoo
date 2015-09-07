@@ -688,34 +688,62 @@ defBuiltin "create":
 #
 # Destroys obj
 defBuiltin "recycle":
-  if args.len != 1:
-    runtimeError(E_ARGS, "recycle takes 1 argument")
-
-  let obj = extractObject(args[0])
-  checkOwn(owner, obj)
-
-  let children = obj.children
-  let parent = obj.parent
-  for child in children:
-    child.changeParent(parent)
+  var phase = phase
 
   let nowhered = world.getGlobal("$nowhere")
   let nowhere = extractObject(nowhered)
 
-  let (has, contents) = obj.getContents()
-  if has:
-    for contained in contents:
-      discard
+  if phase == 0:
+    if args.len != 1:
+      runtimeError(E_ARGS, "recycle takes 1 argument")
 
-  proc callback(innerTask: Task = task, top: MData = nilD) =
+    let obj = extractObject(args[0])
+    checkOwn(owner, obj)
+
+    let children = obj.children
+    let parent = obj.parent
+    for child in children:
+      child.changeParent(parent)
+
+    let (has, contents) = obj.getContents()
+    if has:
+      for contained in contents:
+        # This is actually how LambdaMOO does it: no call to the move
+        # builtin instead a raw exitfunc call. I find this somewhat
+        # dubious but actually making a builtin call is difficult because
+        # of the phase mechanism.
+        discard contained.moveTo(nowhere)
+        discard obj.verbCall("exitfunc", owner, @[contained.md])
+        world.persist(contained)
+
+    if not obj.verbCall("recycle", owner, @[], task.id):
+      # We don't actually care if the verb "recycle" exists
+      phase = 1
+    else:
+      return 1.pack
+
+  if phase == 1:
+    let obj = extractObject(args[0])
+    let parent = obj.parent
+
+    # If the object parents itself, all of its children will be left
+    # without a parent so they now have to parent themselves too.
+    if parent == obj:
+      for child in obj.children:
+        child.changeParent(child)
+        world.persist(child)
+    else:
+      for child in obj.children:
+        child.changeParent(parent)
+        world.persist(child)
+
     # Destroy the object
     discard obj.moveTo(nowhere)
     discard nowhere.removeFromContents(obj)
     world.delete(obj)
     world.persist()
 
-  #if not obj.verbCall("recycle", owner, @[], callback):
-  #  callback()
+    return 1.md.pack
 
 defBuiltin "parent":
   if args.len != 1:
