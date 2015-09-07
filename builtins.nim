@@ -780,7 +780,7 @@ defBuiltin "setparent":
     if conductor == obj:
       runtimeError(E_RECMOVE, "parenting cannot create cycles of length greater than 1!")
 
-  obj.parent = newParent
+  obj.changeParent(newParent)
   world.persist(obj)
 
   return newParent.md.pack
