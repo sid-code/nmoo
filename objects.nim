@@ -3,11 +3,11 @@
 import types, sequtils, strutils, tables
 # NOTE: verbs is imported later on!
 
-proc getStrProp*(obj: MObject, name: string): string
+proc getStrProp*(obj: MObject, name: string, all = true): string
 proc getAliases*(obj: MObject): seq[string]
 proc getLocation*(obj: MObject): MObject
 proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]]
-proc getPropVal*(obj: MObject, name: string): MData
+proc getPropVal*(obj: MObject, name: string, all = true): MData
 proc setProp*(obj: MObject, name: string, newVal: MData): MProperty
 proc addTask*(world: World, name: string, owner, caller: MObject,
               symtable: SymbolTable, code: CpOutput, callback = -1)
@@ -64,13 +64,20 @@ proc toObjStr*(objd: MData, world: World): string =
 
 import verbs
 
-
-proc getProp*(obj: MObject, name: string): MProperty =
+proc getPropAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, p: MProperty] =
   for p in obj.props:
     if p.name == name:
-      return p
+      return (obj, p)
 
-  return nil
+  if all:
+    let parent = obj.parent
+    if parent != nil and parent != obj:
+      return parent.getPropAndObj(name, all)
+
+  return (nil, nil)
+
+proc getProp*(obj: MObject, name: string, all = true): MProperty =
+  obj.getPropAndObj(name, all).p
 
 proc setPropChildCopy*(obj: MObject, name: string, newVal: bool): bool =
   var prop = obj.getProp(name)
@@ -80,15 +87,15 @@ proc setPropChildCopy*(obj: MObject, name: string, newVal: bool): bool =
   else:
     return false
 
-proc getPropVal*(obj: MObject, name: string): MData =
-  var res = obj.getProp(name)
+proc getPropVal*(obj: MObject, name: string, all = true): MData =
+  var res = obj.getProp(name, all)
   if res == nil:
     nilD
   else:
     res.val
 
 proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
-  var p = obj.getProp(name)
+  var p = obj.getProp(name, all = false)
   if p == nil:
     p = newProperty(
       name = name,
@@ -138,7 +145,6 @@ proc delPropRec*(obj: MObject, prop: MProperty):
 
   for child in obj.children:
     result.add(child.delPropRec(prop))
-
 
 proc getLocation*(obj: MObject): MObject =
   let world = obj.getWorld()
@@ -222,8 +228,8 @@ proc getAliases*(obj: MObject): seq[string] =
       if o.isType(dStr):
         result.add(o.strVal)
 
-proc getStrProp*(obj: MObject, name: string): string =
-  let datum = obj.getPropVal(name)
+proc getStrProp*(obj: MObject, name: string, all = true): string =
+  let datum = obj.getPropVal(name, all)
 
   if datum.isType(dStr):
     return datum.strVal
@@ -274,19 +280,6 @@ proc changeParent*(obj: MObject, newParent: MObject) =
 
     # remove this from old parent's children
     obj.parent.children.keepItIf(it != obj)
-
-
-  for p in newParent.props:
-    var pc = p.copy
-    pc.inherited = true
-
-    # only copy the value of the property if specified by the property
-
-    if not pc.copyVal:
-      pc.val = blank(pc.val.dtype)
-
-
-    obj.props.add(pc)
 
   obj.parent = newParent
   newParent.children.add(obj)
