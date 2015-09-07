@@ -140,7 +140,7 @@ proc delProp*(obj: MObject, prop: MProperty): MProperty =
 
 proc delPropRec*(obj: MObject, prop: MProperty):
     seq[tuple[o: MObject, p: MProperty]] =
-  result = @[]
+  newSeq(result, 0)
   result.add((obj, obj.delProp(prop)))
 
   for child in obj.children:
