@@ -249,6 +249,7 @@ proc createWorld*(name: string): World =
   result = newWorld()
   result.name = name
   var verbObj = blankObject()
+  verbObj.parent = verbObj
   result.add(verbObj)
   result.verbObj = verbObj
 
