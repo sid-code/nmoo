@@ -268,7 +268,7 @@ template getPropOn(objd, propd: MData, die = true,
   checkType(propd2, dStr)
   let
     propName = propd.strVal
-    propObj = obj.getProp(propName)
+    (objOn, propObj) = obj.getPropAndObj(propName, all)
 
   if propObj == nil:
     if die:
@@ -276,7 +276,7 @@ template getPropOn(objd, propd: MData, die = true,
     else:
       return nilD.pack
 
-  (obj, propObj)
+  (objOn, propObj)
 
 template getVerbOn(objd, verbdescd: MData, die = true,
                    all = false): tuple[o: MObject, v: MVerb] =
@@ -288,21 +288,21 @@ template getVerbOn(objd, verbdescd: MData, die = true,
   checkType(verbdescd2, dStr)
   let verbdesc = verbdescd2.strVal
 
-  let verb = obj.getVerb(verbdesc, all)
+  let (objOn, verb) = obj.getVerbAndObj(verbdesc, all)
   if verb == nil:
     if die:
       runtimeError(E_VERBNF, "verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
     else:
       return nilD.pack
 
-  (obj, verb)
+  (objOn, verb)
 
 # (getprop what propname)
 defBuiltin "getprop":
   if args.len != 2:
     runtimeError(E_ARGS, "getprop takes 2 arguments")
 
-  let (obj, propObj) = getPropOn(args[0], args[1])
+  let (obj, propObj) = getPropOn(args[0], args[1], all = true)
   discard obj
 
   checkRead(owner, propObj)
@@ -323,23 +323,18 @@ defBuiltin "setprop":
 
   checkType(propd, dStr)
 
-  let
-    prop = propd.strVal
-    oldProp = obj.getProp(prop)
+  let prop = propd.strVal
+  var oldProp = obj.getProp(prop, all = false)
+
+  echo oldProp == nil
 
   if oldProp == nil:
     owner.checkWrite(obj)
-    for tup in obj.setPropRec(prop, newVal):
-      let (moddedObj, addedProp) = tup
-      # If the property didn't exist before, we want its owner to be us,
-      # not the object that it belongs to.
-      addedProp.owner = owner
-      world.persist(moddedObj)
-
+    discard obj.setProp(prop, newVal)
+    world.persist(obj)
   else:
-    var propObj = obj.getProp(prop)
-    owner.checkWrite(propObj)
-    propObj.val = newVal
+    owner.checkWrite(oldProp)
+    oldProp.val = newVal
     world.persist(obj)
 
   return newVal.pack
