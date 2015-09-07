@@ -27,7 +27,7 @@ while true:
       let matches = match.get.captures
       let verbname = matches[1]
 
-      let objs = player.query(matches[0].strip(), global = true)
+      let objs = player.query(matches[0].strip())
       let obj = objs[0]
 
       let verb = obj.getVerb(verbname)
