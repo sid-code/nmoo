@@ -68,4 +68,4 @@ proc query*(obj: MObject, str: string, global = false): seq[MObject] =
 
   let searchSpace = if global: world.getObjects()[] else: obj.getVicinity()
 
-  result.add(searchSpace.filterIt(it.matches(str)))
+  result.add(searchSpace.filterIt(it != nil and it.matches(str)))
