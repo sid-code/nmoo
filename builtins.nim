@@ -259,7 +259,8 @@ proc setArgs(verb: MVerb, args: VerbArgs) =
   verb.prepSpec = args.prepSpec
   verb.ioSpec = args.ioSpec
 
-template getPropOn(objd, propd: MData, die = true): tuple[o: Mobject, p: MProperty] =
+template getPropOn(objd, propd: MData, die = true,
+                   all = false): tuple[o: MObject, p: MProperty] =
   let objd2 = evalD(objd)
   let obj = extractObject(objd2)
 
