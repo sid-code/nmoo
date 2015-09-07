@@ -338,21 +338,53 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
 
 proc numTasks*(world: World): int = world.tasks.len
 
-# Check if there is a nowhere object
+import persist
+
+# Check if a symbol in the global symtable has a certain desired type
+proc checkForGSymType(world: World, sym: string, dtype: MDataType) =
+  if not world.globalSymtable.hasKey(sym):
+    raise newException(InvalidWorldError, "there is no object $# in the global symtable" % [sym])
+
+  let data = world.getGlobal(sym)
+  if not data.isType(dtype):
+    raise newException(InvalidWorldError, "$# needs to be of type $#, not $#" % [sym, $dtype, $data.dtype])
+
+proc checkRoot(world: World) =
+  world.checkForGSymType("$root", dObj)
+
 proc checkNowhere(world: World) =
-  if world.globalSymtable.hasKey("$nowhere"):
-    let nowhered = world.globalSymtable["$nowhere"]
-    if nowhered.isType(dObj):
-      let nowhere = world.dataToObj(nowhered)
-      if nowhere.getProp("contents") == nil:
-        raise newException(InvalidWorldError, "the $nowhere object needs to have contents")
-      else:
-        return
-    else:
-      raise newException(InvalidWorldError, "$nowhere needs to be an object")
-  else:
-    raise newException(InvalidWorldError, "there is no $nowhere object in the global symtable")
+  world.checkForGSymType("$nowhere", dObj)
+  let nowhered = world.getGlobal("$nowhere")
+
+  let nowhere = world.dataToObj(nowhered)
+
+  if nowhere.getProp("contents") == nil:
+    raise newException(InvalidWorldError, "the $nowhere object needs to have contents")
+
+proc checkPlayer(world: World) =
+  world.checkForGSymType("$player", dObj)
+  let playerd = world.getGlobal("$player")
+
+  let player = world.dataToObj(playerd)
+
+  if player.getProp("contents") == nil:
+    raise newException(InvalidWorldError, "the $player object needs to have contents")
+
+proc checkObjectHierarchyHelper(world: World, root: MObject) =
+  root.children.keepItIf(it != nil)
+  for child in root.children:
+    if child != root:
+      world.checkObjectHierarchyHelper(child)
+
+  world.persist(root)
+
+proc checkObjectHierarchy(world: World) =
+  let root = world.dataToObj(world.getGlobal("$root"))
+  world.checkObjectHierarchyHelper(root)
 
 # This checks if the world is fit to be used
 proc check*(world: World) =
+  world.checkRoot()
   world.checkNowhere()
+  world.checkPlayer()
+  world.checkObjectHierarchy()
