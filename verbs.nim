@@ -180,6 +180,19 @@ proc getVerb*(obj: MObject, name: string, all = true): MVerb =
 
   return nil
 
+# Code duplication, I know, but I'm lazy
+proc getVerbAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, v: MVerb] =
+  for v in obj.verbs:
+    if v.matchesName(name):
+      return (obj, v)
+
+  if all:
+    let parent = obj.parent
+    if parent != nil and parent != obj:
+      return parent.getVerbAndObj(name, all)
+
+  return (nil, nil)
+
 proc addVerb*(obj: MObject, verb: MVerb): MVerb =
   obj.verbs.add(verb)
   return verb
