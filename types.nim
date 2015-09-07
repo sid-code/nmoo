@@ -204,15 +204,15 @@ proc setID*(obj: MObject, newID: ObjID) = obj.id = newID
 proc getWorld*(obj: MObject): World = obj.world
 proc setWorld*(obj: MObject, newWorld: World) = obj.world = newWorld
 
-proc md*(x: int): MData = MData(dtype: dInt, intVal: x)
-proc md*(x: float): MData = MData(dtype: dFloat, floatVal: x)
-proc md*(x: string): MData = MData(dtype: dStr, strVal: x)
-proc mds*(x: string): MData = MData(dtype: dSym, symVal: x)
-proc md*(x: MError): MData = MData(dtype: dErr, errVal: x, errMsg: "no message set")
-proc md*(x: MError, s: string): MData = MData(dtype: dErr, errVal: x, errMsg: s)
-proc md*(x: seq[MData]): MData = MData(dtype: dList, listVal: x)
-proc md*(x: ObjID): MData = MData(dtype: dObj, objVal: x)
-proc md*(x: MObject): MData = x.id.md
+proc md*(x: int): MData {.procvar.} = MData(dtype: dInt, intVal: x)
+proc md*(x: float): MData {.procvar.} = MData(dtype: dFloat, floatVal: x)
+proc md*(x: string): MData {.procvar.} = MData(dtype: dStr, strVal: x)
+proc mds*(x: string): MData {.procvar.} = MData(dtype: dSym, symVal: x)
+proc md*(x: MError): MData {.procvar.} = MData(dtype: dErr, errVal: x, errMsg: "no message set")
+proc md*(x: MError, s: string): MData {.procvar.} = MData(dtype: dErr, errVal: x, errMsg: s)
+proc md*(x: seq[MData]): MData {.procvar.} = MData(dtype: dList, listVal: x)
+proc md*(x: ObjID): MData {.procvar.} = MData(dtype: dObj, objVal: x)
+proc md*(x: MObject): MData {.procvar.} = x.id.md
 
 proc pack*(x: MData): Package = Package(ptype: ptData, val: x)
 proc pack*(phase: int): Package = Package(ptype: ptCall, phase: phase)
