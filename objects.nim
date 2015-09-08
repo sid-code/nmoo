@@ -122,11 +122,13 @@ template setPropR*(obj: MObject, name: string, newVal: expr) =
 proc setPropRec*(obj: MObject, name: string, newVal: MData,
                  recursed: bool = false):
                  seq[tuple[o: MObject, p: MProperty]] =
-  result = @[]
-  var prop = obj.setProp(name, newVal)
+  newSeq(result, 0)
 
-  if recursed: # If we're recursing, then it's being inherited
-    prop.inherited = true
+  if recursed: # If we're recursing, then it may not be necessary
+    if obj.getProp(name) != nil:
+      return
+
+  var prop = obj.setProp(name, newVal)
 
   result.add((obj, prop))
 
