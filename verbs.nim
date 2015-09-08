@@ -104,7 +104,10 @@ proc parseCommand*(str: string): ParsedCommand =
     let word = fixedWords[i]
     i += 1
 
-    let (success, ptype) = strToPrepSpec(word)
+    var (success, ptype) = strToPrepSpec(word)
+    if success and ptype in {pNone, pAny}:
+      success = false
+
     if success:
       result.prep = (ptype, word)
       break
