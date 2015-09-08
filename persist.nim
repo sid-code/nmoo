@@ -58,7 +58,7 @@ proc dumpData(data: MData): string =
 
 proc dumpObjID(obj: MObject): string =
   if obj == nil:
-    "-1"
+    "0"
   else:
     $obj.getID()
 
