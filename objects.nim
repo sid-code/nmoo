@@ -3,6 +3,7 @@
 import types, sequtils, strutils, tables
 # NOTE: verbs is imported later on!
 
+proc getProp*(obj: MObject, name: string, all = true): MProperty
 proc getStrProp*(obj: MObject, name: string, all = true): string
 proc getAliases*(obj: MObject): seq[string]
 proc getLocation*(obj: MObject): MObject
