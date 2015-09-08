@@ -1150,3 +1150,39 @@ defBuiltin "unshift":
 
   list.insert(el, 0)
   return list.md.pack
+
+# (setadd list el)
+# Adds el to list only if it's already not contained
+defBuiltin "setadd":
+  if args.len != 2:
+    runtimeError(E_ARGS, "setadd takes 2 arguments")
+
+  let listd = evalD(args[0])
+  checkType(listd, dList)
+
+  let el = args[1]
+
+  var list = listd.listVal
+  if el notin list:
+    list.add(el)
+
+  return list.md.pack
+
+# (setremove list el)
+# Removes el from list
+defBuiltin "setremove":
+  if args.len != 2:
+    runtimeError(E_ARGS, "setremove takes 2 arguments")
+
+  let listd = evalD(args[0])
+  checkType(listd, dList)
+
+  let el = args[1]
+
+  var list = listd.listVal
+  for idx, val in list:
+    if el == val:
+      list.delete(idx)
+      break
+
+  return list.md.pack
