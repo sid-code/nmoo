@@ -404,9 +404,7 @@ defBuiltin "props":
 
   checkRead(owner, obj)
 
-  var res: seq[MData] = @[]
-  for p in obj.props:
-    res.add(p.name.md)
+  let res = obj.getOwnProps().map(md)
 
   return res.md.pack
 
