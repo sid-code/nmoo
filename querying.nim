@@ -25,8 +25,7 @@ proc matches(obj: MObject, str: string): bool =
   return false
 
 proc getVicinity*(obj: MObject): seq[MObject] =
-
-  result = @[]
+  newSeq(result, 0)
 
   let loc = obj.getLocation()
 
@@ -43,7 +42,7 @@ proc getVicinity*(obj: MObject): seq[MObject] =
     for o in contents: result.add(o)
 
 proc query*(obj: MObject, str: string, global = false): seq[MObject] =
-  result = @[]
+  newSeq(result, 0)
   let world = obj.getWorld()
   assert(world != nil)
 

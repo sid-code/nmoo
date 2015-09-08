@@ -204,7 +204,7 @@ proc addVerb*(obj: MObject, verb: MVerb): MVerb =
   return verb
 
 proc addVerbRec*(obj: MObject, verb: MVerb): seq[tuple[o: MObject, v: MVerb]] =
-  result = @[]
+  newSeq(result, 0)
   result.add((obj, obj.addVerb(verb)))
   for child in obj.children:
     var verbCopy = verb.copy
@@ -220,7 +220,7 @@ proc delVerb*(obj: MObject, verb: MVerb): MVerb =
   return nil
 
 proc delVerbRec*(obj: MObject, verb: MVerb): seq[tuple[o: MObject, v: MVerb]] =
-  result = @[]
+  newSeq(result, 0)
   result.add((obj, obj.delVerb(verb)))
   for child in obj.children:
     result.add(child.delVerbRec(verb))

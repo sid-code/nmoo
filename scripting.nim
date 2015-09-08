@@ -43,7 +43,7 @@ template addword {.immediate.} =
     curWord = ""
 
 proc lex*(code: string): seq[Token] =
-  result = @[]
+  newSeq(result, 0)
   var
     curToken = Token(ttype: ATOM_TOK, image: "")
     curWord = ""
