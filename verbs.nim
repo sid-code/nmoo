@@ -293,7 +293,9 @@ proc handleCommand*(obj: MObject, command: string): MData =
 
     doQuery = obj.query(doString.toLower())
     ioQuery = obj.query(ioString.toLower())
-    restQuery = obj.query(restStr.toLower())
+
+    doQuerySuccess = doString.len > 0 and doQuery.len > 0
+    ioQuerySuccess = ioString.len > 0 and ioQuery.len > 0
 
   var
     world = obj.getWorld()
@@ -305,73 +307,58 @@ proc handleCommand*(obj: MObject, command: string): MData =
   symtable["args"] = rest.map(proc (x: string): MData = x.md).md
   symtable["argstr"] = restStr.md
 
-  for o, v in vicinityVerbs(obj, verb):
-    symtable["self"] = o.md
-    symtable["dobjstr"] = doString.md
-    symtable["iobjstr"] = ioString.md
-    symtable["dobj"] = nilD
-    symtable["iobj"] = nilD
+  var objects = @[obj]
 
-    if v.prepSpec != pNone and v.prepSpec != prep.ptype:
-      continue
+  if doQuery.len > 0:
+    objects.add(doQuery[0])
+  if ioQuery.len > 0:
+    objects.add(ioQuery[0])
 
-    var
-      useddoQuery = doQuery
-      useddoString = doString
+  let loc = obj.getLocation()
+  if loc != nil:
+    objects.add(loc)
 
-    if v.prepSpec == pNone:
-      useddoQuery = restQuery
-      useddoString = restStr
-      symtable["dobjstr"] = useddoString.md
 
-    if useddoQuery.len > 0:
-      if v.doSpec == oAny:
-        symtable["dobj"] = useddoQuery[0].md
-      elif v.doSpec == oStr:
-        discard
-      elif v.doSpec == oThis:
-        if useddoQuery[0] != o:
-          continue
-        else:
-          symtable["dobj"] = o.md
-      else:
-        continue
-    else:
-      if v.doSpec == oNone:
-        discard
-      elif v.doSpec == oStr:
-        if useddoString.len == 0:
-          continue
-        else:
-          discard
-      else:
+  for o in objects:
+    for v in o.allVerbs():
+      if not v.matchesName(verb):
         continue
 
-    if ioQuery.len > 0:
-      if v.ioSpec == oAny:
-        symtable["iobj"] = ioQuery[0].md
-      elif v.ioSpec == oStr:
-        discard
-      elif v.ioSpec == oThis:
-        if ioQuery[0] != o:
-          continue
-        else:
-          symtable["iobj"] = o.md
+      symtable["self"] = o.md
+
+      if v.prepSpec == pNone:
+        symtable["dobjstr"] = symtable["argstr"]
       else:
-        continue
-    else:
-      if v.ioSpec == oNone:
-        discard
-      elif v.ioSpec == oStr:
-        if ioString.len == 0:
-          continue
-        else:
-          discard
-      else:
+        symtable["dobjstr"] = doString.md
+
+      symtable["iobjstr"] = ioString.md
+      symtable["dobj"] = nilD
+      symtable["iobj"] = nilD
+
+      if v.prepSpec != pAny and v.prepSpec != prep.ptype:
         continue
 
-    v.call(world, holder = o, caller = obj, symtable = symtable)
-    return
+      case v.doSpec:
+        of oAny:
+          if doQuerySuccess: symtable["dobj"] = doQuery[0].md
+        of oThis:
+          if doQuerySuccess and doQuery[0] == o: symtable["dobj"] = o.md else: continue
+        of oStr:
+          if doString.len == 0: continue
+        of oNone:
+          if doString.len > 0: continue
+      case v.ioSpec:
+        of oAny:
+          if ioQuerySuccess: symtable["iobj"] = ioQuery[0].md
+        of oThis:
+          if ioQuerySuccess and ioQuery[0] == o: symtable["iobj"] = o.md else: continue
+        of oStr:
+          if ioString.len == 0: continue
+        of oNone:
+          if ioString.len > 0: continue
+
+      v.call(world, holder = o, caller = obj, symtable = symtable)
+      return nilD
 
   obj.send("Sorry, I couldn't understand that")
   return nilD
