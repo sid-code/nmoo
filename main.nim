@@ -3,7 +3,7 @@ import os, strutils, nre, options, tables
 
 let
   world = loadWorld("min")
-  player = world.getObjects()[8]
+  player = world.getObjects()[7]
 
 world.check()
 
