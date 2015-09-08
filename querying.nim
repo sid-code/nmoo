@@ -46,6 +46,14 @@ proc query*(obj: MObject, str: string, global = false): seq[MObject] =
   let world = obj.getWorld()
   assert(world != nil)
 
+  if str == "me":
+    return @[obj]
+  if str == "here":
+    let loc = obj.getLocation()
+    if loc != nil:
+      return @[loc]
+
+
   let gst = world.globalSymtable
   if gst.hasKey(str):
     let symVal = gst[str]
