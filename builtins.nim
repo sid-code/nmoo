@@ -326,8 +326,6 @@ defBuiltin "setprop":
   let prop = propd.strVal
   var oldProp = obj.getProp(prop, all = false)
 
-  echo oldProp == nil
-
   if oldProp == nil:
     owner.checkWrite(obj)
     discard obj.setProp(prop, newVal)
