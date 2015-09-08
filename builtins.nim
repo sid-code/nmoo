@@ -832,7 +832,9 @@ defBuiltin "verbcall":
     else:
       runtimeError(E_ARGS, "verbcall takes 2 or 3 arguments")
 
-  let (obj, verb) = getVerbOn(args[0], args[1], all = true)
+  let obj = extractObject(args[0])
+  let (holder, verb) = getVerbOn(args[0], args[1], all = true)
+  discard holder
 
   if phase == 0:
     if args.len > 3:
