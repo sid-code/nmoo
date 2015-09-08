@@ -225,6 +225,14 @@ proc delVerbRec*(obj: MObject, verb: MVerb): seq[tuple[o: MObject, v: MVerb]] =
   for child in obj.children:
     result.add(child.delVerbRec(verb))
 
+proc getOwnVerbs*(obj: MObject): seq[string] =
+  newSeq(result, 0)
+  for prop in obj.props:
+    if obj.parent != obj:
+      let name = prop.name
+      if obj.parent.getProp(name) == nil:
+        result.add(name)
+
 iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] =
   var searchSpace = obj.getVicinity()
 
