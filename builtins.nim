@@ -1004,7 +1004,7 @@ defBuiltin "len":
 # (substr string start end)
 defBuiltin "substr":
   if args.len != 3:
-    runtimeError(E_ARGS, "substr takes 3 argument")
+    runtimeError(E_ARGS, "substr takes 3 arguments")
 
   let strd = args[0]
   checkType(strd, dStr)
