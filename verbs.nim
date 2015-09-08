@@ -78,7 +78,9 @@ proc shellwords(str: string): seq[string] =
 
 ### End utilities
 
-proc parseCommand(str: string): ParsedCommand =
+proc parseCommand*(str: string): ParsedCommand =
+  result.prep = (pNone, "none")
+
   let
     words = shellwords(str)
     fixup = peg"""\\{.} / \"{[^\\] / $}"""
