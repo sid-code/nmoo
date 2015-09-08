@@ -34,7 +34,8 @@ const
     (pAs, "as"),
     (pOff, "off"), (pOff, "off of"),
 
-    (pNone, "none")
+    (pNone, "none"),
+    (pAny, "any")
   ]
 
 ### Utilities

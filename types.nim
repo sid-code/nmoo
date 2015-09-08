@@ -54,7 +54,7 @@ type
   PrepType* = enum
     pWith, pAt, pInFront, pIn, pOn, pFrom, pOver,
     pThrough, pUnder, pBehind, pBeside, pFor, pIs,
-    pAs, pOff, pNone
+    pAs, pOff, pNone, pAny
 
   ObjSpec* = enum
     oAny, oThis, oNone, oStr
