@@ -147,7 +147,8 @@ proc delPropRec*(obj: MObject, prop: MProperty):
   result.add((obj, obj.delProp(prop)))
 
   for child in obj.children:
-    result.add(child.delPropRec(prop))
+    if child != obj:
+      result.add(child.delPropRec(prop))
 
 proc getOwnProps*(obj: MObject): seq[string] =
   newSeq(result, 0)
