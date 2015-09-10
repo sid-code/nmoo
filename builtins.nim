@@ -692,11 +692,6 @@ defBuiltin "recycle":
     let obj = extractObject(args[0])
     checkOwn(owner, obj)
 
-    let children = obj.children
-    let parent = obj.parent
-    for child in children:
-      child.changeParent(parent)
-
     let (has, contents) = obj.getContents()
     if has:
       for contained in contents:
@@ -721,11 +716,13 @@ defBuiltin "recycle":
     # If the object parents itself, all of its children will be left
     # without a parent so they now have to parent themselves too.
     if parent == obj:
-      for child in obj.children:
+      while obj.children.len > 0:
+        let child = obj.children[0]
         child.changeParent(child)
         world.persist(child)
     else:
-      for child in obj.children:
+      while obj.children.len > 0:
+        let child = obj.children[0]
         child.changeParent(parent)
         world.persist(child)
 
