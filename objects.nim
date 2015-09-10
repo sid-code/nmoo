@@ -389,7 +389,7 @@ proc checkObjectHierarchyHelper(world: World, root: MObject) =
   world.persist(root)
 
 proc checkObjectHierarchy(world: World) =
-  let root = world.dataToObj(world.getGlobal("$root"))
+  let root = world.dataToObj(world.getGlobal("root"))
   world.checkObjectHierarchyHelper(root)
 
 # This checks if the world is fit to be used
