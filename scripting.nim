@@ -115,7 +115,7 @@ proc toData(image: string): MData =
       except ValueError:
         raise newException(MParseError, "invalid object " & image)
     of '$':
-      return @["getprop".mds, 1.ObjID.md, rest.md].md
+      return @["getprop".mds, 0.ObjID.md, rest.md].md
     of '\'':
       return rest.mds
     of '"':
