@@ -394,7 +394,7 @@ defBuiltin "setpropinfo":
   return args[0].pack
 
 # (props obj)
-# returns a list of obj's properties.pack
+# returns a list of obj's properties
 defBuiltin "props":
   if args.len != 1:
     runtimeError(E_ARGS, "props takes 1 argument")
