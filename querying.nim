@@ -53,6 +53,14 @@ proc query*(obj: MObject, str: string, global = false): seq[MObject] =
     if loc != nil:
       return @[loc]
 
+  if str[0] == '$':
+    let tail = str[1..^1]
+    let prop = world.verbObj.getProp(tail)
+    if prop != nil:
+      let val = prop.val
+      if val.isType(dObj):
+        return @[world.dataToObj(val)]
+
   if str.len > 0:
     if str[0] == '#':
       try:
