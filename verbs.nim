@@ -298,6 +298,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
     prep = parsed.prep
     rest = parsed.rest
     restStr = rest.join(" ")
+    frest = parsed.fixedRest
 
     doQuery = obj.query(doString.toLower())
     ioQuery = obj.query(ioString.toLower())
@@ -312,7 +313,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
   symtable["cmd"] = command.md
   symtable["verb"] = verb.md
   symtable["caller"] = obj.md
-  symtable["args"] = rest.map(proc (x: string): MData = x.md).md
+  symtable["args"] = frest.map(proc (x: string): MData = x.md).md
   symtable["argstr"] = restStr.md
 
   var objects = @[obj]
