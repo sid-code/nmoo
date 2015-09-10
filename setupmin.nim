@@ -64,12 +64,5 @@ eval.setCode("""(eval (cat "(try (echo \"=> \" " dobjstr ") (echo \"eval error: 
 world.verbObj.verbs.add(eval)
 player.level = 0
 
-world.globalSymtable["$verbobj"] = world.verbObj.md
-world.globalSymtable["$root"] = root.md
-world.globalSymtable["$nowhere"] = nowhere.md
-world.globalSymtable["$container"] = genericContainer.md
-world.globalSymtable["$player"] = genericPlayer.md
-world.globalSymtable["$room"] = genericRoom.md
-
 createDir(getObjectDir(name))
 world.persist()

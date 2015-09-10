@@ -274,13 +274,14 @@ proc delete*(world: World, obj: MObject) =
   objs[idx] = nil
 
 proc setGlobal*(world: World, key: string, value: MData) =
-  world.globalSymtable[key] = value
+  discard world.verbObj.setProp(key, value)
 
 proc getGlobal*(world: World, key: string): MData =
-  if world.globalSymtable.hasKey(key):
-    world.globalSymtable[key]
-  else:
+  let prop = world.verbObj.getProp(key)
+  if prop == nil:
     nilD
+  else:
+    prop.val
 
 proc changeParent*(obj: MObject, newParent: MObject) =
   if not newParent.fertile:
@@ -353,19 +354,17 @@ import persist
 
 # Check if a symbol in the global symtable has a certain desired type
 proc checkForGSymType(world: World, sym: string, dtype: MDataType) =
-  if not world.globalSymtable.hasKey(sym):
-    raise newException(InvalidWorldError, "there is no object $# in the global symtable" % [sym])
-
   let data = world.getGlobal(sym)
+
   if not data.isType(dtype):
     raise newException(InvalidWorldError, "$# needs to be of type $#, not $#" % [sym, $dtype, $data.dtype])
 
 proc checkRoot(world: World) =
-  world.checkForGSymType("$root", dObj)
+  world.checkForGSymType("root", dObj)
 
 proc checkNowhere(world: World) =
-  world.checkForGSymType("$nowhere", dObj)
-  let nowhered = world.getGlobal("$nowhere")
+  world.checkForGSymType("nowhere", dObj)
+  let nowhered = world.getGlobal("nowhere")
 
   let nowhere = world.dataToObj(nowhered)
 
@@ -373,8 +372,8 @@ proc checkNowhere(world: World) =
     raise newException(InvalidWorldError, "the $nowhere object needs to have contents")
 
 proc checkPlayer(world: World) =
-  world.checkForGSymType("$player", dObj)
-  let playerd = world.getGlobal("$player")
+  world.checkForGSymType("player", dObj)
+  let playerd = world.getGlobal("player")
 
   let player = world.dataToObj(playerd)
 

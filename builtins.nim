@@ -682,7 +682,7 @@ defBuiltin "create":
 defBuiltin "recycle":
   var phase = phase
 
-  let nowhered = world.getGlobal("$nowhere")
+  let nowhered = world.getGlobal("nowhere")
   let nowhere = extractObject(nowhered)
 
   if phase == 0:

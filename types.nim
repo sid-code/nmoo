@@ -13,7 +13,6 @@ type
     verbObj*: MObject # object that holds global verbs
     tasks*: seq[Task]
     taskIDCounter*: int
-    globalSymtable*: SymbolTable
 
   InvalidWorldError* = object of Exception
 
@@ -394,7 +393,7 @@ proc copy*(verb: MVerb): MVerb =
   )
 
 proc newWorld*: World =
-  World( objects: @[], verbObj: nil, tasks: @[], taskIDCounter: 0, globalSymtable: newSymbolTable() )
+  World( objects: @[], verbObj: nil, tasks: @[], taskIDCounter: 0 )
 
 proc getObjects*(world: World): ptr seq[MObject] =
   addr world.objects

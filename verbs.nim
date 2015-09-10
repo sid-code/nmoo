@@ -307,7 +307,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
 
   var
     world = obj.getWorld()
-    symtable = world.globalSymtable
+    symtable = newSymbolTable()
 
   symtable["cmd"] = command.md
   symtable["verb"] = verb.md

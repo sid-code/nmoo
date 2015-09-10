@@ -53,14 +53,6 @@ proc query*(obj: MObject, str: string, global = false): seq[MObject] =
     if loc != nil:
       return @[loc]
 
-
-  let gst = world.globalSymtable
-  if gst.hasKey(str):
-    let symVal = gst[str]
-    if symVal.isType(dObj):
-      result.add(world.dataToObj(symVal))
-      return
-
   if str.len > 0:
     if str[0] == '#':
       try:

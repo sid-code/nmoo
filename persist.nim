@@ -239,14 +239,6 @@ proc readObjectCount(world: World, stream: File) =
   let ctr = readNum(stream)
   world.taskIDCounter = ctr
 
-proc readGSymtable(world: World, stream: File) =
-  world.globalSymtable = newSymbolTable()
-  var key = stream.readLine()
-  while key != ".":
-    let val = stream.readData()
-    world.globalSymtable[key] = val
-    key = stream.readLine()
-
 proc getWorldDir*(name: string): string =
   "worlds" / name
 
@@ -271,9 +263,6 @@ proc getExtraFile(name: string, fileName: string): string =
 proc getObjectCountFile(name: string): string =
   getExtraFile(name, "objcount")
 
-proc getGSymtableFile(name: string): string =
-  getExtraFile(name, "gsymtable")
-
 proc persist*(world: World, obj: MObject) =
   let fileName = getObjectFile(world.name, obj.getID().int)
   let file = open(fileName, fmWrite)
@@ -292,20 +281,9 @@ proc persistObjectCount(world: World) =
   file.write($world.taskIDCounter & "\n")
   file.close()
 
-proc persistGSymtable(world: World) =
-  let fileName = getGSymtableFile(world.name)
-  let file = open(fileName, fmWrite)
-  for key, val in world.globalSymtable.pairs:
-    file.write(key & "\n")
-    file.write(@[val].md.toCodeStr() & "\n")
-
-  file.write(".\n\n") # footer
-  file.close()
-
 proc persist*(world: World) =
   if existsDir(getWorldDir(world.name)):
     world.persistObjectCount()
-    world.persistGSymtable()
 
     createDir(getObjectDir(world.name))
 
@@ -333,10 +311,6 @@ proc loadWorld*(name: string): World =
   let objcountFile = open(getObjectCountFile(name), fmRead)
   readObjectCount(result, objcountFile)
   objcountFile.close()
-
-  let gsymtableFile = open(getGSymtableFile(name), fmRead)
-  readGSymtable(result, gsymtableFile)
-  gsymtableFile.close()
 
   for fileName in walkFiles(dir / "*"):
     let
