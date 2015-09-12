@@ -216,18 +216,6 @@ proc md*(x: MObject): MData {.procvar.} = x.id.md
 proc pack*(x: MData): Package = Package(ptype: ptData, val: x)
 proc pack*(phase: int): Package = Package(ptype: ptCall, phase: phase)
 
-proc blank*(dt: MDataType): MData =
-  case dt:
-    of dInt: 0.md
-    of dFloat: 0.0'f64.md
-    of dStr: "".md
-    of dSym: "".mds
-    of dErr: E_NONE.md
-    of dList: @[].md
-    of dObj: 0.ObjID.md
-    of dNil: nilD
-
-
 proc `$`*(x: ObjID): string {.borrow.}
 proc `==`*(x: ObjID, y: ObjID): bool {.borrow.}
 proc `$`*(x: MData): string {.inline.} =
