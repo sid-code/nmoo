@@ -125,10 +125,20 @@ proc codeGen*(compiler: MCompiler, data: MData) =
   if data.isType(dList):
     compiler.codeGen(data.listVal)
   elif data.isType(dSym):
-    try:
-      compiler.real.add(compiler.symtable.getSymInst(data.symVal))
-    except:
-      compiler.real.add(ins(inPUSH, data))
+    let name = data.symVal
+    if name[0] == '$':
+      let pos = data.pos
+      var sym = "getprop".mds
+      sym.pos = pos
+      var expanded = @[sym, 0.ObjID.md, name[1..^1].md].md
+      expanded.pos = pos
+
+      compiler.codeGen(expanded)
+    else:
+      try:
+        compiler.real.add(compiler.symtable.getSymInst(data.symVal))
+      except:
+        compiler.real.add(ins(inPUSH, data))
   else:
     compiler.real.add(ins(inPUSH, data))
 
