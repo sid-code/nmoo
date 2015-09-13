@@ -136,6 +136,16 @@ proc codeGen*(compiler: MCompiler, data: MData) =
   else:
     compiler.real.add(ins(inPUSH, data))
 
+# Quoted data needs no extra processing
+proc codeGenQ*(compiler: MCompiler, code: MData) =
+  if code.isType(dList):
+    let list = code.listVal
+    for item in list:
+      compiler.codeGenQ(item)
+    compiler.real.add(ins(inCLIST, list.len.md))
+  else:
+    compiler.real.add(ins(inPUSH, code))
+
 template defSymbol(symtable: CSymTable, name: string): int =
   let index = symtable.len
   symtable[name] = index
@@ -187,6 +197,11 @@ proc compileCode*(code: MData): CpOutput =
 proc compileCode*(code: string): CpOutput =
   var parser = newParser(code)
   return compileCode(parser.parseList)
+
+defSpecial "quote":
+  verifyArgs("quote", args, @[dNil])
+
+  compiler.codeGenQ(args[0])
 
 defSpecial "lambda":
   verifyArgs("lambda", args, @[dList, dNil])
