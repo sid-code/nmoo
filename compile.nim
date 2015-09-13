@@ -2,6 +2,31 @@ import types, scripting, tables, strutils, sequtils
 from algorithm import reversed
 
 proc newCSymTable: CSymTable = initTable[string, int]()
+proc toData(st: CSymTable): MData =
+  var pairs: seq[MData] = @[]
+  for key, val in st:
+    pairs.add(@[key.md, val.md].md)
+  return pairs.md
+
+proc toCST*(data: MData): CSymTable =
+  result = newCSymTable()
+  if not data.isType(dList):
+    return
+
+  let list = data.listVal
+  for pair in list:
+    if not pair.isType(dList): continue
+
+    let pairdata = pair.listVal
+    let keyd = pairdata[0]
+    let vald = pairdata[1]
+    if not keyd.isType(dStr): continue
+    if not vald.isType(dInt): continue
+    let key = keyd.strVal
+    let val = vald.intVal
+    result[key] = val
+
+
 proc newSymGen(prefix: string): SymGen = SymGen(counter: 0, prefix: prefix)
 proc newSymGen: SymGen = newSymGen("L")
 proc newCompiler: MCompiler =
@@ -239,9 +264,14 @@ defSpecial "lambda":
   compiler.subrs.add(addedSubrs)
 
   compiler.real.add(ins(inLPUSH, labelName))
-  compiler.real.add(ins(inMENV))
-  compiler.real.add(ins(inPUSH, bounds.len.md))
-  compiler.real.add(ins(inCLIST, 3.md))
+  compiler.real.add(ins(inPUSH, compiler.symtable.toData()))
+  compiler.real.add(ins(inMENV)) # This pushes the environment id AND a
+                                 # MData representation if it
+
+  compiler.real.add(ins(inGTID)) # Record the task ID in the lambda
+  compiler.real.add(ins(inPUSH, bounds.map(proc (x: MData): MData = x.symVal.md).md))
+  compiler.real.add(ins(inPUSH, expression))
+  compiler.real.add(ins(inCLIST, 6.md))
 
 defSpecial "map":
   verifyArgs("map", args, @[dNil, dNil])

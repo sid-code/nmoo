@@ -133,6 +133,7 @@ type
     inPUSH, inCALL, inACALL, inLABEL, inJ0, inJN0, inJMP, inPOP,
     inRET, inRETJ
     inLPUSH, # strictly for labels - gets replaced by the renderer
+    inGTID, # Push the task's ID onto the stack
     inSTO, inGET, inGGET, inCLIST,
     inPOPL, inPUSHL, inLEN, inSWAP, inSWAP3, inREV,
     inMENV, inGENV,
@@ -191,8 +192,6 @@ type
 
   InstructionProc* = proc(task: Task, operand: MData)
   CpOutput* = tuple[entry: int, code: seq[Instruction]]
-
-proc newSymbolTable*: SymbolTable = initTable[string, MData]()
 
 const nilD* = MData(dtype: dNil, nilVal: 1)
 
@@ -264,6 +263,29 @@ proc byID*(world: World, id: ObjID): MObject =
     return nil
   else:
     return world.objects[id.int]
+
+proc newSymbolTable*: SymbolTable = initTable[string, MData]()
+proc toData*(st: SymbolTable): MData =
+  var pairs: seq[MData] = @[]
+  for key, val in st:
+    pairs.add(@[key.md, val].md)
+  return pairs.md
+
+proc toST*(data: MData): SymbolTable =
+  result = newSymbolTable()
+  if not data.isType(dList):
+    return
+
+  let list = data.listVal
+  for pair in list:
+    if not pair.isType(dList): continue
+
+    let pairdata = pair.listVal
+    let keyd = pairdata[0]
+    let val = pairdata[1]
+    if not keyd.isType(dStr): continue
+    let key = keyd.strVal
+    result[key] = val
 
 proc dataToObj*(world: World, objd: MData): MObject =
   world.byID(objd.objVal)

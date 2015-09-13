@@ -1,4 +1,4 @@
-import types, compile, scripting, tables, hashes, strutils
+import types, compile, scripting, tables, hashes, strutils, objects
 ## VM (Task)
 
 # Some procs that builtins.nim needs
@@ -12,6 +12,12 @@ import builtins
 proc hash(itype: InstructionType): auto = ord(itype).hash
 
 proc newVSymTable: VSymTable = newTable[int, MData]()
+
+proc combine(cst: CSymTable, vst: VSymTable): SymbolTable =
+  result = newSymbolTable()
+  for key, val in cst:
+    result[key] = vst[val]
+
 proc curFrame(task: Task): Frame =
   task.frames[task.frames.len - 1]
 proc curST(task: Task): VSymTable =
@@ -103,6 +109,18 @@ proc top(task: Task): MData =
   else:
     return task.stack[size - 1]
 
+proc foreignLambdaCall(task: Task, symtable: SymbolTable, expression: MData) =
+  task.suspend
+  let instructions = compileCode(expression)
+  task.world.addTask(
+    name = task.name & "-lambda",
+    owner = task.owner,
+    caller = task.caller,
+    symtable = symtable,
+    code = instructions,
+    callback = task.id) # Resume this task when done
+
+
 # Implementation of instructions
 #
 # To keep the code concise, I don't bother to check types- the compiler
@@ -120,6 +138,9 @@ impl inSTO:
 
 impl inPUSH:
   task.spush(operand)
+
+impl inGTID:
+  task.spush(task.id.md)
 
 impl inPOP:
   discard task.spop()
@@ -160,24 +181,40 @@ impl inMENV:
   deepCopy(newST, task.curST())
   let pos = task.symtables.len
   task.symtables.add(newST)
+  let cst = task.spop().toCST()
   task.spush(pos.md)
+  task.spush(cst.combine(newST).toData())
 
 impl inCALL:
   let what = task.spop()
   let numArgs = operand.intVal
   if what.isType(dList):
     # It's a lambda call
-    let lcall = what.listVal
-    let jmploc = lcall[0]
-    let env = lcall[1]
-    let expectedNumArgs = lcall[2].intVal
-    if expectedNumArgs == numArgs:
-      task.pushFrame(symtable = task.symtables[env.intVal])
-      task.pc = jmploc.intVal
-    else:
-      task.doError(E_ARGS.md(
-        "lambda expected $1 args but got $2" %
-          [$expectedNumArgs, $numArgs]))
+    try:
+      let lcall = what.listVal
+      let jmploc = lcall[0]
+      let env = lcall[1].intVal
+      let envData = lcall[2]
+      let origin = lcall[3].intVal
+      let bounds = lcall[4].listVal.map(proc (x: MData): string = x.strVal)
+      let expectedNumArgs = bounds.len
+      let expression = lcall[5]
+
+      if expectedNumArgs == numArgs:
+        if origin == task.id:
+          task.pushFrame(symtable = task.symtables[env])
+          task.pc = jmploc.intVal
+        else:
+          let args = task.collect(numArgs)
+          var symtable = envData.toST()
+          for idx, name in bounds:
+            symtable[name] = args[idx]
+          task.foreignLambdaCall(symtable = symtable, expression = expression)
+      else:
+        task.doError(E_ARGS.md("lambda expected $1 args but got $2" %
+                               [$expectedNumArgs, $numArgs]))
+    except:
+      task.doError(E_ARGS.md("invalid lambda"))
   elif what.isType(dSym):
     # It's a builtin call
     let args = task.collect(numArgs)
