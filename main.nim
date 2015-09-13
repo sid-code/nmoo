@@ -46,7 +46,6 @@ while true:
 
       verb.setCode(newCode)
       echo "Succesfully edited verb '$1'" % verbname
-      world.persist()
 
 
     except:
@@ -59,5 +58,6 @@ while true:
   discard player.handleCommand(command).isType(dNil)
   while world.numTasks() > 0:
     world.tick()
+  world.persist()
 
 removeFile("edit.tmp")
