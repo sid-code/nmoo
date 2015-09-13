@@ -5,7 +5,11 @@ let
   world = loadWorld("min")
   player = world.getObjects()[7]
 
-world.check()
+try:
+  world.check()
+except InvalidWorldError:
+  let exception = getCurrentException()
+  echo "Invalid world: " & exception.msg & "."
 
 player.output = proc(obj: MObject, msg: string) =
   echo msg
