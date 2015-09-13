@@ -269,7 +269,7 @@ defSpecial "lambda":
                                  # MData representation if it
 
   compiler.real.add(ins(inGTID)) # Record the task ID in the lambda
-  compiler.real.add(ins(inPUSH, bounds.map(proc (x: MData): MData = x.symVal.md).md))
+  compiler.real.add(ins(inPUSH, bounds.md))
   compiler.real.add(ins(inPUSH, expression))
   compiler.real.add(ins(inCLIST, 6.md))
 

@@ -196,7 +196,7 @@ impl inCALL:
       let env = lcall[1].intVal
       let envData = lcall[2]
       let origin = lcall[3].intVal
-      let bounds = lcall[4].listVal.map(proc (x: MData): string = x.strVal)
+      let bounds = lcall[4].listVal.map(proc (x: MData): string = x.symVal)
       let expectedNumArgs = bounds.len
       let expression = lcall[5]
 
