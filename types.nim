@@ -186,7 +186,6 @@ type
     callPackage*: Package
     builtinToCall*: MData
     builtinArgs*: seq[MData]
-    callbackResult*: MData
 
     callback*: int
 

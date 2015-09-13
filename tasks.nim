@@ -275,7 +275,7 @@ proc finish(task: Task) =
   if callback >= 0:
     let cbTask = task.world.getTaskByID(callback)
     if cbTask != nil:
-      cbTask.callbackResult = task.top()
+      cbTask.spush(task.top())
       cbTask.resume()
     else:
       # I've decided that a warning here should suffice. The maintainer should
@@ -291,7 +291,7 @@ proc doCallPackage(task: Task) =
   let phase = task.callPackage.phase
   let sym = task.builtinToCall
   var args = task.builtinArgs
-  args.add(task.callbackResult)
+  args.add(task.spop())
 
   task.hasCallPackage = false
   task.builtinCall(sym, args, phase = phase)
@@ -345,7 +345,6 @@ proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObje
     callPackage: nilD.pack,
     builtinToCall: "".mds,
     builtinArgs: @[],
-    callbackResult: nilD,
 
     callback: callback
 
