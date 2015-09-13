@@ -192,6 +192,7 @@ defSpecial "lambda":
   verifyArgs("lambda", args, @[dList, dNil])
 
   let bounds = args[0].listVal
+  let expression = args[1]
 
   let labelName = compiler.addLabel(subrs)
 
@@ -204,7 +205,7 @@ defSpecial "lambda":
   let
     subrsBeforeSize = compiler.subrs.len
     realBeforeSize = compiler.real.len
-  compiler.codeGen(args[1])
+  compiler.codeGen(expression)
   let
     subrsAfterSize = compiler.subrs.len
     realAfterSize = compiler.real.len
