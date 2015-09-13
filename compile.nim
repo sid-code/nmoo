@@ -13,12 +13,6 @@ proc newCompiler: MCompiler =
 
 proc codeGen*(compiler: MCompiler, data: MData)
 
-proc compileCode*(code: string): MCompiler =
-  var compiler = newCompiler()
-  var parser = newParser(code)
-  compiler.codeGen(parser.parseList)
-  return compiler
-
 proc genSym(symgen: SymGen): string =
   result = "$1$2" % [symgen.prefix, $symgen.counter]
   symgen.counter += 1
@@ -184,6 +178,15 @@ proc render*(compiler: MCompiler): CpOutput =
 
   code.add(ins(inHALT))
   return (entry, code)
+
+proc compileCode*(code: MData): CpOutput =
+  let compiler = newCompiler()
+  compiler.codeGen(code)
+  return compiler.render
+
+proc compileCode*(code: string): CpOutput =
+  var parser = newParser(code)
+  return compileCode(parser.parseList)
 
 defSpecial "lambda":
   verifyArgs("lambda", args, @[dList, dNil])

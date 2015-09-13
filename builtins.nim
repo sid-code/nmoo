@@ -108,8 +108,8 @@ defBuiltin "eval":
     evalStr = '(' & evalStr & ')'
 
   try:
-    let compiler = compileCode(evalStr)
-    world.addTask("eval", owner, caller, symtable, compiler.render)
+    let instructions = compileCode(evalStr)
+    world.addTask("eval", owner, caller, symtable, instructions)
   except MParseError:
     let msg = getCurrentExceptionMsg()
     runtimeError(E_PARSE, "code failed to parse: $1" % msg)
