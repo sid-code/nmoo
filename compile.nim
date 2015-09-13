@@ -309,12 +309,12 @@ defSpecial "reduce-right":
   compiler.genFold(args[0], args[1], args[2], useDefault = false, left = false)
 
 defSpecial "foldl":
-  verifyArgs("foldr", args, @[dNil, dNil, dNil])
+  verifyArgs("foldl", args, @[dNil, dNil, dNil])
 
   compiler.genFold(args[0], args[1], args[2], useDefault = true, left = true)
 
 defSpecial "foldr":
-  verifyArgs("foldl", args, @[dNil, dNil, dNil])
+  verifyArgs("foldr", args, @[dNil, dNil, dNil])
 
   compiler.genFold(args[0], args[1], args[2], useDefault = true, left = false)
 
