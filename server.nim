@@ -20,7 +20,7 @@ if genericPlayer == nil:
 
 proc processClient(client: AsyncSocket) {.async.} =
   await client.send("welcome!\c\L")
-  let player = world.getObjects()[8] # FIXME: This won't work
+  let player = world.getObjects()[7] # FIXME: This won't work
   #let player = genericPlayer.createChild()
   #world.add(player)
   #player.setPropR("name", "a guest")
