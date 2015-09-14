@@ -18,6 +18,10 @@ proc myEscape(s: string): string =
   s.replace("\"", "\\\"")
 
 while true:
+  while world.numTasks() > 0:
+    world.tick()
+  world.persist()
+
   var command = readLineFromStdin("> ").strip()
 
   if command.contains("<>"):
@@ -56,8 +60,5 @@ while true:
   if command.len == 0: continue
 
   discard player.handleCommand(command).isType(dNil)
-  while world.numTasks() > 0:
-    world.tick()
-  world.persist()
 
 removeFile("edit.tmp")
