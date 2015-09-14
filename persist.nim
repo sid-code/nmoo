@@ -233,6 +233,7 @@ proc readTask(world: World, stream: File) =
   let task = to[Task](stream.readLine())
   task.owner = readObjectID(world, stream)
   task.caller = readObjectID(world, stream)
+  task.world = world
   world.tasks.add(task)
 
 proc readObjectCount(world: World, stream: File) =
@@ -298,9 +299,8 @@ proc persist*(world: World) =
       else:
         world.persist(obj)
     createDir(getTaskDir(world.name))
-    # This is broken so I'll temporarily disable it
-    # for task in world.tasks:
-    #   world.persist(task)
+    for task in world.tasks:
+      world.persist(task)
 
 proc loadWorld*(name: string): World =
   result = createWorld(name)
