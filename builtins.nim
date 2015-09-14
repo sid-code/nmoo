@@ -1197,3 +1197,42 @@ defBuiltin "in":
 
   let list = listd.listVal
   return list.find(el).md.pack
+
+# (pass arg1 arg2 ...)
+# calls the parent verb
+defBuiltin "pass":
+  if phase == 0:
+    var args = args
+    if args.len == 0:
+      let oldArgsd = symtable["args"]
+      if oldArgsd.isType(dList):
+        args = oldArgsd.listVal
+
+    let selfd = symtable["self"]
+    if not selfd.isType(dObj):
+      return nilD.pack
+    let self = extractObject(selfd)
+    let parent = self.parent
+
+    if parent == nil or parent == self:
+      return nilD.pack
+
+    let verbd = symtable["verb"]
+    if not verbd.isType(dStr):
+      return nilD.pack
+    let verbName = verbd.strVal
+
+    let verb = parent.getVerb(verbName)
+
+    if verb == nil:
+      runtimeError(E_VERBNF, "Pass failed, verb is not inherited.")
+
+    echo self
+
+    self.verbCallRaw(verb, owner, args, task.id)
+
+    return 1.pack
+
+  if phase == 1:
+    let verbResult = args[^1]
+    return verbResult.pack
