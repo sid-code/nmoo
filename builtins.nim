@@ -1154,7 +1154,7 @@ defBuiltin "setadd":
   if args.len != 2:
     runtimeError(E_ARGS, "setadd takes 2 arguments")
 
-  let listd = evalD(args[0])
+  let listd = args[0]
   checkType(listd, dList)
 
   let el = args[1]
@@ -1171,7 +1171,7 @@ defBuiltin "setremove":
   if args.len != 2:
     runtimeError(E_ARGS, "setremove takes 2 arguments")
 
-  let listd = evalD(args[0])
+  let listd = args[0]
   checkType(listd, dList)
 
   let el = args[1]
