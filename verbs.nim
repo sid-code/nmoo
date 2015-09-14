@@ -245,17 +245,21 @@ proc call(verb: MVerb, world: World, holder, caller: MObject,
   let name = "$#:$#" % [holder.toObjStr(), verb.names]
   world.addTask(name, verb.owner, caller, symtable, verb.compiled, callback)
 
-proc verbCallRaw*(holder: MObject, verb: MVerb, caller: MObject,
-                  args: seq[MData], callback = -1) =
+proc verbCallRaw*(self: MObject, verb: MVerb, caller: MObject,
+                  args: seq[MData], symtable: SymbolTable = newSymbolTable(),
+                  holder: MObject = nil, callback = -1) =
   var
     world = caller.getWorld()
-    symtable = newSymbolTable()
+    symtable = symtable
+
+  var holder = if holder == nil: self else: holder
 
   doAssert(world != nil)
 
   symtable["caller"] = caller.md
   symtable["args"] = args.md
-  symtable["self"] = holder.md
+  symtable["self"] = self.md
+  symtable["holder"] = holder.md
   symtable["verb"] = verb.names.md
 
   verb.call(world, holder, caller, symtable, callback)
@@ -265,7 +269,7 @@ proc verbCall*(owner: MObject, name: string, caller: MObject,
 
   for v in matchingVerbs(owner, name):
     if caller.canExecute(v):
-      owner.verbCallRaw(v, caller, args, callback)
+      owner.verbCallRaw(v, caller, args, callback = callback)
       return true
   return false
 
@@ -357,6 +361,7 @@ proc handleCommand*(obj: MObject, command: string): MData =
         of oNone:
           if ioString.len > 0: continue
 
+      symtable["holder"] = o.md
       v.call(world, holder = o, caller = obj, symtable = symtable)
       return nilD
 

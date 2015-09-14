@@ -844,7 +844,7 @@ defBuiltin "verbcall":
     owner.checkExecute(verb)
 
     task.suspend()
-    obj.verbCallRaw(verb, caller, cargs, task.id)
+    obj.verbCallRaw(verb, caller, cargs, symtable = symtable, callback = task.id)
     return 1.pack
   if phase == 1:
     let verbResult = args[^1]
@@ -1208,13 +1208,13 @@ defBuiltin "pass":
       if oldArgsd.isType(dList):
         args = oldArgsd.listVal
 
-    let selfd = symtable["self"]
-    if not selfd.isType(dObj):
+    let holderd = symtable["holder"]
+    if not holderd.isType(dObj):
       return nilD.pack
-    let self = extractObject(selfd)
-    let parent = self.parent
+    let holder = extractObject(holderd)
+    let parent = holder.parent
 
-    if parent == nil or parent == self:
+    if parent == nil or parent == holder:
       return nilD.pack
 
     let verbd = symtable["verb"]
@@ -1227,9 +1227,8 @@ defBuiltin "pass":
     if verb == nil:
       runtimeError(E_VERBNF, "Pass failed, verb is not inherited.")
 
-    echo self
-
-    self.verbCallRaw(verb, owner, args, task.id)
+    holder.verbCallRaw(verb, owner, args,
+                       symtable = symtable, holder = parent, callback = task.id)
 
     return 1.pack
 
