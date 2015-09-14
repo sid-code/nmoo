@@ -1214,6 +1214,11 @@ defBuiltin "pass":
     let holder = extractObject(holderd)
     let parent = holder.parent
 
+    let selfd = symtable["self"]
+    if not selfd.isType(dObj):
+      return nilD.pack
+    let self = extractObject(selfd)
+
     if parent == nil or parent == holder:
       return nilD.pack
 
@@ -1227,7 +1232,7 @@ defBuiltin "pass":
     if verb == nil:
       runtimeError(E_VERBNF, "Pass failed, verb is not inherited.")
 
-    holder.verbCallRaw(verb, owner, args,
+    self.verbCallRaw(verb, owner, args,
                        symtable = symtable, holder = parent, callback = task.id)
 
     return 1.pack
