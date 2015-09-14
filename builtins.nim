@@ -1183,3 +1183,17 @@ defBuiltin "setremove":
       break
 
   return list.md.pack
+
+# (in list el)
+# returns index of el in list, or -1
+defBuiltin "in":
+  if args.len != 2:
+    runtimeError(E_ARGS, "in takes 2 arguments")
+
+  let listd = args[0]
+  checkType(listd, dList)
+
+  let el = args[1]
+
+  let list = listd.listVal
+  return list.find(el).md.pack
