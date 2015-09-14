@@ -54,6 +54,8 @@ proc toObjStr*(obj: MObject): string =
   else:
     return "No name ($1)" % objdstr
 
+proc `$`*(obj: MObject): string = obj.toObjStr
+
 proc toObjStr*(objd: MData, world: World): string =
   ## Converts MData holding objects into strings
   let
