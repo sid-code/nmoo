@@ -158,6 +158,9 @@ proc nameMatchesStr(name: string, str: string): bool =
   return name.len == str.len or name[i] == '*' or tolerateSize
 
 proc matchesName(verb: MVerb, str: string): bool =
+  if str == verb.names:
+    return true
+
   let names = verb.names.split(" ")
   for name in names:
     if nameMatchesStr(name, str):
