@@ -910,7 +910,11 @@ defBuiltin "$":
   if args.len != 1:
     runtimeError(E_ARGS, "$ takes 1 argument")
 
-  return args[0].toCodeStr().md.pack
+  let what = args[0]
+  if what.isType(dStr):
+    return what.pack
+  else:
+    return what.toCodeStr().md.pack
 
 # (cat str1 str2 ...)
 # (cat list1 list2 ...)
