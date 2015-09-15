@@ -21,13 +21,12 @@ template checkForError(value: MData) =
 template runtimeError(error: MError, message: string) =
   return error.md("line $#, col $#: $#" % [$pos.line, $pos.col, message]).pack
 
-template checkType(value: MData, expected: MDataType, ifnot: MError = E_TYPE)
-          {.immediate.} =
+template checkType(value: MData, expected: MDataType, ifnot: MError = E_TYPE) =
   if not value.isType(expected):
     runtimeError(ifnot,
       "expected argument of type " & $expected & " instead got " & $value.dType)
 
-template extractObject(objd: MData): MObject {.immediate.} =
+template extractObject(objd: MData): MObject =
   checkType(objd, dObj)
   let obj = world.dataToObj(objd)
   if obj == nil:
@@ -870,7 +869,7 @@ type
   BinFloatOp = proc(x: float, y: float): float
   BinIntOp = proc(x: int, y: int): int
 
-template defArithmeticOperator(name: string, op: BinFloatOp) {.immediate.} =
+template defArithmeticOperator(name: string, op: BinFloatOp) =
   defBuiltin name:
     if args.len != 2:
       runtimeError(E_ARGS, "$1 takes 2 arguments" % name)
