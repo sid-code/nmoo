@@ -21,7 +21,7 @@ template checkForError(value: MData) =
 template runtimeError(error: MError, message: string) =
   return error.md("line $#, col $#: $#" % [$pos.line, $pos.col, message]).pack
 
-template checkType(value: MData, expected: MDataType, ifnot: MError = E_ARGS)
+template checkType(value: MData, expected: MDataType, ifnot: MError = E_TYPE)
           {.immediate.} =
   if not value.isType(expected):
     runtimeError(ifnot,
