@@ -102,6 +102,12 @@ proc toData(image: string): MData =
     else:
       raise newException(MParseError, "misplaced dot in " & image)
 
+  try:
+    let err = parseEnum[MError](image)
+    return err.md
+  except ValueError:
+    discard
+
   case leader:
     of '#':
       if ':' in image:
