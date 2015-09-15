@@ -117,6 +117,20 @@ defBuiltin "eval":
     let msg = getCurrentExceptionMsg()
     runtimeError(E_PARSE, "compile error: $1" % msg)
 
+defBuiltin "err":
+  if args.len != 2:
+    runtimeError(E_ARGS, "err takes 2 arguments")
+
+  var err = args[0]
+  checkType(err, dErr)
+
+  let msgd = args[1]
+  checkType(msgd, dStr)
+  let msg = msgd.strVal
+
+  err.errMsg = msg
+  return err.pack
+
 proc extractInfo(prop: MProperty): MData =
   var res: seq[MData] = @[]
   res.add(prop.owner.md)
