@@ -5,7 +5,7 @@ import types, objects, tables, strutils, math, sequtils
 type
   TokenType = enum
     OPAREN_TOK, CPAREN_TOK,
-    ATOM_TOK
+    ATOM_TOK, QUOTE_TOK
 
   Token = object
     ttype: TokenType
@@ -69,6 +69,10 @@ proc lex*(code: string): seq[Token] =
         addword()
         if c & "" == "\n": # why nim
           pos.nextLine()
+      elif c == '\'' and curWord.len == 0:
+        curToken.ttype = QUOTE_TOK
+        curToken.image = "'"
+        addtoken()
       elif c == '(':
         addword()
         curToken.ttype = OPAREN_TOK
@@ -186,6 +190,12 @@ proc parseList*(parser: var MParser): MData =
   while next.ttype != CPAREN_TOK:
     if next.ttype == OPAREN_TOK:
       resultL.add(parser.parseList())
+    elif next.ttype == QUOTE_TOK:
+      let quote =  parser.consume(QUOTE_TOK)
+      var quoteSymbol = "quote".mds
+      quoteSymbol.pos = quote.pos
+
+      resultL.add(@[quoteSymbol, parser.parseList()].md)
     else:
       resultL.add(parser.consume(ATOM_TOK).toData())
     next = parser.peek()
