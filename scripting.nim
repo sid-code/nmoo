@@ -180,6 +180,30 @@ proc consume(parser: var MParser, ttype: TokenType): Token =
     raise newException(MParseError, "expected token " & $ttype & ", instead got " & $tok.ttype)
 
   return tok
+proc parseList*(parser: var MParser): MData
+
+proc parseAtom*(parser: var MParser): MData =
+  var quotePos: CodePosition = (0, 0)
+  var quote = false
+
+  var next = parser.peek()
+  if next.ttype == QUOTE_TOK:
+    quotePos = parser.consume(QUOTE_TOK).pos
+    next = parser.peek()
+    quote = true
+
+  case next.ttype:
+    of OPAREN_TOK:
+      result = parser.parseList()
+    of ATOM_TOK:
+      result = parser.consume(ATOM_TOK).toData()
+    else:
+      raise newException(MParseError, "unexpected token '" & next.image & "'")
+
+  if quote:
+    var quoteSym = "quote".mds
+    quoteSym.pos = quotePos
+    result = @[quoteSym, result].md
 
 proc parseList*(parser: var MParser): MData =
   var resultL: seq[MData] = @[]
@@ -190,14 +214,8 @@ proc parseList*(parser: var MParser): MData =
   while next.ttype != CPAREN_TOK:
     if next.ttype == OPAREN_TOK:
       resultL.add(parser.parseList())
-    elif next.ttype == QUOTE_TOK:
-      let quote =  parser.consume(QUOTE_TOK)
-      var quoteSymbol = "quote".mds
-      quoteSymbol.pos = quote.pos
-
-      resultL.add(@[quoteSymbol, parser.parseList()].md)
     else:
-      resultL.add(parser.consume(ATOM_TOK).toData())
+      resultL.add(parser.parseAtom())
     next = parser.peek()
   discard parser.consume(CPAREN_TOK)
 
