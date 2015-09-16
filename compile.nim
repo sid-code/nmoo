@@ -221,7 +221,7 @@ proc compileCode*(code: MData): CpOutput =
 
 proc compileCode*(code: string): CpOutput =
   var parser = newParser(code)
-  return compileCode(parser.parseList)
+  return compileCode(parser.parseAtom())
 
 defSpecial "quote":
   verifyArgs("quote", args, @[dNil])

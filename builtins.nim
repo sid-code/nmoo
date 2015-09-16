@@ -103,8 +103,6 @@ defBuiltin "eval":
   let argd = evalD(args[0])
   checkType(argd, dStr)
   var evalStr = argd.strVal
-  if evalStr[0] != '(':
-    evalStr = '(' & evalStr & ')'
 
   try:
     let instructions = compileCode(evalStr)
