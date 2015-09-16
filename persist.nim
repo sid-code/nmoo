@@ -109,6 +109,7 @@ proc dumpTask(task: Task): string =
   result = ""
   let owner = task.owner
   let caller = task.caller
+  let world = task.world
 
   task.owner = nil
   task.caller = nil
@@ -117,6 +118,10 @@ proc dumpTask(task: Task): string =
   result.addLine($$task)
   result.addLine($owner.getID())
   result.addLine($caller.getID())
+
+  task.caller = caller
+  task.owner = owner
+  task.world = world
 
 proc readNum(stream: File): int =
   let line = stream.readLine().strip()
