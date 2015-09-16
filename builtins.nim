@@ -867,40 +867,51 @@ type
   BinFloatOp = proc(x: float, y: float): float
   BinIntOp = proc(x: int, y: int): int
 
-template defArithmeticOperator(name: string, op: BinFloatOp) =
+template extractFloat(into: var float, num: MData) =
+  if num.isType(dInt):
+    into = num.intVal.float
+  elif num.isType(dFloat):
+    into = num.floatVal
+  else:
+    runtimeError(E_ARGS, "invalid number " & $num)
+
+template defArithmeticOperator(name: string, op: BinFloatOp, logical = false) =
   defBuiltin name:
-    if args.len != 2:
-      runtimeError(E_ARGS, "$1 takes 2 arguments" % name)
+    if args.len < 2:
+      runtimeError(E_ARGS, "$1 takes 2 or more arguments" % name)
 
-    var lhsd = evalD(args[0])
-    var rhsd = evalD(args[1])
+    var rhs, lhs: float
+    template combine(lhsd: MData, rhsd: MData): MData =
 
-    var
-      lhs: float
-      rhs: float
+      lhs.extractFloat(lhsd)
+      rhs.extractFloat(rhsd)
 
-    if lhsd.isType(dInt):
-      lhs = lhsd.intVal.float
-    elif lhsd.isType(dFloat):
-      lhs = lhsd.floatVal
-    else:
-      runtimeError(E_ARGS, "invalid number " & $lhsd)
-    if rhsd.isType(dInt):
-      rhs = rhsd.intVal.float
-    elif rhsd.isType(dFloat):
-      rhs = rhsd.floatVal
-    else:
-      runtimeError(E_ARGS, "invalid number " & $rhsd)
+      if lhsd.isType(dInt) and rhsd.isType(dInt):
+        op(lhs, rhs).int.md
+      else:
+        op(lhs, rhs).md
 
-    if lhsd.isType(dInt) and rhsd.isType(dInt):
-      return op(lhs, rhs).int.md.pack
-    else:
-      return op(lhs, rhs).md.pack
+    var acc = args[0].truthy.int.md
+    for next in args[1..^1]:
+      acc = combine(acc, next.truthy.int.md)
+
+    return acc.pack
 
 defArithmeticOperator("+", `+`)
 defArithmeticOperator("-", `-`)
 defArithmeticOperator("*", `*`)
 defArithmeticOperator("/", `/`)
+
+proc wrappedAnd(a, b: float): float = (a.int and b.int).float
+proc wrappedOr(a, b: float): float = (a.int or b.int).float
+proc wrappedXor(a, b: float): float = (a.int xor b.int).float
+
+defArithmeticOperator("&", wrappedAnd)
+defArithmeticOperator("|", wrappedOr)
+defArithmeticOperator("^", wrappedXor)
+defArithmeticOperator("and", wrappedAnd, true)
+defArithmeticOperator("or",  wrappedOr, true)
+defArithmeticOperator("xor", wrappedXor, true)
 
 # (= a b)
 defBuiltin "=":
