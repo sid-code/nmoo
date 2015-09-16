@@ -1108,7 +1108,10 @@ defBuiltin "set":
     index = indexd.intVal
 
   try:
-    list[index] = el
+    if index < 0:
+      list[^ -index] = el
+    else:
+      list[index] = el
   except IndexError:
     runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
@@ -1129,7 +1132,10 @@ defBuiltin "get":
     index = indexd.intVal
 
   try:
-    return list[index].pack
+    if index < 0:
+      return list[^ -index].pack
+    else:
+      return list[index].pack
   except:
     runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
