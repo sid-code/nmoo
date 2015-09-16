@@ -300,7 +300,7 @@ defSpecial "map":
   compiler.real.add(ins(inPOP))
 
 proc genFold(compiler: MCompiler, fn, default, list: MData,
-             useDefault = true, left = true) =
+             useDefault = true, right = true) =
 
   compiler.codeGen(fn)
 
@@ -314,7 +314,7 @@ proc genFold(compiler: MCompiler, fn, default, list: MData,
     compiler.real.add(ins(inLEN))                # list len
     compiler.real.add(ins(inJ0, emptyList))      # list
 
-  if left:
+  if right:
     compiler.real.add(ins(inREV))                # list-rev
 
   if useDefault:
@@ -343,25 +343,25 @@ proc genFold(compiler: MCompiler, fn, default, list: MData,
   compiler.real.add(ins(inLABEL, after))
   compiler.real.add(ins(inPOP))                  # result
 
-defSpecial "reduce-left":
-  verifyArgs("reduce-left", args, @[dNil, dNil, dNil])
-
-  compiler.genFold(args[0], args[1], args[2], useDefault = false, left = true)
-
 defSpecial "reduce-right":
   verifyArgs("reduce-right", args, @[dNil, dNil, dNil])
 
-  compiler.genFold(args[0], args[1], args[2], useDefault = false, left = false)
+  compiler.genFold(args[0], args[1], args[2], useDefault = false, right = true)
 
-defSpecial "foldl":
-  verifyArgs("foldl", args, @[dNil, dNil, dNil])
+defSpecial "reduce-left":
+  verifyArgs("reduce-left", args, @[dNil, dNil, dNil])
 
-  compiler.genFold(args[0], args[1], args[2], useDefault = true, left = true)
+  compiler.genFold(args[0], args[1], args[2], useDefault = false, right = false)
 
-defSpecial "foldr":
-  verifyArgs("foldr", args, @[dNil, dNil, dNil])
+defSpecial "fold-right":
+  verifyArgs("fold-right", args, @[dNil, dNil, dNil])
 
-  compiler.genFold(args[0], args[1], args[2], useDefault = true, left = false)
+  compiler.genFold(args[0], args[1], args[2], useDefault = true, right = true)
+
+defSpecial "fold-left":
+  verifyArgs("fold-left", args, @[dNil, dNil, dNil])
+
+  compiler.genFold(args[0], args[1], args[2], useDefault = true, right = false)
 
 defSpecial "call":
   verifyArgs("call", args, @[dNil, dNil])
