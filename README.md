@@ -12,22 +12,8 @@ like rooms or characters.
 This project is an attempt to create a system similar to LambdaMOO and also
 an attempt to learn Nim, a very interesting new systems programming language.
 
-It's far from complete, in fact there is hardly anything to suggest that it
-even will be a text game yet.
-
 I'm using the LambdaMOO [Programmer's Manual][2] as a very loose specification
 for this project. 
-
-Things I have done (or almost done):
-  * set up an acceptable object system with inheritance
-  * created a scripting language to define verbs
-  * player command parsing
-  * verb handling
-
-Things left to do:
-  * build up the object database
-  * networking
-  * any sort of documentation
 
   [1]: http://en.wikipedia.org/wiki/LambdaMOO
   [2]: http://www.hayseed.net/MOO/manuals/ProgrammersManual.html
@@ -74,11 +60,13 @@ $ ./server
 You can connect to it with the details provided. The only command implemented is
 "eval", so you can mess around with the scripting language.
 
+As soon as possible, a less-minimal MUD style world will be available for download,
+but it is largely incomplete as of now.
+
 Note: The server polls every 10ms and this is also the interval between each task
 tick (when an instruction is executed). This means that verbs will run ridiculously
 slowly. I'll change it later when I'm confident that the compiler and the VM are
 working properly.
-
 
 The main program is in a constant state of flux and therefore has no well defined
 behavior. Today it does this and tomorrow it might do something else. Don't use it.
