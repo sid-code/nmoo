@@ -344,7 +344,10 @@ proc handleCommand*(obj: MObject, command: string): MData =
 
       case v.doSpec:
         of oAny:
-          if doQuerySuccess: symtable["dobj"] = doQuery[0].md
+          if doQuerySuccess:
+            if o == doQuery[0]:
+              continue
+            symtable["dobj"] = doQuery[0].md
         of oThis:
           if doQuerySuccess and doQuery[0] == o: symtable["dobj"] = o.md else: continue
         of oStr:
@@ -353,7 +356,10 @@ proc handleCommand*(obj: MObject, command: string): MData =
           if doString.len > 0: continue
       case v.ioSpec:
         of oAny:
-          if ioQuerySuccess: symtable["iobj"] = ioQuery[0].md
+          if ioQuerySuccess:
+            if o == ioQuery[0]:
+              continue
+            symtable["iobj"] = ioQuery[0].md
         of oThis:
           if ioQuerySuccess and ioQuery[0] == o: symtable["iobj"] = o.md else: continue
         of oStr:
