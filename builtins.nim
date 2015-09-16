@@ -1040,6 +1040,29 @@ defBuiltin "substr":
   else:
     return str[start .. ^ -endv].md.pack
 
+# (index string substr [ignore-case])
+# returns index of substr in string, or -1
+defBuiltin "index":
+  var args = args
+  case args.len:
+    of 2: args.add(0.md)
+    of 3: discard
+    else: runtimeError(E_ARGS, "index takes 2 or 3 arguments")
+
+  let haystackd = args[0]
+  checkType(haystackd, dStr)
+  var haystack = haystackd.strVal
+
+  let needled = args[1]
+  checkType(needled, dStr)
+  var needle = needled.strVal
+
+  let ignoreCase = args[2]
+  if ignoreCase.truthy:
+    haystack = haystack.toLower()
+    needle = needle.toLower()
+
+  return haystack.find(needle).md.pack
 
 
 # (insert list index new-el)
