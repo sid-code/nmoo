@@ -875,10 +875,15 @@ template extractFloat(into: var float, num: MData) =
   else:
     runtimeError(E_ARGS, "invalid number " & $num)
 
-template defArithmeticOperator(name: string, op: BinFloatOp, logical = false) =
+template defArithmeticOperator(name: string, op: BinFloatOp, logical = false,
+                               strictlyBinary = false) =
   defBuiltin name:
-    if args.len < 2:
-      runtimeError(E_ARGS, "$1 takes 2 or more arguments" % name)
+    if strictlyBinary:
+      if args.len != 2:
+        runtimeError(E_ARGS, "$1 takes 2 arguments" % name)
+    else:
+      if args.len < 2:
+        runtimeError(E_ARGS, "$1 takes 2 or more arguments" % name)
 
     var rhs, lhs: float
     template combine(lhsd: MData, rhsd: MData): MData =
@@ -891,9 +896,16 @@ template defArithmeticOperator(name: string, op: BinFloatOp, logical = false) =
       else:
         op(lhs, rhs).md
 
-    var acc = args[0].truthy.int.md
-    for next in args[1..^1]:
-      acc = combine(acc, next.truthy.int.md)
+    var acc: MData
+
+    if logical:
+      acc = args[0].truthy.int.md
+      for next in args[1..^1]:
+        acc = combine(acc, next.truthy.int.md)
+    else:
+      acc = args[0]
+      for next in args[1..^1]:
+        acc = combine(acc, next)
 
     return acc.pack
 
@@ -909,9 +921,19 @@ proc wrappedXor(a, b: float): float = (a.int xor b.int).float
 defArithmeticOperator("&", wrappedAnd)
 defArithmeticOperator("|", wrappedOr)
 defArithmeticOperator("^", wrappedXor)
-defArithmeticOperator("and", wrappedAnd, true)
-defArithmeticOperator("or",  wrappedOr, true)
-defArithmeticOperator("xor", wrappedXor, true)
+defArithmeticOperator("and", wrappedAnd, logical = true)
+defArithmeticOperator("or",  wrappedOr, logical = true)
+defArithmeticOperator("xor", wrappedXor, logical = true)
+
+proc wrappedLT(a, b: float): float = (a < b).float
+proc wrappedLTE(a, b: float): float = (a <= b).float
+proc wrappedGT(a, b: float): float = (a > b).float
+proc wrappedGTE(a, b: float): float = (a >= b).float
+
+defArithmeticOperator("<", wrappedLT)
+defArithmeticOperator("<=", wrappedLTE)
+defArithmeticOperator(">", wrappedGT)
+defArithmeticOperator(">=", wrappedGTE)
 
 # (= a b)
 defBuiltin "=":
