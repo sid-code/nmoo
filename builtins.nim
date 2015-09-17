@@ -948,6 +948,12 @@ defBuiltin "=":
   else:
     return 0.md.pack
 
+defBuiltin "nil?":
+  if args.len != 1:
+    runtimeError(E_ARGS, "nil? takes 1 argument")
+
+  return args[0].isType(dNil).int.md.pack
+
 # tostring function
 # ($ obj) returns "#6", for example
 defBuiltin "$":
