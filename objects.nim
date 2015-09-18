@@ -11,7 +11,7 @@ proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]
 proc getPropVal*(obj: MObject, name: string, all = true): MData
 proc setProp*(obj: MObject, name: string, newVal: MData): MProperty
 proc addTask*(world: World, name: string, owner, caller: MObject,
-              symtable: SymbolTable, code: CpOutput, callback = -1)
+              symtable: SymbolTable, code: CpOutput, callback = -1): Task
 
 ## Permissions handling
 
@@ -336,7 +336,7 @@ proc tick*(world: World) =
       # raise exception
 
 proc addTask*(world: World, name: string, owner, caller: MObject,
-              symtable: SymbolTable, code: CpOutput, callback = -1) =
+              symtable: SymbolTable, code: CpOutput, callback = -1): Task =
 
   let newTask = task(
     id = world.taskIDCounter,
@@ -350,6 +350,7 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
   world.taskIDCounter += 1
 
   world.tasks.add(newTask)
+  return newTask
 
 proc numTasks*(world: World): int = world.tasks.len
 

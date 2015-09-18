@@ -243,7 +243,7 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
 proc call(verb: MVerb, world: World, holder, caller: MObject,
           symtable: SymbolTable, callback = -1) =
   let name = "$#:$#" % [holder.toObjStr(), verb.names]
-  world.addTask(name, verb.owner, caller, symtable, verb.compiled, callback)
+  discard world.addTask(name, verb.owner, caller, symtable, verb.compiled, callback)
 
 proc verbCallRaw*(self: MObject, verb: MVerb, caller: MObject,
                   args: seq[MData], symtable: SymbolTable = newSymbolTable(),

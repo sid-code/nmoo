@@ -112,7 +112,7 @@ proc top(task: Task): MData =
 proc foreignLambdaCall(task: Task, symtable: SymbolTable, expression: MData) =
   task.suspend
   let instructions = compileCode(expression)
-  task.world.addTask(
+  discard task.world.addTask(
     name = task.name & "-lambda",
     owner = task.owner,
     caller = task.caller,
