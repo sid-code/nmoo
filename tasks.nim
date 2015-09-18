@@ -363,7 +363,7 @@ proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObje
   let st = newVSymTable()
   let (entry, code) = compiled
 
-  var globals = addCoreGlobals(globals)
+  let globals = addCoreGlobals(globals)
 
   var task = Task(
     id: id,
