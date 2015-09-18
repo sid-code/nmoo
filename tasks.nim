@@ -354,10 +354,17 @@ proc step*(task: Task) =
     task.pc += 1
     task.tickCount += 1
 
+proc addCoreGlobals(st: SymbolTable): SymbolTable =
+  result = st
+  result["nil"] = nilD
+
 proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObject,
            caller: MObject, globals = newSymbolTable(), callback: int): Task =
   let st = newVSymTable()
   let (entry, code) = compiled
+
+  var globals = addCoreGlobals(globals)
+
   var task = Task(
     id: id,
     name: name,
