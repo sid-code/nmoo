@@ -285,10 +285,11 @@ proc setArgs(verb: MVerb, args: VerbArgs) =
   verb.prepSpec = args.prepSpec
   verb.ioSpec = args.ioSpec
 
-template getPropOn(objd, propd: MData, die = true,
-                   all = false): tuple[o: MObject, p: MProperty] =
+template getPropOn(objd, propd: MData, die = true, useDefault = false,
+                   default = nilD, all = false): tuple[o: MObject, p: MProperty] =
   let objd2 = objd
   let obj = extractObject(objd2)
+  var res: tuple[o: MObject, p: MProperty]
 
   let propd2 = propd
   checkType(propd2, dStr)
@@ -297,12 +298,17 @@ template getPropOn(objd, propd: MData, die = true,
     (objOn, propObj) = obj.getPropAndObj(propName, all)
 
   if propObj == nil:
-    if die:
-      runtimeError(E_PROPNF, "property $1 not found on $2" % [propName, $obj.toObjStr()])
+    if useDefault:
+      res = (nil, newProperty("default", default, nil))
     else:
-      return nilD.pack
+      if die:
+        runtimeError(E_PROPNF, "property $1 not found on $2" % [propName, $obj.toObjStr()])
+      else:
+        return nilD.pack
+  else:
+    res = (objOn, propObj)
 
-  (objOn, propObj)
+  res
 
 template getVerbOn(objd, verbdescd: MData, die = true,
                    all = false): tuple[o: MObject, v: MVerb] =
@@ -325,10 +331,20 @@ template getVerbOn(objd, verbdescd: MData, die = true,
 
 # (getprop what propname)
 defBuiltin "getprop":
-  if args.len != 2:
-    runtimeError(E_ARGS, "getprop takes 2 arguments")
+  var useDefault = false
+  var default = nilD
+  case args.len:
+    of 2: discard
+    of 3:
+      default = args[2]
+      useDefault = true
+    else:
+      runtimeError(E_ARGS, "getprop takes 2 arguments")
 
-  let (obj, propObj) = getPropOn(args[0], args[1], all = true)
+  let (obj, propObj) = getPropOn(args[0], args[1],
+                                 all = true,
+                                 default = default,
+                                 useDefault = useDefault)
   discard obj
 
   checkRead(owner, propObj)
