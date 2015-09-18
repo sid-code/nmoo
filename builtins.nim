@@ -1209,8 +1209,15 @@ defBuiltin "set":
   return list.md.pack
 
 defBuiltin "get":
-  if args.len != 2:
-    runtimeError(E_ARGS, "get takes 2 arguments")
+  var useDefault = false
+  var default = nilD
+  case args.len:
+    of 2: discard
+    of 3:
+      default = args[2]
+      useDefault = true
+    else:
+      runtimeError(E_ARGS, "get takes 2 or 3 arguments")
 
   let listd = args[0]
   checkType(listd, dList)
@@ -1228,7 +1235,10 @@ defBuiltin "get":
     else:
       return list[index].pack
   except:
-    runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
+    if useDefault:
+      return default.pack
+    else:
+      runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
 # (push list new-el)
 # adds to end
