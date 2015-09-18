@@ -291,7 +291,8 @@ proc dataToObj*(world: World, objd: MData): MObject =
   world.byID(objd.objVal)
 
 proc defaultOutput(obj: MObject, m: string) =
-  echo "sent to #$1: $2" % [$obj.getID(), m]
+  when defined(debug):
+    echo "sent to #$1: $2" % [$obj.getID(), m]
 
 
 proc blankObject*: MObject =
