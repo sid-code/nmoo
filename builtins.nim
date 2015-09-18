@@ -85,6 +85,21 @@ defBuiltin "echo":
   caller.send(sendstr)
   return newArgs.md.pack
 
+defBuiltin "notify":
+  if args.len != 2:
+    runtimeError(E_ARGS, "notify takes 2 arguments")
+
+  let who = extractObject(args[0])
+  let msgd = args[1]
+  checkType(msgd, dStr)
+  let msg = msgd.strVal
+
+  if owner != who and not owner.isWizard:
+    runtimeError(E_PERM, "$# cannot notify $#" % [$owner, $who])
+
+  who.send(msg)
+  return msg.md.pack
+
 defBuiltin "do":
   var newArgs: seq[MData] = @[]
   for arg in args:
