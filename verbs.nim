@@ -241,13 +241,13 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
         yield (o, v)
 
 proc call(verb: MVerb, world: World, holder, caller: MObject,
-          symtable: SymbolTable, callback = -1) =
+          symtable: SymbolTable, callback = -1): Task =
   let name = "$#:$#" % [holder.toObjStr(), verb.names]
-  discard world.addTask(name, verb.owner, caller, symtable, verb.compiled, callback)
+  return world.addTask(name, verb.owner, caller, symtable, verb.compiled, callback)
 
 proc verbCallRaw*(self: MObject, verb: MVerb, caller: MObject,
                   args: seq[MData], symtable: SymbolTable = newSymbolTable(),
-                  holder: MObject = nil, callback = -1) =
+                  holder: MObject = nil, callback = -1): Task =
   var
     world = caller.getWorld()
     symtable = symtable
@@ -262,16 +262,16 @@ proc verbCallRaw*(self: MObject, verb: MVerb, caller: MObject,
   symtable["holder"] = holder.md
   symtable["verb"] = verb.names.md
 
-  verb.call(world, holder, caller, symtable, callback)
+  return verb.call(world, holder, caller, symtable, callback)
 
 proc verbCall*(owner: MObject, name: string, caller: MObject,
-               args: seq[MData], callback = -1): bool =
+               args: seq[MData], symtable = newSymbolTable(),
+               callback = -1): Task =
 
   for v in matchingVerbs(owner, name):
     if caller.canExecute(v):
-      owner.verbCallRaw(v, caller, args, callback = callback)
-      return true
-  return false
+      return owner.verbCallRaw(v, caller, args, symtable = symtable, callback = callback)
+  return nil
 
 proc setCode*(verb: MVerb, newCode: string) =
   verb.code = newCode
@@ -282,7 +282,7 @@ proc preprocess(command: string): string =
     return "eval " & command
   return command
 
-proc handleCommand*(obj: MObject, command: string): MData =
+proc handleCommand*(obj: MObject, command: string): Task =
   let command = preprocess(command)
 
   let
@@ -368,9 +368,60 @@ proc handleCommand*(obj: MObject, command: string): MData =
           if ioString.len > 0: continue
 
       symtable["holder"] = o.md
-      v.call(world, holder = o, caller = obj, symtable = symtable)
-      return nilD
+      return v.call(world, holder = o, caller = obj, symtable = symtable)
 
-  obj.send("Sorry, I couldn't understand that")
-  return nilD
+  obj.send("Sorry, I couldn't understand that.")
+  return nil
+
+# Return MObject because the goal of these commands is to determine the
+# player the connection owns.
+proc handleLoginCommand*(obj: MObject, command: string): MObject =
+  let
+    parsed = parseCommand(command)
+    commandName = parsed.verb
+    rest = parsed.rest
+    restStr = rest.join(" ")
+    frest = parsed.fixedRest
+
+  var
+    world = obj.getWorld()
+    symtable = newSymbolTable()
+
+  let verbObj = world.verbObj
+
+  let args = frest.map(md)
+
+  symtable["command"] = commandName.md
+  symtable["args"] = args.md
+  symtable["argstr"] = restStr.md
+  symtable["caller"] = obj.md
+  symtable["self"] = verbObj.md
+
+  let lcTask = verbObj.verbCall("handle-login-command", obj, args,
+                                symtable = symtable)
+
+  if isNil(lcTask):
+    obj.send("Failed to run your login command; server is set up incorrectly.")
+    return nil
+
+  let tr = lcTask.run
+  case tr.typ:
+    of trFinish:
+      if tr.res.isType(dObj):
+        return world.dataToObj(tr.res)
+      else:
+        if tr.res.isType(dStr):
+          obj.send(tr.res.strVal)
+        return nil
+    of trSuspend:
+      verbObj.send("The task for #0:handle-new-connection got suspended!")
+    of trError:
+      verbObj.send("The task for #0:handle-new-connection had an error.")
+    of trTooLong:
+      verbObj.send("The task for #0:handle-new-connection ran for too long!")
+
+  obj.send("Failed to run your login command; server is set up incorrectly.")
+  return nil
+
+
 

@@ -636,8 +636,8 @@ defBuiltin "move":
 
     let whatlist = @[what.md]
 
-    let success = dest.verbCall("accept", caller, whatlist, task.id)
-    if not success: # We were not able to call the verb
+    let failure = isNil(dest.verbCall("accept", caller, whatlist, callback = task.id))
+    if failure: # We were not able to call the verb
       runtimeError(E_FMOVE, "$1 didn't accept $2" % [dest.toObjStr(), what.toObjStr()])
 
     return 1.pack
@@ -660,8 +660,8 @@ defBuiltin "move":
     if oldLoc == nil:
       phase += 1
     else:
-      let success = oldLoc.verbCall("exitfunc", caller, @[what.md], task.id)
-      if success:
+      let failure = isNil(oldLoc.verbCall("exitfunc", caller, @[what.md], callback = task.id))
+      if failure:
         return 2.pack
       else:
         phase += 1
@@ -679,7 +679,7 @@ defBuiltin "move":
             [what.toObjStr(), dest.toObjStr()])
 
     # Discard because it doesn't really matter what happens now, the move is complete
-    discard dest.verbCall("enterfunc", caller, @[what.md], task.id)
+    discard dest.verbCall("enterfunc", caller, @[what.md], callback = task.id)
     return what.md.pack
 
 # (create parent new-owner)
@@ -748,7 +748,7 @@ defBuiltin "recycle":
         discard obj.verbCall("exitfunc", owner, @[contained.md])
         world.persist(contained)
 
-    if not obj.verbCall("recycle", owner, @[], task.id):
+    if not isNil(obj.verbCall("recycle", owner, @[], callback = task.id)):
       # We don't actually care if the verb "recycle" exists
       phase = 1
     else:
@@ -889,7 +889,7 @@ defBuiltin "verbcall":
     owner.checkExecute(verb)
 
     task.suspend()
-    obj.verbCallRaw(verb, caller, cargs, symtable = symtable, callback = task.id)
+    discard obj.verbCallRaw(verb, caller, cargs, symtable = symtable, callback = task.id)
     return 1.pack
   if phase == 1:
     let verbResult = args[^1]
@@ -1359,7 +1359,7 @@ defBuiltin "pass":
     if verb == nil:
       runtimeError(E_VERBNF, "Pass failed, verb is not inherited.")
 
-    self.verbCallRaw(verb, owner, args,
+    discard self.verbCallRaw(verb, owner, args,
                        symtable = symtable, holder = parent, callback = task.id)
 
     return 1.pack

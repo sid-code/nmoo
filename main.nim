@@ -59,6 +59,6 @@ while true:
 
   if command.len == 0: continue
 
-  discard player.handleCommand(command).isType(dNil)
+  discard player.handleCommand(command)
 
 removeFile("edit.tmp")
