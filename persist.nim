@@ -307,7 +307,15 @@ proc persist*(world: World) =
     for task in world.tasks:
       world.persist(task)
 
+proc backupWorld(name: string) =
+  let bckName = name & ".backup"
+  let bckBckName = bckName & ".backup"
+  copyDir(getWorldDir(bckName), getWorldDir(bckBckName))
+  copyDir(getWorldDir(name), getWorldDir(bckName))
+
 proc loadWorld*(name: string): World =
+  backupWorld(name)
+
   result = createWorld(name)
   let dir = getObjectDir(name)
   var objs = result.getObjects()
