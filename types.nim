@@ -190,6 +190,14 @@ type
 
     callback*: int
 
+  TaskResultType* = enum trFinish, trSuspend, trError, trTooLong
+  TaskResult* = object
+    case typ*: TaskResultType
+      of trFinish: res*: MData
+      of trSuspend: discard
+      of trError: err*: MData
+      of trTooLong: discard
+
   InstructionProc* = proc(task: Task, operand: MData)
   CpOutput* = tuple[entry: int, code: seq[Instruction]]
 

@@ -12,6 +12,7 @@ proc getPropVal*(obj: MObject, name: string, all = true): MData
 proc setProp*(obj: MObject, name: string, newVal: MData): MProperty
 proc addTask*(world: World, name: string, owner, caller: MObject,
               symtable: SymbolTable, code: CpOutput, callback = -1): Task
+proc run*(task: Task, limit: int = 20000): TaskResult
 
 ## Permissions handling
 
@@ -351,6 +352,35 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
 
   world.tasks.add(newTask)
   return newTask
+
+# I would really like to put this in tasks.nim but verbs needs it and
+# I can't import tasks from verbs.
+proc run*(task: Task, limit: int = 20000): TaskResult =
+  var limit = limit
+  while limit > 0:
+    if task.suspended:
+      # This is a sticky case. Now we need to search for a task whose callback
+      # is this task, so that we can run that task to completion.
+      var found = false
+      for otask in task.world.tasks:
+        if otask.callback == task.id:
+          discard otask.run(limit)
+          found = true
+          break
+
+      if not found:
+        return TaskResult(typ: trSuspend)
+    if task.done:
+      let res = task.top()
+      if res.isType(dErr):
+        return TaskResult(typ: trError, err: res)
+      else:
+        return TaskResult(typ: trFinish, res: res)
+
+    task.step()
+    limit -= 1
+
+  return TaskResult(typ: trTooLong)
 
 proc numTasks*(world: World): int = world.tasks.len
 
