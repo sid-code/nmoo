@@ -334,7 +334,7 @@ proc doCallPackage(task: Task) =
   task.builtinCall(sym, args, phase = phase)
 
 proc step*(task: Task) =
-  if task.suspended: return
+  if task.suspended or task.done: return
 
   if task.hasCallPackage:
     task.doCallPackage()
