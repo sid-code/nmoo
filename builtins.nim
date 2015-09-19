@@ -3,6 +3,9 @@
 import types, objects, verbs, scripting, persist, compile, tasks
 import strutils, tables, sequtils
 
+# for hashing builtins
+import bcrypt
+
 proc strToType(str: string): tuple[b: bool, t: MDataType] =
   case str.toLower():
     of "int": return (true, dInt)
@@ -1364,3 +1367,43 @@ defBuiltin "pass":
   if phase == 1:
     let verbResult = args[^1]
     return verbResult.pack
+
+# (gensalt [rounds])
+# generates a random salt to use
+# If rounds is not provided, then #0.default-salt-rounds is used
+# If that's not there, then 5 is used
+# The cap is set to 10 in the interest of the lag hashing passwords with big salts
+# creates
+defBuiltin "gensalt":
+  var rounds: int
+  case args.len:
+    of 0:
+      let prop = world.getGlobal("default-salt-rounds")
+      rounds = if not prop.isType(dInt): 5 else: prop.intVal
+    of 1:
+      let roundsd = args[0]
+      checkType(roundsd, dInt)
+      rounds = roundsd.intVal
+    else:
+      runtimeError(E_ARGS, "gensalt takes 0 or 1 arguments")
+
+  if rounds > 10 or rounds < 1:
+    runtimeError(E_ARGS, "number of salt rounds needs to be 1..10")
+
+  return genSalt(rounds.int8).md.pack
+
+# (phash password salt)
+# hashes the password with the salt using bcrypt
+defBuiltin "phash":
+  if args.len != 2:
+    runtimeError(E_ARGS, "phash takes 2 arguments")
+
+  let passd = args[0]
+  checkType(passd, dStr)
+  let pass = passd.strVal
+
+  let saltd = args[1]
+  checkType(saltd, dStr)
+  let salt = saltd.strVal
+
+  return hash(pass, salt).md.pack
