@@ -288,24 +288,31 @@ proc persistObjectCount(world: World) =
   file.close()
 
 proc persist*(world: World) =
-  if existsDir(getWorldDir(world.name)):
-    world.persistObjectCount()
+  let oldName = world.name
+  world.name = world.name & ".new"
+  createDir(getWorldDir(world.name))
 
-    createDir(getObjectDir(world.name))
+  world.persistObjectCount()
 
-    let trashDir = getTrashDir(world.name)
-    createDir(trashDir)
+  createDir(getObjectDir(world.name))
 
-    for idx, obj in world.getObjects()[]:
-      if obj == nil:
-        let deadObject = getobjectFile(world.name, idx)
-        if fileExists(deadObject):
-          moveFile(deadObject, trashDir / $idx)
-      else:
-        world.persist(obj)
-    createDir(getTaskDir(world.name))
-    for task in world.tasks:
-      world.persist(task)
+  let trashDir = getTrashDir(world.name)
+  createDir(trashDir)
+
+  for idx, obj in world.getObjects()[]:
+    if obj == nil:
+      let deadObject = getobjectFile(world.name, idx)
+      if fileExists(deadObject):
+        moveFile(deadObject, trashDir / $idx)
+    else:
+      world.persist(obj)
+  createDir(getTaskDir(world.name))
+  for task in world.tasks:
+    world.persist(task)
+
+  copyDir(getWorldDir(world.name), getWorldDir(oldName))
+  #removeDir(world.name)
+  world.name = oldName
 
 proc backupWorld(name: string) =
   let bckName = name & ".backup"
