@@ -102,7 +102,7 @@ template impl(itype: InstructionType, body: stmt) {.immediate, dirty.} =
     proc(task: Task, operand: MData) =
       body
 
-proc top(task: Task): MData =
+proc top*(task: Task): MData =
   let size = task.stack.len
   if size == 0:
     return nilD
