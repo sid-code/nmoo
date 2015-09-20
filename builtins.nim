@@ -1168,6 +1168,17 @@ defBuiltin "index":
 
   return haystack.find(needle).md.pack
 
+# (downcase str)
+# Makes every character in str lowercase
+defBuiltin "downcase":
+  if args.len != 1:
+    runtimeError(E_ARGS, "downcase takes 1 argument")
+
+  let strd = args[0]
+  checkType(strd, dStr)
+  let str = strd.strVal
+
+  return str.toLower().md.pack
 
 # (insert list index new-el)
 defBuiltin "insert":
