@@ -117,6 +117,7 @@ type
     E_PROPNF,
     E_VERBNF,
     E_BOUNDS,
+    E_QUOTA,
 
     E_PARSE
 
