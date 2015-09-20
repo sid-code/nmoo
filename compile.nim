@@ -411,13 +411,13 @@ defSpecial "try":
   let endLabel = compiler.makeSymbol()
   compiler.real.add(ins(inTRY, @[exceptLabel].md))
   compiler.codeGen(args[0])
+  compiler.real.add(ins(inETRY))
   compiler.real.add(ins(inJMP, endLabel))
   compiler.real.add(ins(inLABEL, exceptLabel))
   let errorIndex = compiler.symtable.defSymbol("error")
   compiler.real.add(ins(inSTO, errorIndex.md))
   compiler.codeGen(args[1])
   compiler.real.add(ins(inLABEL, endLabel))
-  compiler.real.add(ins(inETRY))
   if alen == 3:
     compiler.codeGen(args[2])
 

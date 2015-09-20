@@ -40,13 +40,13 @@ proc collect(task: Task, num: int): seq[MData] =
 proc doError(task: Task, error: MData) =
   # unwind the stack
   while task.frames.len > 0:
-    let tries = task.curFrame().tries
+    let frame = task.curFrame()
 
-    if tries.len == 0:
+    if frame.tries.len == 0:
       task.popFrame()
       continue
 
-    let top = tries[tries.len - 1]
+    let top = frame.tries.pop()
 
     task.pc = top
     task.spush(error)
