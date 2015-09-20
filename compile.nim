@@ -372,6 +372,11 @@ defSpecial "call":
 
 defSpecial "let":
   verifyArgs("let", args, @[dList, dNil])
+
+  # Keep track of what's bound so we can unbind them later
+  var binds: seq[string]
+  newSeq(binds, 0)
+
   let asmts = args[0].listVal
   for assignd in asmts:
     if not assignd.isType(dList):
@@ -388,9 +393,14 @@ defSpecial "let":
 
     compiler.codeGen(val)
     let symIndex = compiler.symtable.defSymbol(sym.symVal)
+    binds.add(sym.symVal)
     compiler.real.add(ins(inSTO, symIndex.md))
 
   compiler.codeGen(args[1])
+
+  # We're outside scope so unbind the symbols
+  for bound in binds:
+    compiler.symtable.del(bound)
 
 defSpecial "try":
   let alen = args.len
