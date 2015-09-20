@@ -362,9 +362,13 @@ proc run*(task: Task, limit: int = 20000): TaskResult =
       # This is a sticky case. Now we need to search for a task whose callback
       # is this task, so that we can run that task to completion.
       var found = false
-      for otask in task.world.tasks:
+      for idx, otask in task.world.tasks:
         if otask.callback == task.id:
-          discard otask.run(limit)
+          let res = otask.run(limit)
+          if res.typ in {trError, trTooLong, trSuspend}: return res
+
+          system.delete(task.world.tasks, idx)
+
           found = true
           break
 
