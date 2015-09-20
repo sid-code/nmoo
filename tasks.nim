@@ -312,8 +312,12 @@ proc finish(task: Task) =
   if callback >= 0:
     let cbTask = task.world.getTaskByID(callback)
     if cbTask != nil:
-      cbTask.spush(task.top())
+      let res = task.top()
       cbTask.resume()
+      if res.isType(dErr):
+        cbTask.doError(res)
+      else:
+        cbTask.spush(task.top())
     else:
       # I've decided that a warning here should suffice. The maintainer should
       # make sure that the task's callback isn't crucial to the operation of
@@ -396,4 +400,3 @@ proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObje
 
   task.pushFrame(newVSymTable())
   return task
-
