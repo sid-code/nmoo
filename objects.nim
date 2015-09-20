@@ -338,6 +338,8 @@ proc tick*(world: World) =
 
 proc addTask*(world: World, name: string, owner, caller: MObject,
               symtable: SymbolTable, code: CpOutput, callback = -1): Task =
+  let tickQuotad = world.getGlobal("tick-quota")
+  let tickQuota = if tickQuotad.isType(dInt): tickQuotad.intVal else: 20000
 
   let newTask = task(
     id = world.taskIDCounter,
@@ -347,6 +349,7 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
     owner = owner,
     caller = caller,
     globals = symtable,
+    ticksLeft = tickQuota,
     callback = callback)
   world.taskIDCounter += 1
 

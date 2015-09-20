@@ -356,14 +356,16 @@ proc step*(task: Task) =
       task.finish()
 
     task.pc += 1
-    task.tickCount += 1
+    task.ticksLeft -= 1
+    if task.ticksLeft <= 0:
+      task.doError(E_QUOTA.md("task has exceeded tick quota"))
 
 proc addCoreGlobals(st: SymbolTable): SymbolTable =
   result = st
   result["nil"] = nilD
 
 proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObject,
-           caller: MObject, globals = newSymbolTable(), callback: int): Task =
+           caller: MObject, globals = newSymbolTable(), ticksLeft, callback: int): Task =
   let st = newVSymTable()
   let (entry, code) = compiled
 
@@ -387,7 +389,7 @@ proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObje
     done: false,
     suspended: false,
     restartTime: 0,
-    tickCount: 0,
+    ticksLeft: ticksLeft,
 
     hasCallPackage: false,
     callPackage: nilD.pack,

@@ -182,7 +182,7 @@ type
     done*: bool
     suspended*: bool
     restartTime*: int
-    tickCount*: int
+    ticksLeft*: int
 
     hasCallPackage*: bool
     callPackage*: Package
