@@ -661,7 +661,7 @@ defBuiltin "move":
       phase += 1
     else:
       let failure = isNil(oldLoc.verbCall("exitfunc", caller, @[what.md], callback = task.id))
-      if failure:
+      if not failure:
         return 2.pack
       else:
         phase += 1
