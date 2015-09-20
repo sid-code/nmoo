@@ -1199,7 +1199,7 @@ defBuiltin "insert":
 
   try:
     list.insert(el, index)
-  except IndexError:
+  except RangeError:
     runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
   return list.md.pack
