@@ -410,8 +410,6 @@ proc handleLoginCommand*(obj: MObject, command: string): MObject =
       if tr.res.isType(dObj):
         return world.dataToObj(tr.res)
       else:
-        if tr.res.isType(dStr):
-          obj.send(tr.res.strVal)
         return nil
     of trSuspend:
       verbObj.send("The task for #0:handle-new-connection got suspended!")
