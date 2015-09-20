@@ -721,6 +721,39 @@ defBuiltin "create":
 
   return newObj.md.pack
 
+# (level obj)
+# returns obj's level
+# 0 = wizard
+# 1 = programmer
+# 2 = regular
+defBuiltin "level":
+  if args.len != 1:
+    runtimeError(E_ARGS, "level takes 1 argument")
+
+  let obj = extractObject(args[0])
+  return obj.level.md.pack
+
+# (setlevel obj new-level)
+# sets obj's level to new-level
+# the programmer must be a wizard
+defBuiltin "setlevel":
+  if args.len != 2:
+    runtimeError(E_ARGS, "setlevel takes 2 arguments")
+
+  let obj = extractObject(args[0])
+  let newLeveld = args[1]
+  checkType(newLeveld, dInt)
+  let newLevel = newLeveld.intVal
+
+  if not owner.isWizard():
+    runtimeError(E_PERM, "only wizards can set level")
+
+  if newLevel > 3 or newLevel < 0:
+    runtimeError(E_ARGS, "level must be 0..3")
+
+  obj.level = newLevel
+  return newLeveld.pack
+
 # (recycle obj)
 #
 # Destroys obj
