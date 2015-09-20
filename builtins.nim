@@ -967,11 +967,11 @@ template defArithmeticOperator(name: string, op: BinFloatOp, logical = false,
 
     if logical:
       acc = args[0].truthy.int.md
-      for next in args[1..^1]:
+      for next in args[1 .. ^1]:
         acc = combine(acc, next.truthy.int.md)
     else:
       acc = args[0]
-      for next in args[1..^1]:
+      for next in args[1 .. ^1]:
         acc = combine(acc, next)
 
     return acc.pack
