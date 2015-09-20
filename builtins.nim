@@ -1350,7 +1350,7 @@ defBuiltin "setremove":
   var list = listd.listVal
   for idx, val in list:
     if el == val:
-      list.delete(idx)
+      system.delete(list, idx)
       break
 
   return list.md.pack
