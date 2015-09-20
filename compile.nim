@@ -48,7 +48,7 @@ template ins(typ: InstructionType, op: MData): Instruction =
 template ins(typ: InstructionType): Instruction =
   ins(typ, nilD)
 
-proc `$`(ins: Instruction): string =
+proc `$`*(ins: Instruction): string =
   let itypeStr = ($ins.itype)[2 .. ^1]
   if ins.operand == nilD:
     return itypeStr & "\t"
