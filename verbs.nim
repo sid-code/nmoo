@@ -345,7 +345,7 @@ proc handleCommand*(obj: MObject, command: string): Task =
       case v.doSpec:
         of oAny:
           if doQuerySuccess:
-            if o == doQuery[0]:
+            if o == doQuery[0] and o != obj:
               continue
             symtable["dobj"] = doQuery[0].md
         of oThis:
@@ -357,7 +357,7 @@ proc handleCommand*(obj: MObject, command: string): Task =
       case v.ioSpec:
         of oAny:
           if ioQuerySuccess:
-            if o == ioQuery[0]:
+            if o == ioQuery[0] and o != obj:
               continue
             symtable["iobj"] = ioQuery[0].md
         of oThis:
