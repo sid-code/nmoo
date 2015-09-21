@@ -124,8 +124,6 @@ proc toData(image: string): MData =
         raise newException(MParseError, "object id overflow " & image)
       except ValueError:
         raise newException(MParseError, "invalid object " & image)
-    of '\'':
-      return rest.mds
     of '"':
       return rest[0 .. ^2].md
     of Digits, '-', '.':
