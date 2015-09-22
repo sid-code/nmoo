@@ -1196,6 +1196,27 @@ defBuiltin "repeat":
 
   return str.repeat(times).md.pack
 
+# (strsub str from to)
+# replaces all occurrences of "from" in str to "to"
+# (strsub "hello" "l" "n") => "henno"
+defBuiltin "strsub":
+  if args.len != 3:
+    runtimeError(E_ARGS, "strsub takes 3 arguments")
+
+  let strd = args[0]
+  checkType(strd, dStr)
+  let str = strd.strVal
+
+  let fromd = args[1]
+  checkType(fromd, dStr)
+  let fromv = fromd.strVal
+
+  let tod = args[2]
+  checkType(tod, dStr)
+  let to = tod.strVal
+
+  return str.replace(fromv, to).md.pack
+
 # (downcase str)
 # Makes every character in str lowercase
 defBuiltin "downcase":
