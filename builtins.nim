@@ -1418,6 +1418,26 @@ defBuiltin "in":
   let list = listd.listVal
   return list.find(el).md.pack
 
+# (range start end)
+# returns '(start start+1 start+2 ... end-1 end)
+# removes end - start + 1 ticks from the current task's ticks left
+defBuiltin "range":
+  if args.len != 2:
+    runtimeError(E_ARGS, "range takes 2 arguments")
+
+  let startd = args[0]
+  checkType(startd, dInt)
+  let start = startd.intVal
+
+  let endd = args[1]
+  checkType(endd, dInt)
+  let endv = endd.intVal
+
+  let numberOfTicks = endv - start + 1
+  task.ticksLeft -= numberOfTicks
+
+  return toSeq(start..endv).map(md).md.pack
+
 # (pass arg1 arg2 ...)
 # calls the parent verb
 defBuiltin "pass":
