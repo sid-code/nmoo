@@ -1221,7 +1221,7 @@ defBuiltin "strsub":
 # Makes every character in str lowercase
 defBuiltin "downcase":
   if args.len != 1:
-    runtimeError(E_ARGS, "downcase takes 1 argument")
+    runtimeError(E_ARGS, "downcase takes 1 arguments")
 
   let strd = args[0]
   checkType(strd, dStr)
