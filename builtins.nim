@@ -1033,6 +1033,15 @@ defBuiltin "$":
   else:
     return what.toCodeStr().md.pack
 
+# Object tostring function
+# ($o obj) returns toObjStr(#6)
+defBuiltin "$o":
+  if args.len != 1:
+    runtimeError(E_ARGS, "$o takes 1 argument")
+
+  let what = extractObject(args[0])
+  return what.toObjStr().md.pack
+
 # (cat str1 str2 ...)
 # (cat list1 list2 ...)
 # concats any number of strings or lists in a list
