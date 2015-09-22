@@ -1177,6 +1177,25 @@ defBuiltin "index":
 
   return haystack.find(needle).md.pack
 
+# (repeat str times)
+# (repeat "hello" 3) => "hellohellohello"
+defBuiltin "repeat":
+  if args.len != 2:
+    runtimeError(E_ARGS, "repeat takes 2 arguments")
+
+  let strd = args[0]
+  checkType(strd, dStr)
+  let str = strd.strVal
+
+  let timesd = args[1]
+  checkType(timesd, dInt)
+  let times = timesd.intVal
+
+  if times < 1:
+    runtimeError(E_ARGS, "can't repeat a string less than one time")
+
+  return str.repeat(times).md.pack
+
 # (downcase str)
 # Makes every character in str lowercase
 defBuiltin "downcase":
