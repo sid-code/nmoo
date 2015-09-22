@@ -319,18 +319,32 @@ template getVerbOn(objd, verbdescd: MData, die = true,
   let objd2 = objd
   let obj = extractObject(objd2)
 
+  var res: tuple[o: MObject, v: MVerb]
+
   let verbdescd2 = verbdescd
-  checkType(verbdescd2, dStr)
-  let verbdesc = verbdescd2.strVal
+  if verbdescd2.isType(dStr):
+    let verbdesc = verbdescd2.strVal
 
-  let (objOn, verb) = obj.getVerbAndObj(verbdesc, all)
-  if verb == nil:
-    if die:
-      runtimeError(E_VERBNF, "verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
-    else:
-      return nilD.pack
+    let (objOn, verb) = obj.getVerbAndObj(verbdesc, all)
+    if verb == nil:
+      if die:
+        runtimeError(E_VERBNF, "verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
+      else:
+        return nilD.pack
 
-  (objOn, verb)
+    res = (objOn, verb)
+  elif verbdescd2.isType(dInt):
+    let verbnum = verbdescd2.intVal
+
+    if verbnum >= obj.verbs.len or verbnum < 0:
+      runtimeError(E_VERBNF, "verb index $# out of range" % $verbnum)
+
+    res = (obj, obj.verbs[verbnum])
+  else:
+    runtimeError(E_ARGS, "verb indices can only be strings or integers")
+
+
+  res
 
 # (getprop what propname)
 defBuiltin "getprop":
