@@ -3,5 +3,7 @@
 !Makefile
 !LICENSE
 
+!editserv
+
 .*.swp
 edit.tmp

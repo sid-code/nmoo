@@ -1,4 +1,5 @@
 import types, objects, verbs, builtins, persist, tasks
+import editserv/editserv
 import asyncnet, asyncdispatch, strutils
 
 echo "Loading world... "
@@ -174,6 +175,19 @@ setControlCHook(handler)
 
 echo "Starting server:  host=$1   port=$2" % [host, $port]
 asyncCheck serve()
+
+let editord = world.getGlobal("editor")
+if editord.isType(dObj):
+  let editor = world.dataToObj(editord)
+  if not isNil(editor):
+    let eportd = editor.getPropVal("port")
+    let eport = if eportd.isType(dInt): eportd.intVal else: port + 1
+
+    let eserv = newEditServer(editor)
+
+    echo "Starting edit server:  host=$1   port=$2" % [host, $eport]
+    asyncCheck eserv.serve(Port(eport), host)
+
 echo "Listening for connections (end with ^C)"
 
 try:
