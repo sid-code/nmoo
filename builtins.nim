@@ -1065,13 +1065,7 @@ defBuiltin "cat":
     runtimeError(E_ARGS, "cat needs at least one string")
 
   let typ = args[0].dtype
-  if typ == dStr:
-    var total = ""
-    for argd in args:
-      let arg = argd
-      total &= arg.toEchoString()
-    return total.md.pack
-  elif typ == dList:
+  if typ == dList:
     var total: seq[MData] = @[]
     for argd in args:
       let arg = argd
@@ -1079,7 +1073,11 @@ defBuiltin "cat":
       total.add(arg.listVal)
     return total.md.pack
   else:
-    runtimeError(E_ARGS, "cat only concatenates strings or lists")
+    var total = ""
+    for argd in args:
+      let arg = argd
+      total &= arg.toEchoString()
+    return total.md.pack
 
 # (head list)
 defBuiltin "head":
