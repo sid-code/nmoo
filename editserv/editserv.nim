@@ -4,21 +4,21 @@ import strutils
 import types, objects, verbs, scripting
 
 const
-  cmSource = staticRead("editserv/codemirror.js")
-  cmCSS = staticRead("editserv/codemirror.css")
-  cmScheme = staticRead("editserv/scheme.js")
-  cmVim = staticRead("editserv/vim.js")
+  cmSource = "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/codemirror.min.js"
+  cmCSS = "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/codemirror.css"
+  cmScheme = "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/mode/scheme/scheme.min.js"
+  cmVim = "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/keymap/vim.min.js"
   cmClient = staticRead("editserv/client.js")
   templ = """
 <html>
   <body>
     <form onsubmit="this."
   </body>
+  <script src="$#"></script>
+  <script src="$#"></script>
+  <script src="$#"></script>
   <script>$#</script>
-  <script>$#</script>
-  <script>$#</script>
-  <script>$#</script>
-  <style>$#</style>
+  <link rel="stylesheet" href="$#" />
 </html>
 """.format(cmSource, cmScheme, cmVim, cmClient, cmCSS)
 
