@@ -313,6 +313,7 @@ proc finish(task: Task) =
     let cbTask = task.world.getTaskByID(callback)
     if cbTask != nil:
       let res = task.top()
+      cbTask.tickCount += task.tickCount
       cbTask.resume()
       if res.isType(dErr):
         cbTask.doError(res)
@@ -356,8 +357,8 @@ proc step*(task: Task) =
       task.finish()
 
     task.pc += 1
-    task.ticksLeft -= 1
-    if task.ticksLeft <= 0:
+    task.tickCount += 1
+    if task.tickCount >= task.tickQuota:
       task.doError(E_QUOTA.md("task has exceeded tick quota"))
 
 proc addCoreGlobals(st: SymbolTable): SymbolTable =
@@ -365,7 +366,7 @@ proc addCoreGlobals(st: SymbolTable): SymbolTable =
   result["nil"] = nilD
 
 proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObject,
-           caller: MObject, globals = newSymbolTable(), ticksLeft, callback: int): Task =
+           caller: MObject, globals = newSymbolTable(), tickQuota, callback: int): Task =
   let st = newVSymTable()
   let (entry, code) = compiled
 
@@ -389,7 +390,8 @@ proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObje
     done: false,
     suspended: false,
     restartTime: 0,
-    ticksLeft: ticksLeft,
+    tickCount: 0,
+    tickQuota: tickQuota,
 
     hasCallPackage: false,
     callPackage: nilD.pack,

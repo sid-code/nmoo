@@ -349,7 +349,7 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
     owner = owner,
     caller = caller,
     globals = symtable,
-    ticksLeft = tickQuota,
+    tickQuota = tickQuota,
     callback = callback)
   world.taskIDCounter += 1
 

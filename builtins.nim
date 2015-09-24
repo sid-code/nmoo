@@ -1520,7 +1520,7 @@ defBuiltin "range":
   let endv = endd.intVal
 
   let numberOfTicks = endv - start + 1
-  task.ticksLeft -= numberOfTicks
+  task.tickCount += numberOfTicks
 
   return toSeq(start..endv).map(md).md.pack
 
