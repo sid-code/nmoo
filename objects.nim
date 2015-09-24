@@ -325,6 +325,8 @@ proc tick*(world: World) =
     try:
       task.step()
       if task.done:
+        if defined(showTicks):
+          echo "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
         system.delete(world.tasks, idx)
     except:
       let exception = getCurrentException()
