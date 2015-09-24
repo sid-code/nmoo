@@ -1231,6 +1231,70 @@ defBuiltin "strsub":
 
   return str.replace(fromv, to).md.pack
 
+# (fit string length filler=" " trail="")
+# If (len string) is less than length, then filler is added until it isn't
+# otherwise, string is cut short and trail is added, such that it doesn't exceed length
+
+defBuiltin "fit":
+  var
+    filler = " "
+    trail = ""
+
+  if args.len notin 2..4:
+    runtimeError(E_ARGS, "fit takes 2 to 4 arguments")
+
+  let strd = args[0]
+  checkType(strd, dStr)
+  var str = strd.strVal
+
+  let lend = args[1]
+  checkType(lend, dInt)
+  let length = lend.intVal
+
+  if args.len >= 3:
+    let fillerd = args[2]
+    checkType(fillerd, dStr)
+    filler = fillerd.strVal
+
+  if args.len >= 4:
+    let traild = args[3]
+    checkType(traild, dStr)
+    trail = traild.strVal
+
+  if trail.len > str.len:
+    trail = ""
+
+  let strlen = str.len
+  let traillen = trail.len
+
+  if strlen == length:
+    return strd.pack
+  elif strlen < length:
+    while str.len <= length:
+      str &= filler
+
+    return str[0..length-1].md.pack
+  elif strlen > length:
+    let allowed = length - traillen
+    return (str[0..allowed-1] & trail).md.pack
+
+defBuiltin "split":
+  var sep = " "
+  case args.len:
+    of 1: discard
+    of 2:
+      let sepd = args[1]
+      checkType(sepd, dStr)
+      sep = sepd.strVal
+    else:
+      runtimeError(E_ARGS, "split takes 2 arguments")
+
+  let strd = args[0]
+  checkType(strd, dStr)
+  let str = strd.strVal
+
+  return str.split(sep).map(md).md.pack
+
 # (downcase str)
 # Makes every character in str lowercase
 defBuiltin "downcase":
