@@ -1320,13 +1320,15 @@ defBuiltin "insert":
 
   let el = args[2]
 
-  var
-    list = listd.listVal
-    index = indexd.intVal
+  var list = listd.listVal
 
-  try:
+  let
+    index = indexd.intVal
+    length = list.len
+
+  if index in 0..length:
     list.insert(el, index)
-  except RangeError:
+  else:
     runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
   return list.md.pack
@@ -1342,13 +1344,15 @@ defBuiltin "delete":
   let indexd = args[1]
   checkType(indexd, dInt)
 
-  var
-    list = listd.listVal
-    index = indexd.intVal
+  var list = listd.listVal
 
-  try:
+  let
+    index = indexd.intVal
+    length = list.len
+
+  if index in -length..length-1:
     system.delete(list, index)
-  except IndexError:
+  else:
     runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
   return list.md.pack
@@ -1368,16 +1372,18 @@ defBuiltin "set":
 
   let el = args[2]
 
-  var
-    list = listd.listVal
-    index = indexd.intVal
+  var list = listd.listVal
 
-  try:
+  let
+    index = indexd.intVal
+    length = list.len
+
+  if index in -length..length-1:
     if index < 0:
       list[^ -index] = el
     else:
       list[index] = el
-  except IndexError:
+  else:
     runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
   return list.md.pack
@@ -1399,16 +1405,18 @@ defBuiltin "get":
   let indexd = args[1]
   checkType(indexd, dInt)
 
-  var
-    list = listd.listVal
-    index = indexd.intVal
+  var list = listd.listVal
 
-  try:
+  let
+    index = indexd.intVal
+    length = list.len
+
+  if index in -length..length-1:
     if index < 0:
       return list[^ -index].pack
     else:
       return list[index].pack
-  except:
+  else:
     if useDefault:
       return default.pack
     else:
