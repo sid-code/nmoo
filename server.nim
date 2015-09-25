@@ -48,18 +48,6 @@ proc send(client: Client, msg: string) {.async.} =
 proc recvLine(client: Client): Future[string] {.async.} =
   return await client.sock.recvLine()
 
-# TODO: make a better way to get this
-# get the generic player
-var genericPlayer: MObject = nil
-for o in world.getObjects()[]:
-  if o != nil:
-    if o.getPropVal("name") == "generic player".md:
-      genericPlayer = o
-
-if genericPlayer == nil:
-  stderr.write "fatal: there is no generic player"
-  quit 1
-
 proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: string] =
   result.o = nil
   result.msg = "*** Could not connect; the server is not set up correctly. ***"
