@@ -298,6 +298,7 @@ proc changeParent*(obj: MObject, newParent: MObject) =
     # remove this from old parent's children
     obj.parent.children.keepItIf(it != obj)
 
+  obj.level = newParent.level
   obj.parent = newParent
   newParent.children.add(obj)
 
