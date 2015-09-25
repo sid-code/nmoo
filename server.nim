@@ -1,6 +1,6 @@
 import types, objects, verbs, builtins, persist, tasks
 import editserv/editserv
-import asyncnet, asyncdispatch, strutils
+import asyncnet, asyncdispatch, strutils, net
 import logging
 
 var clog = newConsoleLogger()
@@ -131,14 +131,43 @@ proc processClient(client: Client, address: string) {.async.} =
 
 var server: AsyncSocket
 const
-  host = "localhost"
-  port = 4444
+  defaultHost = "localhost"
+  defaultPort = Port(4444)
 
-proc serve() {.async.} =
+proc getHostAndPort: tuple[host: string, port: Port] =
+  # Defaults
+  result.host = defaultHost
+  result.port = defaultPort
+
+  let hostd = world.getGlobal("host")
+  if hostd.isType(dStr):
+    let host = hostd.strVal
+    if not isIpAddress(host):
+      fatal "World specified invalid host $#" % host
+      quit 1
+    result.host = host
+  else:
+    warn "Server doesn't define #0.host, using default host $#" % defaultHost
+
+  let portd = world.getGlobal("port")
+  if portd.isType(dInt):
+    let port = portd.intVal
+    if port < 0 or port > 65535:
+      fatal "Invalid port $#" % $port
+      quit 1
+
+    result.port = Port(port)
+  else:
+    warn "Server doesn't specify #0.port, using default port $#" % $defaultPort
+
+let (host, port) = getHostAndPort()
+
+proc serve {.async.} =
   clients = @[]
   server = newAsyncSocket()
   server.setSockOpt(OptReuseAddr, true)
-  server.bindAddr(Port(port), host)
+
+  server.bindAddr(port, host)
   server.listen()
 
   while true:
@@ -173,12 +202,12 @@ if editord.isType(dObj):
   let editor = world.dataToObj(editord)
   if not isNil(editor):
     let eportd = editor.getPropVal("port")
-    let eport = if eportd.isType(dInt): eportd.intVal else: port + 1
+    let eport = if eportd.isType(dInt): Port(eportd.intVal) else: Port(port.int + 1)
 
     let eserv = newEditServer(editor)
 
-    asyncCheck eserv.serve(Port(eport), host)
     info "Starting edit server:  host=$1   port=$2" % [host, $eport]
+    asyncCheck eserv.serve(eport, host)
 
 info "Listening for connections (end with ^C)"
 
