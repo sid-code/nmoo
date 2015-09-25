@@ -795,7 +795,7 @@ defBuiltin "recycle":
         discard obj.verbCall("exitfunc", owner, @[contained.md])
         world.persist(contained)
 
-    if not isNil(obj.verbCall("recycle", owner, @[], callback = task.id)):
+    if isNil(obj.verbCall("recycle", owner, @[], callback = task.id)):
       # We don't actually care if the verb "recycle" exists
       phase = 1
     else:
