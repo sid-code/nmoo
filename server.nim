@@ -1,12 +1,16 @@
 import types, objects, verbs, builtins, persist, tasks
 import editserv/editserv
 import asyncnet, asyncdispatch, strutils
+import logging
 
-echo "Loading world... "
+var clog = newConsoleLogger()
+addHandler(clog)
+
+info "Loading world... "
 let world = loadWorld("min")
 
 world.verbObj.output = proc(obj: MObject, msg: string) =
-  echo "#0: " & msg
+  info "#0: " & msg
 
 type
   Client = ref object
@@ -145,9 +149,9 @@ proc serve() {.async.} =
 
 proc cleanUp() =
   if server != nil and not server.isClosed():
-    echo "Closing connections"
+    info "Closing connections"
     for client in clients:
-      echo "Closing a client..."
+      info "Closing a client..."
       waitFor client.send("Server is going down!\c\L")
       client.close()
     server.close()
@@ -156,12 +160,12 @@ proc cleanUp() =
 
 proc handler() {.noconv.} =
   cleanup()
-  echo "Exit"
+  info "Exit"
   quit 0
 
 setControlCHook(handler)
 
-echo "Starting server:  host=$1   port=$2" % [host, $port]
+info "Starting server:  host=$1   port=$2" % [host, $port]
 asyncCheck serve()
 
 let editord = world.getGlobal("editor")
@@ -173,10 +177,10 @@ if editord.isType(dObj):
 
     let eserv = newEditServer(editor)
 
-    echo "Starting edit server:  host=$1   port=$2" % [host, $eport]
     asyncCheck eserv.serve(Port(eport), host)
+    info "Starting edit server:  host=$1   port=$2" % [host, $eport]
 
-echo "Listening for connections (end with ^C)"
+info "Listening for connections (end with ^C)"
 
 try:
   while true:
