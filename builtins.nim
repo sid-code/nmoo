@@ -1,6 +1,6 @@
 # Here are all of the builtin functions that verbs can call
 
-import types, objects, verbs, scripting, persist, compile, tasks
+import types, objects, verbs, scripting, persist, compile, tasks, querying
 import strutils, tables, sequtils
 
 # for hashing builtins
@@ -868,6 +868,18 @@ defBuiltin "setparent":
   world.persist(obj)
 
   return newParent.md.pack
+
+# (query str)
+# Wrapper for the query proc in querying.nim
+defBuiltin "query":
+  if args.len != 1:
+    runtimeError(E_ARGS, "query takes 1 argument")
+
+  let strd = args[0]
+  checkType(strd, dStr)
+  let str = strd.strVal
+
+  return caller.query(str).map(md).md.pack
 
 # (istype thingy typedesc)
 # typedesc is a string:
