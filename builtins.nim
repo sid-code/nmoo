@@ -818,6 +818,10 @@ defBuiltin "recycle":
         child.changeParent(parent)
         world.persist(child)
 
+    let childIndex = parent.children.find(obj)
+    if childIndex > -1:
+      system.delete(parent.children, childIndex)
+
     # Destroy the object
     discard obj.moveTo(nowhere)
     discard nowhere.removeFromContents(obj)
