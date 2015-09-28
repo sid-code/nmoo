@@ -339,7 +339,8 @@ proc doCallPackage(task: Task) =
   task.builtinCall(sym, args, phase = phase)
 
 proc step*(task: Task) =
-  if task.suspended or task.done: return
+  # When I run this on the Raspberry Pi, task is sometimes nil, hence the isNil check
+  if isNil(task) or task.suspended or task.done: return
 
   if task.hasCallPackage:
     task.doCallPackage()
