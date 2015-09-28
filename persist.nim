@@ -144,10 +144,7 @@ proc readObjectID(world: World, stream: File, default: MObject = world.verbObj):
     return world.verbObj
 
   result = world.byID(id.id)
-  if result == nil:
-    return world.verbObj
-  else:
-    return result
+  return if isNil(result): default else: result
 
 proc readProp(world: World, stream: File): MProperty =
   result = newProperty(
