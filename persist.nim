@@ -286,8 +286,13 @@ proc persistObjectCount(world: World) =
 
 proc persist*(world: World) =
   let oldName = world.name
+  let oldDir = getWorldDir(oldName)
   world.name = world.name & ".new"
-  createDir(getWorldDir(world.name))
+  let dir = getWorldDir(world.name)
+
+  # Make sure it doesn't even exist
+  removeDir(dir)
+  createDir(dir)
 
   world.persistObjectCount()
 
@@ -303,12 +308,14 @@ proc persist*(world: World) =
         moveFile(deadObject, trashDir / $idx)
     else:
       world.persist(obj)
-  createDir(getTaskDir(world.name))
+  let taskDir = getTaskDir(world.name)
+  createDir(taskDir)
   for task in world.tasks:
     world.persist(task)
 
-  copyDir(getWorldDir(world.name), getWorldDir(oldName))
-  #removeDir(world.name)
+  removeDir(dir)
+  copyDir(dir, oldDir)
+  removeDir(dir)
   world.name = oldName
 
 proc backupWorld(name: string) =
