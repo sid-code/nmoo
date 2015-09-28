@@ -825,7 +825,7 @@ defBuiltin "recycle":
     # Destroy the object
     discard obj.moveTo(nowhere)
     discard nowhere.removeFromContents(obj)
-    world.delete(obj)
+    world.dbDelete(obj)
     world.persist()
 
     return 1.md.pack

@@ -318,6 +318,13 @@ proc persist*(world: World) =
   removeDir(dir)
   world.name = oldName
 
+proc dbDelete*(world: World, obj: MObject) =
+  world.delete(obj)
+  let id = obj.getID().int
+  let objFile = getObjectFile(world.name, id)
+  let trashFile = getTrashDir(world.name) / $id
+  moveFile(objFile, trashFile)
+
 proc backupWorld(name: string) =
   let bckName = name & ".backup"
   let bckBckName = bckName & ".backup"
