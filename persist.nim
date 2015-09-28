@@ -57,8 +57,8 @@ proc dumpData(data: MData): string =
   toCodeStr(@[data].md)
 
 proc dumpObjID(obj: MObject): string =
-  if obj == nil:
-    "0"
+  if isNil(obj):
+    ""
   else:
     $obj.getID()
 
