@@ -323,6 +323,9 @@ import tasks
 
 proc tick*(world: World) =
   for idx, task in world.tasks:
+    if isNil(task):
+      system.delete(world.tasks, idx)
+      continue
     try:
       task.step()
       if task.done:
