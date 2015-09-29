@@ -29,47 +29,7 @@ what objects should do.
 
 ## Using
 
-There's not much to use, but here's what can be done.
-
-The only dependency for this project is `nake` (`nimble install nake`)
-
-Clone the repository, build the executables with the following command:
-
-```
-$ nake
-```
-
-Setup a minimal world:
-
-```
-$ nake setup
-```
-
-Run the tests:
-
-```
-$ ./tests
-```
-(Note: due to the recent switch from an interpreter to a compiler, hardly any of
-these will even pass.)
-
-```
-$ ./server
-```
-
-You can connect to it with the details provided. The only command implemented is
-"eval", so you can mess around with the scripting language.
-
-As soon as possible, a less-minimal MUD style world will be available for download,
-but it is largely incomplete as of now.
-
-Note: The server polls every 10ms and this is also the interval between each task
-tick (when an instruction is executed). This means that verbs will run ridiculously
-slowly. I'll change it later when I'm confident that the compiler and the VM are
-working properly.
-
-The main program is in a constant state of flux and therefore has no well defined
-behavior. Today it does this and tomorrow it might do something else. Don't use it.
+Don't even try to use this yet (I'll update this when it's usable).
 
 ## License
 
