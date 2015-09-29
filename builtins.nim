@@ -17,6 +17,30 @@ proc strToType(str: string): tuple[b: bool, t: MDataType] =
     of "nil": return (true, dNil)
     else: return (false, dInt)
 
+template extractInt(d: MData): int =
+  checkType(d, dInt)
+  d.intVal
+template extractFloat(d: MData): float =
+  checkType(d, dFloat)
+  d.floatVal
+template extractString(d: MData): string =
+  checkType(d, dStr)
+  d.strVal
+template extractSymbol(d: MData): string =
+  checkType(d, dSym)
+  d.symVal
+template extractList(d: MData): seq[MData] =
+  checkType(d, dList)
+  d.listVal
+
+template extractObject(objd: MData): MObject =
+  checkType(objd, dObj)
+  let obj = world.dataToObj(objd)
+  if obj == nil:
+    runtimeError(E_ARGS, "invalid object " & $objd)
+
+  obj
+
 template checkForError(value: MData) =
   if value.isType(dErr):
     return value
@@ -28,14 +52,6 @@ template checkType(value: MData, expected: MDataType, ifnot: MError = E_TYPE) =
   if not value.isType(expected):
     runtimeError(ifnot,
       "expected argument of type " & $expected & " instead got " & $value.dType)
-
-template extractObject(objd: MData): MObject =
-  checkType(objd, dObj)
-  let obj = world.dataToObj(objd)
-  if obj == nil:
-    runtimeError(E_ARGS, "invalid object " & $objd)
-
-  obj
 
 template checkOwn(obj, what: MObject) =
   if not obj.owns(what):
@@ -93,9 +109,7 @@ defBuiltin "notify":
     runtimeError(E_ARGS, "notify takes 2 arguments")
 
   let who = extractObject(args[0])
-  let msgd = args[1]
-  checkType(msgd, dStr)
-  let msg = msgd.strVal
+  let msg = extractString(args[1])
 
   if owner != who and not owner.isWizard:
     runtimeError(E_PERM, "$# cannot notify $#" % [$owner, $who])
@@ -118,9 +132,7 @@ defBuiltin "eval":
   if args.len != 1:
     runtimeError(E_ARGS, "eval takes 1 argument")
 
-  let argd = args[0]
-  checkType(argd, dStr)
-  var evalStr = argd.strVal
+  var evalStr = extractString(args[0])
 
   try:
     let instructions = compileCode(evalStr)
@@ -139,9 +151,7 @@ defBuiltin "err":
   var err = args[0]
   checkType(err, dErr)
 
-  let msgd = args[1]
-  checkType(msgd, dStr)
-  let msg = msgd.strVal
+  let msg = extractString(args[1])
 
   err.errMsg = msg
   return err.pack
@@ -194,15 +204,11 @@ template propInfoFromInput(info: seq[MData]): PropInfo =
   let ownero = extractObject(ownerd)
   res.owner = ownero
 
-  let permsd = info[1]
-  checkType(permsd, dStr)
-  let perms = permsd.strVal
+  let perms = extractString(args[1])
   res.perms = perms
 
   if info.len == 3:
-    let newNamed = info[2]
-    checkType(newNamed, dStr)
-    let newName = newNamed.strVal
+    let newName = extractString(args[2])
     res.newName = newName
 
   res
@@ -217,24 +223,18 @@ template verbInfoFromInput(info: seq[MData]): VerbInfo =
   let ownero = extractObject(ownerd)
   res.owner = ownero
 
-  let permsd = info[1]
-  checkType(permsd, dStr)
-  let perms = permsd.strVal
+  let perms = extractString(args[1])
   res.perms = perms
 
   if info.len == 3:
-    let newNamed = info[2]
-    checkType(newNamed, dStr)
-    let newName = newNamed.strVal
+    let newName = extractString(args[2])
     res.newName = newName
 
   res
 
 template objSpecFromData(ospd: MData): ObjSpec =
-  let specd = ospd
-  checkType(specd, dStr)
   let
-    str = specd.strVal
+    str = extractString(ospd)
     (success, spec) = strToObjSpec(str)
 
   if not success:
@@ -243,10 +243,8 @@ template objSpecFromData(ospd: MData): ObjSpec =
   spec
 
 template prepSpecFromData(pspd: MData): PrepType =
-  let specd = pspd
-  checkType(specd, dStr)
   let
-    str = specd.strVal
+    str = extractString(pspd)
     (success, spec) = strToPrepSpec(str)
 
   if not success:
@@ -294,10 +292,8 @@ template getPropOn(objd, propd: MData, die = true, useDefault = false,
   let obj = extractObject(objd2)
   var res: tuple[o: MObject, p: MProperty]
 
-  let propd2 = propd
-  checkType(propd2, dStr)
   let
-    propName = propd.strVal
+    propName = extractString(propd)
     (objOn, propObj) = obj.getPropAndObj(propName, all)
 
   if propObj == nil:
@@ -376,13 +372,9 @@ defBuiltin "setprop":
   let objd = args[0]
   let obj = extractObject(objd)
 
-  let
-    propd = args[1]
-    newVal = args[2]
+  let newVal = args[2]
 
-  checkType(propd, dStr)
-
-  let prop = propd.strVal
+  let prop = extractString(args[1])
   var oldProp = obj.getProp(prop, all = false)
 
   if oldProp == nil:
@@ -440,10 +432,8 @@ defBuiltin "setpropinfo":
   checkWrite(owner, propObj)
 
   # validate the property info
-  let propinfod = args[2]
-  checkType(propinfod, dList)
   let
-    propinfo = propinfod.listVal
+    propinfo = extractList(args[2])
     info = propInfoFromInput(propinfo)
 
   propObj.setInfo(info)
@@ -504,9 +494,9 @@ defBuiltin "setverbinfo":
   let (obj, verb) = getVerbOn(args[0], args[1])
   checkWrite(owner, verb)
 
-  let infod = args[2]
-  checkType(infod, dList)
-  let info = verbInfoFromInput(infod.listVal)
+  let verbInfo = extractList(args[2])
+
+  let info = verbInfoFromInput(verbInfo)
 
   verb.setInfo(info)
   world.persist(obj)
@@ -531,10 +521,9 @@ defBuiltin "setverbargs":
   let (obj, verb) = getVerbOn(args[0], args[1])
   checkWrite(owner, verb)
 
-  let argsInfod = args[2]
-  checkType(argsInfod, dList)
+  let verbArgs = extractList(args[2])
 
-  let argsInfo = verbArgsFromInput(argsInfod.listVal)
+  let argsInfo = verbArgsFromInput(verbArgs)
   verb.setArgs(argsInfo)
   world.persist(obj)
 
@@ -548,9 +537,7 @@ defBuiltin "addverb":
   let objd = args[0]
   let obj = extractObject(objd)
 
-  let namesd = args[1]
-  checkType(namesd, dStr)
-  let names = namesd.strVal
+  let names = extractString(args[1])
 
   var verb = newVerb(
     names = names,
@@ -603,11 +590,10 @@ defBuiltin "setverbcode":
   let (obj, verb) = getVerbOn(args[0], args[1])
   checkWrite(owner, verb)
 
-  let newCode = args[2]
-  checkType(newCode, dStr)
+  let newCode = extractString(args[2])
 
   try:
-    verb.setCode(newCode.strVal)
+    verb.setCode(newCode)
     world.persist(obj)
     return nilD.pack
   except MParseError:
@@ -755,9 +741,7 @@ defBuiltin "setlevel":
     runtimeError(E_ARGS, "setlevel takes 2 arguments")
 
   let obj = extractObject(args[0])
-  let newLeveld = args[1]
-  checkType(newLeveld, dInt)
-  let newLevel = newLeveld.intVal
+  let newLevel = extractInt(args[1])
 
   if not owner.isWizard():
     runtimeError(E_PERM, "only wizards can set level")
@@ -766,7 +750,7 @@ defBuiltin "setlevel":
     runtimeError(E_ARGS, "level must be 0..3")
 
   obj.level = newLevel
-  return newLeveld.pack
+  return newLevel.md.pack
 
 # (recycle obj)
 #
@@ -875,9 +859,7 @@ defBuiltin "query":
   if args.len != 1:
     runtimeError(E_ARGS, "query takes 1 argument")
 
-  let strd = args[0]
-  checkType(strd, dStr)
-  let str = strd.strVal
+  let str = extractString(args[0])
 
   return caller.query(str).map(md).md.pack
 
@@ -890,12 +872,11 @@ defBuiltin "istype":
 
   let
     what = args[0]
-    typed = args[1]
-  checkType(typed, dStr)
+    typev = extractString(args[1])
 
-  let (valid, typedVal) = strToType(typed.strVal)
+  let (valid, typedVal) = strToType(typev)
   if not valid:
-    runtimeError(E_ARGS, "'$1' is not a valid data type" % typed.strVal)
+    runtimeError(E_ARGS, "'$1' is not a valid data type" % typev)
 
   if what.isType(typedVal):
     return 1.md.pack
@@ -945,9 +926,7 @@ defBuiltin "verbcall":
     if args.len > 3:
       runtimeError(E_ARGS, "verbcall takes 2 or 3 arguments")
 
-    let cargsd = args[2]
-    checkType(cargsd, dList)
-    let cargs = cargsd.listVal
+    let cargs = extractList(args[2])
 
     owner.checkExecute(verb)
 
@@ -1091,9 +1070,8 @@ defBuiltin "cat":
   if typ == dList:
     var total: seq[MData] = @[]
     for argd in args:
-      let arg = argd
-      checkType(arg, dList)
-      total.add(arg.listVal)
+      let arg = extractList(argd)
+      total.add(arg)
     return total.md.pack
   else:
     var total = ""
@@ -1168,17 +1146,9 @@ defBuiltin "substr":
   if args.len != 3:
     runtimeError(E_ARGS, "substr takes 3 arguments")
 
-  let strd = args[0]
-  checkType(strd, dStr)
-  let str = strd.strVal
-
-  let startd = args[1]
-  checkType(startd, dInt)
-  let start = startd.intVal
-
-  let endd = args[2]
-  checkType(endd, dInt)
-  let endv = endd.intVal # end is a reserved word
+  let str = extractString(args[0])
+  let start = extractInt(args[1])
+  let endv = extractInt(args[2]) # end is a reserved word
 
   if start < 0:
     runtimeError(E_ARGS, "start index must be greater than 0")
@@ -1197,14 +1167,8 @@ defBuiltin "index":
     of 3: discard
     else: runtimeError(E_ARGS, "index takes 2 or 3 arguments")
 
-  let haystackd = args[0]
-  checkType(haystackd, dStr)
-  var haystack = haystackd.strVal
-
-  let needled = args[1]
-  checkType(needled, dStr)
-  var needle = needled.strVal
-
+  var haystack = extractString(args[0])
+  var needle = extractString(args[1])
   let ignoreCase = args[2]
   if ignoreCase.truthy:
     haystack = haystack.toLower()
@@ -1218,13 +1182,8 @@ defBuiltin "repeat":
   if args.len != 2:
     runtimeError(E_ARGS, "repeat takes 2 arguments")
 
-  let strd = args[0]
-  checkType(strd, dStr)
-  let str = strd.strVal
-
-  let timesd = args[1]
-  checkType(timesd, dInt)
-  let times = timesd.intVal
+  let str = extractString(args[0])
+  let times = extractInt(args[1])
 
   if times < 1:
     runtimeError(E_ARGS, "can't repeat a string less than one time")
@@ -1238,17 +1197,9 @@ defBuiltin "strsub":
   if args.len != 3:
     runtimeError(E_ARGS, "strsub takes 3 arguments")
 
-  let strd = args[0]
-  checkType(strd, dStr)
-  let str = strd.strVal
-
-  let fromd = args[1]
-  checkType(fromd, dStr)
-  let fromv = fromd.strVal
-
-  let tod = args[2]
-  checkType(tod, dStr)
-  let to = tod.strVal
+  let str = extractString(args[0])
+  let fromv = extractString(args[1])
+  let to = extractString(args[2])
 
   return str.replace(fromv, to).md.pack
 
@@ -1264,23 +1215,14 @@ defBuiltin "fit":
   if args.len notin 2..4:
     runtimeError(E_ARGS, "fit takes 2 to 4 arguments")
 
-  let strd = args[0]
-  checkType(strd, dStr)
-  var str = strd.strVal
-
-  let lend = args[1]
-  checkType(lend, dInt)
-  let length = lend.intVal
+  var str = extractString(args[0])
+  let length = extractInt(args[1])
 
   if args.len >= 3:
-    let fillerd = args[2]
-    checkType(fillerd, dStr)
-    filler = fillerd.strVal
+    filler = extractString(args[2])
 
   if args.len >= 4:
-    let traild = args[3]
-    checkType(traild, dStr)
-    trail = traild.strVal
+    trail = extractString(args[3])
 
   if trail.len > str.len:
     trail = ""
@@ -1289,7 +1231,7 @@ defBuiltin "fit":
   let traillen = trail.len
 
   if strlen == length:
-    return strd.pack
+    return str.md.pack
   elif strlen < length:
     while str.len <= length:
       str &= filler
@@ -1304,15 +1246,11 @@ defBuiltin "split":
   case args.len:
     of 1: discard
     of 2:
-      let sepd = args[1]
-      checkType(sepd, dStr)
-      sep = sepd.strVal
+      sep = extractString(args[1])
     else:
       runtimeError(E_ARGS, "split takes 2 arguments")
 
-  let strd = args[0]
-  checkType(strd, dStr)
-  let str = strd.strVal
+  let str = extractString(args[0])
 
   return str.split(sep).map(md).md.pack
 
@@ -1322,9 +1260,7 @@ defBuiltin "downcase":
   if args.len != 1:
     runtimeError(E_ARGS, "downcase takes 1 arguments")
 
-  let strd = args[0]
-  checkType(strd, dStr)
-  let str = strd.strVal
+  let str = extractString(args[0])
 
   return str.toLower().md.pack
 
@@ -1333,19 +1269,11 @@ defBuiltin "insert":
   if args.len != 3:
     runtimeError(E_ARGS, "insert takes 3 arguments")
 
-  let listd = args[0]
-  checkType(listd, dList)
-
-  let indexd = args[1]
-  checkType(indexd, dInt)
-
+  var list = extractList(args[0])
+  let index = extractInt(args[1])
   let el = args[2]
 
-  var list = listd.listVal
-
-  let
-    index = indexd.intVal
-    length = list.len
+  let length = list.len
 
   if index in 0..length:
     list.insert(el, index)
@@ -1359,17 +1287,10 @@ defBuiltin "delete":
   if args.len != 2:
     runtimeError(E_ARGS, "delete takes 2 arguments")
 
-  let listd = args[0]
-  checkType(listd, dList)
+  var list = extractList(args[0])
+  let index = extractInt(args[1])
 
-  let indexd = args[1]
-  checkType(indexd, dInt)
-
-  var list = listd.listVal
-
-  let
-    index = indexd.intVal
-    length = list.len
+  let length = list.len
 
   if index in -length..length-1:
     system.delete(list, index)
@@ -1385,19 +1306,11 @@ defBuiltin "set":
   if args.len != 3:
     runtimeError(E_ARGS, "set takes 3 arguments")
 
-  let listd = args[0]
-  checkType(listd, dList)
-
-  let indexd = args[1]
-  checkType(indexd, dInt)
-
+  var list = extractList(args[0])
+  let index = extractInt(args[1])
   let el = args[2]
 
-  var list = listd.listVal
-
-  let
-    index = indexd.intVal
-    length = list.len
+  let length = list.len
 
   if index in -length..length-1:
     if index < 0:
@@ -1420,17 +1333,9 @@ defBuiltin "get":
     else:
       runtimeError(E_ARGS, "get takes 2 or 3 arguments")
 
-  let listd = args[0]
-  checkType(listd, dList)
-
-  let indexd = args[1]
-  checkType(indexd, dInt)
-
-  var list = listd.listVal
-
-  let
-    index = indexd.intVal
-    length = list.len
+  let list = extractList(args[0])
+  let index = extractInt(args[1])
+  let length = list.len
 
   if index in -length..length-1:
     if index < 0:
@@ -1449,12 +1354,8 @@ defBuiltin "push":
   if args.len != 2:
     runtimeError(E_ARGS, "push takes 2 arguments")
 
-  let listd = args[0]
-  checkType(listd, dList)
-
+  var list = extractList(args[0])
   let el = args[1]
-
-  var list = listd.listVal
 
   list.add(el)
   return list.md.pack
@@ -1465,12 +1366,8 @@ defBuiltin "unshift":
   if args.len != 2:
     runtimeError(E_ARGS, "insert takes 2 arguments")
 
-  let listd = args[0]
-  checkType(listd, dList)
-
+  var list = extractList(args[0])
   let el = args[1]
-
-  var list = listd.listVal
 
   list.insert(el, 0)
   return list.md.pack
@@ -1481,12 +1378,9 @@ defBuiltin "setadd":
   if args.len != 2:
     runtimeError(E_ARGS, "setadd takes 2 arguments")
 
-  let listd = args[0]
-  checkType(listd, dList)
-
+  var list = extractList(args[0])
   let el = args[1]
 
-  var list = listd.listVal
   if el notin list:
     list.add(el)
 
@@ -1498,12 +1392,9 @@ defBuiltin "setremove":
   if args.len != 2:
     runtimeError(E_ARGS, "setremove takes 2 arguments")
 
-  let listd = args[0]
-  checkType(listd, dList)
-
+  var list = extractList(args[0])
   let el = args[1]
 
-  var list = listd.listVal
   for idx, val in list:
     if el == val:
       system.delete(list, idx)
@@ -1517,12 +1408,9 @@ defBuiltin "in":
   if args.len != 2:
     runtimeError(E_ARGS, "in takes 2 arguments")
 
-  let listd = args[0]
-  checkType(listd, dList)
-
+  let list = extractList(args[0])
   let el = args[1]
 
-  let list = listd.listVal
   return list.find(el).md.pack
 
 # (range start end)
@@ -1532,13 +1420,8 @@ defBuiltin "range":
   if args.len != 2:
     runtimeError(E_ARGS, "range takes 2 arguments")
 
-  let startd = args[0]
-  checkType(startd, dInt)
-  let start = startd.intVal
-
-  let endd = args[1]
-  checkType(endd, dInt)
-  let endv = endd.intVal
+  let start = extractInt(args[0])
+  let endv = extractInt(args[1])
 
   let numberOfTicks = endv - start + 1
   task.tickCount += numberOfTicks
@@ -1601,9 +1484,7 @@ defBuiltin "gensalt":
       let prop = world.getGlobal("default-salt-rounds")
       rounds = if not prop.isType(dInt): 5 else: prop.intVal
     of 1:
-      let roundsd = args[0]
-      checkType(roundsd, dInt)
-      rounds = roundsd.intVal
+      rounds = extractInt(args[0])
     else:
       runtimeError(E_ARGS, "gensalt takes 0 or 1 arguments")
 
@@ -1618,12 +1499,7 @@ defBuiltin "phash":
   if args.len != 2:
     runtimeError(E_ARGS, "phash takes 2 arguments")
 
-  let passd = args[0]
-  checkType(passd, dStr)
-  let pass = passd.strVal
-
-  let saltd = args[1]
-  checkType(saltd, dStr)
-  let salt = saltd.strVal
+  let pass = extractString(args[0])
+  let salt = extractString(args[1])
 
   return hash(pass, salt).md.pack
