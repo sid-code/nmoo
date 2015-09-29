@@ -964,7 +964,7 @@ type
   BinFloatOp = proc(x: float, y: float): float
   BinIntOp = proc(x: int, y: int): int
 
-template extractFloat(into: var float, num: MData) =
+template extractFloatInto(into: var float, num: MData) =
   if num.isType(dInt):
     into = num.intVal.float
   elif num.isType(dFloat):
@@ -985,8 +985,8 @@ template defArithmeticOperator(name: string, op: BinFloatOp, logical = false,
     var rhs, lhs: float
     template combine(lhsd: MData, rhsd: MData): MData =
 
-      lhs.extractFloat(lhsd)
-      rhs.extractFloat(rhsd)
+      lhs.extractFloatInto(lhsd)
+      rhs.extractFloatInto(rhsd)
 
       if lhsd.isType(dInt) and rhsd.isType(dInt):
         op(lhs, rhs).int.md
