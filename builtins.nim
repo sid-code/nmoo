@@ -1032,6 +1032,13 @@ defArithmeticOperator("<=", wrappedLTE)
 defArithmeticOperator(">", wrappedGT)
 defArithmeticOperator(">=", wrappedGTE)
 
+defBuiltin "not":
+  if args.len != 1:
+    runtimeError(E_ARGS, "not takes 1 argument")
+
+  let what = args[0]
+  return (not what.truthy).int.md.pack
+
 # (= a b)
 defBuiltin "=":
   if args.len != 2:
