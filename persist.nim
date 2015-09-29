@@ -313,7 +313,6 @@ proc persist*(world: World) =
   for task in world.tasks:
     world.persist(task)
 
-  removeDir(dir)
   copyDir(dir, oldDir)
   removeDir(dir)
   world.name = oldName
