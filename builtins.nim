@@ -1264,6 +1264,29 @@ defBuiltin "downcase":
 
   return str.toLower().md.pack
 
+# (ord char)
+# returns the ascii code of char or the char at index of string
+defBuiltin "ord":
+  if args.len != 1:
+    runtimeError(E_ARGS, "ord takes 1 argument")
+
+  let str = extractString(args[0])
+  if str.len == 0:
+    runtimeError(E_ARGS, "ord given an empty string")
+
+  let ch = str[0]
+  return ch.ord.md.pack
+
+# (chr int)
+# returns the ascii character of int % 256
+# TODO: restrict this to printable (and some more?) characters
+defBuiltin "chr":
+  if args.len != 1:
+    runtimeError(E_ARGS, "chr takes 1 argument")
+
+  let num = extractInt(args[0])
+  return ($num.chr).md.pack
+
 # (insert list index new-el)
 defBuiltin "insert":
   if args.len != 3:
