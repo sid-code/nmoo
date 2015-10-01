@@ -1,7 +1,7 @@
 # Here are all of the builtin functions that verbs can call
 
 import types, objects, verbs, scripting, persist, compile, tasks, querying
-import strutils, tables, sequtils
+import strutils, tables, sequtils, math
 
 # for hashing builtins
 import bcrypt
@@ -1503,3 +1503,23 @@ defBuiltin "phash":
   let salt = extractString(args[1])
 
   return hash(pass, salt).md.pack
+
+randomize()
+
+# (random [min] max)
+# generates a random number from min..max-1
+defBuiltin "random":
+  var args = args
+  var nmin, nmax: int
+
+  case args.len:
+    of 1:
+      nmin = 0
+      nmax = extractInt(args[0])
+    of 2:
+      nmin = extractInt(args[0])
+      nmax = extractInt(args[1])
+    else:
+      runtimeError(E_ARGS, "random takes 2 arguments")
+
+  return (random(nmax - nmin) + nmin).md.pack
