@@ -204,11 +204,11 @@ template propInfoFromInput(info: seq[MData]): PropInfo =
   let ownero = extractObject(ownerd)
   res.owner = ownero
 
-  let perms = extractString(args[1])
+  let perms = extractString(info[1])
   res.perms = perms
 
   if info.len == 3:
-    let newName = extractString(args[2])
+    let newName = extractString(info[2])
     res.newName = newName
 
   res
@@ -223,11 +223,11 @@ template verbInfoFromInput(info: seq[MData]): VerbInfo =
   let ownero = extractObject(ownerd)
   res.owner = ownero
 
-  let perms = extractString(args[1])
+  let perms = extractString(info[1])
   res.perms = perms
 
   if info.len == 3:
-    let newName = extractString(args[2])
+    let newName = extractString(info[2])
     res.newName = newName
 
   res
