@@ -24,7 +24,7 @@ var clients {.threadvar.}: seq[Client]
 
 proc removeClient(client: Client) =
   let index = clients.find(client)
-  if index > 0:
+  if index >= 0:
     system.delete(clients, index)
 
 proc findClient(player: MObject): Client =
