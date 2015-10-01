@@ -189,6 +189,12 @@ proc getVerb*(obj: MObject, name: string, all = true): MVerb =
 
   return nil
 
+proc getVerb*(obj: MObject, index: int): MVerb =
+  if index in 0..obj.verbs.len-1:
+    obj.verbs[index]
+  else:
+    nil
+
 # Code duplication, I know, but I'm lazy
 proc getVerbAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, v: MVerb] =
   for v in obj.verbs:

@@ -2,6 +2,7 @@
 var editor = CodeMirror(document.body, {
   keyMap: "vim",
   mode: "scheme",
+  matchBrackets: true,
   value: <<<CODE>>>
 });
 

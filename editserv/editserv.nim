@@ -7,6 +7,7 @@ const
   cmSource = "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/codemirror.min.js"
   cmCSS = "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/codemirror.css"
   cmScheme = "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/mode/scheme/scheme.min.js"
+  cmBrackets = "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/addon/edit/matchbrackets.min.js"
   cmVim = "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/keymap/vim.min.js"
   cmClient = staticRead("editserv/client.js")
   templ = """
@@ -17,10 +18,11 @@ const
   <script src="$#"></script>
   <script src="$#"></script>
   <script src="$#"></script>
+  <script src="$#"></script>
   <script>$#</script>
   <link rel="stylesheet" href="$#" />
 </html>
-""".format(cmSource, cmScheme, cmVim, cmClient, cmCSS)
+""".format(cmSource, cmScheme, cmBrackets, cmVim, cmClient, cmCSS)
 
 type
   EditServer = ref object
@@ -63,25 +65,30 @@ proc serve*(es: EditServer, port: Port, address = ""): Future[void] {.async.} =
               await req.respond(Http500, "Object didn't exist.")
             else:
               let vnamed = verbToEdit[1]
+              var verb: MVerb
               if isType(vnamed, dStr):
                 let vname = vnamed.strVal
-                let verb = obj.getVerb(vname)
-                if isNil(verb):
-                  await req.respond(Http500, "Verb not found.")
-                else:
-                  if req.reqMethod == "get":
-                    let data = templ.replace("<<<CODE>>>", escape(verb.code))
-                    await req.respond(Http200, data)
-                  elif req.reqMethod == "post":
-                    let newCode = req.body
-                    let (success, msg) = verb.safeSetCode(newCode)
-                    if success:
-                      await req.respond(Http200, msg)
-                      discard editor.delProp(editor.getProp(propName))
-                    else:
-                      await req.respond(Http500, msg)
+                verb = obj.getVerb(vname)
+              elif vnamed.isType(dInt):
+                let vindex = vnamed.intVal
+                verb = obj.getVerb(vindex)
               else:
-                await req.respond(Http500, "Didn't get a string.")
+                await req.respond(Http500, "Invalid verb indexing.")
+
+              if isNil(verb):
+                await req.respond(Http500, "Verb not found.")
+              else:
+                if req.reqMethod == "get":
+                  let data = templ.replace("<<<CODE>>>", escape(verb.code))
+                  await req.respond(Http200, data)
+                elif req.reqMethod == "post":
+                  let newCode = req.body
+                  let (success, msg) = verb.safeSetCode(newCode)
+                  if success:
+                    await req.respond(Http200, msg)
+                    discard editor.delProp(editor.getProp(propName))
+                  else:
+                    await req.respond(Http500, msg)
           else:
             await req.respond(Http500, "Didn't get an object.")
         else:
