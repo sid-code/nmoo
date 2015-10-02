@@ -718,6 +718,7 @@ defBuiltin "create":
   # TODO: some way to keep track of an object's owner objects
 
   world.persist(newObj)
+  world.persist(parent)
 
   return newObj.md.pack
 
@@ -833,6 +834,8 @@ defBuiltin "setparent":
     runtimeError(E_ARGS, "setparent takes 2 arguments")
 
   var obj = extractObject(args[0])
+  let oldParent = obj.parent
+
   let newParent = extractObject(args[1])
 
   var conductor = newParent
@@ -849,7 +852,9 @@ defBuiltin "setparent":
       runtimeError(E_RECMOVE, "parenting cannot create cycles of length greater than 1!")
 
   obj.changeParent(newParent)
+  world.persist(oldParent)
   world.persist(obj)
+  world.persist(newParent)
 
   return newParent.md.pack
 
