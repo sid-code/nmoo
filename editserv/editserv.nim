@@ -15,6 +15,11 @@ const
   <body>
     <form onsubmit="this."
   </body>
+  <style type="text/css">
+    .CodeMirror {
+      height: auto;
+    }
+  </style>
   <script src="$#"></script>
   <script src="$#"></script>
   <script src="$#"></script>

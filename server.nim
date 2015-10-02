@@ -213,7 +213,9 @@ info "Listening for connections (end with ^C)"
 
 try:
   while true:
-    world.tick()
-    poll(0)
+    # experimental!
+    for x in 1..5:
+      world.tick()
+    poll(1)
 finally:
   cleanUp()
