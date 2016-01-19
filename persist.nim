@@ -137,8 +137,12 @@ proc readData(stream: File): MData =
 
   return res[0]
 
-proc readObjectID(world: World, stream: File, default: MObject = world.verbObj):
+proc readObjectID(world: World, stream: File, default: MObject = nil):
                   MObject =
+  var default = default
+  if isNil(default):
+    default = world.verbObj
+
   let id = readNum(stream)
   if id == -1:
     return world.verbObj
