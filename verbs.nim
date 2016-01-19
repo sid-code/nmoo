@@ -2,7 +2,7 @@
 # not just verbs
 
 import types, objects, querying, scripting, compile
-import strutils, tables, pegs
+import sequtils, strutils, tables, pegs
 
 type
 
