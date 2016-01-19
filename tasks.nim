@@ -16,7 +16,12 @@ proc newVSymTable: VSymTable = newTable[int, MData]()
 proc combine(cst: CSymTable, vst: VSymTable): SymbolTable =
   result = newSymbolTable()
   for key, val in cst:
-    result[key] = vst[val]
+    try:
+      result[key] = vst[val]
+    except:
+      discard
+      # TODO: figure out what is going on here.
+      # It seems as if vst is missing values.
 
 proc curFrame(task: Task): Frame =
   task.frames[task.frames.len - 1]
