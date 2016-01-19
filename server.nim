@@ -75,6 +75,10 @@ proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: stri
     of trTooLong:
       world.verbObj.send("The task for #0:handle-new-connection ran for too long!")
 
+proc fixUp(line: string): string =
+  # TODO
+  return line
+
 proc processClient(client: Client, address: string) {.async.} =
 
   var (player, msg) = determinePlayer(world, address)
@@ -105,7 +109,7 @@ proc processClient(client: Client, address: string) {.async.} =
       removeClient(client)
       break
 
-    line = line.strip()
+    line = line.strip().fixUp()
     if line.len == 0:
       continue
 
