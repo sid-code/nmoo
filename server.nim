@@ -3,14 +3,8 @@ import types, objects, verbs, builtins, persist, tasks
 import asyncnet, asyncdispatch, strutils, net
 import logging
 
-var clog = newConsoleLogger()
-addHandler(clog)
-
-info "Loading world... "
-let world = loadWorld("min")
-
-world.verbObj.output = proc(obj: MObject, msg: string) =
-  info "#0: " & msg
+var world: World = nil
+var clog: ConsoleLogger
 
 type
   Client = ref object
@@ -164,7 +158,8 @@ proc getHostAndPort: tuple[host: string, port: Port] =
   else:
     warn "Server doesn't specify #0.port, using default port $#" % $defaultPort
 
-let (host, port) = getHostAndPort()
+var host: string
+var port: Port
 
 proc serve {.async.} =
   clients = @[]
@@ -197,8 +192,18 @@ proc handler() {.noconv.} =
   quit 0
 
 proc main =
+  clog = newConsoleLogger()
+  addHandler(clog)
+
+  info "Loading world... "
+  world = loadWorld("min")
+
+  world.verbObj.output = proc(obj: MObject, msg: string) =
+    info "#0: " & msg
 
   setControlCHook(handler)
+
+  (host, port) = getHostAndPort()
 
   info "Starting server:  host=$1   port=$2" % [host, $port]
   asyncCheck serve()
