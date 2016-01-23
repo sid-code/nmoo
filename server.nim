@@ -1,5 +1,5 @@
 import types, objects, verbs, builtins, persist, tasks
-import editserv/editserv
+# import editserv/editserv
 import asyncnet, asyncdispatch, strutils, net
 import logging
 
@@ -201,17 +201,17 @@ setControlCHook(handler)
 info "Starting server:  host=$1   port=$2" % [host, $port]
 asyncCheck serve()
 
-let editord = world.getGlobal("editor")
-if editord.isType(dObj):
-  let editor = world.dataToObj(editord)
-  if not isNil(editor):
-    let eportd = editor.getPropVal("port")
-    let eport = if eportd.isType(dInt): Port(eportd.intVal) else: Port(port.int + 1)
-
-    let eserv = newEditServer(editor)
-
-    info "Starting edit server:  host=$1   port=$2" % [host, $eport]
-    asyncCheck eserv.serve(eport, host)
+# let editord = world.getGlobal("editor")
+# if editord.isType(dObj):
+#   let editor = world.dataToObj(editord)
+#   if not isNil(editor):
+#     let eportd = editor.getPropVal("port")
+#     let eport = if eportd.isType(dInt): Port(eportd.intVal) else: Port(port.int + 1)
+#
+#     let eserv = newEditServer(editor)
+#
+#     info "Starting edit server:  host=$1   port=$2" % [host, $eport]
+#     asyncCheck eserv.serve(eport, host)
 
 info "Listening for connections (end with ^C)"
 
