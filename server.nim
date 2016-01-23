@@ -196,11 +196,28 @@ proc handler() {.noconv.} =
   info "Exit"
   quit 0
 
-setControlCHook(handler)
+proc main =
 
-info "Starting server:  host=$1   port=$2" % [host, $port]
-asyncCheck serve()
+  setControlCHook(handler)
 
+  info "Starting server:  host=$1   port=$2" % [host, $port]
+  asyncCheck serve()
+
+  info "Listening for connections (end with ^C)"
+
+  try:
+    while true:
+      # experimental!
+      for x in 1..5:
+        world.tick()
+      poll(1)
+  finally:
+    cleanUp()
+
+main()
+
+## Old code for editserver
+#
 # let editord = world.getGlobal("editor")
 # if editord.isType(dObj):
 #   let editor = world.dataToObj(editord)
@@ -212,14 +229,3 @@ asyncCheck serve()
 #
 #     info "Starting edit server:  host=$1   port=$2" % [host, $eport]
 #     asyncCheck eserv.serve(eport, host)
-
-info "Listening for connections (end with ^C)"
-
-try:
-  while true:
-    # experimental!
-    for x in 1..5:
-      world.tick()
-    poll(1)
-finally:
-  cleanUp()
