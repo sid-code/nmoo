@@ -64,7 +64,8 @@ proc flushOut(client: Client) =
 
 proc flushOutAll =
   for client in clients:
-    client.flush()
+    client.flushOut()
+
 
 proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: string] =
   result.o = nil
