@@ -371,7 +371,8 @@ proc addCoreGlobals(st: SymbolTable): SymbolTable =
   result["nil"] = nilD
 
 proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObject,
-           caller: MObject, globals = newSymbolTable(), tickQuota, callback: int): Task =
+           caller: MObject, globals = newSymbolTable(), tickQuota: int, taskType: TaskType,
+           callback: int): Task =
   let st = newVSymTable()
   let (entry, code) = compiled
 
@@ -403,6 +404,7 @@ proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObje
     builtinToCall: "".mds,
     builtinArgs: @[],
 
+    taskType: taskType,
     callback: callback
 
   )

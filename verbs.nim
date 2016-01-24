@@ -247,13 +247,13 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
         yield (o, v)
 
 proc call(verb: MVerb, world: World, holder, caller: MObject,
-          symtable: SymbolTable, callback = -1): Task =
+          symtable: SymbolTable, taskType = ttFunction, callback = -1): Task =
   let name = "$#:$#" % [holder.toObjStr(), verb.names]
-  return world.addTask(name, verb.owner, caller, symtable, verb.compiled, callback)
+  return world.addTask(name, verb.owner, caller, symtable, verb.compiled, taskType, callback)
 
 proc verbCallRaw*(self: MObject, verb: MVerb, caller: MObject,
                   args: seq[MData], symtable: SymbolTable = newSymbolTable(),
-                  holder: MObject = nil, callback = -1): Task =
+                  holder: MObject = nil, taskType = ttFunction, callback = -1): Task =
   var
     world = caller.getWorld()
     symtable = symtable
@@ -268,15 +268,15 @@ proc verbCallRaw*(self: MObject, verb: MVerb, caller: MObject,
   symtable["holder"] = holder.md
   symtable["verb"] = verb.names.md
 
-  return verb.call(world, holder, caller, symtable, callback)
+  return verb.call(world, holder, caller, symtable, taskType, callback)
 
 proc verbCall*(owner: MObject, name: string, caller: MObject,
                args: seq[MData], symtable = newSymbolTable(),
-               callback = -1): Task =
+               taskType = ttFunction, callback = -1): Task =
 
   for v in matchingVerbs(owner, name):
     if caller.canExecute(v):
-      return owner.verbCallRaw(v, caller, args, symtable = symtable, callback = callback)
+      return owner.verbCallRaw(v, caller, args, symtable = symtable, taskType = taskType, callback = callback)
   return nil
 
 proc setCode*(verb: MVerb, newCode: string) =
@@ -289,6 +289,7 @@ proc preprocess(command: string): string =
   return command
 
 proc handleCommand*(obj: MObject, command: string): Task =
+  let originalCommand = command
   let command = preprocess(command)
 
   let
@@ -374,9 +375,15 @@ proc handleCommand*(obj: MObject, command: string): Task =
           if ioString.len > 0: continue
 
       symtable["holder"] = o.md
-      return v.call(world, holder = o, caller = obj, symtable = symtable)
+      return v.call(world, holder = o, caller = obj, symtable = symtable, taskType = ttInput)
 
-  obj.send("Sorry, I couldn't understand that.")
+  let locationd = obj.getPropVal("location")
+  if not locationd.isType(dObj):
+    return nil
+
+  let location = world.dataToObj(locationd)
+  discard location.verbCall("huh", obj, @[originalCommand.md], taskType = ttInput)
+
   return nil
 
 # Return MObject because the goal of these commands is to determine the
@@ -404,7 +411,7 @@ proc handleLoginCommand*(obj: MObject, command: string): MObject =
   symtable["self"] = verbObj.md
 
   let lcTask = verbObj.verbCall("handle-login-command", obj, args,
-                                symtable = symtable)
+                                symtable = symtable, taskType = ttInput)
 
   if isNil(lcTask):
     obj.send("Failed to run your login command; server is set up incorrectly.")

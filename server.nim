@@ -7,10 +7,11 @@ var world: World = nil
 var clog: ConsoleLogger
 
 type
-  Client = ref object
-    world: World
-    player: MObject
-    sock: AsyncSocket
+  Client* = ref object
+    world*: World
+    player*: MObject
+    sock*: AsyncSocket
+    outputQueue*: seq[string]
 
 proc `==`(c1, c2: Client): bool = c1.player == c2.player
 
@@ -21,7 +22,7 @@ proc removeClient(client: Client) =
   if index >= 0:
     system.delete(clients, index)
 
-proc findClient(player: MObject): Client =
+proc findClient*(player: MObject): Client =
   for client in clients:
     if client.player == player:
       return client
@@ -45,6 +46,25 @@ proc send(client: Client, msg: string) {.async.} =
 
 proc recvLine(client: Client): Future[string] {.async.} =
   return await client.sock.recvLine()
+
+proc queueOut(client: Client, msg: string) =
+  client.outputQueue.insert(msg, 0)
+
+proc unqueueOut(client: Client): bool =
+  if client.outputQueue.len == 0:
+    return false
+
+  let last = client.outputQueue.pop()
+  discard client.send(last)
+  return true
+
+proc flushOut(client: Client) =
+  while client.unqueueOut():
+    discard
+
+proc flushOutAll =
+  for client in clients:
+    client.flush()
 
 proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: string] =
   result.o = nil
@@ -87,7 +107,7 @@ proc processClient(client: Client, address: string) {.async.} =
 
   await client.send("Welcome to the server!\c\L")
   proc ssend(obj: MObject, msg: string) =
-    discard client.send(msg & "\c\L")
+    client.queueOut(msg & "\c\L")
 
   client.player.output = ssend
 
@@ -171,7 +191,7 @@ proc serve {.async.} =
 
   while true:
     let (address, socket) = await server.acceptAddr()
-    let client = Client( sock: socket, player: nil )
+    let client = Client( sock: socket, player: nil, outputQueue: @[] )
 
     asyncCheck processClient(client, address)
 
@@ -214,7 +234,9 @@ proc main =
     while true:
       # experimental!
       for x in 1..5:
-        world.tick()
+        if world.tick():
+          # This means an input task finished
+          flushOutAll()
       poll(1)
   finally:
     cleanUp()

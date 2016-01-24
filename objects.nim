@@ -11,7 +11,8 @@ proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]
 proc getPropVal*(obj: MObject, name: string, all = true): MData
 proc setProp*(obj: MObject, name: string, newVal: MData): MProperty
 proc addTask*(world: World, name: string, owner, caller: MObject,
-              symtable: SymbolTable, code: CpOutput, callback = -1): Task
+              symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
+              callback = -1): Task
 proc run*(task: Task, limit: int = 20000): TaskResult
 
 ## Permissions handling
@@ -321,7 +322,10 @@ proc createChild*(parent: MObject): MObject =
 
 import tasks
 
-proc tick*(world: World) =
+# This proc is called by the server. The return value tells the server
+# whether to flush all output.  This is done when an input tasks finishes.
+proc tick*(world: World): bool =
+  result = false
   for idx, task in world.tasks:
     try:
       task.step()
@@ -329,6 +333,7 @@ proc tick*(world: World) =
         if defined(showTicks):
           echo "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
         system.delete(world.tasks, idx)
+        result = task.taskType != ttSystem
     except:
       let exception = getCurrentException()
       task.done = true
@@ -339,9 +344,11 @@ proc tick*(world: World) =
       task.caller.send("Here is what it says: " & exception.msg)
       task.caller.send("This error is due to a server bug.")
       # raise exception
+      result = true # for now, just send true so that the server flushes all output
 
 proc addTask*(world: World, name: string, owner, caller: MObject,
-              symtable: SymbolTable, code: CpOutput, callback = -1): Task =
+              symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
+              callback = -1): Task =
   let tickQuotad = world.getGlobal("tick-quota")
   let tickQuota = if tickQuotad.isType(dInt): tickQuotad.intVal else: 20000
 
@@ -354,6 +361,7 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
     caller = caller,
     globals = symtable,
     tickQuota = tickQuota,
+    taskType = taskType,
     callback = callback)
   world.taskIDCounter += 1
 

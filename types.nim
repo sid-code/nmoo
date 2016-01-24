@@ -163,6 +163,9 @@ type
     calledFrom*: int
     tries*:      seq[int]
 
+  TaskType* = enum
+    ttFunction, ttInput, ttSystem
+
   Task* = ref object
     id*: int
     name*: string
@@ -190,6 +193,7 @@ type
     builtinToCall*: MData
     builtinArgs*: seq[MData]
 
+    taskType*: TaskType
     callback*: int
 
   TaskResultType* = enum trFinish, trSuspend, trError, trTooLong
