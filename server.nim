@@ -233,7 +233,7 @@ proc main =
   try:
     while true:
       # experimental!
-      for x in 1..5:
+      for x in 1..100:
         if world.tick():
           # This means an input task finished
           flushOutAll()
