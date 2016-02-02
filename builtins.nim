@@ -1,6 +1,6 @@
 # Here are all of the builtin functions that verbs can call
 
-import types, objects, verbs, scripting, persist, compile, tasks, querying
+import types, objects, verbs, scripting, persist, compile, tasks, querying, server
 import strutils, tables, sequtils, math
 
 # for hashing builtins
@@ -143,6 +143,34 @@ defBuiltin "eval":
   except MCompileError:
     let msg = getCurrentExceptionMsg()
     runtimeError(E_PARSE, "compile error: $1" % msg)
+
+# (read [player])
+defBuiltin "read":
+  if phase == 0:
+    var who: MObject
+    case args.len:
+      of 0:
+        who = caller
+      of 1:
+        who = extractObject(args[0])
+      else:
+        runtimeError(E_ARGS, "read takes 0 or 1 arguments")
+
+    if not caller.isWizard() and who != caller:
+      runtimeError(E_PERM, "you don't have permission to read from that connection")
+
+    let client = findClient(who)
+    if isNil(client):
+      runtimeError(E_ARGS, who.toObjStr() & " has not been connected to!")
+
+    task.askForInput(client)
+    return 1.pack
+  elif phase == 1:
+    # sanity check
+    if args.len != 1:
+      runtimeError(E_ARGS, "read failed")
+
+    return args[0].pack
 
 defBuiltin "err":
   if args.len != 2:
