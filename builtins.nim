@@ -916,6 +916,21 @@ defBuiltin "istype":
   else:
     return 0.md.pack
 
+# (valid obj)
+# checks if an object is valid, e.g. it exists
+defBuiltin "valid":
+  if args.len != 1:
+    runtimeError(E_ARGS, "valid takes one argument")
+
+  let objd = args[0]
+  checkType(objd, dObj)
+  let obj = world.dataToObj(objd)
+  if obj == nil:
+    return 0.md.pack
+  else:
+    return 1.md.pack
+
+
 # (call lambda-or-builtin args)
 # forces evaluation (is this a good way to do it?)
 defBuiltin "call":
