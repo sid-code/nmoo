@@ -382,7 +382,8 @@ proc handleCommand*(obj: MObject, command: string): Task =
     return nil
 
   let location = world.dataToObj(locationd)
-  discard location.verbCall("huh", obj, @[originalCommand.md], taskType = ttInput)
+  if location.verbCall("huh", obj, @[originalCommand.md], taskType = ttInput) == nil:
+    obj.send("Huh?")
 
   return nil
 
