@@ -61,7 +61,11 @@ proc lex*(code: string): seq[Token] =
       elif c == '\\' and not skipNext:
         skipNext = true
       else:
-        curWord &= $c
+        if skipNext and c == 'n':
+          curWord &= "\n"
+        else:
+          curWord &= $c
+
         if skipNext: skipNext = false
 
     else:
