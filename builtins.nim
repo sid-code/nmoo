@@ -136,7 +136,7 @@ defBuiltin "eval":
 
   try:
     let instructions = compileCode(evalStr)
-    discard world.addTask("eval", owner, caller, symtable, instructions)
+    discard world.addTask("eval", owner, caller, symtable, instructions, taskType = ttInput)
   except MParseError:
     let msg = getCurrentExceptionMsg()
     runtimeError(E_PARSE, "code failed to parse: $1" % msg)
