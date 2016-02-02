@@ -52,7 +52,7 @@ proc toObjStr*(obj: MObject): string =
     name = obj.getPropVal("name")
     objdstr = $obj.md
   if name.isType(dStr) and name.strVal.len > 0:
-    return "$1  ($2)" % [objdstr, name.strVal]
+    return "$2 ($1)" % [objdstr, name.strVal]
   else:
     return "$1" % objdstr
 
