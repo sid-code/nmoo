@@ -206,7 +206,7 @@ proc processClient(client: Client, address: string) {.async.} =
 
         client.player = newPlayer
         newPlayer.output = ssend
-        let greetTask = newPlayer.verbCall("greet", newPlayer, @[])
+        let greetTask = newPlayer.verbCall("greet", newPlayer, @[], taskType = ttInput)
         if not isNil(greetTask): discard greetTask.run()
 
 var server: AsyncSocket
