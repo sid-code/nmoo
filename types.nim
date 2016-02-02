@@ -165,7 +165,7 @@ type
     tries*:      seq[int]
 
   TaskType* = enum
-    ttFunction, ttInput, ttSystem
+    ttFunction, ttInput
 
   Task* = ref object
     id*: int
