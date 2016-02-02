@@ -1,6 +1,6 @@
 # This file has methods for manipulating objects and their properties
 
-import types, sequtils, strutils, tables
+import types, server, sequtils, strutils, tables
 # NOTE: verbs is imported later on!
 
 proc getProp*(obj: MObject, name: string, all = true): MProperty
@@ -324,8 +324,7 @@ import tasks
 
 # This proc is called by the server. The return value tells the server
 # whether to flush all output.  This is done when an input tasks finishes.
-proc tick*(world: World): bool =
-  result = false
+proc tick*(world: World) =
   for idx, task in world.tasks:
     try:
       task.step()
@@ -333,7 +332,7 @@ proc tick*(world: World): bool =
         if defined(showTicks):
           echo "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
         system.delete(world.tasks, idx)
-        result = task.taskType != ttSystem
+        server.taskFinished(task)
     except:
       let exception = getCurrentException()
       task.done = true
@@ -344,7 +343,7 @@ proc tick*(world: World): bool =
       task.caller.send("Here is what it says: " & exception.msg)
       task.caller.send("This error is due to a server bug.")
       # raise exception
-      result = true # for now, just send true so that the server flushes all output
+      server.taskFinished(task)
 
 proc addTask*(world: World, name: string, owner, caller: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,

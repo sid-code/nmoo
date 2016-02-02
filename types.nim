@@ -3,6 +3,7 @@
 # everywhere.
 
 import strutils, tables
+from asyncnet import AsyncSocket
 
 type
 
@@ -206,6 +207,15 @@ type
 
   InstructionProc* = proc(task: Task, operand: MData)
   CpOutput* = tuple[entry: int, code: seq[Instruction]]
+
+  Client* = ref object
+    world*: World
+    player*: MObject
+    sock*: AsyncSocket
+    outputQueue*: seq[string]
+    inputQueue*: seq[string]
+    tasksWaitingForInput*: seq[Task]
+    inputTaskRunning*: bool
 
 const nilD* = MData(dtype: dNil, nilVal: 1)
 

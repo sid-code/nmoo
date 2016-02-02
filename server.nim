@@ -1,17 +1,15 @@
-import types, objects, verbs, builtins, persist, tasks
+import types
 # import editserv/editserv
 import asyncnet, asyncdispatch, strutils, net
 import logging
 
+proc taskFinished*(task: Task)
+proc findClient*(player: MObject): Client
+proc askForInput*(task: Task, client: Client)
+import objects, verbs, builtins, persist, tasks
+
 var world: World = nil
 var clog: ConsoleLogger
-
-type
-  Client* = ref object
-    world*: World
-    player*: MObject
-    sock*: AsyncSocket
-    outputQueue*: seq[string]
 
 proc `==`(c1, c2: Client): bool = c1.player == c2.player
 
@@ -47,6 +45,9 @@ proc send(client: Client, msg: string) {.async.} =
 proc recvLine(client: Client): Future[string] {.async.} =
   return await client.sock.recvLine()
 
+## I/O Queues
+#
+# TODO: add some kind of documentation here?
 proc queueOut(client: Client, msg: string) =
   client.outputQueue.insert(msg, 0)
 
@@ -66,6 +67,64 @@ proc flushOutAll =
   for client in clients:
     client.flushOut()
 
+proc queueIn(client: Client, msg: string) =
+  client.inputQueue.insert(msg, 0)
+
+# Forward declaration for the following proc
+proc supplyTaskWithInput(client: Client, input: string)
+
+proc unqueueIn(client: Client): bool =
+  if client.inputQueue.len == 0:
+    return false
+
+  let last = client.inputQueue.pop()
+  if client.tasksWaitingForInput.len > 0:
+    client.supplyTaskWithInput(last)
+  else:
+    let task = client.player.handleCommand(last)
+    if isNil(task):
+      client.flushOut()
+    else:
+      if task.taskType == ttInput:
+        client.inputTaskRunning = true
+
+
+
+  return true
+
+proc clearIn(client: Client) =
+  setLen(client.inputQueue, 0)
+
+proc clearInAll =
+  for client in clients:
+    client.clearIn()
+
+## stuff for the read builtin
+
+# to be called from the read builtin
+proc askForInput*(task: Task, client: Client) =
+  client.tasksWaitingForInput.add(task)
+  client.flushOut()
+  discard client.unqueueIn() # This may or may not succeed, but it doesn't really matter.
+
+proc supplyTaskWithInput(client: Client, input: string) =
+  echo "A task got input!"
+  let task = client.tasksWaitingForInput.pop()
+  task.spush(input.md)
+  task.resume()
+
+# Called whenever a task finishes. This is used to determine when
+# to flush queues/etc
+proc taskFinished*(task: Task) =
+  if task.taskType == ttInput:
+    let callerClient = findClient(task.caller)
+    if isNil(callerClient):
+      return
+
+    flushOutAll()
+
+    callerClient.inputTaskRunning = false
+    discard callerClient.unqueueIn()
 
 proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: string] =
   result.o = nil
@@ -129,7 +188,9 @@ proc processClient(client: Client, address: string) {.async.} =
       continue
 
     if connected:
-      discard client.player.handleCommand(line)
+      client.queueIn(line)
+      if not client.inputTaskRunning: # get it started!
+        discard client.unqueueIn()
     else:
       let newPlayer = client.player.handleLoginCommand(line)
       if not isNil(newPlayer):
@@ -192,7 +253,12 @@ proc serve {.async.} =
 
   while true:
     let (address, socket) = await server.acceptAddr()
-    let client = Client( sock: socket, player: nil, outputQueue: @[] )
+    let client = Client(
+      sock: socket,
+      player: nil,
+      outputQueue: @[],
+      inputQueue: @[],
+      tasksWaitingForInput: @[])
 
     asyncCheck processClient(client, address)
 
@@ -235,9 +301,7 @@ proc main =
     while true:
       # experimental!
       for x in 1..100:
-        if world.tick():
-          # This means an input task finished
-          flushOutAll()
+        world.tick()
       poll(1)
   finally:
     cleanUp()
