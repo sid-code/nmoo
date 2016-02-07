@@ -17,6 +17,9 @@ player.output = proc(obj: MObject, msg: string) =
 proc myEscape(s: string): string =
   s.replace("\"", "\\\"")
 
+proc stripNewLines(s: string): string =
+  s.replace("\n", "")
+
 while true:
   while world.numTasks() > 0:
     world.tick()
@@ -26,7 +29,7 @@ while true:
 
   if command.contains("<>"):
     discard os.execShellCmd("vim edit.tmp")
-    command = command.replace("<>", readFile("edit.tmp").myEscape())
+    command = command.replace("<>", readFile("edit.tmp").myEscape().stripNewLines())
 
   let match = command.match(re"vedit (.+?):(.*)")
 

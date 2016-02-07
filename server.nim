@@ -88,8 +88,6 @@ proc unqueueIn(client: Client): bool =
       if task.taskType == ttInput:
         client.inputTaskRunning = true
 
-
-
   return true
 
 proc clearIn(client: Client) =
@@ -108,7 +106,6 @@ proc askForInput*(task: Task, client: Client) =
   discard client.unqueueIn() # This may or may not succeed, but it doesn't really matter.
 
 proc supplyTaskWithInput(client: Client, input: string) =
-  echo "A task got input!"
   let task = client.tasksWaitingForInput.pop()
   task.spush(input.md)
   task.resume()
