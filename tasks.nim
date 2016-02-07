@@ -190,42 +190,87 @@ impl inMENV:
   task.spush(pos.md)
   task.spush(cst.combine(newST).toData())
 
+impl inMCONT:
+  var cont: Continuation
+  cont.pc = operand.intVal
+  cont.globals = task.globals
+  deepCopy(cont.stack, task.stack)
+  deepCopy(cont.frames, task.frames)
+
+  # push the continuation's ID onto the stack so that it can be accessed
+  let contID = task.continuations.len
+  task.spush(contID.md)
+  task.continuations.add(cont)
+
+proc callContinuation(task: Task, contID: int) =
+  if contID >= task.continuations.len:
+    task.doError(E_ARGS.md("continuation id: " & $contID & " does not exist."))
+    return
+
+  let res = task.spop()
+
+  let cont = task.continuations[contID]
+  task.pc = cont.pc
+  deepCopy(task.stack, cont.stack)
+  deepCopy(task.frames, cont.frames)
+
+  task.spush(res)
+
 impl inCALL:
   let what = task.spop()
   let numArgs = operand.intVal
   if what.isType(dList):
-    # It's a lambda call
-    try:
-      let lcall = what.listVal
-      let jmploc = lcall[0]
-      let env = lcall[1].intVal
-      let envData = lcall[2]
-      let origin = lcall[3].intVal
-      let bounds = lcall[4].listVal.map(proc (x: MData): string = x.symVal)
-      let expectedNumArgs = bounds.len
-      let expression = lcall[5]
+    # It's a lambda or continuation call
+    let lcall = what.listVal
+    if lcall.len == 2:
+      if lcall[0] == "cont".mds:
+        #try:
+          let contID = lcall[1].intVal
+          if numArgs != 1:
+            task.doError(E_ARGS.md("continuations only take 1 argument"))
 
-      if expectedNumArgs == numArgs:
-        if origin == task.id:
-          task.pushFrame(symtable = task.symtables[env])
-          task.pc = jmploc.intVal
-        else:
           let args = task.collect(numArgs)
-          var symtable = envData.toST()
-          for idx, name in bounds:
-            symtable[name] = args[idx]
-          task.foreignLambdaCall(symtable = symtable, expression = expression)
+          task.spush(args[0])
+          task.callContinuation(contID)
+        
+        #except:
+        #  task.doError(E_ARGS.md("invalid continuation (error)"))
       else:
-        task.doError(E_ARGS.md("lambda expected $1 args but got $2" %
-                               [$expectedNumArgs, $numArgs]))
-    except:
-      task.doError(E_ARGS.md("invalid lambda"))
+        task.doError(E_ARGS.md("invalid continuation format"))
+
+    elif lcall.len == 6:
+      try:
+        let jmploc = lcall[0]
+        let env = lcall[1].intVal
+        let envData = lcall[2]
+        let origin = lcall[3].intVal
+        let bounds = lcall[4].listVal.map(proc (x: MData): string = x.symVal)
+        let expectedNumArgs = bounds.len
+        let expression = lcall[5]
+
+        if expectedNumArgs == numArgs:
+          if origin == task.id:
+            task.pushFrame(symtable = task.symtables[env])
+            task.pc = jmploc.intVal
+          else:
+            let args = task.collect(numArgs)
+            var symtable = envData.toST()
+            for idx, name in bounds:
+              symtable[name] = args[idx]
+            task.foreignLambdaCall(symtable = symtable, expression = expression)
+        else:
+          task.doError(E_ARGS.md("lambda expected $1 args but got $2" %
+                                 [$expectedNumArgs, $numArgs]))
+      except:
+        task.doError(E_ARGS.md("invalid lambda"))
+    else:
+      task.doError(E_ARGS.md("can't call " & $lcall))
   elif what.isType(dSym):
     # It's a builtin call
     let args = task.collect(numArgs)
     task.builtinCall(what, args)
   else:
-    raise newException(Exception, "cannot call '$1'" % [$what])
+    task.doError(E_ARGS.md("cannot call '$1'" % [$what]))
 
 impl inRET:
   task.popFrame()
@@ -388,6 +433,7 @@ proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObje
     pc: entry,
 
     frames: @[],
+    continuations: @[],
 
     world: world,
     owner: owner,

@@ -200,7 +200,7 @@ proc render*(compiler: MCompiler): CpOutput =
 
   for idx, inst in code:
     let op = inst.operand
-    if inst.itype in {inJ0, inJN0, inJMP, inRETJ}:
+    if inst.itype in {inJ0, inJN0, inJMP, inRETJ, inMCONT}:
       if op.isType(dSym):
         let label = op.symVal
         let jumpLoc = labels[label]
@@ -467,3 +467,19 @@ defSpecial "if":
   if args.len != 3:
     compileError("if takes 3 arguments (condition, if-true, if-false)")
   compiler.codeGen(@["cond".mds, @[args[0], args[1]].md, @[args[2]].md].md)
+
+defSpecial "call-cc":
+  verifyArgs("call-cc", args, @[dNil])
+  # continuations will be of the form (cont <ID>)
+  let contLabel = compiler.makeSymbol()
+  compiler.real.add(ins(inMCONT, contLabel))
+  let index = compiler.symtable.defSymbol("__cont_index")
+  compiler.real.add(ins(inSTO, index.md))
+  compiler.real.add(ins(inPUSH, "cont".mds))
+  compiler.real.add(ins(inGET, index.md))
+  compiler.real.add(ins(inCLIST, 2.md))
+  compiler.real.add(ins(inCLIST, 1.md))
+
+  compiler.codeGen(args[0])
+  compiler.real.add(ins(inACALL))
+  compiler.real.add(ins(inLABEL, contLabel))

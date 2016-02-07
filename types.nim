@@ -136,6 +136,7 @@ type
     inRET, inRETJ
     inLPUSH, # strictly for labels - gets replaced by the renderer
     inGTID, # Push the task's ID onto the stack
+    inMCONT, inCCONT, # first-class continuations
     inSTO, inGET, inGGET, inCLIST,
     inPOPL, inPUSHL, inLEN, inSWAP, inSWAP3, inREV,
     inMENV, inGENV,
@@ -167,6 +168,13 @@ type
   TaskType* = enum
     ttFunction, ttInput
 
+  # First class continuations
+  Continuation* = object
+    pc*: int
+    stack*: seq[MData]
+    globals*: SymbolTable
+    frames*: seq[Frame]
+
   Task* = ref object
     id*: int
     name*: string
@@ -178,6 +186,7 @@ type
     pc*:        int                ## Program counter
 
     frames*:    seq[Frame]
+    continuations*: seq[Continuation]  ## For continuations
 
     world*:     World
     owner*:     MObject
