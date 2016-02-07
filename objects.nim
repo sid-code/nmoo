@@ -332,6 +332,8 @@ proc tick*(world: World) =
         if defined(showTicks):
           echo "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
         system.delete(world.tasks, idx)
+
+      if task.done or task.suspended:
         server.taskFinished(task)
     except:
       let exception = getCurrentException()
