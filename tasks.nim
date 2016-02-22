@@ -201,6 +201,19 @@ impl inMCONT:
   task.spush(contID.md)
   task.continuations.add(cont)
 
+proc nextInstruction(task: Task): Instruction =
+  var pc = task.pc
+  while true:
+    pc += 1
+    let inst = task.code[pc]
+    if inst.itype == inLABEL:
+      continue
+
+    if inst.itype == inJMP:
+      pc = inst.operand.intVal
+    else:
+      return inst
+
 proc callContinuation(task: Task, contID: int) =
   if contID >= task.continuations.len:
     task.doError(E_ARGS.md("continuation id: " & $contID & " does not exist."))
@@ -249,7 +262,12 @@ impl inCALL:
 
         if expectedNumArgs == numArgs:
           if origin == task.id:
-            task.pushFrame(symtable = task.symtables[env])
+            if task.nextInstruction().itype == inRET:
+              # we have a tail call!
+              # there's no need to push another stack frame
+              discard
+            else:
+              task.pushFrame(symtable = task.symtables[env])
             task.pc = jmploc.intVal
           else:
             let args = task.collect(numArgs)
