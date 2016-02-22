@@ -1,8 +1,8 @@
 import nake
 
 const
-  DefaultOptions = "--verbosity:0 --hint[XDeclaredButNotUsed]:off"
-  MainDeps =
+  defaultOptions = "--verbosity:0 --hint[XDeclaredButNotUsed]:off"
+  mainDeps =
     @[
       "types",
       "objects",
@@ -14,19 +14,21 @@ const
       "compile",
       "tasks"
     ]
-  Exes = {
-    "main": MainDeps,
-    "test": MainDeps,
-    "setupmin": MainDeps,
-    "server": MainDeps
+  exes = {
+    "main": mainDeps,
+    "test": mainDeps,
+    "setupmin": mainDeps,
+    "server": mainDeps
   }
+
+  outDir = "bin"
 
 var forceRefresh = false
 proc needsRefreshH(f1, f2: string): bool =
-  forceRefresh or f1.needsRefresh(f2)
+  forceRefresh or (outDir / f1).needsRefresh(f2)
 
 task defaultTask, "builds everything":
-  for info in Exes:
+  for info in exes:
     let (exe, deps) = info
     runTask(exe)
 
@@ -41,16 +43,16 @@ proc simpleBuild(name: string, deps: seq[string]) =
     refresh = refresh or name.needsRefreshH(sourceFile)
 
     if refresh:
-      if direShell(nimExe, DefaultOptions, "c", name):
+      if direShell(nimExe, defaultOptions, "--out:" & outDir / name, "c", name):
         echo "success building " & name
     else:
       echo name & " is up to date"
 
 task "clean", "removes executables":
-  for info in Exes:
+  for info in exes:
     let (exe, deps) = info
     echo "removing " & exe
-    removeFile(exe)
+    removeFile(outDir / exe)
 
   echo "removing nimcache"
   removeDir("nimcache")
@@ -66,7 +68,10 @@ task "setup", "sets up a minimal world":
   echo "done!"
   echo "use this world by running \"main\" (nake main && ./main)"
 
+task "serve", "builds and starts the server":
+  runTask("server")
+  direShell("./bin/server")
 
-for info in Exes:
+for info in exes:
   let (exe, deps) = info
   simpleBuild(exe, deps)

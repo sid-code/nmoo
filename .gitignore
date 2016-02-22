@@ -3,6 +3,7 @@
 !Makefile
 !LICENSE
 
+!bin
 
 .*.sw*
 edit.tmp
