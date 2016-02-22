@@ -2,8 +2,6 @@ import types, compile, scripting, tables, hashes, strutils, objects, sequtils
 ## VM (Task)
 
 # Some procs that builtins.nim needs
-proc suspend*(task: Task)
-proc resume*(task: Task)
 proc spush*(task: Task, what: MData) = task.stack.add(what)
 proc spop*(task: Task): MData = task.stack.pop()
 
@@ -59,7 +57,7 @@ proc doError(task: Task, error: MData) =
     return
 
   task.spush(error)
-  task.done = true
+  task.status = tsDone
   task.caller.send("Task $# failed due to error:" % [task.name])
   task.caller.send($error)
 
@@ -68,7 +66,8 @@ proc setCallPackage(task: Task, package: Package, builtin: MData, args: seq[MDat
   task.callPackage = package
   task.builtinToCall = builtin
   task.builtinArgs = args
-  task.suspend()
+  if task.status == tsRunning:
+    task.status = tsSuspended
 
 proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
   let builtinName = builtin.symVal
@@ -115,7 +114,7 @@ proc top*(task: Task): MData =
     return task.stack[size - 1]
 
 proc foreignLambdaCall(task: Task, symtable: SymbolTable, expression: MData) =
-  task.suspend
+  task.status = tsSuspended
   let instructions = compileCode(expression)
   discard task.world.addTask(
     name = task.name & "-lambda",
@@ -348,7 +347,7 @@ impl inETRY:
   discard task.curFrame.tries.pop()
 
 impl inHALT:
-  task.done = true
+  task.status = tsDone
 
 proc getTaskByID*(world: World, id: int): Task =
   for task in world.tasks:
@@ -364,7 +363,7 @@ proc finish(task: Task) =
     if cbTask != nil:
       let res = task.top()
       cbTask.tickCount += task.tickCount
-      cbTask.resume()
+      cbTask.status = tsRunning
       if res.isType(dErr):
         cbTask.doError(res)
       else:
@@ -376,9 +375,6 @@ proc finish(task: Task) =
 
       echo "Warning: callback for task '$#' didn't exist." % [task.name]
 
-proc suspend*(task: Task) = task.suspended = true
-proc resume*(task: Task) = task.suspended = false
-
 proc doCallPackage(task: Task) =
   let phase = task.callPackage.phase
   let sym = task.builtinToCall
@@ -389,7 +385,7 @@ proc doCallPackage(task: Task) =
   task.builtinCall(sym, args, phase = phase)
 
 proc step*(task: Task) =
-  if task.suspended or task.done: return
+  if task.status != tsRunning: return
 
   if task.hasCallPackage:
     task.doCallPackage()
@@ -403,7 +399,7 @@ proc step*(task: Task) =
     else:
       raise newException(Exception, "instruction '$1' not implemented" % [$itype])
 
-    if task.done:
+    if task.status == tsDone:
       task.finish()
 
     task.pc += 1
@@ -439,8 +435,7 @@ proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObje
     owner: owner,
     caller: caller,
 
-    done: false,
-    suspended: false,
+    status: tsRunning,
     restartTime: 0,
     tickCount: 0,
     tickQuota: tickQuota,

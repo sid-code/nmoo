@@ -326,18 +326,19 @@ import tasks
 # whether to flush all output.  This is done when an input tasks finishes.
 proc tick*(world: World) =
   for idx, task in world.tasks:
+    if task.status != tsRunning: continue
     try:
       task.step()
-      if task.done:
+      if task.status == tsDone:
         if defined(showTicks):
           echo "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
         system.delete(world.tasks, idx)
 
-      if task.done or task.suspended:
+      if task.status != tsRunning:
         server.taskFinished(task)
     except:
       let exception = getCurrentException()
-      task.done = true
+      task.status = tsDone
       system.delete(world.tasks, idx)
       echo exception.repr
       task.caller.send("There was an internal error while executing a task you called.")
@@ -374,31 +375,34 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
 proc run*(task: Task, limit: int = 20000): TaskResult =
   var limit = limit
   while limit > 0:
-    if task.suspended:
-      # This is a sticky case. Now we need to search for a task whose callback
-      # is this task, so that we can run that task to completion.
-      var found = false
-      for idx, otask in task.world.tasks:
-        if otask.callback == task.id:
-          let res = otask.run(limit)
-          if res.typ in {trError, trTooLong, trSuspend}: return res
-
-          system.delete(task.world.tasks, idx)
-
-          found = true
-          break
-
-      if not found:
+    case task.status:
+      of tsAwaitingInput:
         return TaskResult(typ: trSuspend)
-    if task.done:
-      let res = task.top()
-      if res.isType(dErr):
-        return TaskResult(typ: trError, err: res)
-      else:
-        return TaskResult(typ: trFinish, res: res)
+      of tsSuspended:
+        # This is a sticky case. Now we need to search for a task whose callback
+        # is this task, so that we can run that task to completion.
+        var found = false
+        for idx, otask in task.world.tasks:
+          if otask.callback == task.id:
+            let res = otask.run(limit)
+            if res.typ in {trError, trTooLong, trSuspend}: return res
 
-    task.step()
-    limit -= 1
+            system.delete(task.world.tasks, idx)
+
+            found = true
+            break
+
+        if not found:
+          return TaskResult(typ: trSuspend)
+      of tsDone:
+        let res = task.top()
+        if res.isType(dErr):
+          return TaskResult(typ: trError, err: res)
+        else:
+          return TaskResult(typ: trFinish, res: res)
+      of tsRunning:
+        task.step()
+        limit -= 1
 
   return TaskResult(typ: trTooLong)
 

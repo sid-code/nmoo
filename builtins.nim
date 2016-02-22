@@ -978,8 +978,8 @@ defBuiltin "verbcall":
 
     owner.checkExecute(verb)
 
-    task.suspend()
-    discard obj.verbCallRaw(verb, caller, cargs, symtable = symtable, callback = task.id)
+    task.status = tsSuspended
+    discard obj.verbCallRaw(verb, caller, cargs, symtable = symtable, taskType = task.taskType, callback = task.id)
     return 1.pack
   if phase == 1:
     let verbResult = args[^1]

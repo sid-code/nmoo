@@ -168,6 +168,9 @@ type
   TaskType* = enum
     ttFunction, ttInput
 
+  TaskStatus* = enum
+    tsRunning, tsAwaitingInput, tsSuspended, tsDone
+
   # First class continuations
   Continuation* = object
     pc*: int
@@ -192,8 +195,7 @@ type
     owner*:     MObject
     caller*:    MObject
 
-    done*: bool
-    suspended*: bool
+    status*: TaskStatus
     restartTime*: int
     tickCount*: int
     tickQuota*: int
