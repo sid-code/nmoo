@@ -3,7 +3,6 @@
 !Makefile
 !LICENSE
 
-!editserv
 
 .*.sw*
 edit.tmp
