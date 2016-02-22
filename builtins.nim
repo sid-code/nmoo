@@ -129,20 +129,25 @@ defBuiltin "do":
     return @[].md.pack
 
 defBuiltin "eval":
-  if args.len != 1:
-    runtimeError(E_ARGS, "eval takes 1 argument")
+  if phase == 0:
+    if args.len != 1:
+      runtimeError(E_ARGS, "eval takes 1 argument")
 
-  var evalStr = extractString(args[0])
+    var evalStr = extractString(args[0])
 
-  try:
-    let instructions = compileCode(evalStr)
-    discard world.addTask("eval", owner, caller, symtable, instructions, taskType = ttInput)
-  except MParseError:
-    let msg = getCurrentExceptionMsg()
-    runtimeError(E_PARSE, "code failed to parse: $1" % msg)
-  except MCompileError:
-    let msg = getCurrentExceptionMsg()
-    runtimeError(E_PARSE, "compile error: $1" % msg)
+    try:
+      let instructions = compileCode(evalStr)
+      discard world.addTask("eval", owner, caller, symtable, instructions,
+                            taskType = task.taskType, callback = task.id)
+      return 1.pack
+    except MParseError:
+      let msg = getCurrentExceptionMsg()
+      runtimeError(E_PARSE, "code failed to parse: $1" % msg)
+    except MCompileError:
+      let msg = getCurrentExceptionMsg()
+      runtimeError(E_PARSE, "compile error: $1" % msg)
+  if phase == 1:
+    return args[1].pack
 
 # (read [player])
 defBuiltin "read":

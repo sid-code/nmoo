@@ -70,6 +70,9 @@ proc flushOutAll =
 proc queueIn(client: Client, msg: string) =
   client.inputQueue.insert(msg, 0)
 
+proc setInputTaskStatus(client: Client, status: bool) =
+  client.inputTaskRunning = status
+
 # Forward declaration for the following proc
 proc supplyTaskWithInput(client: Client, input: string)
 
@@ -86,7 +89,7 @@ proc unqueueIn(client: Client): bool =
       client.flushOut()
     else:
       if task.taskType == ttInput:
-        client.inputTaskRunning = true
+        client.setInputTaskStatus(true)
 
   return true
 
@@ -101,14 +104,15 @@ proc clearInAll =
 
 # to be called from the read builtin
 proc askForInput*(task: Task, client: Client) =
+  task.status = tsAwaitingInput
   client.tasksWaitingForInput.add(task)
   client.flushOut()
-  discard client.unqueueIn() # This may or may not succeed, but it doesn't really matter.
 
 proc supplyTaskWithInput(client: Client, input: string) =
   let task = client.tasksWaitingForInput.pop()
   task.spush(input.md)
-  task.resume()
+  task.status = tsRunning
+  client.setInputTaskStatus(true)
 
 # Called whenever a task finishes. This is used to determine when
 # to flush queues/etc
@@ -120,8 +124,9 @@ proc taskFinished*(task: Task) =
 
     flushOutAll()
 
-    callerClient.inputTaskRunning = false
-    discard callerClient.unqueueIn()
+    callerClient.setInputTaskStatus(false)
+    if task.status in {tsDone, tsAwaitingInput}:
+      discard callerClient.unqueueIn()
 
 proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: string] =
   result.o = nil
@@ -188,6 +193,7 @@ proc processClient(client: Client, address: string) {.async.} =
         discard client.unqueueIn()
     else:
       let newPlayer = client.player.handleLoginCommand(line)
+      client.flushOut()
       if not isNil(newPlayer):
         connected = true
         client.player.callDisconnect()
@@ -203,6 +209,7 @@ proc processClient(client: Client, address: string) {.async.} =
         newPlayer.output = ssend
         let greetTask = newPlayer.verbCall("greet", newPlayer, @[], taskType = ttInput)
         if not isNil(greetTask): discard greetTask.run()
+        client.flushOut()
 
 var server: AsyncSocket
 const
