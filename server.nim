@@ -45,6 +45,18 @@ proc send(client: Client, msg: string) {.async.} =
 proc recvLine(client: Client): Future[string] {.async.} =
   return await client.sock.recvLine()
 
+# client input task procs
+proc setInputTask(client: Client, inputTask: Task) =
+  client.currentInputTask = inputTask
+
+proc inputTaskRunning(client: Client): bool =
+  let inputTask = client.currentInputTask
+  return (not isNil(inputTask)) and inputTask.status notin {tsDone}
+
+proc requiresInput(client: Client): bool =
+  client.tasksWaitingForInput.len > 0 or not client.inputTaskRunning()
+
+
 ## I/O Queues
 #
 # TODO: add some kind of documentation here?
@@ -69,13 +81,6 @@ proc flushOutAll =
 
 proc queueIn(client: Client, msg: string) =
   client.inputQueue.insert(msg, 0)
-
-proc setInputTask(client: Client, inputTask: Task) =
-  client.currentInputTask = inputTask
-
-proc inputTaskRunning(client: Client): bool =
-  let inputTask = client.currentInputTask
-  return (not isNil(inputTask)) and inputTask.isRunning()
 
 # Forward declaration for the following proc
 proc supplyTaskWithInput(client: Client, input: string)
@@ -194,7 +199,7 @@ proc processClient(client: Client, address: string) {.async.} =
 
     if connected:
       client.queueIn(line)
-      if not client.inputTaskRunning(): # get it started!
+      if client.requiresInput(): # get it started!
         discard client.unqueueIn()
     else:
       let newPlayer = client.player.handleLoginCommand(line)
