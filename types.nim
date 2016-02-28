@@ -169,7 +169,8 @@ type
     ttFunction, ttInput
 
   TaskStatus* = enum
-    tsRunning, tsAwaitingInput, tsSuspended, tsDone
+    tsRunning, tsAwaitingInput, tsAwaitingResult,
+    tsReceivedInput, tsSuspended, tsDone
 
   # First class continuations
   Continuation* = object
@@ -226,7 +227,7 @@ type
     outputQueue*: seq[string]
     inputQueue*: seq[string]
     tasksWaitingForInput*: seq[Task]
-    inputTaskRunning*: bool
+    currentInputTask*: Task
 
 const nilD* = MData(dtype: dNil, nilVal: 1)
 

@@ -4,6 +4,7 @@ import types, compile, scripting, tables, hashes, strutils, objects, sequtils
 # Some procs that builtins.nim needs
 proc spush*(task: Task, what: MData) = task.stack.add(what)
 proc spop*(task: Task): MData = task.stack.pop()
+proc isRunning*(task: Task): bool = task.status in {tsRunning, tsReceivedInput}
 
 import builtins
 
@@ -67,7 +68,10 @@ proc setCallPackage(task: Task, package: Package, builtin: MData, args: seq[MDat
   task.builtinToCall = builtin
   task.builtinArgs = args
   if task.status == tsRunning:
-    task.status = tsSuspended
+    task.status = tsAwaitingResult
+  elif task.status == tsReceivedInput:
+    # already got input and can start again
+    task.status = tsRunning
 
 proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
   let builtinName = builtin.symVal
@@ -114,7 +118,7 @@ proc top*(task: Task): MData =
     return task.stack[size - 1]
 
 proc foreignLambdaCall(task: Task, symtable: SymbolTable, expression: MData) =
-  task.status = tsSuspended
+  task.status = tsAwaitingResult
   let instructions = compileCode(expression)
   discard task.world.addTask(
     name = task.name & "-lambda",
@@ -122,7 +126,8 @@ proc foreignLambdaCall(task: Task, symtable: SymbolTable, expression: MData) =
     caller = task.caller,
     symtable = symtable,
     code = instructions,
-    callback = task.id) # Resume this task when done
+    callback = task.id, # Resume this task when done
+    taskType = task.taskType)
 
 
 # Implementation of instructions
@@ -402,8 +407,11 @@ proc doCallPackage(task: Task) =
   task.hasCallPackage = false
   task.builtinCall(sym, args, phase = phase)
 
+  if task.status == tsReceivedInput:
+    task.status = tsRunning
+
 proc step*(task: Task) =
-  if task.status != tsRunning: return
+  if not task.isRunning(): return
 
   if task.hasCallPackage:
     task.doCallPackage()

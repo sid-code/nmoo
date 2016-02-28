@@ -70,8 +70,12 @@ proc flushOutAll =
 proc queueIn(client: Client, msg: string) =
   client.inputQueue.insert(msg, 0)
 
-proc setInputTaskStatus(client: Client, status: bool) =
-  client.inputTaskRunning = status
+proc setInputTask(client: Client, inputTask: Task) =
+  client.currentInputTask = inputTask
+
+proc inputTaskRunning(client: Client): bool =
+  let inputTask = client.currentInputTask
+  return (not isNil(inputTask)) and inputTask.isRunning()
 
 # Forward declaration for the following proc
 proc supplyTaskWithInput(client: Client, input: string)
@@ -89,7 +93,7 @@ proc unqueueIn(client: Client): bool =
       client.flushOut()
     else:
       if task.taskType == ttInput:
-        client.setInputTaskStatus(true)
+        client.setInputTask(task)
 
   return true
 
@@ -111,8 +115,7 @@ proc askForInput*(task: Task, client: Client) =
 proc supplyTaskWithInput(client: Client, input: string) =
   let task = client.tasksWaitingForInput.pop()
   task.spush(input.md)
-  task.status = tsRunning
-  client.setInputTaskStatus(true)
+  task.status = tsReceivedInput
 
 # Called whenever a task finishes. This is used to determine when
 # to flush queues/etc
@@ -124,8 +127,10 @@ proc taskFinished*(task: Task) =
 
     flushOutAll()
 
-    callerClient.setInputTaskStatus(false)
-    if task.status in {tsDone, tsAwaitingInput}:
+    if task.status == tsAwaitingInput:
+      discard callerClient.unqueueIn()
+    elif task.status == tsDone and task == callerClient.currentInputTask:
+      callerClient.setInputTask(nil)
       discard callerClient.unqueueIn()
 
 proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: string] =
@@ -189,7 +194,7 @@ proc processClient(client: Client, address: string) {.async.} =
 
     if connected:
       client.queueIn(line)
-      if not client.inputTaskRunning: # get it started!
+      if not client.inputTaskRunning(): # get it started!
         discard client.unqueueIn()
     else:
       let newPlayer = client.player.handleLoginCommand(line)
@@ -260,7 +265,8 @@ proc serve {.async.} =
       player: nil,
       outputQueue: @[],
       inputQueue: @[],
-      tasksWaitingForInput: @[])
+      tasksWaitingForInput: @[],
+      currentInputTask: nil)
 
     asyncCheck processClient(client, address)
 

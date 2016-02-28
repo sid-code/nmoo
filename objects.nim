@@ -326,7 +326,7 @@ import tasks
 # whether to flush all output.  This is done when an input tasks finishes.
 proc tick*(world: World) =
   for idx, task in world.tasks:
-    if task.status != tsRunning: continue
+    if not task.isRunning(): continue
     try:
       task.step()
       if task.status == tsDone:
@@ -376,9 +376,9 @@ proc run*(task: Task, limit: int = 20000): TaskResult =
   var limit = limit
   while limit > 0:
     case task.status:
-      of tsAwaitingInput:
+      of tsSuspended, tsAwaitingInput, tsReceivedInput:
         return TaskResult(typ: trSuspend)
-      of tsSuspended:
+      of tsAwaitingResult:
         # This is a sticky case. Now we need to search for a task whose callback
         # is this task, so that we can run that task to completion.
         var found = false
