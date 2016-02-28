@@ -289,10 +289,10 @@ proc preprocess(command: string): string =
   return command
 
 proc handleCommand*(obj: MObject, command: string): Task =
+  let command = preprocess(command.strip())
   if command.len == 0: return nil
 
   let originalCommand = command
-  let command = preprocess(command)
 
   let
     parsed = parseCommand(command)
@@ -392,6 +392,7 @@ proc handleCommand*(obj: MObject, command: string): Task =
 # Return MObject because the goal of these commands is to determine the
 # player the connection owns.
 proc handleLoginCommand*(obj: MObject, command: string): MObject =
+  let command = command.strip()
   if command.len == 0: return nil
 
   let

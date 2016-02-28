@@ -195,7 +195,7 @@ proc processClient(client: Client, address: string) {.async.} =
       removeClient(client)
       break
 
-    line = line.strip().fixUp()
+    line = line.fixUp()
 
     if connected:
       client.queueIn(line)
