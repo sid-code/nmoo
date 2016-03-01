@@ -42,18 +42,29 @@ proc genSym(symgen: SymGen): string =
   result = "$1$2" % [symgen.prefix, $symgen.counter]
   symgen.counter += 1
 
+template ins(typ: InstructionType, op: MData, position: CodePosition): Instruction =
+  Instruction(itype: typ, operand: op, pos: position)
+
 template ins(typ: InstructionType, op: MData): Instruction =
-  Instruction(itype: typ, operand: op)
+  ins(typ, op, (0, 0))
 
 template ins(typ: InstructionType): Instruction =
   ins(typ, nilD)
+
+# shortcut for compiler.real.add
+template radd(compiler: MCompiler, inst: Instruction) =
+  compiler.real.add(inst)
+
+# shortcut for compiler.subrs.add
+template sadd(compiler: MCompiler, inst: Instruction) =
+  compiler.subrs.add(inst)
 
 proc `$`*(ins: Instruction): string =
   let itypeStr = ($ins.itype)[2 .. ^1]
   if ins.operand == nilD:
     return itypeStr & "\t"
   else:
-    return "$1\t$2" % [itypeStr, ins.operand.toCodeStr()]
+    return "$1\t$2\t$3" % [itypeStr, ins.operand.toCodeStr(), $ins.pos]
 
 proc `$`*(compiler: MCompiler): string =
   var slines: seq[string] = @[]
@@ -80,15 +91,18 @@ proc getSymbol(symtable: CSymTable, name: string): int =
   else:
     compileError("unbound symbol '$1'" % [name])
 
-proc getSymInst(symtable: CSymTable, name: string): Instruction =
+proc getSymInst(symtable: CSymTable, sym: MData): Instruction =
+  let pos = sym.pos
+  let name = sym.symVal
+
   try:
     if builtinExists(name):
-      return ins(inPUSH, name.mds)
+      return ins(inPUSH, name.mds, pos)
     else:
       let index = symtable.getSymbol(name)
-      return ins(inGET, index.md)
+      return ins(inGET, index.md, pos)
   except:
-    return ins(inGGET, name.mds)
+    return ins(inGGET, name.mds, pos)
 
 var specials = initTable[string, SpecialProc]()
 proc specialExists(name: string): bool =
@@ -99,7 +113,17 @@ proc checkType(value: MData, expected: MDataType) =
     compileError("expected argument of type " & $expected & " instead got " & $value.dType)
 
 template defSpecial(name: string, body: stmt) {.immediate, dirty.} =
-  specials[name] = proc (compiler: MCompiler, args: seq[MData]) =
+  specials[name] = proc (compiler: MCompiler, args: seq[MData], pos: CodePosition) =
+    proc emit(inst: Instruction, where = 0) =
+      var inst = inst
+      inst.pos = pos
+      if where == 0:
+        compiler.radd(inst)
+      else:
+        compiler.sadd(inst)
+    proc emit(insts: seq[Instruction], where = 0) =
+      for inst in insts: emit(inst, where)
+
     body
 
 
@@ -114,9 +138,9 @@ proc verifyArgs(name: string, args: seq[MData], spec: seq[MDataType]) =
       compileError("$1: expected argument of type $2 but got $3" %
         [name, $e, $o.dtype])
 
-proc codeGen*(compiler: MCompiler, code: seq[MData]) =
+proc codeGen*(compiler: MCompiler, code: seq[MData], pos: CodePosition) =
   if code.len == 0:
-    compiler.real.add(ins(inCLIST, 0.md))
+    compiler.radd(ins(inCLIST, 0.md, pos))
     return
 
   let first = code[0]
@@ -127,22 +151,22 @@ proc codeGen*(compiler: MCompiler, code: seq[MData]) =
       let
         args = code[1 .. ^1]
         prok = compile.specials[name]
-      prok(compiler, args)
+      prok(compiler, args, pos)
       return
     elif builtinExists(name):
       for arg in code[1 .. ^1]:
         compiler.codeGen(arg)
-      compiler.real.add(ins(inPUSH, first))
-      compiler.real.add(ins(inCALL, (code.len - 1).md))
+      compiler.radd(ins(inPUSH, first, first.pos))
+      compiler.radd(ins(inCALL, (code.len - 1).md, first.pos))
       return
 
   for data in code:
     compiler.codeGen(data)
-  compiler.real.add(ins(inCLIST, code.len.md))
+  compiler.radd(ins(inCLIST, code.len.md, pos))
 
 proc codeGen*(compiler: MCompiler, data: MData) =
   if data.isType(dList):
-    compiler.codeGen(data.listVal)
+    compiler.codeGen(data.listVal, data.pos)
   elif data.isType(dSym):
     let name = data.symVal
     if name[0] == '$':
@@ -155,11 +179,11 @@ proc codeGen*(compiler: MCompiler, data: MData) =
       compiler.codeGen(expanded)
     else:
       try:
-        compiler.real.add(compiler.symtable.getSymInst(data.symVal))
+        compiler.radd(compiler.symtable.getSymInst(data))
       except:
-        compiler.real.add(ins(inPUSH, data))
+        compiler.radd(ins(inPUSH, data, data.pos))
   else:
-    compiler.real.add(ins(inPUSH, data))
+    compiler.radd(ins(inPUSH, data, data.pos))
 
 # Quoted data needs no extra processing
 proc codeGenQ*(compiler: MCompiler, code: MData) =
@@ -167,9 +191,10 @@ proc codeGenQ*(compiler: MCompiler, code: MData) =
     let list = code.listVal
     for item in list:
       compiler.codeGenQ(item)
-    compiler.real.add(ins(inCLIST, list.len.md))
+    let pos = code.pos
+    compiler.radd(ins(inCLIST, list.len.md, pos))
   else:
-    compiler.real.add(ins(inPUSH, code))
+    compiler.radd(ins(inPUSH, code))
 
 template defSymbol(symtable: CSymTable, name: string): int =
   let index = symtable.len
@@ -204,12 +229,12 @@ proc render*(compiler: MCompiler): CpOutput =
       if op.isType(dSym):
         let label = op.symVal
         let jumpLoc = labels[label]
-        code[idx] = ins(inst.itype, jumpLoc.md)
+        code[idx] = ins(inst.itype, jumpLoc.md, inst.pos)
     elif inst.itype == inLPUSH:
-      code[idx] = ins(inPUSH, labels[op.symVal].md)
+      code[idx] = ins(inPUSH, labels[op.symVal].md, inst.pos)
     elif inst.itype == inTRY:
       let newLabels = op.listVal.map(proc(x: MData): MData = labels[x.symVal].md).md
-      code[idx] = ins(inTRY, newLabels)
+      code[idx] = ins(inTRY, newLabels, inst.pos)
 
   code.add(ins(inHALT))
   return (entry, code)
@@ -260,18 +285,18 @@ defSpecial "lambda":
   for bound in bounds:
     let name = bound.symVal
     compiler.symtable.del(name)
-  compiler.subrs.add(ins(inRET))
-  compiler.subrs.add(addedSubrs)
+  emit(ins(inRET), 1)
+  emit(addedSubrs, 1)
 
-  compiler.real.add(ins(inLPUSH, labelName))
-  compiler.real.add(ins(inPUSH, compiler.symtable.toData()))
-  compiler.real.add(ins(inMENV)) # This pushes the environment id AND a
+  emit(ins(inLPUSH, labelName))
+  emit(ins(inPUSH, compiler.symtable.toData()))
+  emit(ins(inMENV)) # This pushes the environment id AND a
                                  # MData representation if it
 
-  compiler.real.add(ins(inGTID)) # Record the task ID in the lambda
-  compiler.real.add(ins(inPUSH, bounds.md))
-  compiler.real.add(ins(inPUSH, expression))
-  compiler.real.add(ins(inCLIST, 6.md))
+  emit(ins(inGTID)) # Record the task ID in the lambda
+  emit(ins(inPUSH, bounds.md))
+  emit(ins(inPUSH, expression))
+  emit(ins(inCLIST, 6.md))
 
 defSpecial "map":
   verifyArgs("map", args, @[dNil, dNil])
@@ -280,95 +305,100 @@ defSpecial "map":
   compiler.codeGen(fn)
 
   let index = compiler.symtable.defSymbol("__mapfn")
-  compiler.real.add(ins(inSTO, index.md))
+  emit(ins(inSTO, index.md))
   compiler.codeGen(args[1])
-  compiler.real.add(ins(inREV))
-  compiler.real.add(ins(inCLIST, 0.md))
+  emit(ins(inREV))
+  emit(ins(inCLIST, 0.md))
   let labelLocation = compiler.addLabel(real)
   let afterLocation = compiler.makeSymbol()
-  compiler.real.add(ins(inSWAP))
-  compiler.real.add(ins(inLEN))
-  compiler.real.add(ins(inJ0, afterLocation))
-  compiler.real.add(ins(inPOPL))
-  compiler.real.add(ins(inGET, index.md))
-  compiler.real.add(ins(inCALL, 1.md))
-  compiler.real.add(ins(inSWAP3))
-  compiler.real.add(ins(inSWAP))
-  compiler.real.add(ins(inPUSHL))
-  compiler.real.add(ins(inJMP, labelLocation))
-  compiler.real.add(ins(inLABEL, afterLocation))
-  compiler.real.add(ins(inPOP))
+  emit(ins(inSWAP))
+  emit(ins(inLEN))
+  emit(ins(inJ0, afterLocation))
+  emit(ins(inPOPL))
+  emit(ins(inGET, index.md))
+  emit(ins(inCALL, 1.md))
+  emit(ins(inSWAP3))
+  emit(ins(inSWAP))
+  emit(ins(inPUSHL))
+  emit(ins(inJMP, labelLocation))
+  emit(ins(inLABEL, afterLocation))
+  emit(ins(inPOP))
 
 proc genFold(compiler: MCompiler, fn, default, list: MData,
-             useDefault = true, right = true) =
+             useDefault = true, right = true, pos: CodePosition = (0, 0)) =
+
+  proc emit(inst: Instruction) =
+    var inst = inst
+    inst.pos = pos
+    compiler.radd(inst)
 
   compiler.codeGen(fn)
 
   let index = compiler.symtable.defSymbol("__redfn")
-  compiler.real.add(ins(inSTO, index.md))
+  emit(ins(inSTO, index.md))
   compiler.codeGen(list)                         # list
 
   let after = compiler.makeSymbol()
   let emptyList = compiler.makeSymbol()
   if not useDefault:
-    compiler.real.add(ins(inLEN))                # list len
-    compiler.real.add(ins(inJ0, emptyList))      # list
+    emit(ins(inLEN))                # list len
+    emit(ins(inJ0, emptyList))      # list
 
   if right:
-    compiler.real.add(ins(inREV))                # list-rev
+    emit(ins(inREV))                # list-rev
 
   if useDefault:
     compiler.codeGen(default)
   else:
-    compiler.real.add(ins(inPOPL))               # list-rev last
+    emit(ins(inPOPL))               # list-rev last
 
-  compiler.real.add(ins(inSWAP))                 # last list-rev
+  emit(ins(inSWAP))                 # last list-rev
 
   let loop = compiler.addLabel(real)
-  compiler.real.add(ins(inLEN))                  # last list-rev len
-  compiler.real.add(ins(inJ0, after))            # last list-rev
-  compiler.real.add(ins(inPOPL))                 # last1 list-rev last2
-  compiler.real.add(ins(inSWAP3))                # list-rev last2 last1
-  compiler.real.add(ins(inSWAP))                 # list-rev last1 last2
-  compiler.real.add(ins(inGET, index.md))        # list-rev last1 last2 fn
-  compiler.real.add(ins(inCALL, 2.md))           # list-rev result
-  compiler.real.add(ins(inSWAP))                 # result list-rev
-  compiler.real.add(ins(inJMP, loop))
+  emit(ins(inLEN))                  # last list-rev len
+  emit(ins(inJ0, after))            # last list-rev
+  emit(ins(inPOPL))                 # last1 list-rev last2
+  emit(ins(inSWAP3))                # list-rev last2 last1
+  emit(ins(inSWAP))                 # list-rev last1 last2
+  emit(ins(inGET, index.md))        # list-rev last1 last2 fn
+  emit(ins(inCALL, 2.md))           # list-rev result
+  emit(ins(inSWAP))                 # result list-rev
+  emit(ins(inJMP, loop))
 
   if not useDefault:
-    compiler.real.add(ins(inLABEL, emptyList))
+    emit(ins(inLABEL, emptyList))
     compiler.codeGen(default)
-    compiler.real.add(ins(inSWAP)) # So that the pop at the end pops off the empty list
+    emit(ins(inSWAP)) # So that the pop at the end pops off the empty list
 
-  compiler.real.add(ins(inLABEL, after))
-  compiler.real.add(ins(inPOP))                  # result
+  emit(ins(inLABEL, after))
+  emit(ins(inPOP))                  # result
 
 defSpecial "reduce-right":
   verifyArgs("reduce-right", args, @[dNil, dNil, dNil])
 
-  compiler.genFold(args[0], args[1], args[2], useDefault = false, right = true)
+  compiler.genFold(args[0], args[1], args[2], useDefault = false, right = true, pos = pos)
 
 defSpecial "reduce-left":
   verifyArgs("reduce-left", args, @[dNil, dNil, dNil])
 
-  compiler.genFold(args[0], args[1], args[2], useDefault = false, right = false)
+  compiler.genFold(args[0], args[1], args[2], useDefault = false, right = false, pos = pos)
 
 defSpecial "fold-right":
   verifyArgs("fold-right", args, @[dNil, dNil, dNil])
 
-  compiler.genFold(args[0], args[1], args[2], useDefault = true, right = true)
+  compiler.genFold(args[0], args[1], args[2], useDefault = true, right = true, pos = pos)
 
 defSpecial "fold-left":
   verifyArgs("fold-left", args, @[dNil, dNil, dNil])
 
-  compiler.genFold(args[0], args[1], args[2], useDefault = true, right = false)
+  compiler.genFold(args[0], args[1], args[2], useDefault = true, right = false, pos = pos)
 
 defSpecial "call":
   verifyArgs("call", args, @[dNil, dNil])
   compiler.codeGen(args[1])
   compiler.codeGen(args[0])
 
-  compiler.real.add(ins(inACALL))
+  emit(ins(inACALL))
 
 defSpecial "let":
   verifyArgs("let", args, @[dList, dNil])
@@ -394,7 +424,7 @@ defSpecial "let":
     compiler.codeGen(val)
     let symIndex = compiler.symtable.defSymbol(sym.symVal)
     binds.add(sym.symVal)
-    compiler.real.add(ins(inSTO, symIndex.md))
+    emit(ins(inSTO, symIndex.md))
 
   compiler.codeGen(args[1])
 
@@ -409,15 +439,15 @@ defSpecial "try":
 
   let exceptLabel = compiler.makeSymbol()
   let endLabel = compiler.makeSymbol()
-  compiler.real.add(ins(inTRY, @[exceptLabel].md))
+  emit(ins(inTRY, @[exceptLabel].md))
   compiler.codeGen(args[0])
-  compiler.real.add(ins(inETRY))
-  compiler.real.add(ins(inJMP, endLabel))
-  compiler.real.add(ins(inLABEL, exceptLabel))
+  emit(ins(inETRY))
+  emit(ins(inJMP, endLabel))
+  emit(ins(inLABEL, exceptLabel))
   let errorIndex = compiler.symtable.defSymbol("error")
-  compiler.real.add(ins(inSTO, errorIndex.md))
+  emit(ins(inSTO, errorIndex.md))
   compiler.codeGen(args[1])
-  compiler.real.add(ins(inLABEL, endLabel))
+  emit(ins(inLABEL, endLabel))
   if alen == 3:
     compiler.codeGen(args[2])
 
@@ -443,9 +473,9 @@ defSpecial "cond":
     branchLabels.add(condLabel)
 
     compiler.codeGen(larg[0])
-    compiler.real.add(ins(inJN0, condLabel))
+    emit(ins(inJN0, condLabel))
 
-  compiler.real.add(ins(inJMP, elseLabel))
+  emit(ins(inJMP, elseLabel))
 
   if not hadElseClause:
     compileError("cond: else clause required")
@@ -453,15 +483,15 @@ defSpecial "cond":
   for idx, arg in args:
     let larg = arg.listVal
     if larg.len == 1:
-      compiler.real.add(ins(inLABEL, elseLabel))
+      emit(ins(inLABEL, elseLabel))
       compiler.codeGen(larg[0])
-      compiler.real.add(ins(inLABEL, endLabel))
+      emit(ins(inLABEL, endLabel))
       break
 
     let condLabel = branchLabels[idx]
-    compiler.real.add(ins(inLABEL, condLabel))
+    emit(ins(inLABEL, condLabel))
     compiler.codeGen(larg[1])
-    compiler.real.add(ins(inJMP, endLabel))
+    emit(ins(inJMP, endLabel))
 
 defSpecial "if":
   if args.len != 3:
@@ -472,14 +502,14 @@ defSpecial "call-cc":
   verifyArgs("call-cc", args, @[dNil])
   # continuations will be of the form (cont <ID>)
   let contLabel = compiler.makeSymbol()
-  compiler.real.add(ins(inMCONT, contLabel))
+  emit(ins(inMCONT, contLabel))
   let index = compiler.symtable.defSymbol("__cont_index")
-  compiler.real.add(ins(inSTO, index.md))
-  compiler.real.add(ins(inPUSH, "cont".mds))
-  compiler.real.add(ins(inGET, index.md))
-  compiler.real.add(ins(inCLIST, 2.md))
-  compiler.real.add(ins(inCLIST, 1.md))
+  emit(ins(inSTO, index.md))
+  emit(ins(inPUSH, "cont".mds))
+  emit(ins(inGET, index.md))
+  emit(ins(inCLIST, 2.md))
+  emit(ins(inCLIST, 1.md))
 
   compiler.codeGen(args[0])
-  compiler.real.add(ins(inACALL))
-  compiler.real.add(ins(inLABEL, contLabel))
+  emit(ins(inACALL))
+  emit(ins(inLABEL, contLabel))

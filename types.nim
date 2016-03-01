@@ -130,6 +130,7 @@ type
   Instruction* = object
     itype*: InstructionType
     operand*: MData
+    pos*: CodePosition
 
   InstructionType* = enum
     inPUSH, inCALL, inACALL, inLABEL, inJ0, inJN0, inJMP, inPOP,
@@ -155,7 +156,7 @@ type
     symtable*: CSymTable
     symgen*: SymGen
 
-  SpecialProc* = proc(compiler: MCompiler, args: seq[MData])
+  SpecialProc* = proc(compiler: MCompiler, args: seq[MData], pos: CodePosition)
 
   MCompileError* = object of Exception
 
