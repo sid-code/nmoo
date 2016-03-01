@@ -90,6 +90,9 @@ proc unqueueIn(client: Client): bool =
     return false
 
   let last = client.inputQueue.pop()
+  when defined(debug):
+    echo "Tasks currently waiting for input: " & $client.tasksWaitingForInput.len
+
   if client.tasksWaitingForInput.len > 0:
     client.supplyTaskWithInput(last)
   else:
@@ -109,22 +112,26 @@ proc clearInAll =
   for client in clients:
     client.clearIn()
 
+
 ## stuff for the read builtin
 
 # to be called from the read builtin
 proc askForInput*(task: Task, client: Client) =
+  when defined(debug): echo "Task " & task.name & " asked for input!"
   task.status = tsAwaitingInput
   client.tasksWaitingForInput.add(task)
   client.flushOut()
 
 proc supplyTaskWithInput(client: Client, input: string) =
   let task = client.tasksWaitingForInput.pop()
+  when defined(debug): echo "Supplied task " & task.name & " with input."
   task.spush(input.md)
   task.status = tsReceivedInput
 
 # Called whenever a task finishes. This is used to determine when
 # to flush queues/etc
 proc taskFinished*(task: Task) =
+  when defined(debug): echo "Task " & task.name & " entered state " & $task.status & " (TYPE: " & $task.taskType & ")"
   if task.taskType == ttInput:
     let callerClient = findClient(task.caller)
     if isNil(callerClient):
@@ -194,6 +201,8 @@ proc processClient(client: Client, address: string) {.async.} =
         client.player.callDisconnect()
       removeClient(client)
       break
+
+    when defined(debug): echo "Received " & line
 
     line = line.fixUp()
 
