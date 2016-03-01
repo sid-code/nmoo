@@ -41,6 +41,7 @@ proc collect(task: Task, num: int): seq[MData] =
     discard i
     result.insert(task.spop(), 0)
 
+proc finish(task: Task)
 proc doError(task: Task, error: MData) =
   # unwind the stack
   while task.frames.len > 0:
@@ -59,8 +60,7 @@ proc doError(task: Task, error: MData) =
 
   task.spush(error)
   task.status = tsDone
-  task.caller.send("Task $# failed due to error:" % [task.name])
-  task.caller.send($error)
+  task.finish()
 
 proc setCallPackage(task: Task, package: Package, builtin: MData, args: seq[MData]) =
   task.hasCallPackage = true
@@ -381,10 +381,15 @@ proc getTaskByID*(world: World, id: int): Task =
 
 proc finish(task: Task) =
   let callback = task.callback
+  var res = task.top()
+
+  if res.isType(dErr):
+    let pos = task.code[task.pc].pos
+    res.errMsg = "$1\nline $3, col $4 of $2" % [res.errMsg, task.name, $pos.line, $pos.col]
+
   if callback >= 0:
     let cbTask = task.world.getTaskByID(callback)
     if cbTask != nil:
-      let res = task.top()
       cbTask.tickCount += task.tickCount
       cbTask.status = tsRunning
       if res.isType(dErr):
@@ -397,6 +402,9 @@ proc finish(task: Task) =
       # the system, and if it is, then debug more.
 
       echo "Warning: callback for task '$#' didn't exist." % [task.name]
+  else:
+    if res.isType(dErr):
+      task.caller.send("Traceback (most recent call first)\n" & $res)
 
 proc doCallPackage(task: Task) =
   let phase = task.callPackage.phase
