@@ -288,7 +288,7 @@ proc preprocess(command: string): string =
     return "eval " & command
   return command
 
-proc handleCommand*(obj: MObject, command: string): Task =
+proc handleCommand*(player: MObject, command: string): Task =
   let command = preprocess(command.strip())
   if command.len == 0: return nil
 
@@ -304,94 +304,100 @@ proc handleCommand*(obj: MObject, command: string): Task =
     restStr = rest.join(" ")
     frest = parsed.fixedRest
 
-    doQuery = obj.query(doString.toLower())
-    ioQuery = obj.query(ioString.toLower())
+    doQuery = player.query(doString.toLower())
+    ioQuery = player.query(ioString.toLower())
 
     doQuerySuccess = doString.len > 0 and doQuery.len > 0
     ioQuerySuccess = ioString.len > 0 and ioQuery.len > 0
 
+    dobject = if doQuerySuccess: doQuery[0] else: nil
+    iobject = if ioQuerySuccess: ioQuery[0] else: nil
+
   var
-    world = obj.getWorld()
+    world = player.getWorld()
     symtable = newSymbolTable()
 
   symtable["cmd"] = command.md
   symtable["verb"] = verb.md
-  symtable["caller"] = obj.md
+  symtable["caller"] = player.md
   symtable["args"] = frest.map(proc (x: string): MData = x.md).md
   symtable["argstr"] = restStr.md
 
-  var objects = @[obj]
-
-  if doQuery.len > 0:
-    objects.add(doQuery[0])
-  if ioQuery.len > 0:
-    objects.add(ioQuery[0])
-
-  let loc = obj.getLocation()
-  if loc != nil:
-    objects.add(loc)
-
-
-  for o in objects:
+  var objectVerbPairs: seq[tuple[o: MObject, v: MVerb]] = @[]
+  proc considerObject(o: MObject) =
     for v in o.allVerbs():
-      if not v.matchesName(verb):
-        continue
+      objectVerbPairs.add((o, v))
 
-      symtable["self"] = o.md
+  considerObject(player)
 
-      if v.prepSpec == pNone:
-        symtable["dobjstr"] = symtable["argstr"]
-      else:
-        symtable["dobjstr"] = doString.md
+  if doQuerySuccess:
+    considerObject(dobject)
+  if ioQuerySuccess:
+    considerObject(iobject)
 
-      symtable["iobjstr"] = ioString.md
-      symtable["dobj"] = nilD
-      symtable["iobj"] = nilD
+  let loc = player.getLocation()
+  if not isNil(loc):
+    considerObject(loc)
 
-      if v.prepSpec != pAny and v.prepSpec != prep.ptype:
-        continue
+  for o, v in objectVerbPairs.items:
+    if not v.matchesName(verb):
+      continue
 
-      case v.doSpec:
-        of oAny:
-          if doQuerySuccess:
-            if o == doQuery[0] and o != obj:
-              continue
-            symtable["dobj"] = doQuery[0].md
-        of oThis:
-          if doQuerySuccess and doQuery[0] == o: symtable["dobj"] = o.md else: continue
-        of oStr:
-          if doString.len == 0: continue
-        of oNone:
-          if doString.len > 0: continue
-      case v.ioSpec:
-        of oAny:
-          if ioQuerySuccess:
-            if o == ioQuery[0] and o != obj:
-              continue
-            symtable["iobj"] = ioQuery[0].md
-        of oThis:
-          if ioQuerySuccess and ioQuery[0] == o: symtable["iobj"] = o.md else: continue
-        of oStr:
-          if ioString.len == 0: continue
-        of oNone:
-          if ioString.len > 0: continue
+    symtable["self"] = o.md
 
-      symtable["holder"] = o.md
-      return v.call(world, holder = o, caller = obj, symtable = symtable, taskType = ttInput)
+    if v.prepSpec == pNone:
+      symtable["dobjstr"] = symtable["argstr"]
+    else:
+      symtable["dobjstr"] = doString.md
 
-  let locationd = obj.getPropVal("location")
+    symtable["iobjstr"] = ioString.md
+    symtable["dobj"] = nilD
+    symtable["iobj"] = nilD
+
+    if v.prepSpec != pAny and v.prepSpec != prep.ptype:
+      continue
+
+    case v.doSpec:
+      of oAny:
+        if doQuerySuccess:
+          if o != player and o != loc:
+            continue
+          symtable["dobj"] = dobject.md
+      of oThis:
+        if doQuerySuccess and dobject == o: symtable["dobj"] = o.md else: continue
+      of oStr:
+        if doString.len == 0: continue
+      of oNone:
+        if doString.len > 0: continue
+    case v.ioSpec:
+      of oAny:
+        if ioQuerySuccess:
+          if o != player and o != loc:
+            continue
+          symtable["iobj"] = iobject.md
+      of oThis:
+        if ioQuerySuccess and iobject == o: symtable["iobj"] = o.md else: continue
+      of oStr:
+        if ioString.len == 0: continue
+      of oNone:
+        if ioString.len > 0: continue
+
+    symtable["holder"] = o.md
+    return v.call(world, holder = o, caller = player, symtable = symtable, taskType = ttInput)
+
+  let locationd = player.getPropVal("location")
   if not locationd.isType(dObj):
     return nil
 
   let location = world.dataToObj(locationd)
-  if location.verbCall("huh", obj, @[originalCommand.md], taskType = ttInput) == nil:
-    obj.send("Huh?")
+  if location.verbCall("huh", player, @[originalCommand.md], taskType = ttInput) == nil:
+    player.send("Huh?")
 
   return nil
 
 # Return MObject because the goal of these commands is to determine the
 # player the connection owns.
-proc handleLoginCommand*(obj: MObject, command: string): MObject =
+proc handleLoginCommand*(player: MObject, command: string): MObject =
   let command = command.strip()
   if command.len == 0: return nil
 
@@ -403,7 +409,7 @@ proc handleLoginCommand*(obj: MObject, command: string): MObject =
     frest = parsed.fixedRest
 
   var
-    world = obj.getWorld()
+    world = player.getWorld()
     symtable = newSymbolTable()
 
   let verbObj = world.verbObj
@@ -413,14 +419,14 @@ proc handleLoginCommand*(obj: MObject, command: string): MObject =
   symtable["command"] = commandName.md
   symtable["args"] = args.md
   symtable["argstr"] = restStr.md
-  symtable["caller"] = obj.md
+  symtable["caller"] = player.md
   symtable["self"] = verbObj.md
 
-  let lcTask = verbObj.verbCall("handle-login-command", obj, args,
+  let lcTask = verbObj.verbCall("handle-login-command", player, args,
                                 symtable = symtable, taskType = ttInput)
 
   if isNil(lcTask):
-    obj.send("Failed to run your login command; server is set up incorrectly.")
+    player.send("Failed to run your login command; server is set up incorrectly.")
     return nil
 
   let tr = lcTask.run
@@ -437,7 +443,7 @@ proc handleLoginCommand*(obj: MObject, command: string): MObject =
     of trTooLong:
       verbObj.send("The task for #0:handle-new-connection ran for too long!")
 
-  obj.send("Failed to run your login command; server is set up incorrectly.")
+  player.send("Failed to run your login command; server is set up incorrectly.")
   return nil
 
 
