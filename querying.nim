@@ -44,19 +44,19 @@ proc getVicinity*(obj: MObject): seq[MObject] =
 proc query*(obj: MObject, str: string, global = false): seq[MObject] =
   newSeq(result, 0)
   let world = obj.getWorld()
-  assert(world != nil)
+  assert(not isNil(world))
 
   if str == "me":
     return @[obj]
   if str == "here":
     let loc = obj.getLocation()
-    if loc != nil:
+    if not isNil(loc):
       return @[loc]
 
   if str[0] == '$':
     let tail = str[1..^1]
     let prop = world.verbObj.getProp(tail)
-    if prop != nil:
+    if not isNil(prop):
       let val = prop.val
       if val.isType(dObj):
         return @[world.dataToObj(val)]
@@ -67,7 +67,7 @@ proc query*(obj: MObject, str: string, global = false): seq[MObject] =
         let
           id = parseInt(str[1 .. ^1]).id
           fobj = world.byID(id)
-        if fobj != nil:
+        if not isNil(fobj):
           result.add(fobj)
       except:
         discard # let it be
@@ -75,4 +75,4 @@ proc query*(obj: MObject, str: string, global = false): seq[MObject] =
 
   let searchSpace = if global: world.getObjects()[] else: obj.getVicinity()
 
-  result.add(searchSpace.filterIt(it != nil and it.matches(str)))
+  result.add(searchSpace.filterIt(not isNil(it) and it.matches(str)))
