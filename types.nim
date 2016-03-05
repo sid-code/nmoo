@@ -120,6 +120,7 @@ type
     E_BOUNDS,
     E_QUOTA,
 
+    E_INTERNAL,
     E_PARSE
 
   SymbolTable* = Table[string, MData]

@@ -6,10 +6,10 @@ import logging
 proc taskFinished*(task: Task)
 proc findClient*(player: MObject): Client
 proc askForInput*(task: Task, client: Client)
+var clog*: ConsoleLogger
 import objects, verbs, builtins, persist, tasks
 
 var world: World = nil
-var clog: ConsoleLogger
 
 proc `==`(c1, c2: Client): bool = c1.player == c2.player
 

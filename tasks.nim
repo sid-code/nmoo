@@ -42,12 +42,19 @@ proc collect(task: Task, num: int): seq[MData] =
     result.insert(task.spop(), 0)
 
 proc finish(task: Task)
-proc doError(task: Task, error: MData) =
+proc doError*(task: Task, error: MData) =
+  # prepare the error for modifying
+  # each stack frame/task callback will be a line
+  var error = error
+
   # unwind the stack
+
   while task.frames.len > 0:
     let frame = task.curFrame()
 
     if frame.tries.len == 0:
+      let pos = task.code[task.pc].pos
+      error.errMsg = "$1\nline $3, col $4 of $2" % [error.errMsg, task.name, $pos.line, $pos.col]
       task.popFrame()
       continue
 
@@ -60,7 +67,6 @@ proc doError(task: Task, error: MData) =
 
   task.spush(error)
   task.status = tsDone
-  task.finish()
 
 proc setCallPackage(task: Task, package: Package, builtin: MData, args: seq[MData]) =
   task.hasCallPackage = true
@@ -382,10 +388,6 @@ proc getTaskByID*(world: World, id: int): Task =
 proc finish(task: Task) =
   let callback = task.callback
   var res = task.top()
-
-  if res.isType(dErr):
-    let pos = task.code[task.pc].pos
-    res.errMsg = "$1\nline $3, col $4 of $2" % [res.errMsg, task.name, $pos.line, $pos.col]
 
   if callback >= 0:
     let cbTask = task.world.getTaskByID(callback)

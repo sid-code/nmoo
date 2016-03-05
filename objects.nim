@@ -1,6 +1,6 @@
 # This file has methods for manipulating objects and their properties
 
-import types, server, sequtils, strutils, tables
+import types, server, sequtils, strutils, tables, logging
 # NOTE: verbs is imported later on!
 
 proc getProp*(obj: MObject, name: string, all = true): MProperty
@@ -338,15 +338,9 @@ proc tick*(world: World) =
         server.taskFinished(task)
     except:
       let exception = getCurrentException()
-      task.status = tsDone
-      system.delete(world.tasks, idx)
-      echo exception.repr
-      task.caller.send("There was an internal error while executing a task you called.")
-      task.caller.send("The task's name is: " & task.name)
-      task.caller.send("Here is what it says: " & exception.msg)
-      task.caller.send("This error is due to a server bug.")
-      # raise exception
-      server.taskFinished(task)
+      warn exception.repr
+      task.doError(E_INTERNAL.md(exception.msg))
+
 
 proc addTask*(world: World, name: string, owner, caller: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
