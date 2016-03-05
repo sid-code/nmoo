@@ -309,7 +309,7 @@ proc persist*(world: World) =
   createDir(trashDir)
 
   for idx, obj in world.getObjects()[]:
-    if obj == nil:
+    if isNil(obj):
       let deadObject = getobjectFile(world.name, idx)
       if fileExists(deadObject):
         moveFile(deadObject, trashDir / $idx)

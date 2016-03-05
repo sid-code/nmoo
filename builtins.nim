@@ -36,7 +36,7 @@ template extractList(d: MData): seq[MData] =
 template extractObject(objd: MData): MObject =
   checkType(objd, dObj)
   let obj = world.dataToObj(objd)
-  if obj == nil:
+  if isNil(obj):
     runtimeError(E_ARGS, "invalid object " & $objd)
 
   obj
@@ -302,7 +302,7 @@ proc setInfo(prop: MProperty, info: PropInfo) =
   prop.pubWrite = "w" in info.perms
   prop.ownerIsParent = "c" in info.perms
 
-  if info.newName != nil:
+  if not isNil(info.newName):
     prop.name = info.newName
 
 proc setInfo(verb: MVerb, info: VerbInfo) =
@@ -311,7 +311,7 @@ proc setInfo(verb: MVerb, info: VerbInfo) =
   verb.pubWrite = "w" in info.perms
   verb.pubExec = "x" in info.perms
 
-  if info.newName != nil:
+  if not isNil(info.newName):
     verb.names = info.newName
 
 proc setArgs(verb: MVerb, args: VerbArgs) =
@@ -329,7 +329,7 @@ template getPropOn(objd, propd: MData, die = true, useDefault = false,
     propName = extractString(propd)
     (objOn, propObj) = obj.getPropAndObj(propName, all)
 
-  if propObj == nil:
+  if isNil(propObj):
     if useDefault:
       res = (nil, newProperty("default", default, nil))
     else:
@@ -355,7 +355,7 @@ template getVerbOn(objd, verbdescd: MData, die = true,
     let verbdesc = verbdescd2.strVal
 
     let (objOn, verb) = obj.getVerbAndObj(verbdesc, all)
-    if verb == nil:
+    if isNil(verb):
       if die:
         runtimeError(E_VERBNF, "verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
       else:
@@ -410,7 +410,7 @@ defBuiltin "setprop":
   let prop = extractString(args[1])
   var oldProp = obj.getProp(prop, all = false)
 
-  if oldProp == nil:
+  if isNil(oldProp):
     owner.checkWrite(obj)
     discard obj.setProp(prop, newVal)
     world.persist(obj)
@@ -599,7 +599,7 @@ defBuiltin "delverb":
 
   let (obj, verb) = getVerbOn(args[0], args[1])
 
-  if verb == nil or verb.inherited:
+  if isNil(verb) or verb.inherited:
     runtimeError(E_VERBNF, "$1 does not define a verb $2" % [obj.toObjStr, $args[1]])
 
   discard obj.delVerb(verb)
@@ -685,7 +685,7 @@ defBuiltin "move":
 
     var conductor = dest
 
-    while conductor != nil:
+    while not isNil(conductor):
       if conductor == what:
         runtimeError(E_RECMOVE, "moving $1 to $2 is recursive" % [what.toObjStr(), dest.toObjStr()])
       let loc = conductor.getLocation()
@@ -693,7 +693,7 @@ defBuiltin "move":
         break
       conductor = loc
 
-    if oldLoc == nil:
+    if isNil(oldLoc):
       phase += 1
     else:
       let failure = isNil(oldLoc.verbCall("exitfunc", caller, @[what.md], callback = task.id))
@@ -707,7 +707,7 @@ defBuiltin "move":
 
     world.persist(what)
     world.persist(dest)
-    if oldLoc != nil:
+    if not isNil(oldLoc):
       world.persist(oldLoc)
 
     if not moveSucceeded:
@@ -933,7 +933,7 @@ defBuiltin "valid":
   let objd = args[0]
   checkType(objd, dObj)
   let obj = world.dataToObj(objd)
-  if obj == nil:
+  if isNil(obj):
     return 0.md.pack
   else:
     return 1.md.pack
@@ -1528,7 +1528,7 @@ defBuiltin "pass":
       return nilD.pack
     let self = extractObject(selfd)
 
-    if parent == nil or parent == holder:
+    if isNil(parent) or parent == holder:
       return nilD.pack
 
     let verbd = symtable["verb"]
@@ -1538,7 +1538,7 @@ defBuiltin "pass":
 
     let verb = parent.getVerb(verbName)
 
-    if verb == nil:
+    if isNil(verb):
       runtimeError(E_VERBNF, "Pass failed, verb is not inherited.")
 
     discard self.verbCallRaw(verb, owner, args,

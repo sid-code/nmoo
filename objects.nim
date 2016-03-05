@@ -62,7 +62,7 @@ proc toObjStr*(objd: MData, world: World): string =
   ## Converts MData holding objects into strings
   let
     obj = world.dataToObj(objd)
-  if obj == nil:
+  if isNil(obj):
     return "Invalid object ($1)" % $objd
   else:
     return obj.toObjStr()
@@ -76,7 +76,7 @@ proc getPropAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, p
 
   if all:
     let parent = obj.parent
-    if parent != nil and parent != obj:
+    if not isNil(parent) and parent != obj:
       return parent.getPropAndObj(name, all)
 
   return (nil, nil)
@@ -86,7 +86,7 @@ proc getProp*(obj: MObject, name: string, all = true): MProperty =
 
 proc setPropChildCopy*(obj: MObject, name: string, newVal: bool): bool =
   var prop = obj.getProp(name)
-  if prop != nil:
+  if not isNil(prop):
     prop.copyVal = newVal
     return true
   else:
@@ -94,14 +94,14 @@ proc setPropChildCopy*(obj: MObject, name: string, newVal: bool): bool =
 
 proc getPropVal*(obj: MObject, name: string, all = true): MData =
   var res = obj.getProp(name, all)
-  if res == nil:
+  if isNil(res):
     nilD
   else:
     res.val
 
 proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
   var p = obj.getProp(name, all = false)
-  if p == nil:
+  if isNil(p):
     p = newProperty(
       name = name,
       val = newVal,
@@ -129,7 +129,7 @@ proc setPropRec*(obj: MObject, name: string, newVal: MData,
   newSeq(result, 0)
 
   if recursed: # If we're recursing, then it may not be necessary
-    if obj.getProp(name) != nil:
+    if not isNil(obj.getProp(name)):
       return
 
   var prop = obj.setProp(name, newVal)
@@ -159,12 +159,12 @@ proc getOwnProps*(obj: MObject): seq[string] =
   for prop in obj.props:
     if obj.parent != obj:
       let name = prop.name
-      if obj.parent.getProp(name) == nil:
+      if isNil(obj.parent.getProp(name)):
         result.add(name)
 
 proc getLocation*(obj: MObject): MObject =
   let world = obj.getWorld()
-  if world == nil: return nil
+  if isNil(world): return nil
 
   let loc = obj.getPropVal("location")
 
@@ -185,7 +185,7 @@ proc getRawContents(obj: MObject): tuple[hasContents: bool, contents: seq[MData]
 
 proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]] =
   let world = obj.getWorld()
-  if world == nil: return (false, @[])
+  if isNil(world): return (false, @[])
 
   var res: seq[MObject] = @[]
 
@@ -226,7 +226,7 @@ proc removeFromContents*(obj: MObject, member: MObject): bool =
 
 proc moveTo*(obj: MObject, newLoc: MObject): bool =
   var loc = obj.getLocation()
-  if loc != nil:
+  if not isNil(loc):
     discard loc.removeFromContents(obj)
 
   if newLoc.addToContents(obj):
@@ -283,7 +283,7 @@ proc setGlobal*(world: World, key: string, value: MData) =
 
 proc getGlobal*(world: World, key: string): MData =
   let prop = world.verbObj.getProp(key)
-  if prop == nil:
+  if isNil(prop):
     nilD
   else:
     prop.val
@@ -292,7 +292,7 @@ proc changeParent*(obj: MObject, newParent: MObject) =
   if not newParent.fertile:
     return
 
-  if obj.parent != nil:
+  if not isNil(obj.parent):
     # delete currently inherited properties
     obj.props.keepItIf(not it.inherited)
 
@@ -420,7 +420,7 @@ proc checkNowhere(world: World) =
 
   let nowhere = world.dataToObj(nowhered)
 
-  if nowhere.getProp("contents") == nil:
+  if isNil(nowhere.getProp("contents")):
     raise newException(InvalidWorldError, "the $nowhere object needs to have contents")
 
 proc checkPlayer(world: World) =
@@ -429,11 +429,11 @@ proc checkPlayer(world: World) =
 
   let player = world.dataToObj(playerd)
 
-  if player.getProp("contents") == nil:
+  if isNil(player.getProp("contents")):
     raise newException(InvalidWorldError, "the $player object needs to have contents")
 
 proc checkObjectHierarchyHelper(world: World, root: MObject) =
-  root.children.keepItIf(it != nil)
+  root.children.keepItIf(not isNil(it))
   for child in root.children:
     if child != root:
       world.checkObjectHierarchyHelper(child)

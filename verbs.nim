@@ -203,7 +203,7 @@ proc getVerbAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, v
 
   if all:
     let parent = obj.parent
-    if parent != nil and parent != obj:
+    if not isNil(parent) and parent != obj:
       return parent.getVerbAndObj(name, all)
 
   return (nil, nil)
@@ -238,7 +238,7 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
   var searchSpace = obj.getVicinity()
 
   var world = obj.getWorld()
-  doAssert(world != nil)
+  doAssert(not isNil(world))
   searchSpace.add(world.getVerbObj())
 
   for o in searchSpace:
@@ -258,9 +258,9 @@ proc verbCallRaw*(self: MObject, verb: MVerb, caller: MObject,
     world = caller.getWorld()
     symtable = symtable
 
-  var holder = if holder == nil: self else: holder
+  var holder = if isNil(holder): self else: holder
 
-  doAssert(world != nil)
+  doAssert(not isNil(world))
 
   symtable["caller"] = caller.md
   symtable["args"] = args.md
@@ -391,7 +391,7 @@ proc handleCommand*(player: MObject, command: string): Task =
     return nil
 
   let location = world.dataToObj(locationd)
-  if location.verbCall("huh", player, @[originalCommand.md], taskType = ttInput) == nil:
+  if isNil(location.verbCall("huh", player, @[originalCommand.md], taskType = ttInput)):
     player.send("Huh?")
 
   return nil

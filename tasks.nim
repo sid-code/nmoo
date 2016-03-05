@@ -391,7 +391,7 @@ proc finish(task: Task) =
 
   if callback >= 0:
     let cbTask = task.world.getTaskByID(callback)
-    if cbTask != nil:
+    if not isNil(cbTask):
       cbTask.tickCount += task.tickCount
       cbTask.status = tsRunning
       if res.isType(dErr):
