@@ -1,7 +1,7 @@
 import nake
 
 const
-  defaultOptions = "--verbosity:0 --hint[XDeclaredButNotUsed]:off"
+  defaultOptions = ""
   mainDeps =
     @[
       "types",
