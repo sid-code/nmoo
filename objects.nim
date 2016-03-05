@@ -326,14 +326,15 @@ import tasks
 # whether to flush all output.  This is done when an input tasks finishes.
 proc tick*(world: World) =
   for idx, task in world.tasks:
+
+    if task.status == tsDone:
+      if defined(showTicks):
+        echo "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
+      system.delete(world.tasks, idx)
+
     if not task.isRunning(): continue
     try:
       task.step()
-      if task.status == tsDone:
-        if defined(showTicks):
-          echo "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
-        system.delete(world.tasks, idx)
-
       if task.status != tsRunning:
         server.taskFinished(task)
     except:
