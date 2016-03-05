@@ -152,7 +152,6 @@ proc toData(image: string): MData =
     else:
       return image.mds
 
-
 proc toData(token: Token): MData =
   if token.ttype != ATOM_TOK: return nilD
   var data = token.image.toData()

@@ -1,4 +1,4 @@
-import types, objects, verbs, scripting, os, sequtils, strutils, marshal, tables
+import types, objects, verbs, scripting, os, sequtils, strutils, marshal, tables, logging
 from scripting import toCodeStr
 
 # object format:
@@ -183,7 +183,10 @@ proc readVerb(world: World, stream: File): MVerb =
     code &= curLine & "\n"
     curLine = stream.readLine()
 
-  result.setCode(code)
+  try:
+    result.setCode(code)
+  except:
+    warn "A verb called \"" & result.names & "\" failed to compile."
 
   result.owner = readObjectID(world, stream)
 
@@ -346,7 +349,9 @@ proc loadWorld*(name: string): World =
   readObjectCount(result, objcountFile)
   objcountFile.close()
 
+  var objectCount = 0
   for fileName in walkFiles(dir / "*"):
+    objectCount += 1
     let
       obj = blankObject()
       (p, fname) = splitPath(fileName)
@@ -362,6 +367,7 @@ proc loadWorld*(name: string): World =
       setLen(objs[], id * 2)
 
     objs[id] = obj
+  info "Read " & $objectCount & " objects from disk."
 
   setLen(objs[], maxid + 1)
 
@@ -371,13 +377,16 @@ proc loadWorld*(name: string): World =
     file.close()
 
   let taskdir = getTaskDir(name)
+  var taskCount = 0
   for fileName in walkFiles(taskdir / "*"):
+    taskCount += 1
     let file = open(fileName, fmRead)
     readTask(result, file)
     file.close()
 
     # tasks are ephemeral
     removeFile(fileName)
+  info "Read " & $taskCount & " tasks from disk."
 
   result.verbObj = objs[0]
 
