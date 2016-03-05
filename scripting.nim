@@ -48,6 +48,7 @@ proc lex*(code: string): seq[Token] =
     curToken = Token(ttype: ATOM_TOK, image: "")
     curWord = ""
     strMode = false
+    commentMode = false
     skipNext = false
 
     pos: CodePosition = (1, 1)
@@ -67,7 +68,9 @@ proc lex*(code: string): seq[Token] =
           curWord &= $c
 
         if skipNext: skipNext = false
-
+    elif commentMode:
+      if c == "\n"[0]:
+        commentMode = false
     else:
       if c in Whitespace:
         addword()
@@ -90,6 +93,9 @@ proc lex*(code: string): seq[Token] =
       elif c == '"':
         curWord = "\""
         strMode = true
+      elif c == ';':
+        addword()
+        commentMode = true
       else:
         curWord &= $c
 
