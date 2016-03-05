@@ -121,7 +121,8 @@ type
     E_QUOTA,
 
     E_INTERNAL,
-    E_PARSE
+    E_PARSE,
+    E_COMPILE
 
   SymbolTable* = Table[string, MData]
   BuiltinProc* = proc(args: seq[MData], world: World,
