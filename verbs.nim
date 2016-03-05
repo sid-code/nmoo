@@ -280,8 +280,9 @@ proc verbCall*(owner: MObject, name: string, caller: MObject,
   return nil
 
 proc setCode*(verb: MVerb, newCode: string) =
+  let compiled = compileCode(newCode)
+  verb.compiled = compiled
   verb.code = newCode
-  verb.compiled = compileCode(newCode)
 
 proc preprocess(command: string): string =
   if command[0] == '(':
