@@ -632,6 +632,9 @@ defBuiltin "setverbcode":
   except MParseError:
     let msg = getCurrentExceptionMsg()
     runtimeError(E_PARSE, "code failed to parse: $1" % msg)
+  except MCompileError:
+    let msg = getCurrentExceptionMsg()
+    runtimeError(E_COMPILE, msg)
 
 defBuiltin "getverbcode":
   if args.len != 2:
