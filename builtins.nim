@@ -670,9 +670,7 @@ defBuiltin "move":
 
     checkOwn(owner, what)
 
-    let whatlist = @[what.md]
-
-    let failure = isNil(dest.verbCall("accept", caller, whatlist, callback = task.id))
+    let failure = isNil(dest.verbCall("accept", caller, @[what.md], callback = task.id))
     if failure: # We were not able to call the verb
       runtimeError(E_FMOVE, "$1 didn't accept $2" % [dest.toObjStr(), what.toObjStr()])
 
