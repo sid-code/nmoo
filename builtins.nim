@@ -695,10 +695,11 @@ defBuiltin "move":
       phase += 1
     else:
       let failure = isNil(oldLoc.verbCall("exitfunc", caller, @[what.md], callback = task.id))
-      if not failure:
-        return 2.pack
-      else:
+      if failure:
+        # This means the verb didn't exist, but that's not an issue.
         phase += 1
+      else:
+        return 2.pack
 
   if phase == 2:
     var moveSucceeded = what.moveTo(dest)
