@@ -31,6 +31,20 @@ what objects should do.
 
 Don't even try to use this yet (I'll update this when it's usable).
 
+## HTML5 client
+
+I've created a HTML5 client because it makes editing verbs easier than typing
+stuff into raw telnet.
+
+The client makes some assumptions about the server if you want to use the
+client command "vedit" to edit verbs with CodeMirror. These assumptions are
+satisfied in a "core" database that I hope to release soon.
+
+Made possible by [jQuery Terminal][3] and [CodeMirror][4]
+
+  [3]: http://terminal.jcubic.pl/
+  [4]: https://codemirror.net/
+
 ## License
 
 MIT
