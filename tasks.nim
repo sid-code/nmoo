@@ -1,10 +1,13 @@
-import types, compile, scripting, tables, hashes, strutils, objects, sequtils
+import types, compile, scripting, server, tables, hashes, strutils, objects, sequtils
 ## VM (Task)
 
 # Some procs that builtins.nim needs
 proc spush*(task: Task, what: MData) = task.stack.add(what)
 proc spop*(task: Task): MData = task.stack.pop()
 proc isRunning*(task: Task): bool = task.status in {tsRunning, tsReceivedInput}
+proc `status=`*(task: Task, newStatus: TaskStatus) =
+  task.status = newStatus
+  if newStatus != tsRunning: server.taskFinished(task)
 
 import builtins
 
@@ -66,7 +69,7 @@ proc doError*(task: Task, error: MData) =
     return
 
   task.spush(error)
-  task.status = tsDone
+  task.finish()
 
 proc setCallPackage(task: Task, package: Package, builtin: MData, args: seq[MData]) =
   task.hasCallPackage = true
@@ -376,7 +379,7 @@ impl inETRY:
   discard task.curFrame.tries.pop()
 
 impl inHALT:
-  task.status = tsDone
+  task.finish()
 
 proc getTaskByID*(world: World, id: int): Task =
   for task in world.tasks:
@@ -386,6 +389,8 @@ proc getTaskByID*(world: World, id: int): Task =
   return nil
 
 proc finish(task: Task) =
+  task.status = tsDone
+
   let callback = task.callback
   var res = task.top()
 
@@ -407,6 +412,8 @@ proc finish(task: Task) =
   else:
     if res.isType(dErr):
       task.caller.send("Traceback (most recent call first)\n" & $res)
+
+  server.taskFinished(task)
 
 proc doCallPackage(task: Task) =
   let phase = task.callPackage.phase

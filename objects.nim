@@ -1,6 +1,6 @@
 # This file has methods for manipulating objects and their properties
 
-import types, server, sequtils, strutils, tables, logging
+import types, sequtils, strutils, tables, logging
 # NOTE: verbs is imported later on!
 
 proc getProp*(obj: MObject, name: string, all = true): MProperty
@@ -322,8 +322,7 @@ proc createChild*(parent: MObject): MObject =
 
 import tasks
 
-# This proc is called by the server. The return value tells the server
-# whether to flush all output.  This is done when an input tasks finishes.
+# This proc is called by the server
 proc tick*(world: World) =
   for idx, task in world.tasks:
 
@@ -335,8 +334,6 @@ proc tick*(world: World) =
     if not task.isRunning(): continue
     try:
       task.step()
-      if task.status != tsRunning:
-        server.taskFinished(task)
     except:
       let exception = getCurrentException()
       warn exception.repr
