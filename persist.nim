@@ -308,17 +308,26 @@ proc persist*(world: World) =
   let trashDir = getTrashDir(world.name)
   createDir(trashDir)
 
+  var objectCount = 0
   for idx, obj in world.getObjects()[]:
+    objectCount += 1
     if isNil(obj):
       let deadObject = getobjectFile(world.name, idx)
       if fileExists(deadObject):
         moveFile(deadObject, trashDir / $idx)
     else:
       world.persist(obj)
+  info "Wrote " & $objectCount & " objects to disk."
+
   let taskDir = getTaskDir(world.name)
   createDir(taskDir)
+
+  var taskCount = 0
   for task in world.tasks:
+    taskCount += 1
     world.persist(task)
+
+  info "Wrote " & $taskCount & " tasks to disk."
 
   copyDir(dir, oldDir)
   removeDir(dir)
