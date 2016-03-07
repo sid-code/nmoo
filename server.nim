@@ -131,7 +131,6 @@ proc supplyTaskWithInput(client: Client, input: string) =
 # Called whenever a task finishes. This is used to determine when
 # to flush queues/etc
 proc taskFinished*(task: Task) =
-  when defined(debug): echo "Task " & task.name & " entered state " & $task.status & " (TYPE: " & $task.taskType & ")"
   if task.taskType == ttInput:
     let callerClient = findClient(task.caller)
     if isNil(callerClient):
