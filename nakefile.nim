@@ -21,6 +21,7 @@ const
     "server": mainDeps
   }
 
+  srcDir = "src"
   outDir = "bin"
 
 var forceRefresh = false
@@ -32,18 +33,21 @@ task defaultTask, "builds everything":
     let (exe, deps) = info
     runTask(exe)
 
+proc toSource(name: string): string =
+  srcDir / name & ".nim"
+
 proc simpleBuild(name: string, deps: seq[string]) =
   task name, "builds " & name:
-    let sourceFile = name & ".nim"
+    let sourceFile = name.toSource()
     var refresh = false
     for dep in deps:
-      let depName = dep & ".nim"
+      let depName = dep.toSource()
       refresh = refresh or name.needsRefreshH(depName)
 
     refresh = refresh or name.needsRefreshH(sourceFile)
 
     if refresh:
-      if direShell(nimExe, defaultOptions, "--out:" & outDir / name, "c", name):
+      if direShell(nimExe, defaultOptions, "--out:" & outDir / name, "c", name.toSource()):
         echo "success building " & name
     else:
       echo name & " is up to date"
