@@ -442,9 +442,6 @@ proc step*(task: Task) =
     else:
       raise newException(Exception, "instruction '$1' not implemented" % [$itype])
 
-    if task.status == tsDone:
-      task.finish()
-
     task.pc += 1
     task.tickCount += 1
     if task.tickCount >= task.tickQuota:

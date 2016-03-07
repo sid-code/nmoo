@@ -131,16 +131,18 @@ proc supplyTaskWithInput(client: Client, input: string) =
 # Called whenever a task finishes. This is used to determine when
 # to flush queues/etc
 proc taskFinished*(task: Task) =
+  if task.status in {tsDone, tsSuspended}:
+    flushOutAll()
+
   if task.taskType == ttInput:
     let callerClient = findClient(task.caller)
     if isNil(callerClient):
       return
 
-    flushOutAll()
 
     if task.status == tsAwaitingInput:
       discard callerClient.unqueueIn()
-    elif task.status == tsDone and task == callerClient.currentInputTask:
+    elif task.status in {tsDone, tsSuspended} and task == callerClient.currentInputTask:
       callerClient.setInputTask(nil)
       discard callerClient.unqueueIn()
 
