@@ -33,8 +33,8 @@ Don't even try to use this yet (I'll update this when it's usable).
 
 ## HTML5 client
 
-I've created a HTML5 client because it makes editing verbs easier than typing
-stuff into raw telnet.
+I've created a HTML5 client (found in `client/`) because it makes editing verbs
+easier than typing stuff into raw telnet.
 
 The client makes some assumptions about the server if you want to use the
 client command "vedit" to edit verbs with CodeMirror. These assumptions are
