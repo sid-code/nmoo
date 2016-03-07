@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>nmoo WebSocket client</title>
+
+  <script src="./js/vendor/jquery-2.1.0.js"></script>
+
+
+  <script src="./js/vendor/jquery.mousewheel.min.js"></script>
+
+  <script src="./js/vendor/jquery.terminal-0.8.8.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/mode/scheme/scheme.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/addon/edit/matchbrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/keymap/vim.min.js"></script>
+
+  <script src="./js/nmoo-client.js"></script>
+
+
+
+  <link rel="stylesheet" type="text/css" href="./css/jquery.terminal.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.7.0/codemirror.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.12.0/theme/base16-dark.css">
+  <style>
+  body { 
+    background-color: black;
+  }
+
+  .layout-table {
+    margin-top: 40px;
+    margin-left: 50px;
+  }
+     
+
+  #terminal {
+    background-color: #151515;
+    border: 1px solid #BBBBBB;
+    width: 80ch;
+  }
+
+  #terminal .cmd {
+    background-color: #151515;
+  }
+
+  .CodeMirror {
+    border: 1px solid #BBBBBB;
+    width: 500px;
+  }
+
+  td {
+    vertical-align: top;
+  }
+  </style>
+
+
+
+</head>
+
+<body>
+  <table class="layout-table">
+    <tr>
+      <td><div id="terminal"></div></td>
+      <td class="cm-container"></td>
+    </tr>
+  </table>
+
+</body>
+
+
+</html>
