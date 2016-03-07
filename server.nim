@@ -1,6 +1,6 @@
 import types
 # import editserv/editserv
-import asyncnet, asyncdispatch, strutils, net
+import asyncnet, asyncdispatch, strutils, net, times, math
 import logging
 
 proc taskFinished*(task: Task)
@@ -295,9 +295,7 @@ proc cleanUp() =
   world.persist()
 
 proc handler() {.noconv.} =
-  cleanup()
-  info "Exit"
-  quit 0
+  raise newException(Exception, "ctrl c")
 
 proc main =
   clog = newConsoleLogger()
@@ -318,13 +316,28 @@ proc main =
 
   info "Listening for connections (end with ^C)"
 
+  var totalPulses = 0
+  var totalPulseTime = 0.0
+
   try:
     while true:
-      # experimental!
-      for x in 1..100:
+      let beforePulse = epochTime()
+      for x in 1..10000:
         world.tick()
-      poll(1)
+
+      let elapsed = epochTime() - beforePulse
+      totalPulses += 1
+      totalPulseTime += elapsed
+
+      poll(250)
+
+
+  except: discard
   finally:
+    let averagePulseTime = totalPulseTime / totalPulses.float
+    info "Pulsed " & $totalPulses & " times."
+    info "Average pulse time " & $averagePulseTime
+    info "Exit"
     cleanUp()
 
 main()
