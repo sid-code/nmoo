@@ -1,9 +1,10 @@
-*
-!*.*
-!Makefile
-!LICENSE
+bin/*
+nakefile
+nimcache
 
-!bin
+worlds*
+
+!bin/README.md
 
 .*.sw*
 edit.tmp
