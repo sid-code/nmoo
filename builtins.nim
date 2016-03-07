@@ -713,8 +713,13 @@ defBuiltin "move":
       runtimeError(E_FMOVE, "moving $1 to $2 failed (it could already be at $2)" %
             [what.toObjStr(), dest.toObjStr()])
 
-    # Discard because it doesn't really matter what happens now, the move is complete
-    discard dest.verbCall("enterfunc", caller, @[what.md], callback = task.id)
+    let failure = isNil(dest.verbCall("enterfunc", caller, @[what.md], callback = task.id))
+    if failure:
+      phase += 1
+    else:
+      return 3.pack
+
+  if phase == 3:
     return what.md.pack
 
 # (create parent new-owner)
