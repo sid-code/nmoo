@@ -1431,6 +1431,36 @@ defBuiltin "get":
     else:
       runtimeError(E_BOUNDS, "index $1 is out of bounds" % [$index])
 
+# (slice list start [end])
+# takes list and returns a new list of its elements from indices start to end
+# if end < 0, then end is (+ (len list) end)
+# (basically, -x means (x - 1) elements from the end)
+#
+# end defaults to -1
+defBuiltin "slice":
+  var args = args
+  if args.len == 2:
+    args.add((-1).md)
+
+  if args.len != 3:
+    runtimeError(E_ARGS, "slice takes 2 or 3 arguments")
+
+  let list = extractList(args[0])
+  let start = extractInt(args[1])
+  let endv = extractInt(args[2])
+
+  let length = list.len
+
+  if start in 0..length - 1:
+    if endv in 0..length - 1:
+      return list[start..endv].md.pack
+    elif endv in -length..(-1):
+      return list[start..^ -endv].md.pack
+    else:
+      runtimeError(E_BOUNDS, "end index $1 is out of bounds." % [$endv])
+  else:
+    runtimeError(E_BOUNDS, "start index $1 is out of bounds." % [$start])
+
 # (push list new-el)
 # adds to end
 defBuiltin "push":
