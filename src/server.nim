@@ -124,7 +124,7 @@ proc askForInput*(task: Task, client: Client) =
 
 proc supplyTaskWithInput(client: Client, input: string) =
   let task = client.tasksWaitingForInput.pop()
-  when defined(debug): echo "Supplied task " & task.name & " with input."
+  when defined(debug): echo "Supplied task " & task.name & " with input " & input
   task.spush(input.md)
   task.setStatus(tsReceivedInput)
 
