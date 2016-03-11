@@ -118,15 +118,15 @@ proc clearInAll =
 # to be called from the read builtin
 proc askForInput*(task: Task, client: Client) =
   when defined(debug): echo "Task " & task.name & " asked for input!"
-  task.status = tsAwaitingInput
   client.tasksWaitingForInput.add(task)
+  task.setStatus(tsAwaitingInput)
   client.flushOut()
 
 proc supplyTaskWithInput(client: Client, input: string) =
   let task = client.tasksWaitingForInput.pop()
   when defined(debug): echo "Supplied task " & task.name & " with input."
   task.spush(input.md)
-  task.status = tsReceivedInput
+  task.setStatus(tsReceivedInput)
 
 # Called whenever a task finishes. This is used to determine when
 # to flush queues/etc

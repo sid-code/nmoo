@@ -990,7 +990,7 @@ defBuiltin "verbcall":
 
     owner.checkExecute(verb)
 
-    task.status = tsAwaitingResult
+    task.setStatus(tsAwaitingResult)
     discard obj.verbCallRaw(verb, caller, cargs, symtable = symtable, taskType = task.taskType, callback = task.id)
     return 1.pack
   if phase == 1:

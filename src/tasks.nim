@@ -5,7 +5,7 @@ import types, compile, scripting, server, tables, hashes, strutils, objects, seq
 proc spush*(task: Task, what: MData) = task.stack.add(what)
 proc spop*(task: Task): MData = task.stack.pop()
 proc isRunning*(task: Task): bool = task.status in {tsRunning, tsReceivedInput}
-proc `status=`*(task: Task, newStatus: TaskStatus) =
+proc setStatus*(task: Task, newStatus: TaskStatus) =
   task.status = newStatus
   if newStatus != tsRunning: server.taskFinished(task)
 
@@ -77,10 +77,10 @@ proc setCallPackage(task: Task, package: Package, builtin: MData, args: seq[MDat
   task.builtinToCall = builtin
   task.builtinArgs = args
   if task.status == tsRunning:
-    task.status = tsAwaitingResult
+    task.setStatus(tsAwaitingResult)
   elif task.status == tsReceivedInput:
     # already got input and can start again
-    task.status = tsRunning
+    task.setStatus(tsRunning)
 
 proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
   let builtinName = builtin.symVal
@@ -127,7 +127,7 @@ proc top*(task: Task): MData =
     return task.stack[size - 1]
 
 proc foreignLambdaCall(task: Task, symtable: SymbolTable, expression: MData) =
-  task.status = tsAwaitingResult
+  task.setStatus(tsAwaitingResult)
   let instructions = compileCode(expression)
   discard task.world.addTask(
     name = task.name & "-lambda",
@@ -389,7 +389,7 @@ proc getTaskByID*(world: World, id: int): Task =
   return nil
 
 proc finish(task: Task) =
-  task.status = tsDone
+  task.setStatus(tsDone)
 
   let callback = task.callback
   var res = task.top()
@@ -398,7 +398,7 @@ proc finish(task: Task) =
     let cbTask = task.world.getTaskByID(callback)
     if not isNil(cbTask):
       cbTask.tickCount += task.tickCount
-      cbTask.status = tsRunning
+      cbTask.setStatus(tsRunning)
       if res.isType(dErr):
         cbTask.doError(res)
       else:
@@ -425,7 +425,7 @@ proc doCallPackage(task: Task) =
   task.builtinCall(sym, args, phase = phase)
 
   if task.status == tsReceivedInput:
-    task.status = tsRunning
+    task.setStatus(tsRunning)
 
 proc step*(task: Task) =
   if not task.isRunning(): return
