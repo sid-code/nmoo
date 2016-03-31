@@ -1458,6 +1458,8 @@ defBuiltin "slice":
       return list[start..^ -endv].md.pack
     else:
       runtimeError(E_BOUNDS, "end index $1 is out of bounds." % [$endv])
+  elif start == length:
+    return @[].md.pack
   else:
     runtimeError(E_BOUNDS, "start index $1 is out of bounds." % [$start])
 
