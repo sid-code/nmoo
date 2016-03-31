@@ -169,9 +169,11 @@ proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: stri
     of trTooLong:
       world.verbObj.send("The task for #0:handle-new-connection ran for too long!")
 
-proc fixUp(line: string): string =
-  # TODO
-  return line
+proc fixUp(line: var string) =
+  if line[^1] == "\n"[0]:
+    line.setLen(line.len - 1)
+
+  # TODO: add more?
 
 proc processClient(client: Client, address: string) {.async.} =
 
@@ -205,7 +207,7 @@ proc processClient(client: Client, address: string) {.async.} =
 
     when defined(debug): echo "Received " & line
 
-    line = line.fixUp()
+    line.fixUp()
 
     if connected:
       client.queueIn(line)
