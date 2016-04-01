@@ -1,10 +1,8 @@
 bin/*
-nakefile
-nimcache
-
-worlds*
-
 !bin/README.md
 
-.*.sw*
-edit.tmp
+nimcache
+
+nakefile
+
+
