@@ -1,3 +1,4 @@
+var editor;
 
 $(function() {
 
@@ -37,6 +38,13 @@ $(function() {
   term.echo("Type 'connect <host> <port>' to connect");
 
   $(".CodeMirror").focus(function() { term.focus(false); });
+  editor = CodeMirror(document.body, {
+    keyMap: "vim",
+    mode: "scheme",
+    matchBrackets: true,
+    theme: "base16-dark"
+  });
+
 });
 
 function connect(host, port, name, pass, term) {
@@ -66,20 +74,14 @@ function connect(host, port, name, pass, term) {
         capturing = false;
         console.log(capture)
 
-        var editor = CodeMirror(document.body, {
-          keyMap: "vim",
-          mode: "scheme",
-          matchBrackets: true,
-          value: capture,
-          theme: "base16-dark"
-        });
-        
+        $(".cm-container").append($(".CodeMirror"));
+        editor.getDoc().setValue(capture);
+
         CodeMirror.commands.save = function(cm) {
           var data = cm.getValue();
-          $(editor.getWrapperElement()).remove();
+          // $(editor.getWrapperElement()).remove();
           var lines = data.trim().split("\n");
           ssend("@program " + editing);
-          editing = "";
 
           lines.forEach(function(line) {
             ssend(line);
@@ -88,7 +90,6 @@ function connect(host, port, name, pass, term) {
           ssend(".");
         }
 
-        $(".cm-container").append($(".CodeMirror"));
 
       } else {
         capture += line + "\n"
