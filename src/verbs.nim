@@ -248,8 +248,11 @@ iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] 
 
 proc call(verb: MVerb, world: World, holder, caller: MObject,
           symtable: SymbolTable, taskType = ttFunction, callback = -1): Task =
-  let name = "$#:$#" % [holder.toObjStr(), verb.names]
-  return world.addTask(name, verb.owner, caller, symtable, verb.compiled, taskType, callback)
+  if not isNil(verb.compiled.code):
+    let name = "$#:$#" % [holder.toObjStr(), verb.names]
+    return world.addTask(name, verb.owner, caller, symtable, verb.compiled, taskType, callback)
+  else:
+    return nil
 
 proc verbCallRaw*(self: MObject, verb: MVerb, caller: MObject,
                   args: seq[MData], symtable: SymbolTable = newSymbolTable(),
@@ -280,9 +283,9 @@ proc verbCall*(owner: MObject, name: string, caller: MObject,
   return nil
 
 proc setCode*(verb: MVerb, newCode: string) =
+  verb.code = newCode
   let compiled = compileCode(newCode)
   verb.compiled = compiled
-  verb.code = newCode
 
 proc preprocess(command: string): string =
   if command[0] == '(':
