@@ -187,6 +187,7 @@ proc readVerb(world: World, stream: File): MVerb =
     result.setCode(code)
   except:
     warn "A verb called \"" & result.names & "\" failed to compile."
+    warn "Message: " & getCurrentException().msg
 
   result.owner = readObjectID(world, stream)
 
