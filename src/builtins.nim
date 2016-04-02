@@ -46,12 +46,13 @@ template checkForError(value: MData) =
     return value
 
 template runtimeError(error: MError, message: string) =
-  return error.md("line $#, col $#: $#" % [$pos.line, $pos.col, message]).pack
+  return error.md("line $#, col $#: $#: $#" % [$pos.line, $pos.col, bname, message]).pack
 
 template checkType(value: MData, expected: MDataType, ifnot: MError = E_TYPE) =
   if not value.isType(expected):
     runtimeError(ifnot,
-      "expected argument of type " & $expected & " instead got " & $value.dType)
+      "expected argument of type " & $expected &
+      " instead got " & $value.dType)
 
 template checkOwn(obj, what: MObject) =
   if not obj.owns(what):

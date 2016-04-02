@@ -266,6 +266,7 @@ proc toCodeStr*(parsed: MData): string =
 # defining builtins
 
 template defBuiltin*(name: string, body: stmt) {.immediate, dirty.} =
+  template bname: string = name
   scripting.builtins[name] =
     proc (args: seq[MData], world: World, caller, owner: MObject,
           symtable: SymbolTable, pos: CodePosition, phase = 0,
