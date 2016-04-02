@@ -1,7 +1,7 @@
 # Here are all of the builtin functions that verbs can call
 
 import types, objects, verbs, scripting, persist, compile, tasks, querying, server
-import strutils, tables, sequtils, math
+import strutils, tables, sequtils, math, nre, options
 
 # for hashing builtins
 import bcrypt
@@ -1236,6 +1236,33 @@ defBuiltin "index":
     needle = needle.toLower()
 
   return haystack.find(needle).md.pack
+
+# (match str pat)
+# pat is regex
+# if match successful: returns list of capturing groups
+# else: returns nil
+defBuiltin "match":
+  if args.len != 2:
+    runtimeError(E_ARGS, "match takes 2 arguments")
+
+  try:
+    let pat = extractString(args[1])
+    let regex = re(pat.replace(re"%(.)", proc (m: RegexMatch): string =
+      let capt = m.captures[0]
+      if capt == "%":
+        return "%"
+      else:
+        return "\\" & capt))
+    let str = extractString(args[0])
+    let matches = str.match(regex)
+    if matches.isSome:
+      let captures = nre.toSeq(matches.get().captures())
+      return captures.map(md).md.pack
+    else:
+      return nilD.pack
+  except SyntaxError:
+    let msg = getCurrentException().msg
+    runtimeError(E_ARGS, "regex error: " & msg)
 
 # (repeat str times)
 # (repeat "hello" 3) => "hellohellohello"
