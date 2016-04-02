@@ -62,8 +62,15 @@ proc lex*(code: string): seq[Token] =
       elif c == '\\' and not skipNext:
         skipNext = true
       else:
-        if skipNext and c == 'n':
-          curWord &= "\n"
+        if skipNext:
+          if c == 'n':
+            curWord &= "\n"
+          elif c == '"':
+            curWord &= "\""
+          elif c == '\\':
+            curWord &= "\\"
+          else:
+            raise newException(MParseError, "invalid escape \\" & c)
         else:
           curWord &= $c
 
