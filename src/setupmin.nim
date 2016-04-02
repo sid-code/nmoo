@@ -1,8 +1,14 @@
-import types, objects, querying, verbs, persist, builtins
+import types, objects, verbs, persist
 import rdstdin, strutils, os, tables
 
 let args = commandLineParams()
 let name = if args.len == 1: args[0] else: "min"
+
+if existsDir("worlds" / name):
+  stderr.write("error: world " & name & " already exists.\n")
+  stderr.write("Delete " & "worlds" / name & " and re-run this program.\n")
+
+quit(0)
 
 var world = createWorld(name)
 var root = blankObject()
