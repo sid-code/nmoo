@@ -157,10 +157,8 @@ proc delPropRec*(obj: MObject, prop: MProperty):
 proc getOwnProps*(obj: MObject): seq[string] =
   newSeq(result, 0)
   for prop in obj.props:
-    if obj.parent != obj:
-      let name = prop.name
-      if isNil(obj.parent.getProp(name)):
-        result.add(name)
+    let name = prop.name
+    result.add(name)
 
 proc getLocation*(obj: MObject): MObject =
   let world = obj.getWorld()
