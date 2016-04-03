@@ -106,6 +106,9 @@ proc lex*(code: string): seq[Token] =
       else:
         curWord &= $c
 
+  if strMode:
+    raise newException(MParseError, "unterminated string meets end of code")
+
 ## PARSER
 
 proc toData(image: string): MData =
