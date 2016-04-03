@@ -247,11 +247,11 @@ proc getHostAndPort: tuple[host: string, port: Port] =
   if hostd.isType(dStr):
     let host = hostd.strVal
     if not isIpAddress(host):
-      fatal "World specified invalid host $#" % host
+      fatal "World specified invalid host '$#'" % host
       quit 1
     result.host = host
   else:
-    warn "Server doesn't define #0.host, using default host $#" % defaultHost
+    warn "Server doesn't define #0.host, using default host '$#'" % defaultHost
 
   let portd = world.getGlobal("port")
   if portd.isType(dInt):
