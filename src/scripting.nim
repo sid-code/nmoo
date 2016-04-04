@@ -281,19 +281,5 @@ template defBuiltin*(name: string, body: stmt) {.immediate, dirty.} =
     proc (args: seq[MData], world: World, caller, owner: MObject,
           symtable: SymbolTable, pos: CodePosition, phase = 0,
           task: Task = nil): Package =
-      # to provide a simpler call to eval (note the optional args)
-      proc evalD(e: MData, w: World = world, c: MObject = caller,
-                 o: MObject = owner, st: SymbolTable = symtable): MData =
-        return e # Disabled
-
-      proc builtinCall(othername: string, args = args, world = world, caller = caller,
-                       owner = owner, symtable = symtable, pos = pos, phase = phase,
-                       task = task): Package =
-        scripting.builtins[othername](args, world, caller, owner, symtable, pos, phase, task)
-
-      # to avoid "declared but not used" warnings
-      discard evalD
-      discard builtinCall
-
       body
 
