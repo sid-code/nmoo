@@ -1,12 +1,24 @@
-import types
-import asyncnet, asyncdispatch, strutils, net, times, math
+import asyncnet
+import asyncdispatch
+import strutils
+import net
+import times
+import math
 import logging
+
+import types
 
 proc taskFinished*(task: Task)
 proc findClient*(player: MObject): Client
 proc askForInput*(task: Task, client: Client)
+
 var clog*: ConsoleLogger
-import objects, verbs, builtins, persist, tasks
+
+import objects
+import verbs
+import builtins
+import persist
+import tasks
 
 var world: World = nil
 
