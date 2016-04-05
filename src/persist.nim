@@ -275,24 +275,32 @@ proc getObjectCountFile(name: string): string =
   getExtraFile(name, "objcount")
 
 proc persist*(world: World, obj: MObject) =
+  if not world.persistent: return
+
   let fileName = getObjectFile(world.name, obj.getID().int)
   let file = open(fileName, fmWrite)
   file.write(dumpObject(obj))
   file.close()
 
 proc persist*(world: World, task: Task) =
+  if not world.persistent: return
+
   let fileName = getTaskFile(world.name, task.id)
   let file = open(fileName, fmWrite)
   file.write(dumpTask(task))
   file.close()
 
 proc persistObjectCount(world: World) =
+  if not world.persistent: return
+
   let fileName = getObjectCountFile(world.name)
   let file = open(fileName, fmWrite)
   file.write($world.taskIDCounter & "\n")
   file.close()
 
 proc persist*(world: World) =
+  if not world.persistent: return
+
   let oldName = world.name
   let oldDir = getWorldDir(oldName)
   world.name = world.name & ".new"
