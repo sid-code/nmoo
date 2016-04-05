@@ -1,5 +1,4 @@
 import types
-# import editserv/editserv
 import asyncnet, asyncdispatch, strutils, net, times, math
 import logging
 
@@ -345,17 +344,3 @@ proc main =
     cleanUp()
 
 main()
-
-## Old code for editserver
-#
-# let editord = world.getGlobal("editor")
-# if editord.isType(dObj):
-#   let editor = world.dataToObj(editord)
-#   if not isNil(editor):
-#     let eportd = editor.getPropVal("port")
-#     let eport = if eportd.isType(dInt): Port(eportd.intVal) else: Port(port.int + 1)
-#
-#     let eserv = newEditServer(editor)
-#
-#     info "Starting edit server:  host=$1   port=$2" % [host, $eport]
-#     asyncCheck eserv.serve(eport, host)
