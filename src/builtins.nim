@@ -438,7 +438,8 @@ defBuiltin "setprop":
 
   if isNil(oldProp):
     checkWrite(obj)
-    discard obj.setProp(prop, newVal)
+    let newProp = obj.setProp(prop, newVal)
+    newProp.owner = task.owner
     world.persist(obj)
   else:
     checkWrite(oldProp)
