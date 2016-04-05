@@ -1,4 +1,4 @@
-import nake
+import nake/nake
 
 const
   defaultOptions = ""
@@ -23,6 +23,8 @@ const
 
   srcDir = "src"
   outDir = "bin"
+
+  defaultWorldName = "min"
 
 var forceRefresh = false
 proc needsRefreshH(f1, f2: string): bool =
@@ -73,8 +75,15 @@ task "setup", "sets up a minimal world":
   echo "use this world by running \"main\" (nake main && ./main)"
 
 task "serve", "builds and starts the server":
+  let params = commandLineParams()
+  var world: string
+  if params.len < 2:
+    world = defaultWorldName
+  else:
+    world = params[1]
+
   runTask("server")
-  direShell(outDir / "server")
+  direShell(outDir / "server " & world)
 
 for info in exes:
   let (exe, deps) = info

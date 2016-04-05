@@ -5,6 +5,7 @@ import net
 import times
 import math
 import logging
+import os
 
 import types
 
@@ -316,8 +317,18 @@ proc runServer =
   clog = newConsoleLogger()
   addHandler(clog)
 
-  info "Loading world... "
-  world = loadWorld("min")
+  var worldName: string
+  if paramCount() < 1:
+    worldName = "min"
+  else:
+    worldName = paramStr(1)
+  info "Loading world \"$#\"." % paramStr(1)
+
+  if not existsDir("worlds" / worldName):
+    fatal "World \"$#\" doesn't exist." % worldName;
+    quit(1)
+
+  world = loadWorld(worldName)
 
   world.verbObj.output = proc(obj: MObject, msg: string) =
     info "#0: " & msg
