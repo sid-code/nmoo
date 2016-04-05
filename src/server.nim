@@ -300,7 +300,7 @@ proc cleanUp() =
 proc handler() {.noconv.} =
   raise newException(Exception, "ctrl c")
 
-proc main =
+proc runServer =
   clog = newConsoleLogger()
   addHandler(clog)
 
@@ -343,4 +343,5 @@ proc main =
     info "Exit"
     cleanUp()
 
-main()
+when isMainModule:
+  runServer()
