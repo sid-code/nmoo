@@ -560,3 +560,10 @@ suite "evaluator":
 
     result = evalS("(in (1 2 3) 4)")
     assert result.intVal == -1
+
+  test "index statement works":
+    var result = evalS("(index \"abcdefghij\" \"def\")")
+    assert result.intVal == 3
+
+    result = evalS("(index \"abcdefghij\" \"adef\")")
+    assert result.intVal == -1
