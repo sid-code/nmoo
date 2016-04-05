@@ -567,3 +567,10 @@ suite "evaluator":
 
     result = evalS("(index \"abcdefghij\" \"adef\")")
     assert result.intVal == -1
+
+  test "match statement works":
+    var result = evalS("(match \"abcdef\" \"a(%w+)f\")")
+    check result.isType(dList)
+    let captures = result.listVal
+    check captures.len == 1
+    check captures[0] == "bcde".md
