@@ -374,14 +374,14 @@ proc genFold(compiler: MCompiler, fn, default, list: MData,
   emit(ins(inPOP))                  # result
 
 defSpecial "reduce-right":
-  verifyArgs("reduce-right", args, @[dNil, dNil, dNil])
+  verifyArgs("reduce-right", args, @[dNil, dNil])
 
-  compiler.genFold(args[0], args[1], args[2], useDefault = false, right = true, pos = pos)
+  compiler.genFold(args[0], nilD, args[1], useDefault = false, right = true, pos = pos)
 
 defSpecial "reduce-left":
-  verifyArgs("reduce-left", args, @[dNil, dNil, dNil])
+  verifyArgs("reduce-left", args, @[dNil, dNil])
 
-  compiler.genFold(args[0], args[1], args[2], useDefault = false, right = false, pos = pos)
+  compiler.genFold(args[0], nilD, args[1], useDefault = false, right = false, pos = pos)
 
 defSpecial "fold-right":
   verifyArgs("fold-right", args, @[dNil, dNil, dNil])
