@@ -1,8 +1,12 @@
 # When the world handles a command, it needs to resolve strings passed by
 # the player such as "clock" in "get clock". This resolution is done here.
 
-import types, objects
-import sequtils, strutils, tables
+import sequtils
+import strutils
+import tables
+
+import types
+import objects
 
 proc startsWith(s1, s2: string): bool =
   if s1.len < s2.len: return false

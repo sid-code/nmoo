@@ -1,5 +1,13 @@
-import types, objects, verbs, persist
-import rdstdin, strutils, os, tables
+
+import rdstdin
+import strutils
+import os
+import tables
+
+import types
+import objects
+import verbs
+import persist
 
 let args = commandLineParams()
 let name = if args.len == 1: args[0] else: "min"

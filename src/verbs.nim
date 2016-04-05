@@ -1,8 +1,16 @@
 # this file is for everything from command parsing to command handling
 # not just verbs
 
-import types, objects, querying, scripting, compile
-import sequtils, strutils, tables, pegs
+import sequtils
+import strutils
+import tables
+import pegs
+
+import types
+import objects
+import querying
+import scripting
+import compile
 
 type
 

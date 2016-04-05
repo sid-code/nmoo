@@ -1,6 +1,10 @@
 # This file has methods for manipulating objects and their properties
 
-import types, sequtils, strutils, tables, logging
+import types
+import sequtils
+import strutils
+import tables
+import logging
 # NOTE: verbs is imported later on!
 
 proc getProp*(obj: MObject, name: string, all = true): MProperty

@@ -1,5 +1,14 @@
-import types, objects, verbs, scripting, os, sequtils, strutils, marshal, tables, logging
-from scripting import toCodeStr
+import os
+import sequtils
+import strutils
+import marshal
+import tables
+import logging
+
+import types
+import objects
+import verbs
+import scripting
 
 # object format:
 #

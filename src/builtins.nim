@@ -1,7 +1,21 @@
 # Here are all of the builtin functions that verbs can call
 
-import types, objects, verbs, scripting, persist, compile, tasks, querying, server
-import strutils, tables, sequtils, math, nre, options
+import strutils
+import tables
+import sequtils
+import math
+import nre
+import options
+
+import types
+import objects
+import verbs
+import scripting
+import persist
+import compile
+import tasks
+import querying
+import server
 
 # for hashing builtins
 import bcrypt

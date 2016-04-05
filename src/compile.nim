@@ -1,4 +1,9 @@
-import types, scripting, tables, strutils, sequtils
+import tables
+import strutils
+import sequtils
+
+import types
+import scripting
 from algorithm import reversed
 
 proc newCSymTable: CSymTable = initTable[string, int]()

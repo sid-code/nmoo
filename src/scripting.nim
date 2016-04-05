@@ -1,6 +1,12 @@
 # The interpreter of the scripting language used in the system
 
-import types, objects, tables, strutils, math, sequtils
+import tables
+import strutils
+import math
+import sequtils
+
+import types
+import objects
 
 type
   TokenType = enum

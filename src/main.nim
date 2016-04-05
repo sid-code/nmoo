@@ -1,5 +1,17 @@
-import types, objects, querying, verbs, builtins, persist, rdstdin
-import os, strutils, nre, options, tables
+import os
+import strutils
+import nre
+import options
+import tables
+
+import types
+import server
+import objects
+import querying
+import verbs
+import builtins
+import persist
+import rdstdin
 
 let
   world = loadWorld("min")

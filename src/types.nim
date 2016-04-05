@@ -2,7 +2,8 @@
 # It also contains some constructors and utility procs that are used
 # everywhere.
 
-import strutils, tables
+import strutils
+import tables
 from asyncnet import AsyncSocket
 
 type

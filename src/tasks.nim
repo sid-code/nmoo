@@ -1,4 +1,13 @@
-import types, compile, scripting, server, tables, hashes, strutils, objects, sequtils
+import tables
+import hashes
+import strutils
+import objects
+import sequtils
+
+import types
+import compile
+import scripting
+import server
 ## VM (Task)
 
 # Some procs that builtins.nim needs
