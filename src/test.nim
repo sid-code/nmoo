@@ -553,3 +553,10 @@ suite "evaluator":
 
     result = evalS("(setremove (1 2) 3)")
     check result.listVal.len == 2
+
+  test "in statement works":
+    var result = evalS("(in (1 2 3) 3)")
+    assert result.intVal == 2
+
+    result = evalS("(in (1 2 3) 4)")
+    assert result.intVal == -1
