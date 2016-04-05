@@ -63,7 +63,7 @@ task "clean", "removes executables":
 
 task "tests", "run tests":
   runTask("test")
-  direShell("./test")
+  direShell(outDir / "test")
 
 task "setup", "sets up a minimal world":
   runTask("setupmin")
@@ -74,7 +74,7 @@ task "setup", "sets up a minimal world":
 
 task "serve", "builds and starts the server":
   runTask("server")
-  direShell("./bin/server")
+  direShell(outDir / "server")
 
 for info in exes:
   let (exe, deps) = info
