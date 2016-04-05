@@ -54,37 +54,50 @@ template checkType(value: MData, expected: MDataType, ifnot: MError = E_TYPE) =
       "expected argument of type " & $expected &
       " instead got " & $value.dType)
 
-template checkOwn(obj, what: MObject) =
+template isWizardT: bool = isWizard(task.owner)
+template owns(what: MObject): bool = task.owner.owns(what)
+
+template checkOwn(what: MObject) =
+  let obj = task.owner
   if not obj.owns(what):
     runtimeError(E_PERM, obj.toObjStr() & " doesn't own " & what.toObjStr())
 
-template checkOwn(obj: MObject, prop: MProperty) =
+template checkOwn(prop: MProperty) =
+  let obj = task.owner
   if not obj.owns(prop):
     runtimeError(E_PERM, obj.toObjStr() & " doesn't own " & prop.name)
 
-template checkOwn(obj: MObject, verb: MVerb) =
+template checkOwn(verb: MVerb) =
+  let obj = task.owner
   if not obj.owns(verb):
     runtimeError(E_PERM, obj.toObjStr() & " doesn't own " & verb.name)
 
-template checkRead(obj, what: MObject) =
+template checkRead(what: MObject) =
+  let obj = task.owner
   if not obj.canRead(what):
     runtimeError(E_PERM, obj.toObjStr() & " cannot read " & what.toObjStr())
-template checkWrite(obj, what: MObject) =
+template checkWrite(what: MObject) =
+  let obj = task.owner
   if not obj.canWrite(what):
     runtimeError(E_PERM, obj.toObjStr() & " cannot write " & what.toObjStr())
-template checkRead(obj: MObject, what: MProperty) =
+template checkRead(what: MProperty) =
+  let obj = task.owner
   if not obj.canRead(what):
     runtimeError(E_PERM, obj.toObjStr() & " cannot read property: " & what.name)
-template checkWrite(obj: MObject, what: MProperty) =
+template checkWrite(what: MProperty) =
+  let obj = task.owner
   if not obj.canWrite(what):
     runtimeError(E_PERM, obj.toObjStr() & " cannot write property: " & what.name)
-template checkRead(obj: MObject, what: MVerb) =
+template checkRead(what: MVerb) =
+  let obj = task.owner
   if not obj.canRead(what):
     runtimeError(E_PERM, obj.toObjStr() & " cannot read verb: " & what.names)
-template checkWrite(obj: MObject, what: MVerb) =
+template checkWrite(what: MVerb) =
+  let obj = task.owner
   if not obj.canWrite(what):
     runtimeError(E_PERM, obj.toObjStr() & " cannot write verb: " & what.names)
-template checkExecute(obj: MObject, what: MVerb) =
+template checkExecute(what: MVerb) =
+  let obj = task.owner
   if not obj.canExecute(verb):
     runtimeError(E_PERM, obj.toObjStr() & " cannot execute verb: " & what.names)
 
@@ -112,7 +125,7 @@ defBuiltin "notify":
   let who = extractObject(args[0])
   let msg = extractString(args[1])
 
-  if owner != who and not owner.isWizard:
+  if task.owner != who and not isWizardT():
     runtimeError(E_PERM, "$# cannot notify $#" % [$owner, $who])
 
   who.send(msg)
@@ -150,6 +163,18 @@ defBuiltin "eval":
   if phase == 1:
     return args[1].pack
 
+defBuiltin "settaskperms":
+  if args.len != 1:
+    runtimeError(E_ARGS, "settaskperms takes 1 argument")
+
+  let newPerms = extractObject(args[0])
+  if not isWizardT() and task.owner != newPerms:
+    runtimeError(E_PERM, "$# can't set task perms to $#" %
+                  [task.owner.toObjStr(), newPerms.toObjStr()])
+
+  task.owner = newPerms
+  return newPerms.md.pack
+
 # (read [player])
 defBuiltin "read":
   if phase == 0:
@@ -162,7 +187,7 @@ defBuiltin "read":
       else:
         runtimeError(E_ARGS, "read takes 0 or 1 arguments")
 
-    if not caller.isWizard() and who != caller:
+    if not isWizardT() and who != caller:
       runtimeError(E_PERM, "you don't have permission to read from that connection")
 
     let client = findClient(who)
@@ -394,7 +419,7 @@ defBuiltin "getprop":
                                  useDefault = useDefault)
   discard obj
 
-  checkRead(owner, propObj)
+  checkRead(propObj)
 
   return propObj.val.pack
 
@@ -412,11 +437,11 @@ defBuiltin "setprop":
   var oldProp = obj.getProp(prop, all = false)
 
   if isNil(oldProp):
-    owner.checkWrite(obj)
+    checkWrite(obj)
     discard obj.setProp(prop, newVal)
     world.persist(obj)
   else:
-    owner.checkWrite(oldProp)
+    checkWrite(oldProp)
     oldProp.val = newVal
     world.persist(obj)
 
@@ -448,7 +473,7 @@ defBuiltin "getpropinfo":
   let (obj, propObj) = getPropOn(args[0], args[1])
   discard obj
 
-  checkRead(owner, propObj)
+  checkRead(propObj)
 
   return extractInfo(propObj).pack
 
@@ -463,7 +488,7 @@ defBuiltin "setpropinfo":
 
   let (obj, propObj) = getPropOn(args[0], args[1])
 
-  checkWrite(owner, propObj)
+  checkWrite(propObj)
 
   # validate the property info
   let
@@ -485,7 +510,7 @@ defBuiltin "props":
   let objd = args[0]
   let obj = extractObject(objd)
 
-  checkRead(owner, obj)
+  checkRead(obj)
 
   let res = obj.getOwnProps().map(md)
 
@@ -500,7 +525,7 @@ defBuiltin "verbs":
   let objd = args[0]
   let obj = extractObject(objd)
 
-  checkRead(owner, obj)
+  checkRead(obj)
 
   var res: seq[MData] = @[]
   for v in obj.verbs:
@@ -516,7 +541,7 @@ defBuiltin "getverbinfo":
 
   let (obj, verb) = getVerbOn(args[0], args[1])
   discard obj
-  checkRead(owner, verb)
+  checkRead(verb)
 
   return extractInfo(verb).pack
 
@@ -526,7 +551,7 @@ defBuiltin "setverbinfo":
     runtimeError(E_ARGS, "setverbinfo takes 3 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
-  checkWrite(owner, verb)
+  checkWrite(verb)
 
   let verbInfo = extractList(args[2])
 
@@ -543,7 +568,7 @@ defBuiltin "getverbargs":
 
   let (obj, verb) = getVerbOn(args[0], args[1])
   discard obj
-  checkRead(owner, verb)
+  checkRead(verb)
 
   return extractArgs(verb).pack
 
@@ -553,7 +578,7 @@ defBuiltin "setverbargs":
     runtimeError(E_ARGS, "setverbargs takes 3 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
-  checkWrite(owner, verb)
+  checkWrite(verb)
 
   let verbArgs = extractList(args[2])
 
@@ -622,7 +647,7 @@ defBuiltin "setverbcode":
     runtimeError(E_ARGS, "setverbcode takes 3 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
-  checkWrite(owner, verb)
+  checkWrite(verb)
 
   let newCode = extractString(args[2])
 
@@ -644,7 +669,7 @@ defBuiltin "getverbcode":
   let (obj, verb) = getVerbOn(args[0], args[1])
   discard obj
 
-  checkRead(owner, verb)
+  checkRead(verb)
 
   return verb.code.md.pack
 
@@ -669,7 +694,7 @@ defBuiltin "move":
     if args.len != 2:
       runtimeError(E_ARGS, "move takes 2 arguments")
 
-    checkOwn(owner, what)
+    checkOwn(what)
 
     let failure = isNil(dest.verbCall("accept", caller, @[what.md], callback = task.id))
     if failure: # We were not able to call the verb
@@ -739,12 +764,12 @@ defBuiltin "create":
   if alen == 2:
     newOwner = extractObject(args[1])
 
-    if newOwner != owner and not owner.isWizard():
+    if newOwner != owner and not isWizardT():
       runtimeError(E_PERM, "non-wizards can only set themselves as the owner of objects")
   else:
     newOwner = owner
 
-  if not parent.fertile and (owner.owns(parent) or owner.isWizard()):
+  if not parent.fertile and (owns(parent) or isWizardT()):
     runtimeError(E_PERM, "$1 is not fertile" % [parent.toObjStr()])
 
   # TODO: Quotas
@@ -767,7 +792,8 @@ defBuiltin "create":
 # returns obj's level
 # 0 = wizard
 # 1 = programmer
-# 2 = regular
+# 2 = builder
+# 3 = regular
 defBuiltin "level":
   if args.len != 1:
     runtimeError(E_ARGS, "level takes 1 argument")
@@ -785,7 +811,7 @@ defBuiltin "setlevel":
   let obj = extractObject(args[0])
   let newLevel = extractInt(args[1])
 
-  if not owner.isWizard():
+  if not isWizardT():
     runtimeError(E_PERM, "only wizards can set level")
 
   if newLevel > 3 or newLevel < 0:
@@ -808,7 +834,7 @@ defBuiltin "recycle":
       runtimeError(E_ARGS, "recycle takes 1 argument")
 
     let obj = extractObject(args[0])
-    checkOwn(owner, obj)
+    checkOwn(obj)
 
     let (has, contents) = obj.getContents()
     if has:
@@ -989,7 +1015,7 @@ defBuiltin "verbcall":
 
     let cargs = extractList(args[2])
 
-    owner.checkExecute(verb)
+    checkExecute(verb)
 
     task.setStatus(tsAwaitingResult)
     discard obj.verbCallRaw(verb, caller, cargs, symtable = symtable, taskType = task.taskType, callback = task.id)
