@@ -344,6 +344,7 @@ proc blankObject*: MObject =
     owner: nil,
     parent: nil,
     children: @[],
+    level: 3,
     pubRead: true,
     pubWrite: false,
     fertile: true,
