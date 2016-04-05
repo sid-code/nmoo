@@ -29,7 +29,31 @@ what objects should do.
 
 ## Using
 
-Don't even try to use this yet (I'll update this when it's usable).
+This project requires the nimble package `bcrypt`. You can type `nimble install
+bcrypt` to install it. The other dependency is `nake`, but since the nimble
+package doesn't have all the required features, the code for nake is included
+as a submodule. That's why when you clone this repository, you need to use the
+`--recursive` flag:
+
+```
+$ git clone https://github.com/sid-code/nmoo --recursive
+```
+
+First, you need to compile the nakefile:
+
+```
+$ nim c nakefile.nim
+```
+
+Then you can run the tests:
+
+```
+$ ./nakefile tests
+```
+
+That's about it for now. I'm working on getting a minimal world set up that can
+be used to build upon or just showcase the features. Before that, the server and
+other programs are useless.
 
 ## HTML5 client
 
