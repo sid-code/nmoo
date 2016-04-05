@@ -539,3 +539,17 @@ suite "evaluator":
   test "get statement works":
     var result = evalS("(get (1 2 3) 1)")
     check result == 2.md
+
+  test "setadd statement works":
+    var result = evalS("(setadd (1 2 3) 2)")
+    check result.listVal.len == 3
+
+    result = evalS("(setadd (1 2) 3)")
+    check result.listVal.len == 3
+
+  test "setremove statement works":
+    var result = evalS("(setremove (1 2 3) 2)")
+    check result.listVal.len == 2
+
+    result = evalS("(setremove (1 2) 3)")
+    check result.listVal.len == 2
