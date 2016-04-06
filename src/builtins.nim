@@ -46,6 +46,9 @@ template extractSymbol(d: MData): string =
 template extractList(d: MData): seq[MData] =
   checkType(d, dList)
   d.listVal
+template extractError(d: MData): tuple[e: MError, s: string] =
+  checkType(d, dErr)
+  (d.errVal, d.errMsg)
 
 template extractObject(objd: MData): MObject =
   checkType(objd, dObj)
