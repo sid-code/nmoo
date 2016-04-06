@@ -232,6 +232,17 @@ defBuiltin "err":
   err.errMsg = msg
   return err.pack
 
+# (erristype err E_WHATEVER)
+# Checks whether err has error type E_WHATEVER
+defBuiltin "erristype":
+  if args.len != 2:
+    runtimeError(E_ARGS, "erristype takes 2 arguments")
+
+  var (err, msg) = extractError(args[0])
+  var (err2, msg2) = extractError(args[1])
+
+  return if err == err2: 1.md.pack else: 0.md.pack
+
 proc extractInfo(prop: MProperty): MData =
   var res: seq[MData] = @[]
   res.add(prop.owner.md)
