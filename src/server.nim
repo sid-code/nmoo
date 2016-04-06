@@ -322,7 +322,7 @@ proc runServer =
     worldName = "min"
   else:
     worldName = paramStr(1)
-  info "Loading world \"$#\"." % paramStr(1)
+  info "Loading world \"$#\"." % worldName
 
   if not existsDir("worlds" / worldName):
     fatal "World \"$#\" doesn't exist." % worldName;
