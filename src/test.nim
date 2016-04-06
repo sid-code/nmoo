@@ -341,6 +341,10 @@ suite "evaluator":
 
     check result == 4.md
 
+  test "errisval statement works":
+    var result = evalS("(try (+ a b) ((erristype error E_UNBOUND) (erristype error E_ARGS)))")
+    check $result == "@[1, 0]"
+
   test "move statement works":
     var genericContainer = root.createChild()
     world.add(genericContainer)
