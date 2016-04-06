@@ -10,8 +10,8 @@ import objects
 
 type
   TokenType = enum
-    OPAREN_TOK, CPAREN_TOK,
-    ATOM_TOK, QUOTE_TOK
+    tokOParen, tokCParen,
+    tokAtom, tokQuote
 
   Token = object
     ttype: TokenType
@@ -39,11 +39,11 @@ proc nextLine(pos: var CodePosition) =
 
 template addtoken {.immediate.} =
   result.add(curToken)
-  curToken = Token(ttype: ATOM_TOK, image: "", pos: pos)
+  curToken = Token(ttype: tokAtom, image: "", pos: pos)
 
 template addword {.immediate.} =
   if curWord.len > 0:
-    curToken.ttype = ATOM_TOK
+    curToken.ttype = tokAtom
     curToken.image = curWord
     addtoken()
     curWord = ""
@@ -51,7 +51,7 @@ template addword {.immediate.} =
 proc lex*(code: string): seq[Token] =
   newSeq(result, 0)
   var
-    curToken = Token(ttype: ATOM_TOK, image: "")
+    curToken = Token(ttype: tokAtom, image: "")
     curWord = ""
     strMode = false
     commentMode = false
@@ -90,17 +90,17 @@ proc lex*(code: string): seq[Token] =
         if c & "" == "\n": # why nim
           pos.nextLine()
       elif c == '\'' and curWord.len == 0:
-        curToken.ttype = QUOTE_TOK
+        curToken.ttype = tokQuote
         curToken.image = "'"
         addtoken()
       elif c == '(':
         addword()
-        curToken.ttype = OPAREN_TOK
+        curToken.ttype = tokOParen
         curToken.image = "("
         addtoken()
       elif c == ')':
         addword()
-        curToken.ttype = CPAREN_TOK
+        curToken.ttype = tokCParen
         curToken.image = ")"
         addtoken()
       elif c == '"':
@@ -169,7 +169,7 @@ proc toData(image: string): MData =
       return image.mds
 
 proc toData(token: Token): MData =
-  if token.ttype != ATOM_TOK: return nilD
+  if token.ttype != tokAtom: return nilD
   var data = token.image.toData()
   data.pos = token.pos
   return data
@@ -210,16 +210,16 @@ proc parseAtom*(parser: var MParser): MData =
   var quote = false
 
   var next = parser.peek()
-  if next.ttype == QUOTE_TOK:
-    quotePos = parser.consume(QUOTE_TOK).pos
+  if next.ttype == tokQuote:
+    quotePos = parser.consume(tokQuote).pos
     next = parser.peek()
     quote = true
 
   case next.ttype:
-    of OPAREN_TOK:
+    of tokOParen:
       result = parser.parseList()
-    of ATOM_TOK:
-      result = parser.consume(ATOM_TOK).toData()
+    of tokAtom:
+      result = parser.consume(tokAtom).toData()
     else:
       raise newException(MParseError, "unexpected token '" & next.image & "'")
 
@@ -231,16 +231,16 @@ proc parseAtom*(parser: var MParser): MData =
 proc parseList*(parser: var MParser): MData =
   var resultL: seq[MData] = @[]
 
-  discard parser.consume(OPAREN_TOK)
+  discard parser.consume(tokOParen)
 
   var next = parser.peek()
-  while next.ttype != CPAREN_TOK:
-    if next.ttype == OPAREN_TOK:
+  while next.ttype != tokCParen:
+    if next.ttype == tokOParen:
       resultL.add(parser.parseList())
     else:
       resultL.add(parser.parseAtom())
     next = parser.peek()
-  discard parser.consume(CPAREN_TOK)
+  discard parser.consume(tokCParen)
 
   # Shorthand syntax: (obj:verb arg1 arg2 ...) => (verbcall obj "verb" (arg1 arg2 ...))
   if resultL.len > 0:
