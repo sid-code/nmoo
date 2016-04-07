@@ -234,7 +234,8 @@ proc readObject(world: World, stream: File) =
   let children = stream.readLine().split(" ")
   for child in children:
     let childID = parseInt(child)
-    obj.children.add(world.byID(childID.id))
+    if childID > 0:
+      obj.children.add(world.byID(childID.id))
 
   obj.props = @[]
   let numProps = readNum(stream)
