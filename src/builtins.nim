@@ -923,7 +923,7 @@ defBuiltin "children":
     runtimeError(E_ARGS, "children takes 1 argument")
 
   let obj = extractObject(args[0])
-  return obj.children.map(proc (x: MObject): MData = x.md).md.pack
+  return obj.children.map(md).md.pack
 
 defBuiltin "setparent":
   if args.len != 2:
