@@ -58,7 +58,7 @@ suite "object tests":
 
     check nowhere.getContents().contents.len == 2
 
-  test "inheritance works":
+  test "property inheritance works":
     var child = root.createChild()
     world.add(child)
     child.setPropR("name", "child")
@@ -67,6 +67,7 @@ suite "object tests":
     world.add(evenMoreChild)
     evenMoreChild.setPropR("rootprop", "no")
 
+    check child.getPropVal("rootprop").strVal != "no"
     child.changeParent(evenMoreChild)
 
     check child.getPropVal("rootprop").strVal == "no"
