@@ -75,6 +75,8 @@ proc lex*(code: string): seq[Token] =
             curWord &= "\""
           elif c == '\\':
             curWord &= "\\"
+          elif c == '\'':
+            curWord &= "'"
           else:
             raise newException(MParseError, "invalid escape \\" & c)
         else:
