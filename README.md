@@ -29,6 +29,9 @@ what objects should do.
 
 ## Using
 
+The tools needed to build this package are [the Nim compiler][5] and the Nim
+package manager, [Nimble][6].
+
 This project requires the nimble package `bcrypt`. You can type `nimble install
 bcrypt` to install it. The other dependency is `nake`, but since the nimble
 package doesn't have all the required features, the code for nake is included
@@ -54,6 +57,9 @@ $ ./nakefile tests
 That's about it for now. I'm working on getting a minimal world set up that can
 be used to build upon or just showcase the features. Before that, the server and
 other programs are useless.
+
+[5]: http://nim-lang.org/ 
+[6]: https://github.com/nim-lang/nimble
 
 ## HTML5 client
 
