@@ -30,13 +30,13 @@ suite "object tests":
   setup:
     var world = createWorld("test", persistent = false)
     var root = blankObject()
+    objects.initializeBuiltinProps(root)
     world.add(root)
     root.owner = root
     root.setPropR("name", "root")
     root.setPropR("aliases", @[])
     root.setPropR("rootprop", "yes")
     check root.setPropChildCopy("rootprop", true)
-
 
     var genericContainer = root.createChild()
     world.add(genericContainer)
@@ -144,6 +144,7 @@ suite "evaluator":
   setup:
     var world = createWorld("test", persistent = false)
     var root = blankObject()
+    initializeBuiltinProps(root)
     root.changeParent(root)
     root.level = 0
     world.add(root)
@@ -278,7 +279,13 @@ suite "evaluator":
 
   test "props statement works":
     var result = evalS("(props #1)", worthy)
-    check ($result == "@[\"name\"]")
+    check "name".md in result.listVal
+    check "owner".md in result.listVal
+    check "location".md in result.listVal
+    check "contents".md in result.listVal
+    check "pubread".md in result.listVal
+    check "pubwrite".md in result.listVal
+    check "fertile".md in result.listVal
 
   test "props checks permissions":
     root.pubRead = false
