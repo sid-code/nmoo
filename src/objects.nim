@@ -20,26 +20,22 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
 proc run*(task: Task, limit: int = 20000): TaskResult
 
 # Builtin property data
-const
-  BuiltinPropertyData = {
-    "name": (dStr, "no name".md),
-    "owner": (dObj, 0.ObjID.md),
-    "location": (dObj, 0.ObjID.md),
-    "contents": (dList, @[].md),
-    "level": (dInt, 3.md),
-    "pubread": (dInt, 1.md),
-    "pubwrite": (dInt, 0.md),
-    "fertile": (dInt, 1.md)
-  }
+var BuiltinPropertyData = initTable[string, MData]()
+BuiltinPropertyData["name"] = "no name".md
+BuiltinPropertyData["owner"] = 0.ObjID.md
+BuiltinPropertyData["location"] = 0.ObjID.md
+BuiltinPropertyData["contents"] = @[].md
+BuiltinPropertyData["level"] = 3.md
+BuiltinPropertyData["pubread"] = 1.md
+BuiltinPropertyData["pubwrite"] = 0.md
+BuiltinPropertyData["fertile"] = 1.md
 
 # Object initialization
 # NOTE: Only pass blank objects to this proc. If not, it will overwrite the
 # values of the built in properties.
-proc initializeBuiltinProps(obj: MObject) =
-  for propName, data in BuiltinPropertyData.pairs:
-    let (valueType, defaultValue) = data
-    discard valueType
-    discard obj.setProp(propName, defaultValue)
+proc initializeBuiltinProps*(obj: MObject) =
+  for propName, value in BuiltinPropertyData.pairs:
+    discard obj.setProp(propName, value)
 
 # The following are convenience procs to ease the transition from
 # no builtin properties to builtin properties.
@@ -175,8 +171,8 @@ proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
     obj.props.add(p)
   else:
     if BuiltinPropertyData.hasKey(name):
-      let (valueType, defaultValue) = BuiltinPropertyData[name]
-      if not newVal.isType(valueType):
+      let defaultValue = BuiltinPropertyData[name]
+      if not newVal.isType(defaultValue.dtype):
         p.val = defaultValue
       else:
         p.val = newVal
