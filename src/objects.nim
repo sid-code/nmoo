@@ -494,12 +494,15 @@ proc checkBuiltinProperties(world: World) =
     for propName, defaultValue in BuiltinPropertyData.pairs:
       let prop = obj.getProp(propName)
       if isNil(prop):
-        let msg = "$# needs to have property $#"
-        raise newException(InvalidWorldError, msg % [$obj.md, propName])
-      let val = prop.val
-      if not val.isType(defaultValue.dtype):
-        let msg = "$#.$# needs to be of type $# (it was $#)"
-        raise newException(InvalidWorldError, msg % [$obj, propName, $val.dtype, $defaultValue.dtype])
+        let msg = "$# needs to have property $#. It will be set to the default value $#."
+        warn msg % [$obj.md, propName, $defaultValue]
+        discard obj.setProp(propName, defaultValue)
+      else:
+        let val = prop.val
+        if not val.isType(defaultValue.dtype):
+          let msg = "$#.$# needs to be of type $# (it was $#). It will be set to the default value $#."
+          warn msg % [$obj, propName, $val.dtype, $defaultValue.dtype, $defaultValue]
+          discard obj.setProp(propName, defaultValue)
 
 # This checks if the world is fit to be used
 proc check*(world: World) =
