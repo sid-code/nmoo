@@ -329,6 +329,11 @@ proc runServer =
     quit(1)
 
   world = loadWorld(worldName)
+  try:
+    world.check()
+  except InvalidWorldError:
+    let exception = getCurrentException()
+    warn "Invalid world: " & exception.msg & "."
 
   world.verbObj.output = proc(obj: MObject, msg: string) =
     info "#0: " & msg
