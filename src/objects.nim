@@ -173,30 +173,17 @@ proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
     if BuiltinPropertyData.hasKey(name):
       let defaultValue = BuiltinPropertyData[name]
       if not newVal.isType(defaultValue.dtype):
+        let msg = "Cannot set $#.$# to $#, only to a value of type $#"
+        e.errVal = E_ARGS
+        e.errMsg =  msg % [$obj.md, name, $newVal, $defaultValue.dtype]
         p.val = defaultValue
       else:
         p.val = newVal
 
-  return p
+  return (p, e)
 
 template setPropR*(obj: MObject, name: string, newVal: expr) =
   discard obj.setProp(name, newVal.md)
-
-proc setPropRec*(obj: MObject, name: string, newVal: MData,
-                 recursed: bool = false):
-                 seq[tuple[o: MObject, p: MProperty]] =
-  newSeq(result, 0)
-
-  if recursed: # If we're recursing, then it may not be necessary
-    if not isNil(obj.getProp(name)):
-      return
-
-  var prop = obj.setProp(name, newVal)
-
-  result.add((obj, prop))
-
-  for child in obj.children:
-    result.add(child.setPropRec(name, newVal, true))
 
 proc delProp*(obj: MObject, prop: MProperty): MProperty =
   for idx, pr in obj.props:
