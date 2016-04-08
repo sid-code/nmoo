@@ -1,4 +1,5 @@
 import os
+import streams
 import sequtils
 import strutils
 import marshal
@@ -132,11 +133,11 @@ proc dumpTask(task: Task): string =
   task.owner = owner
   task.world = world
 
-proc readNum(stream: File): int =
+proc readNum(stream: FileStream): int =
   let line = stream.readLine().strip()
   return parseInt(line)
 
-proc readData(stream: File): MData =
+proc readData(stream: FileStream): MData =
   let line = stream.readLine().strip()
   var parser = newParser(line)
 
@@ -146,7 +147,7 @@ proc readData(stream: File): MData =
 
   return res[0]
 
-proc readObjectID(world: World, stream: File, default: MObject = nil):
+proc readObjectID(world: World, stream: FileStream, default: MObject = nil):
                   MObject =
   var default = default
   if isNil(default):
@@ -159,7 +160,7 @@ proc readObjectID(world: World, stream: File, default: MObject = nil):
   result = world.byID(id.id)
   return if isNil(result): default else: result
 
-proc readProp(world: World, stream: File): MProperty =
+proc readProp(world: World, stream: FileStream): MProperty =
   result = newProperty(
     name = "",
     val = nilD,
@@ -178,7 +179,7 @@ proc readProp(world: World, stream: File): MProperty =
 
   doAssert(stream.readLine().strip() == ".")
 
-proc readVerb(world: World, stream: File): MVerb =
+proc readVerb(world: World, stream: FileStream): MVerb =
   result = newVerb(
     names = "",
     owner = nil
@@ -214,7 +215,7 @@ proc readVerb(world: World, stream: File): MVerb =
 
   doAssert(stream.readLine().strip() == ".")
 
-proc readObject(world: World, stream: File) =
+proc readObject(world: World, stream: FileStream) =
   let id = readNum(stream).id
   var obj = world.byID(id)
 
@@ -249,14 +250,14 @@ proc readObject(world: World, stream: File) =
 
   obj.world = world
 
-proc readTask(world: World, stream: File) =
+proc readTask(world: World, stream: FileStream) =
   let task = to[Task](stream.readLine())
   task.owner = readObjectID(world, stream)
   task.caller = readObjectID(world, stream)
   task.world = world
   world.tasks.add(task)
 
-proc readObjectCount(world: World, stream: File) =
+proc readObjectCount(world: World, stream: FileStream) =
   let ctr = readNum(stream)
   world.taskIDCounter = ctr
 
@@ -288,7 +289,7 @@ proc persist*(world: World, obj: MObject) =
   if not world.persistent: return
 
   let fileName = getObjectFile(world.name, obj.getID().int)
-  let file = open(fileName, fmWrite)
+  let file = newFileStream(fileName, fmWrite)
   file.write(dumpObject(obj))
   file.close()
 
@@ -296,7 +297,7 @@ proc persist*(world: World, task: Task) =
   if not world.persistent: return
 
   let fileName = getTaskFile(world.name, task.id)
-  let file = open(fileName, fmWrite)
+  let file = newFileStream(fileName, fmWrite)
   file.write(dumpTask(task))
   file.close()
 
@@ -304,7 +305,7 @@ proc persistObjectCount(world: World) =
   if not world.persistent: return
 
   let fileName = getObjectCountFile(world.name)
-  let file = open(fileName, fmWrite)
+  let file = newFileStream(fileName, fmWrite)
   file.write($world.taskIDCounter & "\n")
   file.close()
 
@@ -373,7 +374,7 @@ proc loadWorld*(name: string): World =
   var objs = result.getObjects()
   var maxid = 0
 
-  let objcountFile = open(getObjectCountFile(name), fmRead)
+  let objcountFile = newFileStream(getObjectCountFile(name), fmRead)
   readObjectCount(result, objcountFile)
   objcountFile.close()
 
@@ -400,7 +401,7 @@ proc loadWorld*(name: string): World =
   setLen(objs[], maxid + 1)
 
   for fileName in walkFiles(dir / "*"):
-    let file = open(fileName, fmRead)
+    let file = newFileStream(fileName, fmRead)
     readObject(result, file)
     file.close()
 
@@ -408,7 +409,7 @@ proc loadWorld*(name: string): World =
   var taskCount = 0
   for fileName in walkFiles(taskdir / "*"):
     taskCount += 1
-    let file = open(fileName, fmRead)
+    let file = newFileStream(fileName, fmRead)
     readTask(result, file)
     file.close()
 
