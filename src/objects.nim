@@ -13,7 +13,7 @@ proc getAliases*(obj: MObject): seq[string]
 proc getLocation*(obj: MObject): MObject
 proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]]
 proc getPropVal*(obj: MObject, name: string, all = true): MData
-proc setProp*(obj: MObject, name: string, newVal: MData): MProperty
+proc setProp*(obj: MObject, name: string, newVal: MData): tuple[p: MProperty, e: MData]
 proc addTask*(world: World, name: string, owner, caller: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
               callback = -1): Task
@@ -41,10 +41,18 @@ proc initializeBuiltinProps*(obj: MObject) =
 # no builtin properties to builtin properties.
 proc owner*(obj: MObject): MData =
   obj.getPropVal("owner")
-proc `owner=`*(obj: MObject, newOwner: MData) =
-  discard obj.setProp("owner", newOwner)
+proc `owner=`(obj: MObject, newOwnerd: MData) =
+  discard obj.setProp("owner", newOwnerd)
+
 proc `owner=`*(obj: MObject, newOwner: MObject) =
   obj.owner = newOwner.md
+
+  # Need to set the owner of all properties with the 'c' flag.
+  # There will be a hook in the setprop builtin that calls this
+  # if the 'owner' property is set.
+  for prop in obj.props:
+    if prop.ownerIsParent:
+      prop.owner = newOwner
 
 proc level*(obj: MObject): int =
   obj.getPropVal("level").intVal
@@ -153,8 +161,10 @@ proc getPropVal*(obj: MObject, name: string, all = true): MData =
   else:
     res.val
 
-proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
+proc setProp*(obj: MObject, name: string, newVal: MData):
+              tuple[p: MProperty, e: MData] =
   var p = obj.getProp(name, all = false)
+  var e = E_NONE.md("")
   if isNil(p):
     p = newProperty(
       name = name,
