@@ -817,6 +817,27 @@ defBuiltin "create":
 
   return newObj.md.pack
 
+# (playerflag obj [new-val])
+# If new-val is not specified, this builtin returns obj's
+# player bit (1 if it's a player, 0 if not.) If it is specified,
+# obj's player's bit is set to it if task's owner is a wizard
+defBuiltin "playerflag":
+  case args.len:
+    of 1:
+      let obj = extractObject(args[0])
+      return obj.isPlayer.int.md.pack
+    of 2:
+      let obj = extractObject(args[0])
+      if not isWizardT():
+        runtimeError(E_PERM, "only wizards can set the player flag")
+      let newVal = extractInt(args[1])
+      if newVal != 0 and newVal != 1:
+        runtimeError(E_ARGS, "player flag can only be set to 0 or 1")
+      obj.isPlayer = newVal == 1
+      return obj.md.pack
+    else:
+      runtimeError(E_ARGS, "playerflag takes 1 or 2 arguments")
+
 # (level obj)
 # returns obj's level
 # 0 = wizard
