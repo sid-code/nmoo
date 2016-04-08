@@ -60,7 +60,8 @@ task "clean", "removes executables":
     echo "removing " & exe
     removeFile(outDir / exe)
 
-  echo "removing nimcache"
+  echo "removing nimcache(s)"
+  removeDir(outDir / "nimcache")
   removeDir("nimcache")
 
 task "tests", "run tests":
