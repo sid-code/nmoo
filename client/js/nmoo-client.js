@@ -116,7 +116,7 @@ function connect(host, port, name, pass, term) {
       var split = command.trim().split(/ /g);
       var cmdName = split.shift(), args = split;
       if (cmdName == "vedit") {
-        ssend("@list " + args[0] + " tags")
+        ssend("@list " + args[0] + " tags no-ancestors")
         editing = args[0]
       } else {
         ssend(command)
