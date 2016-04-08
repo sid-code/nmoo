@@ -479,15 +479,6 @@ proc checkNowhere(world: World) =
   if isNil(nowhere.getProp("contents")):
     raise newException(InvalidWorldError, "the $nowhere object needs to have contents")
 
-proc checkPlayer(world: World) =
-  world.checkForGSymType("player", dObj)
-  let playerd = world.getGlobal("player")
-
-  let player = world.dataToObj(playerd)
-
-  if isNil(player.getProp("contents")):
-    raise newException(InvalidWorldError, "the $player object needs to have contents")
-
 proc checkObjectHierarchyHelper(world: World, root: MObject) =
   root.children.keepItIf(not isNil(it))
   for child in root.children:
@@ -500,9 +491,22 @@ proc checkObjectHierarchy(world: World) =
   let root = world.dataToObj(world.getGlobal("root"))
   world.checkObjectHierarchyHelper(root)
 
+proc checkBuiltinProperties(world: World) =
+  for obj in world.getObjects()[]:
+    if isNil(obj): continue
+    for propName, defaultValue in BuiltinPropertyData.pairs:
+      let prop = obj.getProp(propName)
+      if isNil(prop):
+        let msg = "$# needs to have property $#"
+        raise newException(InvalidWorldError, msg % [$obj.md, propName])
+      let val = prop.val
+      if not val.isType(defaultValue.dtype):
+        let msg = "$#.$# needs to be of type $# (it was $#)"
+        raise newException(InvalidWorldError, msg % [$obj, propName, $val.dtype, $defaultValue.dtype])
+
 # This checks if the world is fit to be used
 proc check*(world: World) =
   world.checkRoot()
   world.checkNowhere()
-  world.checkPlayer()
   world.checkObjectHierarchy()
+  world.checkBuiltinProperties()
