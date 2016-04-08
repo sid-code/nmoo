@@ -72,6 +72,12 @@ proc dumpObjID(obj: MObject): string =
   else:
     $obj.getID()
 
+proc dumpObjID(objd: MData): string =
+  if not objd.isType(dObj):
+    ""
+  else:
+    $objd.objVal
+
 proc dumpBool(b: bool): string =
   if b:
     $1
@@ -101,9 +107,6 @@ proc dumpObject*(obj: MObject): string =
   result = ""
   result.addLine($obj.getID())
   result.addLine(dumpBool(obj.isPlayer))
-  result.addLine($obj.level)
-  result.addLine(dumpObjID(obj.owner))
-  result.addLine($pack(obj.pubRead, obj.pubWrite, obj.fertile))
   result.addLine(dumpObjID(obj.parent))
   result.addLine(obj.children.map(dumpObjID).join(" "))
   result.addLine($obj.props.len)
@@ -218,32 +221,25 @@ proc readVerb(world: World, stream: FileStream): MVerb =
 proc readObject(world: World, stream: FileStream) =
   let id = readNum(stream).id
   var obj = world.byID(id)
+  newSeq(obj.props, 0)
+  newSeq(obj.children, 0)
+  newSeq(obj.verbs, 0)
 
   obj.setID(id)
   obj.isPlayer = readNum(stream) == 1
-  obj.level = readNum(stream)
-  obj.owner = readObjectID(world, stream)
-
-  let (pr, pw, fert) = unpack3(readNum(stream))
-  obj.pubRead = pr
-  obj.pubWrite = pw
-  obj.fertile = fert
 
   obj.parent = readObjectID(world, stream, nil)
 
-  obj.children = @[]
   let children = stream.readLine().split(" ")
   for child in children:
     let childID = parseInt(child)
     if childID > 0:
       obj.children.add(world.byID(childID.id))
 
-  obj.props = @[]
   let numProps = readNum(stream)
   for i in 0 .. numProps - 1:
     obj.props.add(readProp(world, stream))
 
-  obj.verbs = @[]
   let numVerbs = readNum(stream)
   for i in 0 .. numVerbs - 1:
     obj.verbs.add(readVerb(world, stream))

@@ -13,11 +13,69 @@ proc getAliases*(obj: MObject): seq[string]
 proc getLocation*(obj: MObject): MObject
 proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]]
 proc getPropVal*(obj: MObject, name: string, all = true): MData
-proc setProp*(obj: MObject, name: string, newVal: MData): MProperty
+proc setProp*(obj: MObject, name: string, newVal: MData): tuple[p: MProperty, e: MData]
 proc addTask*(world: World, name: string, owner, caller: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
               callback = -1): Task
 proc run*(task: Task, limit: int = 20000): TaskResult
+
+# Builtin property data
+var BuiltinPropertyData = initTable[string, MData]()
+BuiltinPropertyData["name"] = "no name".md
+BuiltinPropertyData["owner"] = 0.ObjID.md
+BuiltinPropertyData["location"] = 0.ObjID.md
+BuiltinPropertyData["contents"] = @[].md
+BuiltinPropertyData["level"] = 3.md
+BuiltinPropertyData["pubread"] = 1.md
+BuiltinPropertyData["pubwrite"] = 0.md
+BuiltinPropertyData["fertile"] = 1.md
+
+# Object initialization
+# NOTE: Only pass blank objects to this proc. If not, it will overwrite the
+# values of the built in properties.
+proc initializeBuiltinProps*(obj: MObject) =
+  for propName, value in BuiltinPropertyData.pairs:
+    discard obj.setProp(propName, value)
+
+# The following are convenience procs to ease the transition from
+# no builtin properties to builtin properties.
+proc owner*(obj: MObject): MData =
+  obj.getPropVal("owner")
+proc `owner=`(obj: MObject, newOwnerd: MData) =
+  discard obj.setProp("owner", newOwnerd)
+
+proc `owner=`*(obj: MObject, newOwner: MObject) =
+  obj.owner = newOwner.md
+
+  # Need to set the owner of all properties with the 'c' flag.
+  # There will be a hook in the setprop builtin that calls this
+  # if the 'owner' property is set.
+  for prop in obj.props:
+    if prop.ownerIsParent:
+      prop.owner = newOwner
+
+proc level*(obj: MObject): int =
+  obj.getPropVal("level").intVal
+proc `level=`*(obj: MObject, newLevel: int) =
+  discard obj.setProp("level", newLevel.md)
+
+proc pubRead*(obj: MObject): bool =
+  obj.getPropVal("pubread") == 1.md
+proc `pubRead=`*(obj: MObject, newVal: bool) =
+  discard obj.setProp("pubread", if newVal: 1.md else: 0.md)
+
+proc pubWrite*(obj: MObject): bool =
+  obj.getPropVal("pubwrite") == 1.md
+proc `pubWrite=`*(obj: MObject, newVal: bool) =
+  discard obj.setProp("pubwrite", if newVal: 1.md else: 0.md)
+
+proc fertile*(obj: MObject): bool =
+  obj.getPropVal("fertile") == 1.md
+proc `fertile=`*(obj: MObject, newVal: bool) =
+  discard obj.setProp("fertile", if newVal: 1.md else: 0.md)
+
+proc `==`(d: MData, obj: MObject): bool =
+  d == obj.md
 
 ## Permissions handling
 
@@ -103,8 +161,10 @@ proc getPropVal*(obj: MObject, name: string, all = true): MData =
   else:
     res.val
 
-proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
+proc setProp*(obj: MObject, name: string, newVal: MData):
+              tuple[p: MProperty, e: MData] =
   var p = obj.getProp(name, all = false)
+  var e = E_NONE.md("")
   if isNil(p):
     p = newProperty(
       name = name,
@@ -120,28 +180,20 @@ proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
 
     obj.props.add(p)
   else:
-    p.val = newVal
+    if BuiltinPropertyData.hasKey(name):
+      let defaultValue = BuiltinPropertyData[name]
+      if not newVal.isType(defaultValue.dtype):
+        let msg = "Cannot set $#.$# to $#, only to a value of type $#"
+        e.errVal = E_ARGS
+        e.errMsg =  msg % [$obj.md, name, $newVal, $defaultValue.dtype]
+        p.val = defaultValue
+      else:
+        p.val = newVal
 
-  return p
+  return (p, e)
 
 template setPropR*(obj: MObject, name: string, newVal: expr) =
   discard obj.setProp(name, newVal.md)
-
-proc setPropRec*(obj: MObject, name: string, newVal: MData,
-                 recursed: bool = false):
-                 seq[tuple[o: MObject, p: MProperty]] =
-  newSeq(result, 0)
-
-  if recursed: # If we're recursing, then it may not be necessary
-    if not isNil(obj.getProp(name)):
-      return
-
-  var prop = obj.setProp(name, newVal)
-
-  result.add((obj, prop))
-
-  for child in obj.children:
-    result.add(child.setPropRec(name, newVal, true))
 
 proc delProp*(obj: MObject, prop: MProperty): MProperty =
   for idx, pr in obj.props:
@@ -424,15 +476,6 @@ proc checkNowhere(world: World) =
   if isNil(nowhere.getProp("contents")):
     raise newException(InvalidWorldError, "the $nowhere object needs to have contents")
 
-proc checkPlayer(world: World) =
-  world.checkForGSymType("player", dObj)
-  let playerd = world.getGlobal("player")
-
-  let player = world.dataToObj(playerd)
-
-  if isNil(player.getProp("contents")):
-    raise newException(InvalidWorldError, "the $player object needs to have contents")
-
 proc checkObjectHierarchyHelper(world: World, root: MObject) =
   root.children.keepItIf(not isNil(it))
   for child in root.children:
@@ -445,9 +488,25 @@ proc checkObjectHierarchy(world: World) =
   let root = world.dataToObj(world.getGlobal("root"))
   world.checkObjectHierarchyHelper(root)
 
+proc checkBuiltinProperties(world: World) =
+  for obj in world.getObjects()[]:
+    if isNil(obj): continue
+    for propName, defaultValue in BuiltinPropertyData.pairs:
+      let prop = obj.getProp(propName)
+      if isNil(prop):
+        let msg = "$# needs to have property $#. It will be set to the default value $#."
+        warn msg % [$obj.md, propName, $defaultValue]
+        discard obj.setProp(propName, defaultValue)
+      else:
+        let val = prop.val
+        if not val.isType(defaultValue.dtype):
+          let msg = "$#.$# needs to be of type $# (it was $#). It will be set to the default value $#."
+          warn msg % [$obj, propName, $val.dtype, $defaultValue.dtype, $defaultValue]
+          discard obj.setProp(propName, defaultValue)
+
 # This checks if the world is fit to be used
 proc check*(world: World) =
   world.checkRoot()
   world.checkNowhere()
-  world.checkPlayer()
   world.checkObjectHierarchy()
+  world.checkBuiltinProperties()

@@ -59,8 +59,8 @@ template extractObject(objd: MData): MObject =
   obj
 
 template checkForError(value: MData) =
-  if value.isType(dErr):
-    return value
+  if value.isType(dErr) and value.errVal != E_NONE:
+    return value.pack
 
 template runtimeError(error: MError, message: string) =
   return error.md("line $#, col $#: $#: $#" % [$pos.line, $pos.col, bname, message]).pack
@@ -461,17 +461,32 @@ defBuiltin "setprop":
 
   let newVal = args[2]
 
-  let prop = extractString(args[1])
-  var oldProp = obj.getProp(prop, all = false)
+  let propName = extractString(args[1])
+  var oldProp = obj.getProp(propName, all = false)
 
   if isNil(oldProp):
     checkWrite(obj)
-    let newProp = obj.setProp(prop, newVal)
+    let (newProp, error) = obj.setProp(propName, newVal)
+    checkForError(error)
+
     newProp.owner = task.owner
     world.persist(obj)
   else:
     checkWrite(oldProp)
-    oldProp.val = newVal
+    # Even though we could just do oldProp.val = newVal,
+    # we need to call setProp. This is because there are
+    # some special properties whose types are enforced.
+    let (newProp, error) = obj.setProp(propName, newVal)
+    checkForError(error)
+
+    if propName == "owner":
+      # The following line is safe because setProp would have returned an error
+      # if the property "owner" was set to a non-object
+      let newOwner = newVal.extractObject()
+      for prop in obj.props:
+        if prop.ownerIsParent:
+          prop.owner = newOwner
+
     world.persist(obj)
 
   return newVal.pack
