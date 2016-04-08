@@ -220,32 +220,25 @@ proc readVerb(world: World, stream: File): MVerb =
 proc readObject(world: World, stream: File) =
   let id = readNum(stream).id
   var obj = world.byID(id)
+  newSeq(obj.props, 0)
+  newSeq(obj.children, 0)
+  newSeq(obj.verbs, 0)
 
   obj.setID(id)
   obj.isPlayer = readNum(stream) == 1
-  obj.level = readNum(stream)
-  obj.owner = readObjectID(world, stream)
-
-  let (pr, pw, fert) = unpack3(readNum(stream))
-  obj.pubRead = pr
-  obj.pubWrite = pw
-  obj.fertile = fert
 
   obj.parent = readObjectID(world, stream, nil)
 
-  obj.children = @[]
   let children = stream.readLine().split(" ")
   for child in children:
     let childID = parseInt(child)
     if childID > 0:
       obj.children.add(world.byID(childID.id))
 
-  obj.props = @[]
   let numProps = readNum(stream)
   for i in 0 .. numProps - 1:
     obj.props.add(readProp(world, stream))
 
-  obj.verbs = @[]
   let numVerbs = readNum(stream)
   for i in 0 .. numVerbs - 1:
     obj.verbs.add(readVerb(world, stream))
