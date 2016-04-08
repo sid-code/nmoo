@@ -19,6 +19,60 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
               callback = -1): Task
 proc run*(task: Task, limit: int = 20000): TaskResult
 
+# Builtin property data
+const
+  BuiltinPropertyData = {
+    "name": (dStr, "no name".md),
+    "owner": (dObj, 0.ObjID.md),
+    "location": (dObj, 0.ObjID.md),
+    "contents": (dList, @[].md),
+    "level": (dInt, 3.md),
+    "pubread": (dInt, 1.md),
+    "pubwrite": (dInt, 0.md),
+    "fertile": (dInt, 1.md)
+  }
+
+# Object initialization
+# NOTE: Only pass blank objects to this proc. If not, it will overwrite the
+# values of the built in properties.
+proc initializeBuiltinProps(obj: MObject) =
+  for propName, data in BuiltinPropertyData.pairs:
+    let (valueType, defaultValue) = data
+    discard valueType
+    discard obj.setProp(propName, defaultValue)
+
+# The following are convenience procs to ease the transition from
+# no builtin properties to builtin properties.
+proc owner*(obj: MObject): MData =
+  obj.getPropVal("owner")
+proc `owner=`*(obj: MObject, newOwner: MData) =
+  discard obj.setProp("owner", newOwner)
+proc `owner=`*(obj: MObject, newOwner: MObject) =
+  obj.owner = newOwner.md
+
+proc level*(obj: MObject): int =
+  obj.getPropVal("level").intVal
+proc `level=`*(obj: MObject, newLevel: int) =
+  discard obj.setProp("level", newLevel.md)
+
+proc pubRead*(obj: MObject): bool =
+  obj.getPropVal("pubread") == 1.md
+proc `pubRead=`*(obj: MObject, newVal: bool) =
+  discard obj.setProp("pubread", if newVal: 1.md else: 0.md)
+
+proc pubWrite*(obj: MObject): bool =
+  obj.getPropVal("pubwrite") == 1.md
+proc `pubWrite=`*(obj: MObject, newVal: bool) =
+  discard obj.setProp("pubwrite", if newVal: 1.md else: 0.md)
+
+proc fertile*(obj: MObject): bool =
+  obj.getPropVal("fertile") == 1.md
+proc `fertile=`*(obj: MObject, newVal: bool) =
+  discard obj.setProp("fertile", if newVal: 1.md else: 0.md)
+
+proc `==`(d: MData, obj: MObject): bool =
+  d == obj.md
+
 ## Permissions handling
 
 proc isWizard*(obj: MObject): bool = obj.level == 0
@@ -120,7 +174,12 @@ proc setProp*(obj: MObject, name: string, newVal: MData): MProperty =
 
     obj.props.add(p)
   else:
-    p.val = newVal
+    if BuiltinPropertyData.hasKey(name):
+      let (valueType, defaultValue) = BuiltinPropertyData[name]
+      if not newVal.isType(valueType):
+        p.val = defaultValue
+      else:
+        p.val = newVal
 
   return p
 

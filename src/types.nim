@@ -25,19 +25,12 @@ type
     id: ObjID
     world*: World
     isPlayer*: bool
-    owner*: MObject
 
     props*: seq[MProperty]
     verbs*: seq[MVerb]
 
     parent*: MObject
     children*: seq[MObject]
-
-    level*: int
-
-    pubWrite*: bool
-    pubRead*: bool
-    fertile*: bool
 
     output*: OutputProc
 
@@ -343,13 +336,8 @@ proc blankObject*: MObject =
     isPlayer: false,
     props: @[],
     verbs: @[],
-    owner: nil,
     parent: nil,
     children: @[],
-    level: 3,
-    pubRead: true,
-    pubWrite: false,
-    fertile: true,
     output: defaultOutput
   )
 

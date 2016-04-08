@@ -71,6 +71,12 @@ proc dumpObjID(obj: MObject): string =
   else:
     $obj.getID()
 
+proc dumpObjID(objd: MData): string =
+  if not objd.isType(dObj):
+    ""
+  else:
+    $objd.objVal
+
 proc dumpBool(b: bool): string =
   if b:
     $1
@@ -100,9 +106,6 @@ proc dumpObject*(obj: MObject): string =
   result = ""
   result.addLine($obj.getID())
   result.addLine(dumpBool(obj.isPlayer))
-  result.addLine($obj.level)
-  result.addLine(dumpObjID(obj.owner))
-  result.addLine($pack(obj.pubRead, obj.pubWrite, obj.fertile))
   result.addLine(dumpObjID(obj.parent))
   result.addLine(obj.children.map(dumpObjID).join(" "))
   result.addLine($obj.props.len)
