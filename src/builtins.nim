@@ -59,8 +59,8 @@ template extractObject(objd: MData): MObject =
   obj
 
 template checkForError(value: MData) =
-  if value.isType(dErr):
-    return value
+  if value.isType(dErr) and value.errVal != E_NONE:
+    return value.pack
 
 template runtimeError(error: MError, message: string) =
   return error.md("line $#, col $#: $#: $#" % [$pos.line, $pos.col, bname, message]).pack
