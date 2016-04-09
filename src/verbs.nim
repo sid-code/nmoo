@@ -220,14 +220,6 @@ proc addVerb*(obj: MObject, verb: MVerb): MVerb =
   obj.verbs.add(verb)
   return verb
 
-proc addVerbRec*(obj: MObject, verb: MVerb): seq[tuple[o: MObject, v: MVerb]] =
-  newSeq(result, 0)
-  result.add((obj, obj.addVerb(verb)))
-  for child in obj.children:
-    var verbCopy = verb.copy
-    verbCopy.inherited = true
-    result.add(child.addVerbRec(verbCopy))
-
 proc delVerb*(obj: MObject, verb: MVerb): MVerb =
   for i, v in obj.verbs:
     if v == verb:
@@ -235,12 +227,6 @@ proc delVerb*(obj: MObject, verb: MVerb): MVerb =
       return verb
 
   return nil
-
-proc delVerbRec*(obj: MObject, verb: MVerb): seq[tuple[o: MObject, v: MVerb]] =
-  newSeq(result, 0)
-  result.add((obj, obj.delVerb(verb)))
-  for child in obj.children:
-    result.add(child.delVerbRec(verb))
 
 iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] =
   var searchSpace = obj.getVicinity()
