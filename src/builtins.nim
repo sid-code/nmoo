@@ -1091,11 +1091,11 @@ defBuiltin "verbcall":
 
     checkExecute(verb)
 
-    task.setStatus(tsAwaitingResult)
     let verbTask = obj.verbCallRaw(verb, caller, cargs, symtable = symtable, taskType = task.taskType, callback = task.id)
     if isNil(verbTask):
       runtimeError(E_VERBNF, "verb $#:$# has not been compiled (perhaps it failed earlier?)" %
                                 [obj.toObjStr(), verb.names])
+    task.setStatus(tsAwaitingResult)
     return 1.pack
 
   if phase == 1:
