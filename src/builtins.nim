@@ -35,8 +35,17 @@ template extractInt(d: MData): int =
   checkType(d, dInt)
   d.intVal
 template extractFloat(d: MData): float =
-  checkType(d, dFloat)
-  d.floatVal
+  var res: float
+  if d.isType(dFloat):
+    res = d.floatVal
+  elif d.isType(dInt):
+    res = d.intVal.float
+  else:
+    let msg = "expected argument of type dInt or dFloat, instead got $#"
+    runtimeError(E_TYPE, msg % [$d.dtype])
+
+  res
+
 template extractString(d: MData): string =
   checkType(d, dStr)
   d.strVal
