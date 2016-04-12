@@ -395,6 +395,7 @@ proc handleCommand*(player: MObject, command: string): Task =
 
 # Return MObject because the goal of these commands is to determine the
 # player the connection owns.
+import tasks
 proc handleLoginCommand*(player: MObject, command: string): MObject =
   let command = command.strip()
   if command.len == 0: return nil

@@ -14,11 +14,25 @@ proc getAliases*(obj: MObject): seq[string]
 proc getLocation*(obj: MObject): MObject
 proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]]
 proc getPropVal*(obj: MObject, name: string, all = true): MData
+proc getPropAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, p: MProperty]
 proc setProp*(obj: MObject, name: string, newVal: MData): tuple[p: MProperty, e: MData]
+proc delPropRec*(obj: MObject, prop: MProperty): seq[tuple[o: MObject, p: MProperty]]
+proc getOwnProps*(obj: MObject): seq[string]
 proc addTask*(world: World, name: string, owner, caller: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
               callback = -1): Task
-proc run*(task: Task, limit: int = 20000): TaskResult
+proc moveTo*(obj: MObject, newLoc: MObject): bool
+proc createChild*(parent: MObject): MObject
+proc createWorld*(name: string, persistent = true): World
+proc add*(world: World, obj: MObject)
+proc delete*(world: World, obj: MObject)
+proc getGlobal*(world: World, key: string): MData
+proc changeParent*(obj: MObject, newParent: MObject)
+proc addToContents*(obj: MObject, newMember: MObject): bool
+proc removeFromContents*(obj: MObject, member: MObject): bool
+
+template setPropR*(obj: MObject, name: string, newVal: expr) =
+  discard obj.setProp(name, newVal.md)
 
 # Builtin property data
 var BuiltinPropertyData = initTable[string, MData]()
@@ -192,9 +206,6 @@ proc setProp*(obj: MObject, name: string, newVal: MData):
         p.val = newVal
 
   return (p, e)
-
-template setPropR*(obj: MObject, name: string, newVal: expr) =
-  discard obj.setProp(name, newVal.md)
 
 proc delProp*(obj: MObject, prop: MProperty): MProperty =
   for idx, pr in obj.props:
@@ -421,44 +432,16 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
     callback = callback)
   world.taskIDCounter += 1
 
+  if callback > -1:
+    let cbTask = world.getTaskByID(callback)
+    if isNil(cbTask):
+      warn "Warning: callback for task '", newTask.name, "' doesn't exist."
+    else:
+      newTask.registerCallback(cbTask)
+
   world.tasks.add(newTask)
   return newTask
 
-# I would really like to put this in tasks.nim but verbs needs it and
-# I can't import tasks from verbs.
-proc run*(task: Task, limit: int = 20000): TaskResult =
-  var limit = limit
-  while limit > 0:
-    case task.status:
-      of tsSuspended, tsAwaitingInput, tsReceivedInput:
-        return TaskResult(typ: trSuspend)
-      of tsAwaitingResult:
-        # This is a sticky case. Now we need to search for a task whose callback
-        # is this task, so that we can run that task to completion.
-        var found = false
-        for idx, otask in task.world.tasks:
-          if otask.callback == task.id:
-            let res = otask.run(limit)
-            if res.typ in {trError, trTooLong, trSuspend}: return res
-
-            system.delete(task.world.tasks, idx)
-
-            found = true
-            break
-
-        if not found:
-          return TaskResult(typ: trSuspend)
-      of tsDone:
-        let res = task.top()
-        if res.isType(dErr):
-          return TaskResult(typ: trError, err: res)
-        else:
-          return TaskResult(typ: trFinish, res: res)
-      of tsRunning:
-        task.step()
-        limit -= 1
-
-  return TaskResult(typ: trTooLong)
 
 proc numTasks*(world: World): int = world.tasks.len
 

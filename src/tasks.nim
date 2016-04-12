@@ -13,7 +13,10 @@ import server
 # Some procs that builtins.nim needs
 proc spush*(task: Task, what: MData) = task.stack.add(what)
 proc spop*(task: Task): MData = task.stack.pop()
+proc resume*(task: Task, val: MData)
 proc isRunning*(task: Task): bool = task.status in {tsRunning, tsReceivedInput}
+proc getTaskByID*(world: World, id: int): Task
+
 proc setStatus*(task: Task, newStatus: TaskStatus) =
   task.status = newStatus
   if newStatus != tsRunning: server.taskFinished(task)
@@ -455,6 +458,37 @@ proc step*(task: Task) =
     task.tickCount += 1
     if task.tickCount >= task.tickQuota:
       task.doError(E_QUOTA.md("task has exceeded tick quota"))
+
+# I would really like to put this in tasks.nim but verbs needs it and
+# I can't import tasks from verbs.
+proc run*(task: Task, limit: int = 20000): TaskResult =
+  var limit = limit
+  while limit > 0:
+    case task.status:
+      of tsSuspended, tsAwaitingInput, tsReceivedInput:
+        return TaskResult(typ: trSuspend)
+      of tsAwaitingResult:
+        let otask = task.world.getTaskByID(task.waitingFor)
+
+        if isNil(otask):
+          return TaskResult(typ: trSuspend)
+        let res = otask.run(limit)
+        if res.typ in {trError, trTooLong, trSuspend}: return res
+
+        if task.waitingFor > -1:
+          system.delete(task.world.tasks, task.waitingFor)
+
+      of tsDone:
+        let res = task.top()
+        if res.isType(dErr):
+          return TaskResult(typ: trError, err: res)
+        else:
+          return TaskResult(typ: trFinish, res: res)
+      of tsRunning:
+        task.step()
+        limit -= 1
+
+  return TaskResult(typ: trTooLong)
 
 proc addCoreGlobals(st: SymbolTable): SymbolTable =
   result = st
