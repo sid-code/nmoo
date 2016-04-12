@@ -3,6 +3,7 @@ import hashes
 import strutils
 import objects
 import sequtils
+import times
 
 import types
 import compile
