@@ -9,6 +9,7 @@ import types
 import compile
 import scripting
 import server
+import logging
 ## VM (Task)
 
 # Some procs that builtins.nim needs
@@ -421,7 +422,7 @@ proc finish(task: Task) =
       # make sure that the task's callback isn't crucial to the operation of
       # the system, and if it is, then debug more.
 
-      echo "Warning: callback for task '$#' didn't exist." % [task.name]
+      warn "Warning: callback for task '$#' didn't exist." % [task.name]
   else:
     if res.isType(dErr):
       task.caller.send("Traceback (most recent call first)\n" & $res)
