@@ -1813,7 +1813,7 @@ defBuiltin "resume":
   if isNil(otask):
     runtimeError(E_ARGS, "attempt to resume nonexistent task")
   if otask.status notin {tsSuspended, tsAwaitingInput}:
-    runtimeError(E_ARGS, "attempt to resume non-suspended  task")
+    runtimeError(E_ARGS, "attempt to resume non-suspended task")
   if not isWizardT() and task.owner != otask.owner:
     runtimeError(E_PERM, "you must be either a wizard or the owner of a task to suspend it")
 
