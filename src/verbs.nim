@@ -203,11 +203,9 @@ proc getVerb*(obj: MObject, index: int): MVerb =
   else:
     nil
 
-# Code duplication, I know, but I'm lazy
 proc getVerbAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, v: MVerb] =
-  for v in obj.verbs:
-    if v.matchesName(name):
-      return (obj, v)
+  for v in obj.matchingVerbs(name, all):
+    return (obj, v)
 
   if all:
     let parent = obj.parent
