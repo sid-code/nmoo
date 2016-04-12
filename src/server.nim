@@ -103,7 +103,7 @@ proc unqueueIn(client: Client): bool =
 
   let last = client.inputQueue.pop()
   when defined(debug):
-    echo "Tasks currently waiting for input: " & $client.tasksWaitingForInput.len
+    debug "Tasks currently waiting for input: ", client.tasksWaitingForInput.len
 
   if client.tasksWaitingForInput.len > 0:
     client.supplyTaskWithInput(last)
@@ -129,13 +129,13 @@ proc clearInAll =
 
 # to be called from the read builtin
 proc askForInput*(task: Task, client: Client) =
-  when defined(debug): echo "Task " & task.name & " asked for input!"
+  when defined(debug): debug "Task ", task.name, " asked for input!"
   client.tasksWaitingForInput.add(task)
   client.flushOut()
 
 proc supplyTaskWithInput(client: Client, input: string) =
   let task = client.tasksWaitingForInput.pop()
-  when defined(debug): echo "Supplied task " & task.name & " with input " & input
+  when defined(debug): debug "Supplied task ", task.name, " with input ", input
   task.resume(input.md)
 
 # Called whenever a task finishes. This is used to determine when
@@ -225,7 +225,7 @@ proc processClient(client: Client, address: string) {.async.} =
       removeClient(client)
       break
 
-    when defined(debug): echo "Received " & line
+    when defined(debug): debug "Received ", line
 
     line.fixUp()
 
