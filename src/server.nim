@@ -131,14 +131,12 @@ proc clearInAll =
 proc askForInput*(task: Task, client: Client) =
   when defined(debug): echo "Task " & task.name & " asked for input!"
   client.tasksWaitingForInput.add(task)
-  task.setStatus(tsAwaitingInput)
   client.flushOut()
 
 proc supplyTaskWithInput(client: Client, input: string) =
   let task = client.tasksWaitingForInput.pop()
   when defined(debug): echo "Supplied task " & task.name & " with input " & input
-  task.spush(input.md)
-  task.setStatus(tsReceivedInput)
+  task.resume(input.md)
 
 # Called whenever a task finishes. This is used to determine when
 # to flush queues/etc
@@ -154,7 +152,15 @@ proc taskFinished*(task: Task) =
 
     if task.status == tsAwaitingInput:
       discard callerClient.unqueueIn()
-    elif task.status in {tsDone, tsSuspended} and task == callerClient.currentInputTask:
+    elif task.status == tsAwaitingResult:
+      callerClient.setInputTask(task.world.getTaskByID(task.waitingFor))
+    elif task.status == tsDone and task == callerClient.currentInputTask:
+      if task.callback > -1:
+        let cbTask = world.getTaskByID(task.callback)
+        callerClient.setInputTask(cbTask)
+        if isNil(cbTask):
+          discard callerClient.unqueueIn()
+    elif task.status == tsSuspended and task == callerClient.currentInputTask:
       callerClient.setInputTask(nil)
       discard callerClient.unqueueIn()
 

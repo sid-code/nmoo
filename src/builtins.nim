@@ -222,7 +222,7 @@ defBuiltin "read":
       runtimeError(E_ARGS, who.toObjStr() & " has not been connected to!")
 
     task.askForInput(client)
-    return 1.pack
+    return 1.inputPack
   elif phase == 1:
     # sanity check
     if args.len != 1:

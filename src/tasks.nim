@@ -90,11 +90,10 @@ proc setCallPackage(task: Task, package: Package, builtin: MData, args: seq[MDat
   task.callPackage = package
   task.builtinToCall = builtin
   task.builtinArgs = args
-  if task.status == tsRunning:
+  if package.ptype == ptCall:
     task.setStatus(tsAwaitingResult)
-  elif task.status == tsReceivedInput:
-    # already got input and can start again
-    task.setStatus(tsRunning)
+  elif package.ptype == ptInput:
+    task.setStatus(tsAwaitingInput)
 
 proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
   let builtinName = builtin.symVal
@@ -120,7 +119,7 @@ proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
         task.doError(val)
       else:
         task.spush(val)
-    elif res.ptype == ptCall:
+    elif res.ptype in {ptCall, ptInput}:
       task.setCallPackage(res, builtin, args)
   else:
     task.doError(E_BUILTIN.md("unknown builtin '$1'" % builtinName))

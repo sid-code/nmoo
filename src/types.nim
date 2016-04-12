@@ -91,13 +91,13 @@ type
       of dNil: nilVal*: int # dummy
 
   PackageType* = enum
-    ptData, ptCall
+    ptData, ptCall, ptInput
 
   Package* = object
     case ptype*: PackageType
       of ptData:
         val*: MData
-      of ptCall:
+      of ptCall, ptInput:
         phase*: int
 
   CodePosition* = tuple[line: int, col: int]
@@ -252,6 +252,7 @@ proc md*(x: MObject): MData {.procvar.} = x.id.md
 
 proc pack*(x: MData): Package = Package(ptype: ptData, val: x)
 proc pack*(phase: int): Package = Package(ptype: ptCall, phase: phase)
+proc inputPack*(phase: int): Package = Package(ptype: ptInput, phase: phase)
 
 proc `$`*(x: ObjID): string {.borrow.}
 proc `==`*(x: ObjID, y: ObjID): bool {.borrow.}
