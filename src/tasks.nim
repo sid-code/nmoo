@@ -20,6 +20,8 @@ proc isRunning*(task: Task): bool = task.status in {tsRunning, tsReceivedInput}
 proc getTaskByID*(world: World, id: int): Task
 
 proc setStatus*(task: Task, newStatus: TaskStatus) =
+  when defined(debug):
+    debug "Task ", task.name, " entered state ", newStatus
   task.status = newStatus
   if newStatus != tsRunning: server.taskFinished(task)
 
