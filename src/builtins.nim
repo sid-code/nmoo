@@ -1798,3 +1798,23 @@ defBuiltin "suspend":
   if phase == 1:
     task.tickCount = 0
     return args[^1].pack
+
+# (resume task-id [value])
+# Resumes task with id task-id and makes value the result of the
+# suspend that suspended the task
+defBuiltin "resume":
+  let alen = args.len
+  if alen notin 1..2:
+    runtimeError(E_ARGS, "resume takes 1 or 2 arguments")
+  let taskID = extractInt(args[0])
+  let value = if alen == 2: args[1] else: 0.md
+  let otask = world.getTaskByID(taskID)
+
+  if isNil(otask):
+    runtimeError(E_ARGS, "attempt to resume nonexistent task")
+  if otask.status notin {tsSuspended, tsAwaitingInput}:
+    runtimeError(E_ARGS, "attempt to resume non-suspended  task")
+  if not isWizardT() and task.owner != otask.owner:
+    runtimeError(E_PERM, "you must be either a wizard or the owner of a task to suspend it")
+
+  otask.resume(value)
