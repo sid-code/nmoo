@@ -405,7 +405,7 @@ proc tick*(world: World) =
 
     if not task.isRunning(): continue
     try:
-      task.step()
+      discard task.run(task.tickQuota)
     except:
       let exception = getCurrentException()
       warn exception.repr
