@@ -1818,3 +1818,11 @@ defBuiltin "resume":
     runtimeError(E_PERM, "you must be either a wizard or the owner of a task to suspend it")
 
   otask.resume(value)
+
+# (taskid)
+# Returns the currently running task's ID
+defBuiltin "taskid":
+  if args.len != 0:
+    runtimeError(E_ARGS, "taskid takes no arguments")
+
+  return task.id.md.pack
