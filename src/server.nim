@@ -319,7 +319,8 @@ proc cleanUp() =
   world.persist()
 
 proc handler() {.noconv.} =
-  raise newException(Exception, "ctrl c")
+  info "Shutting down..."
+  raise newException(Exception, "Received SIGINT")
 
 proc runServer =
   clog = newConsoleLogger(fmtStr = "$date $time $levelname: ")
