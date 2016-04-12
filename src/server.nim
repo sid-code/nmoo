@@ -208,6 +208,8 @@ proc processClient(client: Client, address: string) {.async.} =
   await client.send("Welcome to the server!\c\L")
   proc ssend(obj: MObject, msg: string) =
     client.queueOut(msg & "\c\L")
+    discard client.unqueueOut()
+    # TODO: Make it so output is unqueued only between tasks
 
   client.player.output = ssend
 
