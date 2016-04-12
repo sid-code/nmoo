@@ -1826,3 +1826,37 @@ defBuiltin "taskid":
     runtimeError(E_ARGS, "taskid takes no arguments")
 
   return task.id.md.pack
+
+# (queued-tasks)
+# Returns a list of lists.
+# Each list represents a task owned by the owner of this task
+# (or if a wizard, all tasks)
+#
+# Format: (task-id start-time programmer verb-loc verb-name line self)
+# task-id: The ID of the task
+# start-time: The time the task started
+# programmer: The programmer of that task
+# verb-loc: The object where the verb the task is running from is found
+# verb-name: The name of the verb the task is running
+# line: The line number the task is waiting to execute
+# self: The value of the task's "self" variable
+defBuiltin "queued-tasks":
+  if args.len != 0:
+    runtimeError(E_ARGS, "queued-tasks takes no argumnts")
+
+  var res: seq[MData] = @[]
+  for otask in world.tasks:
+    if isWizardT() or task.owner == otask.owner:
+      if otask.status notin {tsSuspended, tsAwaitingInput}:
+        continue
+      let taskID = otask.id.md
+      let startTime = otask.suspendedUntil.toSeconds.md
+      let programmer = otask.owner.md
+      let verbLoc = otask.globals["holder"]
+      let verbName = otask.globals["verb"]
+      let line = otask.code[task.pc].pos.line.md
+      let self = otask.globals["self"]
+
+      res.add(@[taskID, startTime, programmer, verbLoc, verbName, line, self].md)
+
+  return res.md.pack
