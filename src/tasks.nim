@@ -494,8 +494,9 @@ proc addCoreGlobals(st: SymbolTable): SymbolTable =
   result = st
   result["nil"] = nilD
 
-proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObject,
-           caller: MObject, globals = newSymbolTable(), tickQuota: int, taskType: TaskType,
+proc createTask*(id: int, name: string, startTime: Time, compiled: CpOutput,
+           world: World, owner: MObject, caller: MObject,
+           globals = newSymbolTable(), tickQuota: int, taskType: TaskType,
            callback: int): Task =
   let st = newVSymTable()
   let (entry, code) = compiled

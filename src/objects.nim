@@ -418,7 +418,7 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
   let tickQuotad = world.getGlobal("tick-quota")
   let tickQuota = if tickQuotad.isType(dInt): tickQuotad.intVal else: 20000
 
-  let newTask = task(
+  let newTask = createTask(
     id = world.taskIDCounter,
     name = name,
     startTime = getTime(),
