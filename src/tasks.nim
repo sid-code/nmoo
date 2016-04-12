@@ -402,6 +402,13 @@ proc getTaskByID*(world: World, id: int): Task =
 
   return nil
 
+proc resume*(task: Task, val: MData) =
+  task.setStatus(tsRunning)
+  if val.isType(dErr):
+    task.doError(val)
+  else:
+    task.spush(val)
+
 proc finish(task: Task) =
   task.setStatus(tsDone)
 
@@ -412,11 +419,8 @@ proc finish(task: Task) =
     let cbTask = task.world.getTaskByID(callback)
     if not isNil(cbTask):
       cbTask.tickCount += task.tickCount
-      cbTask.setStatus(tsRunning)
-      if res.isType(dErr):
-        cbTask.doError(res)
-      else:
-        cbTask.spush(task.top())
+      cbTask.waitingFor = -1
+      cbTask.resume(res)
     else:
       # I've decided that a warning here should suffice. The maintainer should
       # make sure that the task's callback isn't crucial to the operation of
