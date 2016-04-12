@@ -362,7 +362,7 @@ proc runServer =
   try:
     while true:
       let beforePulse = epochTime()
-      for x in 1..10000:
+      for x in 1..10:
         world.tick()
 
       let elapsed = epochTime() - beforePulse
