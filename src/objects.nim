@@ -391,12 +391,12 @@ import tasks
 
 # This proc is called by the server
 proc tick*(world: World) =
+  world.tasks.keepItIf(it.status != tsDone)
   for idx, task in world.tasks:
 
     if task.status == tsDone:
       if defined(showTicks):
         echo "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
-      system.delete(world.tasks, idx)
 
     if task.status == tsSuspended:
       let suspendedUntil = task.suspendedUntil
