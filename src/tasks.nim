@@ -429,6 +429,9 @@ proc finish(task: Task) =
 
   server.taskFinished(task)
 
+proc registerCallback*(task, cbTask: Task) =
+  cbTask.waitingFor = task.id
+
 proc doCallPackage(task: Task) =
   let phase = task.callPackage.phase
   let sym = task.builtinToCall
