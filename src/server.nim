@@ -322,7 +322,7 @@ proc handler() {.noconv.} =
   raise newException(Exception, "ctrl c")
 
 proc runServer =
-  clog = newConsoleLogger()
+  clog = newConsoleLogger(fmtStr = "$date $time $levelname: ")
   addHandler(clog)
 
   var worldName: string
