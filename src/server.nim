@@ -374,10 +374,8 @@ proc runServer =
 
   except: discard
   finally:
-    let averagePulseTime = totalPulseTime / totalPulses.float
-    info "Pulsed " & $totalPulses & " times."
-    info "Average pulse time " & $averagePulseTime
-    info "Exit"
+    let averagePulseTime = int(totalPulseTime / totalPulses.float * 100000) / 100
+    info totalPulses, " pulses, ", averagePulseTime, "ms average"
     cleanUp()
 
 when isMainModule:
