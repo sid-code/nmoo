@@ -369,7 +369,7 @@ proc runServer =
       totalPulses += 1
       totalPulseTime += elapsed
 
-      poll(250)
+      poll(int(250 - elapsed * 1000))
 
 
   except: discard
