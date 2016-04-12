@@ -180,6 +180,7 @@ type
   Task* = ref object
     id*: int
     name*: string
+    startTime*: Time
 
     stack*:     seq[MData]
     symtables*: seq[VSymTable]     ## All of the symbol tables
@@ -195,7 +196,7 @@ type
     caller*:    MObject
 
     status*: TaskStatus
-    restartTime*: int
+    suspendedUntil*: Time
     tickCount*: int
     tickQuota*: int
 
@@ -206,6 +207,7 @@ type
 
     taskType*: TaskType
     callback*: int
+    waitingFor*: int
 
   TaskResultType* = enum trFinish, trSuspend, trError, trTooLong
   TaskResult* = object

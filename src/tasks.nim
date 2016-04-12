@@ -471,6 +471,8 @@ proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObje
   var task = Task(
     id: id,
     name: name,
+    startTime: startTime,
+
     stack: @[],
     symtables: @[st],
     globals: globals,
@@ -485,7 +487,7 @@ proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObje
     caller: caller,
 
     status: tsRunning,
-    restartTime: 0,
+    suspendedUntil: Time(0),
     tickCount: 0,
     tickQuota: tickQuota,
 
@@ -495,7 +497,8 @@ proc task*(id: int, name: string, compiled: CpOutput, world: World, owner: MObje
     builtinArgs: @[],
 
     taskType: taskType,
-    callback: callback
+    callback: callback,
+    waitingFor: -1
 
   )
 

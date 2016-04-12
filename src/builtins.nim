@@ -6,6 +6,7 @@ import sequtils
 import math
 import nre
 import options
+import times
 
 import types
 import objects
@@ -1770,3 +1771,30 @@ defBuiltin "random":
       runtimeError(E_ARGS, "random takes 2 arguments")
 
   return (random(nmax - nmin) + nmin).md.pack
+
+## Task operations
+
+# (suspend [number-of-seconds])
+# number-of-seconds is optional and can be fractional.
+#
+# If not provided, suspend will return return-value when
+# (resume this-task-id return-value) is called.
+defBuiltin "suspend":
+  if phase == 0:
+    var until = Time(0)
+    case args.len:
+      of 0: discard
+      of 1:
+        let ms = (extractFloat(args[0]) * 1000).int
+        if ms < 0:
+          runtimeError(E_ARGS, "cannot suspend for a negative amount of seconds")
+        until = getTime()
+        until += ms.milliseconds
+      else:
+        runtimeError(E_ARGS, "suspend takes 0 or 1 arguments")
+    task.suspendedUntil = until
+    task.setStatus(tsSuspended)
+    return 1.pack
+  if phase == 1:
+    task.tickCount = 0
+    return args[^1].pack

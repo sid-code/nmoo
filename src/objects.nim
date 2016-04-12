@@ -5,6 +5,7 @@ import sequtils
 import strutils
 import tables
 import logging
+import times
 # NOTE: verbs is imported later on!
 
 proc getProp*(obj: MObject, name: string, all = true): MProperty
@@ -386,6 +387,11 @@ proc tick*(world: World) =
         echo "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
       system.delete(world.tasks, idx)
 
+    if task.status == tsSuspended:
+      let suspendedUntil = task.suspendedUntil
+      if suspendedUntil != Time(0) and getTime() >= suspendedUntil:
+        task.resume(0.md)
+
     if not task.isRunning(): continue
     try:
       task.step()
@@ -404,6 +410,7 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
   let newTask = task(
     id = world.taskIDCounter,
     name = name,
+    startTime = getTime(),
     compiled = code,
     world = world,
     owner = owner,
