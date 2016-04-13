@@ -92,9 +92,7 @@ proc setCallPackage(task: Task, package: Package, builtin: MData, args: seq[MDat
   task.callPackage = package
   task.builtinToCall = builtin
   task.builtinArgs = args
-  if package.ptype == ptCall:
-    task.setStatus(tsAwaitingResult)
-  elif package.ptype == ptInput:
+  if package.ptype == ptInput:
     task.setStatus(tsAwaitingInput)
 
 proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =

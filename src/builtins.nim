@@ -180,6 +180,7 @@ defBuiltin "eval":
       let instructions = compileCode(evalStr)
       discard world.addTask("eval", owner, caller, symtable, instructions,
                             taskType = task.taskType, callback = task.id)
+      task.setStatus(tsAwaitingResult)
       return 1.pack
     except MParseError:
       let msg = getCurrentExceptionMsg()
@@ -754,6 +755,7 @@ defBuiltin "move":
     if failure: # We were not able to call the verb
       runtimeError(E_FMOVE, "$1 didn't accept $2" % [dest.toObjStr(), what.toObjStr()])
 
+    task.setStatus(tsAwaitingResult)
     return 1.pack
 
   if phase == 1: # Check for recursive move and call exitfunc
@@ -779,6 +781,7 @@ defBuiltin "move":
         # This means the verb didn't exist, but that's not an issue.
         phase += 1
       else:
+        task.setStatus(tsAwaitingResult)
         return 2.pack
 
   if phase == 2:
@@ -797,6 +800,7 @@ defBuiltin "move":
     if failure:
       phase += 1
     else:
+      task.setStatus(tsAwaitingResult)
       return 3.pack
 
   if phase == 3:
@@ -926,6 +930,7 @@ defBuiltin "recycle":
       # We don't actually care if the verb "recycle" exists
       phase = 1
     else:
+      task.setStatus(tsAwaitingResult)
       return 1.pack
 
   if phase == 1:
@@ -1713,6 +1718,7 @@ defBuiltin "pass":
     discard self.verbCallRaw(verb, owner, args,
                        symtable = symtable, holder = parent, callback = task.id)
 
+    task.setStatus(tsAwaitingResult)
     return 1.pack
 
   if phase == 1:
