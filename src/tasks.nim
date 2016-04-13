@@ -469,8 +469,6 @@ proc step*(task: Task) =
     if task.tickCount >= task.tickQuota:
       task.doError(E_QUOTA.md("task has exceeded tick quota"))
 
-# I would really like to put this in tasks.nim but verbs needs it and
-# I can't import tasks from verbs.
 proc run*(task: Task, limit: int = 20000): TaskResult =
   var limit = limit
   while limit > 0:
