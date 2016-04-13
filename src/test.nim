@@ -406,6 +406,10 @@ suite "evaluator":
     var result = evalS("(lambda (x y) (do x y))")
     check result.isType(dList)
 
+  test "call-cc works":
+    var result = evalS("(call-cc (lambda (x) (call x (5))))")
+    check result == 5.md
+
   test "call statement works on lambdas":
     var result = evalS("(call (lambda (x y) (do x y)) (4 5))")
     check result == 5.md
