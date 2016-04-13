@@ -18,6 +18,7 @@ proc spop*(task: Task): MData = task.stack.pop()
 proc resume*(task: Task, val: MData)
 proc isRunning*(task: Task): bool = task.status in {tsRunning, tsReceivedInput}
 proc getTaskByID*(world: World, id: int): Task
+proc finish*(task: Task)
 
 proc setStatus*(task: Task, newStatus: TaskStatus) =
   when defined(debug):
@@ -60,7 +61,6 @@ proc collect(task: Task, num: int): seq[MData] =
     discard i
     result.insert(task.spop(), 0)
 
-proc finish(task: Task)
 proc doError*(task: Task, error: MData) =
   # prepare the error for modifying
   # each stack frame/task callback will be a line
@@ -408,7 +408,7 @@ proc resume*(task: Task, val: MData) =
   else:
     task.spush(val)
 
-proc finish(task: Task) =
+proc finish*(task: Task) =
   task.setStatus(tsDone)
 
   let callback = task.callback

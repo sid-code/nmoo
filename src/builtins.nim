@@ -1866,3 +1866,21 @@ defBuiltin "queued-tasks":
       res.add(@[taskID, startTime, programmer, verbLoc, verbName, line, self].md)
 
   return res.md.pack
+
+# (kill-task task-id)
+# Kills the task with id task-id
+defBuiltin "kill-task":
+  if args.len != 1:
+    runtimeError(E_ARGS, "kill-task takes 1 argument")
+  let taskID = extractInt(args[0])
+  let otask = world.getTaskByID(taskID)
+
+  if isNil(otask):
+    runtimeError(E_ARGS, "attempt to kill nonexistent task")
+  if otask.status notin {tsSuspended, tsAwaitingInput}:
+    runtimeError(E_ARGS, "attempt to resume non-suspended task")
+  if not isWizardT() and task.owner != otask.owner:
+    runtimeError(E_PERM, "you must be either a wizard or the owner of a task to kill it")
+
+  otask.spush(nilD)
+  otask.finish()
