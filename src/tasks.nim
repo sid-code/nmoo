@@ -205,10 +205,12 @@ impl inCLIST:
 impl inMENV:
   var newST: VSymTable
   deepCopy(newST, task.curST())
-  let pos = task.symtables.len
+  let envID = task.symtables.len
   task.symtables.add(newST)
   let cst = task.spop().toCST()
-  task.spush(pos.md)
+
+  # push the environment's ID onto the stack so that it can be accessed:w
+  task.spush(envID.md)
   task.spush(cst.combine(newST).toData())
 
 impl inMCONT:
