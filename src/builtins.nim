@@ -1100,7 +1100,6 @@ defBuiltin "verbcall":
 type
   BinFloatOp = proc(x: float, y: float): float
   BinIntOp = proc(x: int, y: int): int
-discard BinIntOp
 
 template extractFloatInto(into: var float, num: MData) =
   if num.isType(dInt):

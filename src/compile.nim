@@ -128,7 +128,6 @@ template defSpecial(name: string, body: stmt) {.immediate, dirty.} =
         compiler.sadd(inst)
     proc emit(insts: seq[Instruction], where = 0) =
       for inst in insts: emit(inst, where)
-    discard emit
 
     body
 
