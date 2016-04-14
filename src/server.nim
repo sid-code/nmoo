@@ -42,7 +42,7 @@ proc findClient*(player: MObject): Client =
 proc callDisconnect(player: MObject) =
   let dcTask = player.verbCall("disconnect", world.verbObj, @[])
   if not isNil(dcTask):
-    let res = dcTask.run()
+    discard dcTask.run()
 
 proc close(client: Client) =
   let player = client.player
