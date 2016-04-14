@@ -50,9 +50,6 @@ template extractFloat(d: MData): float =
 template extractString(d: MData): string =
   checkType(d, dStr)
   d.strVal
-template extractSymbol(d: MData): string =
-  checkType(d, dSym)
-  d.symVal
 template extractList(d: MData): seq[MData] =
   checkType(d, dList)
   d.listVal
