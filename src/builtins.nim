@@ -86,16 +86,6 @@ template checkOwn(what: MObject) =
   if not obj.owns(what):
     runtimeError(E_PERM, obj.toObjStr() & " doesn't own " & what.toObjStr())
 
-template checkOwn(prop: MProperty) =
-  let obj = task.owner
-  if not obj.owns(prop):
-    runtimeError(E_PERM, obj.toObjStr() & " doesn't own " & prop.name)
-
-template checkOwn(verb: MVerb) =
-  let obj = task.owner
-  if not obj.owns(verb):
-    runtimeError(E_PERM, obj.toObjStr() & " doesn't own " & verb.name)
-
 template checkRead(what: MObject) =
   let obj = task.owner
   if not obj.canRead(what):
