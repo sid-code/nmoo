@@ -508,10 +508,8 @@ defSpecial "call-cc":
   # continuations will be of the form (cont <ID>)
   let contLabel = compiler.makeSymbol()
   emit(ins(inMCONT, contLabel))
-  let index = compiler.symtable.defSymbol("__cont_index")
-  emit(ins(inSTO, index.md))
   emit(ins(inPUSH, "cont".mds))
-  emit(ins(inGET, index.md))
+  emit(ins(inSWAP))
   emit(ins(inCLIST, 2.md))
   emit(ins(inCLIST, 1.md))
 
