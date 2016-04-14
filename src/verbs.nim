@@ -226,18 +226,6 @@ proc delVerb*(obj: MObject, verb: MVerb): MVerb =
 
   return nil
 
-iterator vicinityVerbs(obj: MObject, name: string): tuple[o: MObject, v: MVerb] =
-  var searchSpace = obj.getVicinity()
-
-  var world = obj.getWorld()
-  doAssert(not isNil(world))
-  searchSpace.add(world.getVerbObj())
-
-  for o in searchSpace:
-    for v in matchingVerbs(o, name):
-      if obj.canExecute(v):
-        yield (o, v)
-
 proc call(verb: MVerb, world: World, holder, caller: MObject,
           symtable: SymbolTable, taskType = ttFunction, callback = -1): Task =
   if not isNil(verb.compiled.code):
