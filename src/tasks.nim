@@ -30,7 +30,7 @@ import builtins
 
 proc hash(itype: InstructionType): auto = ord(itype).hash
 
-proc newVSymTable: VSymTable = newTable[int, MData]()
+proc newVSymTable: VSymTable = initTable[int, MData]()
 
 proc combine(cst: CSymTable, vst: VSymTable): SymbolTable =
   result = newSymbolTable()
@@ -39,7 +39,7 @@ proc combine(cst: CSymTable, vst: VSymTable): SymbolTable =
 
 proc curFrame(task: Task): Frame =
   task.frames[task.frames.len - 1]
-proc curST(task: Task): VSymTable =
+proc curST(task: Task): var VSymTable =
   task.curFrame().symtable
 
 proc pushFrame(task: Task, symtable: VSymTable) =

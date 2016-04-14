@@ -160,7 +160,7 @@ type
 
   MCompileError* = object of Exception
 
-  VSymTable* = TableRef[int, MData]
+  VSymTable* = Table[int, MData]
   Frame* = ref object
     symtable*:   VSymTable
     calledFrom*: int
