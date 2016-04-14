@@ -236,8 +236,8 @@ defBuiltin "erristype":
   if args.len != 2:
     runtimeError(E_ARGS, "erristype takes 2 arguments")
 
-  var (err, msg) = extractError(args[0])
-  var (err2, msg2) = extractError(args[1])
+  var (err, _) = extractError(args[0])
+  var (err2, _) = extractError(args[1])
 
   return if err == err2: 1.md.pack else: 0.md.pack
 
@@ -474,7 +474,7 @@ defBuiltin "setprop":
     # Even though we could just do oldProp.val = newVal,
     # we need to call setProp. This is because there are
     # some special properties whose types are enforced.
-    let (newProp, error) = obj.setProp(propName, newVal)
+    let (_, error) = obj.setProp(propName, newVal)
     checkForError(error)
 
     if propName == "owner":
