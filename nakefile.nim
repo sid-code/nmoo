@@ -61,7 +61,7 @@ task "clean", "removes executables":
     removeFile(outDir / exe)
 
   echo "removing nimcache(s)"
-  removeDir(outDir / "nimcache")
+  removeDir(srcDir / "nimcache")
   removeDir("nimcache")
 
 task "tests", "run tests":
