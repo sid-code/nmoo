@@ -160,6 +160,8 @@ proc taskFinished*(task: Task) =
         callerClient.setInputTask(cbTask)
         if isNil(cbTask):
           discard callerClient.unqueueIn()
+      else:
+        discard callerClient.unqueueIn()
     elif task.status == tsSuspended and task == callerClient.currentInputTask:
       callerClient.setInputTask(nil)
       discard callerClient.unqueueIn()
