@@ -51,13 +51,12 @@ template addword {.immediate.} =
 proc lex*(code: string): seq[Token] =
   newSeq(result, 0)
   var
-    curToken = Token(ttype: tokAtom, image: "")
+    pos: CodePosition = (1, 1)
+    curToken = Token(ttype: tokAtom, image: "", pos: pos)
     curWord = ""
     strMode = false
     commentMode = false
     skipNext = false
-
-    pos: CodePosition = (1, 1)
 
   for idx, c in code & " ":
     pos.nextCol()
@@ -233,7 +232,8 @@ proc parseAtom*(parser: var MParser): MData =
 proc parseList*(parser: var MParser): MData =
   var resultL: seq[MData] = @[]
 
-  discard parser.consume(tokOParen)
+  let oparen = parser.consume(tokOParen)
+  let pos = oparen.pos
 
   var next = parser.peek()
   while next.ttype != tokCParen:
@@ -259,7 +259,8 @@ proc parseList*(parser: var MParser): MData =
         verbCallSymbol.pos = first.pos
         resultL.insert(verbCallSymbol, 0)
 
-  return resultL.md
+  result = resultL.md
+  result.pos = pos
 
 
 var builtins* = initTable[string, BuiltinProc]()
