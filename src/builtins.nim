@@ -190,6 +190,12 @@ defBuiltin "settaskperms":
   task.owner = newPerms
   return newPerms.md.pack
 
+defBuiltin "callerperms":
+  if args.len != 0:
+    runtimeError(E_ARGS, "callerperms takes no arguments")
+
+  return task.owner.md.pack
+
 # (read [player])
 defBuiltin "read":
   if phase == 0:
