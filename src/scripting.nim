@@ -118,7 +118,7 @@ proc lex*(code: string): seq[Token] =
 
 ## PARSER
 
-proc toData(image: string): MData =
+proc toData(image: string, pos: CodePosition): MData =
   let
     leader = image[0]
     rest = image[1 .. ^1]
@@ -127,9 +127,17 @@ proc toData(image: string): MData =
   if '.' in image and leader notin {'"', '\'', '-', '.'} and leader notin Digits:
     let parts = image.split('.')
     if parts.len > 1:
-      let obj = parts[0..^2].join(".").toData()
-      let propname = parts[^1].md
-      return @["getprop".mds, obj, propname].md
+      let objStr = parts[0..^2].join(".")
+      let obj = objStr.toData(pos)
+
+      var propname = parts[^1].md
+      # compute the position of propname
+      propName.pos = (pos.line + objStr.len + 1, pos.col)
+
+      var getpropsym = "getprop".mds
+      getpropsym.pos = pos
+
+      return @[getpropsym, obj, propname].md
     else:
       raise newException(MParseError, "misplaced dot in " & image)
 
@@ -171,7 +179,7 @@ proc toData(image: string): MData =
 
 proc toData(token: Token): MData =
   if token.ttype != tokAtom: return nilD
-  var data = token.image.toData()
+  var data = token.image.toData(token.pos)
   data.pos = token.pos
   return data
 
@@ -253,7 +261,7 @@ proc parseList*(parser: var MParser): MData =
       if parts.len > 1:
         if resultL.len > 1:
           resultL[1..^1] = [resultL[1..^1].md]
-        resultL[0] = parts[0].toData()
+        resultL[0] = parts[0].toData(pos)
         resultL.insert(parts[1].md, 1)
         var verbCallSymbol = "verbcall".mds
         verbCallSymbol.pos = first.pos
@@ -261,7 +269,6 @@ proc parseList*(parser: var MParser): MData =
 
   result = resultL.md
   result.pos = pos
-
 
 var builtins* = initTable[string, BuiltinProc]()
 
