@@ -230,7 +230,7 @@ proc render*(compiler: MCompiler): CpOutput =
 
   for idx, inst in code:
     let op = inst.operand
-    if inst.itype in {inJ0, inJN0, inJMP, inRETJ, inMCONT}:
+    if inst.itype in {inJ0, inJT, inJMP, inRETJ, inMCONT}:
       if op.isType(dSym):
         let label = op.symVal
         let jumpLoc = labels[label]
@@ -478,7 +478,7 @@ defSpecial "cond":
     branchLabels.add(condLabel)
 
     compiler.codeGen(larg[0])
-    emit(ins(inJN0, condLabel))
+    emit(ins(inJT, condLabel))
 
   emit(ins(inJMP, elseLabel))
 

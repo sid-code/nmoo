@@ -180,10 +180,10 @@ impl inJ0:
   if what == 0.md:
     task.pc = where
 
-impl inJN0:
+impl inJT:
   let where = operand.intVal
   let what = task.spop()
-  if what != 0.md:
+  if what.truthy:
     task.pc = where
 
 impl inJMP:

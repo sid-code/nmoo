@@ -133,7 +133,7 @@ type
     pos*: CodePosition
 
   InstructionType* = enum
-    inPUSH, inCALL, inACALL, inLABEL, inJ0, inJN0, inJMP, inPOP,
+    inPUSH, inCALL, inACALL, inLABEL, inJ0, inJT, inJMP, inPOP,
     inRET, inRETJ
     inLPUSH, # strictly for labels - gets replaced by the renderer
     inGTID, # Push the task's ID onto the stack
