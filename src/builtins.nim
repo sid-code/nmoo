@@ -21,6 +21,8 @@ import server
 # for hashing builtins
 import bcrypt
 
+proc arc4random: int32 {.importc: "arc4random".}
+
 proc strToType(str: string): tuple[b: bool, t: MDataType] =
   case str.toLower():
     of "int": return (true, dInt)
@@ -1751,8 +1753,6 @@ defBuiltin "phash":
 
   return hash(pass, salt).md.pack
 
-randomize()
-
 # (random [min] max)
 # generates a random number from min..max-1
 defBuiltin "random":
@@ -1769,7 +1769,13 @@ defBuiltin "random":
     else:
       runtimeError(E_ARGS, "random takes 2 arguments")
 
-  return (random(nmax - nmin) + nmin).md.pack
+  let randomNum = abs(arc4random()).float
+  # Scale the number down using floating point arithmetic
+  let nrange = (nmax - nmin).float
+  let highint32 = high(int32).float
+  let scaled = (randomNum / highint32 * nrange).int
+
+  return (scaled + nmin).md.pack
 
 ## Task operations
 
