@@ -452,6 +452,10 @@ defSpecial "try":
   let errorIndex = compiler.symtable.defSymbol("error")
   emit(ins(inSTO, errorIndex.md))
   compiler.codeGen(args[1])
+
+  # Out of rescue scope, so unbind "error" symbol
+  compiler.symtable.del("error")
+
   emit(ins(inLABEL, endLabel))
   if alen == 3:
     compiler.codeGen(args[2])
