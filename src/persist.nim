@@ -247,7 +247,8 @@ proc readObject(world: World, stream: FileStream) =
   obj.world = world
 
 proc readTask(world: World, stream: FileStream) =
-  let task = to[Task](stream.readLine())
+  var task: Task
+  load[Task](stream, task)
   task.owner = readObjectID(world, stream)
   task.caller = readObjectID(world, stream)
   task.world = world
