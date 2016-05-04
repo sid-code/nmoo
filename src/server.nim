@@ -373,9 +373,8 @@ proc runServer =
 
       poll(int(250 - elapsed * 1000))
 
-
   except:
-    fatal  getCurrentExceptionMsg()
+    fatal getCurrentExceptionMsg()
   finally:
     let averagePulseTime = int(totalPulseTime / totalPulses.float * 100000) / 100
     info totalPulses, " pulses, ", averagePulseTime, "ms average"
