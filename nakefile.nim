@@ -26,13 +26,17 @@ const
 
   defaultWorldName = "min"
 
+var
+  worldName = defaultWorldName
+  extraOptions = ""
+
 var forceRefresh = false
 proc needsRefreshH(f1, f2: string): bool =
   forceRefresh or (outDir / f1).needsRefresh(f2)
 
 task defaultTask, "builds everything":
   for info in exes:
-    let (exe, deps) = info
+    let (exe, _) = info
     runTask(exe)
 
 proc toSource(name: string): string =
@@ -49,14 +53,14 @@ proc simpleBuild(name: string, deps: seq[string]) =
     refresh = refresh or name.needsRefreshH(sourceFile)
 
     if refresh:
-      if direShell(nimExe, defaultOptions, "--out:" & outDir / name, "c", name.toSource()):
+      if direShell(nimExe, defaultOptions, extraOptions, "--out:" & outDir / name, "c", name.toSource()):
         echo "success building " & name
     else:
       echo name & " is up to date"
 
 task "clean", "removes executables":
   for info in exes:
-    let (exe, deps) = info
+    let (exe, _) = info
     echo "removing " & exe
     removeFile(outDir / exe)
 
@@ -76,16 +80,18 @@ task "setup", "sets up a minimal world":
   echo "use this world by running \"main\" (nake main && ./main)"
 
 task "serve", "builds and starts the server":
-  let params = commandLineParams()
-  var world: string
-  if params.len < 2:
-    world = defaultWorldName
-  else:
-    world = params[1]
-
   runTask("server")
-  direShell(outDir / "server " & world)
+  direShell(outDir / "server " & worldName)
 
 for info in exes:
   let (exe, deps) = info
   simpleBuild(exe, deps)
+
+for kind, key, val in getopt():
+  case kind:
+    of cmdArgument: discard
+    of cmdLongOption, cmdShortOption:
+      case key:
+        of "world", "w": worldName = val
+        of "debug": extraOptions &= " --debugger:native "
+    of cmdEnd: assert(false) # can't happen
