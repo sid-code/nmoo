@@ -364,7 +364,9 @@ proc backupWorld(name: string) =
   copyDir(getWorldDir(name), getWorldDir(bckName))
 
 proc loadWorld*(name: string): World =
+  info "Backing up world ", name, " before read..."
   backupWorld(name)
+  info "Completed backup."
 
   result = createWorld(name)
   let dir = getObjectDir(name)
