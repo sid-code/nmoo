@@ -56,7 +56,7 @@ function connect(host, port, name, pass, term) {
   var editing = "";
 
   function ssend(msg) {
-    console.log("Intercepted " + msg)
+    console.log("Intercepted " + msg);
     socket.send(btoa(msg + "\n"));
   }
 
@@ -72,7 +72,7 @@ function connect(host, port, name, pass, term) {
     if (capturing) {
       if (line.trim() == "{/verbcode}") {
         capturing = false;
-        console.log(capture)
+        console.log(capture);
 
         $(".cm-container").append($(".CodeMirror"));
         editor.getDoc().setValue(capture);
@@ -88,21 +88,21 @@ function connect(host, port, name, pass, term) {
           });
 
           ssend(".");
-        }
+        };
 
 
       } else {
-        capture += line + "\n"
+        capture += line + "\n";
       }
     } else {
       if (line.trim() == "{verbcode}") {
-        capturing = true
-        capture = ""
+        capturing = true;
+        capture = "";
       } else {
         term.echo(line); 
       }
     }
-  };
+  }
 
   _ssend = ssend;
 
@@ -116,10 +116,10 @@ function connect(host, port, name, pass, term) {
       var split = command.trim().split(/ /g);
       var cmdName = split.shift(), args = split;
       if (cmdName == "vedit") {
-        ssend("@list " + args[0] + " tags no-ancestors")
-        editing = args[0]
+        ssend("@list " + args[0] + " tags no-ancestors");
+        editing = args[0];
       } else {
-        ssend(command)
+        ssend(command);
       }
     }, {
       name: "nmoo",
