@@ -37,13 +37,14 @@ $(function() {
   });
   term.echo("Type 'connect <host> <port>' to connect");
 
-  $(".CodeMirror").focus(function() { term.focus(false); });
   editor = CodeMirror(document.body, {
     keyMap: "vim",
     mode: "scheme",
     matchBrackets: true,
     theme: "base16-dark"
   });
+  $(".CodeMirror").focus(function() { term.focus(false); });
+  $(".cm-container").append($(".CodeMirror"));
 
 });
 
