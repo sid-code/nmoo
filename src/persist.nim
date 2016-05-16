@@ -358,10 +358,15 @@ proc dbDelete*(world: World, obj: MObject) =
   moveFile(objFile, trashFile)
 
 proc backupWorld(name: string) =
-  let bckName = name & ".backup"
-  let bckBckName = bckName & ".backup"
-  copyDir(getWorldDir(bckName), getWorldDir(bckBckName))
-  copyDir(getWorldDir(name), getWorldDir(bckName))
+  var suffix = 0
+  let backupBase = name & ".b"
+  var backupDir = getWorldDir(backupBase & $suffix)
+
+  while existsDir(backupDir):
+    inc suffix
+    backupDir = getWorldDir(backupBase & $suffix)
+
+  copyDir(getWorldDir(name), backupDir)
 
 proc loadWorld*(name: string): World =
   info "Backing up world ", name, " before read..."
