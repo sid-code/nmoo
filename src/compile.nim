@@ -328,6 +328,7 @@ defSpecial "map":
   emit(ins(inJMP, labelLocation))
   emit(ins(inLABEL, afterLocation))
   emit(ins(inPOP))
+  compiler.symtable.del("__mapfn")
 
 proc genFold(compiler: MCompiler, fn, default, list: MData,
              useDefault = true, right = true, pos: CodePosition = (0, 0)) =
