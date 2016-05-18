@@ -45,7 +45,7 @@ while true:
     break
 
   if command.contains("<>"):
-    discard os.execShellCmd("vim edit.tmp")
+    discard os.execShellCmd("$EDITOR edit.tmp")
     command = command.replace("<>", readFile("edit.tmp").myEscape().stripNewLines())
 
   let match = command.match(re"vedit (.+?):(.*)")
@@ -65,7 +65,7 @@ while true:
       let code = verb.code
 
       writeFile("edit.tmp", code)
-      discard os.execShellCmd("vim edit.tmp -c \"set syntax=scheme\"")
+      discard os.execShellCmd("$EDITOR edit.tmp -c \"set syntax=scheme\"")
       let newCode = readFile("edit.tmp")
 
       verb.setCode(newCode)
