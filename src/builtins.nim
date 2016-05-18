@@ -1000,15 +1000,20 @@ defBuiltin "setparent":
 
   return newParent.md.pack
 
-# (query str)
-# Wrapper for the query proc in querying.nim
+# (query player str)
+# Queries for `str` from `player`'s perspective
+# It just wraps the query proc in querying.nim
 defBuiltin "query":
-  if args.len != 1:
-    runtimeError(E_ARGS, "query takes 1 argument")
+  if args.len != 2:
+    runtimeError(E_ARGS, "query takes 2 arguments")
 
-  let str = extractString(args[0])
+  let who = extractObject(args[0])
+  let str = extractString(args[1])
 
-  return caller.query(str).map(md).md.pack
+  if not (isWizardT() or owns(who) or who == player):
+    runtimeError(E_PERM, "cannot query from perspective of " & player.toObjStr())
+
+  return who.query(str).map(md).md.pack
 
 # (istype thingy typedesc)
 # typedesc is a string:
