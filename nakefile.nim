@@ -94,4 +94,5 @@ for kind, key, val in getopt():
       case key:
         of "world", "w": worldName = val
         of "debug": extraOptions &= " --debugger:native "
+        else: extraOptions &= " --" & key & ":" & val & " "
     of cmdEnd: assert(false) # can't happen
