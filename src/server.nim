@@ -215,6 +215,7 @@ proc processClient(client: Client, address: string) {.async.} =
 
   client.player.output = ssend
 
+  # Has the player connected to an existing character?
   var connected = false
 
   while true:
