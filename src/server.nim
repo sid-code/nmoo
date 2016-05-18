@@ -40,7 +40,7 @@ proc findClient*(player: MObject): Client =
   return nil
 
 proc callDisconnect(player: MObject) =
-  let dcTask = player.verbCall("disconnect", world.verbObj, @[])
+  let dcTask = player.verbCall("disconnect", world.verbObj, world.verbObj, @[])
   if not isNil(dcTask):
     discard dcTask.run()
 
@@ -170,7 +170,7 @@ proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: stri
   result.o = nil
   result.msg = "*** Could not connect; the server is not set up correctly. ***"
 
-  let hcTask = world.verbObj.verbCall("handle-new-connection", world.verbObj, @[address.md])
+  let hcTask = world.verbObj.verbCall("handle-new-connection", world.verbObj, world.verbObj, @[address.md])
 
   if isNil(hcTask):
     return
@@ -251,7 +251,7 @@ proc processClient(client: Client, address: string) {.async.} =
 
         client.player = newPlayer
         newPlayer.output = ssend
-        let greetTask = newPlayer.verbCall("greet", newPlayer, @[], taskType = ttInput)
+        let greetTask = newPlayer.verbCall("greet", newPlayer, newPlayer, @[], taskType = ttInput)
         if not isNil(greetTask): discard greetTask.run()
         client.flushOut()
 

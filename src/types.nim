@@ -124,8 +124,9 @@ type
 
   SymbolTable* = Table[string, MData]
   BuiltinProc* = proc(args: seq[MData], world: World,
-                      caller, owner: MObject, symtable: SymbolTable,
-                      pos: CodePosition, phase: int, task: Task): Package
+                      self, player, caller, owner: MObject,
+                      symtable: SymbolTable, pos: CodePosition, phase: int,
+                      task: Task): Package
 
   Instruction* = object
     itype*: InstructionType
@@ -195,8 +196,10 @@ type
     continuations*: seq[Continuation]  ## For continuations
 
     world*:     World
-    owner*:     MObject
+    self*:      MObject
+    player*:    MObject
     caller*:    MObject
+    owner*:     MObject
 
     status*: TaskStatus
     suspendedUntil*: Time

@@ -100,6 +100,8 @@ proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
     let res = bproc(
       args = args,
       world = task.world,
+      self = task.self,
+      player = task.player,
       caller = task.caller,
       owner = task.owner,
       pos = builtin.pos,
@@ -139,8 +141,10 @@ proc foreignLambdaCall(task: Task, symtable: SymbolTable, expression: MData) =
   let instructions = compileCode(expression)
   discard task.world.addTask(
     name = task.name & "-lambda",
-    owner = task.owner,
+    self = task.self,
+    player = task.player,
     caller = task.caller,
+    owner = task.owner,
     symtable = symtable,
     code = instructions,
     callback = task.id, # Resume this task when done
@@ -498,7 +502,7 @@ proc addCoreGlobals(st: SymbolTable): SymbolTable =
   result["nil"] = nilD
 
 proc createTask*(id: int, name: string, startTime: Time, compiled: CpOutput,
-           world: World, owner: MObject, caller: MObject,
+           world: World, self, player, caller, owner: MObject,
            globals = newSymbolTable(), tickQuota: int, taskType: TaskType,
            callback: int): Task =
   let st = newVSymTable()
@@ -521,8 +525,10 @@ proc createTask*(id: int, name: string, startTime: Time, compiled: CpOutput,
     continuations: @[],
 
     world: world,
-    owner: owner,
+    self: self,
+    player: player,
     caller: caller,
+    owner: owner,
 
     status: tsRunning,
     suspendedUntil: Time(0),

@@ -167,7 +167,7 @@ defBuiltin "eval":
 
     try:
       let instructions = compileCode(evalStr)
-      discard world.addTask("eval", owner, caller, symtable, instructions,
+      discard world.addTask("eval", self, player, caller, owner, symtable, instructions,
                             taskType = task.taskType, callback = task.id)
       task.setStatus(tsAwaitingResult)
       return 1.pack
@@ -746,7 +746,7 @@ defBuiltin "move":
 
     checkOwn(what)
 
-    let failure = isNil(dest.verbCall("accept", caller, @[what.md], callback = task.id))
+    let failure = isNil(dest.verbCall("accept", player, caller, @[what.md], callback = task.id))
     if failure: # We were not able to call the verb
       runtimeError(E_FMOVE, "$1 didn't accept $2" % [dest.toObjStr(), what.toObjStr()])
 
@@ -771,7 +771,7 @@ defBuiltin "move":
     if isNil(oldLoc):
       phase += 1
     else:
-      let failure = isNil(oldLoc.verbCall("exitfunc", caller, @[what.md], callback = task.id))
+      let failure = isNil(oldLoc.verbCall("exitfunc", player, caller, @[what.md], callback = task.id))
       if failure:
         # This means the verb didn't exist, but that's not an issue.
         phase += 1
@@ -791,7 +791,7 @@ defBuiltin "move":
       runtimeError(E_FMOVE, "moving $1 to $2 failed (it could already be at $2)" %
             [what.toObjStr(), dest.toObjStr()])
 
-    let failure = isNil(dest.verbCall("enterfunc", caller, @[what.md], callback = task.id))
+    let failure = isNil(dest.verbCall("enterfunc", player, caller, @[what.md], callback = task.id))
     if failure:
       phase += 1
     else:
@@ -831,7 +831,7 @@ defBuiltin "create":
   world.add(newObj)
   newObj.setPropR("name", "child of $1 ($2)" % [$parent.md, $newObj.md])
 
-  discard newObj.verbCall("initialize", owner, @[])
+  discard newObj.verbCall("initialize", player, caller, @[])
 
   newObj.owner = newOwner
   # TODO: some way to keep track of an object's owner objects
@@ -918,10 +918,10 @@ defBuiltin "recycle":
         # dubious but actually making a builtin call is difficult because
         # of the phase mechanism.
         discard contained.moveTo(nowhere)
-        discard obj.verbCall("exitfunc", owner, @[contained.md])
+        discard obj.verbCall("exitfunc", player, caller, @[contained.md])
         world.persist(contained)
 
-    if isNil(obj.verbCall("recycle", owner, @[], callback = task.id)):
+    if isNil(obj.verbCall("recycle", player, caller, @[], callback = task.id)):
       # We don't actually care if the verb "recycle" exists
       phase = 1
     else:
@@ -1092,7 +1092,14 @@ defBuiltin "verbcall":
 
     checkExecute(verb)
 
-    let verbTask = obj.verbCallRaw(verb, obj, cargs, symtable = symtable, taskType = task.taskType, callback = task.id)
+    let verbTask = obj.verbCallRaw(
+      verb = verb,
+      player = player,
+      caller = self,
+      cargs, symtable = symtable,
+      taskType = task.taskType, callback = task.id
+    )
+
     if isNil(verbTask):
       runtimeError(E_VERBNF, "verb $#:$# has not been compiled (perhaps it failed earlier?)" %
                                 [obj.toObjStr(), verb.names])
@@ -1710,8 +1717,11 @@ defBuiltin "pass":
     if isNil(verb):
       runtimeError(E_VERBNF, "Pass failed, verb is not inherited.")
 
-    discard self.verbCallRaw(verb, owner, args,
-                       symtable = symtable, holder = parent, callback = task.id)
+    discard self.verbCallRaw(
+      verb,
+      player, caller,
+      args, symtable = symtable, holder = parent, callback = task.id
+    )
 
     task.setStatus(tsAwaitingResult)
     return 1.pack

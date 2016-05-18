@@ -120,18 +120,26 @@ proc dumpObject*(obj: MObject): string =
 
 proc dumpTask(task: Task): string =
   result = ""
-  let owner = task.owner
+  let self = task.self
+  let player = task.player
   let caller = task.caller
+  let owner = task.owner
   let world = task.world
 
-  task.owner = nil
+  task.self = nil
+  task.player = nil
   task.caller = nil
+  task.owner = nil
   task.world = nil
 
   result.addLine($$task)
-  result.addLine($owner.getID())
+  result.addLine($self.getID())
+  result.addLine($player.getID())
   result.addLine($caller.getID())
+  result.addLine($owner.getID())
 
+  task.self = self
+  task.player = player
   task.caller = caller
   task.owner = owner
   task.world = world
@@ -249,8 +257,10 @@ proc readObject(world: World, stream: FileStream) =
 proc readTask(world: World, stream: FileStream) =
   var task: Task
   load[Task](stream, task)
-  task.owner = readObjectID(world, stream)
+  task.self = readObjectID(world, stream)
+  task.player = readObjectID(world, stream)
   task.caller = readObjectID(world, stream)
+  task.owner = readObjectID(world, stream)
   task.world = world
   world.tasks.add(task)
 

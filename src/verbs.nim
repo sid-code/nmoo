@@ -226,15 +226,20 @@ proc delVerb*(obj: MObject, verb: MVerb): MVerb =
 
   return nil
 
-proc call(verb: MVerb, world: World, holder, caller: MObject,
+proc call(verb: MVerb, world: World, self, player, caller, holder: MObject,
           symtable: SymbolTable, taskType = ttFunction, callback = -1): Task =
   if not isNil(verb.compiled.code):
     let name = "$#:$#" % [holder.toObjStr(), verb.names]
-    return world.addTask(name, verb.owner, caller, symtable, verb.compiled, taskType, callback)
+    return world.addTask(
+      name,
+      self, player, caller, verb.owner,
+      symtable, verb.compiled, taskType, callback
+    )
+
   else:
     return nil
 
-proc verbCallRaw*(self: MObject, verb: MVerb, caller: MObject,
+proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
                   args: seq[MData], symtable: SymbolTable = newSymbolTable(),
                   holder: MObject = nil, taskType = ttFunction, callback = -1): Task =
   var
@@ -246,20 +251,21 @@ proc verbCallRaw*(self: MObject, verb: MVerb, caller: MObject,
   doAssert(not isNil(world))
 
   symtable["caller"] = caller.md
+  symtable["player"] = player.md
   symtable["args"] = args.md
   symtable["self"] = self.md
   symtable["holder"] = holder.md
   symtable["verb"] = verb.names.md
 
-  return verb.call(world, holder, caller, symtable, taskType, callback)
+  return verb.call(world, self, player, caller, holder, symtable, taskType, callback)
 
-proc verbCall*(owner: MObject, name: string, caller: MObject,
+proc verbCall*(owner: MObject, name: string, player, caller: MObject,
                args: seq[MData], symtable = newSymbolTable(),
                taskType = ttFunction, callback = -1): Task =
 
   for v in matchingVerbs(owner, name):
     if caller.canExecute(v):
-      return owner.verbCallRaw(v, caller, args, symtable = symtable, taskType = taskType, callback = callback)
+      return owner.verbCallRaw(v, player, caller, args, symtable = symtable, taskType = taskType, callback = callback)
   return nil
 
 proc setCode*(verb: MVerb, newCode: string) =
@@ -304,6 +310,7 @@ proc handleCommand*(player: MObject, command: string): Task =
   symtable["cmd"] = command.md
   symtable["verb"] = verb.md
   symtable["caller"] = player.md
+  symtable["player"] = player.md
   symtable["args"] = frest.map(proc (x: string): MData = x.md).md
   symtable["argstr"] = restStr.md
 
@@ -367,14 +374,14 @@ proc handleCommand*(player: MObject, command: string): Task =
         if ioString.len > 0: continue
 
     symtable["holder"] = o.md
-    return v.call(world, holder = o, caller = player, symtable = symtable, taskType = ttInput)
+    return v.call(world, self = o, holder = o, player = player, caller = player, symtable = symtable, taskType = ttInput)
 
   let locationd = player.getPropVal("location")
   if not locationd.isType(dObj):
     return nil
 
   let location = world.dataToObj(locationd)
-  if isNil(location.verbCall("huh", player, @[originalCommand.md], taskType = ttInput)):
+  if isNil(location.verbCall("huh", player, player, @[originalCommand.md], taskType = ttInput)):
     player.send("Huh?")
 
   return nil
@@ -405,10 +412,12 @@ proc handleLoginCommand*(player: MObject, command: string): MObject =
   symtable["args"] = args.md
   symtable["argstr"] = restStr.md
   symtable["caller"] = player.md
+  symtable["player"] = player.md
   symtable["self"] = verbObj.md
 
-  let lcTask = verbObj.verbCall("handle-login-command", player, args,
-                                symtable = symtable, taskType = ttInput)
+  let lcTask = verbObj.verbCall("handle-login-command", player = player,
+                                caller = verbObj, args, symtable = symtable,
+                                taskType = ttInput)
 
   if isNil(lcTask):
     player.send("Failed to run your login command; server is set up incorrectly.")

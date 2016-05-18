@@ -18,7 +18,7 @@ proc getPropAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, p
 proc setProp*(obj: MObject, name: string, newVal: MData): tuple[p: MProperty, e: MData]
 proc delPropRec*(obj: MObject, prop: MProperty): seq[tuple[o: MObject, p: MProperty]]
 proc getOwnProps*(obj: MObject): seq[string]
-proc addTask*(world: World, name: string, owner, caller: MObject,
+proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
               callback = -1): Task
 proc moveTo*(obj: MObject, newLoc: MObject): bool
@@ -412,7 +412,7 @@ proc tick*(world: World) =
       task.doError(E_INTERNAL.md(exception.msg))
 
 
-proc addTask*(world: World, name: string, owner, caller: MObject,
+proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
               callback = -1): Task =
   let tickQuotad = world.getGlobal("tick-quota")
@@ -424,8 +424,10 @@ proc addTask*(world: World, name: string, owner, caller: MObject,
     startTime = getTime(),
     compiled = code,
     world = world,
-    owner = owner,
+    self = self,
+    player = player,
     caller = caller,
+    owner = owner,
     globals = symtable,
     tickQuota = tickQuota,
     taskType = taskType,
