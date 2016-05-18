@@ -37,7 +37,12 @@ while true:
     world.tick()
   world.persist()
 
-  var command = readLineFromStdin("> ").strip()
+  var command = ""
+
+  try:
+    command = readLineFromStdin("> ").strip()
+  except IOError:
+    break
 
   if command.contains("<>"):
     discard os.execShellCmd("vim edit.tmp")
