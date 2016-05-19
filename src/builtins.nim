@@ -36,6 +36,9 @@ proc strToType(str: string): tuple[b: bool, t: MDataType] =
     of "nil": return (true, dNil)
     else: return (false, dInt)
 
+# Convenience templates: these are to be called from builtins to extract
+# values from their arguments but raising an error if they're not of the
+# correct data type.
 template extractInt(d: MData): int =
   checkType(d, dInt)
   d.intVal
@@ -69,6 +72,9 @@ template extractObject(objd: MData): MObject =
 
   obj
 
+# Error-checking templates:
+# Builtins need to check permissions and types. If any of these
+# checks fail, then a error is thrown in the program.
 template checkForError(value: MData) =
   if value.isType(dErr) and value.errVal != E_NONE:
     return value.pack
