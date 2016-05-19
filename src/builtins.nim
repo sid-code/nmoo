@@ -21,6 +21,8 @@ import server
 # for hashing builtins
 import bcrypt
 
+# Provided by bcrypt, but not exported; used for the `random` builtin
+# TODO: find an alternative?
 proc arc4random: int32 {.importc: "arc4random".}
 
 proc strToType(str: string): tuple[b: bool, t: MDataType] =
