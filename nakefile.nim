@@ -2,8 +2,10 @@ import nake/nake
 
 const
   defaultOptions = ""
-  mainDeps =
-    @[
+
+  # Needs to be a seq to be passed in to
+  # the simpleBuild proc
+  mainDeps = @[
       "types",
       "objects",
       "scripting",
@@ -13,7 +15,7 @@ const
       "persist",
       "compile",
       "tasks"
-    ]
+  ]
   exes = {
     "main": mainDeps,
     "test": mainDeps,
