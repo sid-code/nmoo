@@ -212,7 +212,7 @@ defBuiltin "read":
     var who: MObject
     case args.len:
       of 0:
-        who = caller
+        who = player
       of 1:
         who = extractObject(args[0])
       else:
