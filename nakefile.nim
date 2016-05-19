@@ -70,6 +70,9 @@ task "clean", "removes executables":
     echo "removing " & exe
     removeFile(outDir / exe)
 
+  echo "removing compiled nakefile"
+  removeFile("nakefile")
+
   echo "removing nimcache(s)"
   removeDir(srcDir / "nimcache")
   removeDir("nimcache")
