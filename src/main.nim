@@ -65,7 +65,7 @@ while true:
       let code = verb.code
 
       writeFile("edit.tmp", code)
-      discard os.execShellCmd("$EDITOR edit.tmp -c \"set syntax=scheme\"")
+      discard os.execShellCmd("$EDITOR edit.tmp -c \"set filetype=lisp\"")
       let newCode = readFile("edit.tmp")
 
       verb.setCode(newCode)
