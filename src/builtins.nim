@@ -139,7 +139,7 @@ defBuiltin "echo":
     let res = arg
     sendstr &= res.toEchoString()
     newArgs.add(res)
-  caller.send(sendstr)
+  self.send(sendstr)
   return newArgs.md.pack
 
 defBuiltin "notify":
