@@ -21,6 +21,10 @@ const
     "server": mainDeps
   }
 
+  nimbleDeps = [
+    "bcrypt",
+  ]
+
   srcDir = "src"
   outDir = "bin"
 
@@ -86,6 +90,17 @@ task "serve", "builds and starts the server":
 for info in exes:
   let (exe, deps) = info
   simpleBuild(exe, deps)
+
+static:
+  echo "Checking nimble dependencies..."
+  for ndep in nimbleDeps:
+    let res = staticExec("nimble path " & ndep & " > /dev/null; echo $?")
+    if res == "0":
+      echo "Dependency '", ndep, "' met."
+    else:
+      echo "Nimble package '", ndep, "' missing."
+      echo "Run 'nimble install ", ndep, "' to install it."
+      quit(1)
 
 for kind, key, val in getopt():
   case kind:
