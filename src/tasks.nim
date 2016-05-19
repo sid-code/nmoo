@@ -493,7 +493,7 @@ proc run*(task: Task, limit: int = 20000): TaskResult =
           return TaskResult(typ: trFinish, res: res)
       of tsRunning:
         task.step()
-        limit -= 1
+    limit -= 1
 
   return TaskResult(typ: trTooLong)
 
