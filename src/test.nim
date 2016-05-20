@@ -172,7 +172,7 @@ suite "evaluator":
     proc evalS(code: string, who: MObject = root): MData =
       let name = "test task"
       let compiled = compileCode(code)
-      let t = world.addTask(name, who, who, symtable, compiled, ttFunction, -1)
+      let t = world.addTask(name, who, who, who, who, symtable, compiled, ttFunction, -1)
 
       let tr = t.run()
       case tr.typ:
