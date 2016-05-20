@@ -56,7 +56,7 @@ suite "object tests":
 
     check genericContainer.moveTo(nowhere)
 
-    check nowhere.getContents().contents.len == 2
+    check nowhere.getContents().len == 2
 
   test "property inheritance works":
     var child = root.createChild()
@@ -83,9 +83,8 @@ suite "object tests":
     discard o1.moveTo(o2)
 
     o1.setPropR("aliases", @["thingy".md])
-    let (has, contents) = o2.getContents()
+    let contents = o2.getContents()
 
-    check has
     check contents.len == 1
     check o2.query("thin").len == 1
 
@@ -398,14 +397,12 @@ suite "evaluator":
     # move actually moves objects
     var result = evalS("(move gencont nowhere)")
     check genericContainer.getLocation() == nowhere
-    let (has, contents) = nowhere.getContents()
-    check has
+    let contents = nowhere.getContents()
     check genericContainer in contents
 
     # move removes objects from previous location
     result = evalS("(move genthing gencont)")
-    let (has2, contents2) = nowhere.getContents()
-    check has2
+    let contents2 = nowhere.getContents()
     check contents2.len == 1
 
     # for good measure

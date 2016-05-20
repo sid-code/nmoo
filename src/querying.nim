@@ -35,15 +35,13 @@ proc getVicinity*(obj: MObject): seq[MObject] =
 
   if not isNil(loc):
     result.add(loc)
-    let (has, contents) = loc.getContents()
-    if has:
-      for o in contents: result.add(o)
+    let contents = loc.getContents()
+    for o in contents: result.add(o)
   else:
     result.add(obj)
 
-  let (has, contents) = obj.getContents()
-  if has:
-    for o in contents: result.add(o)
+  let contents = obj.getContents()
+  for o in contents: result.add(o)
 
 proc query*(obj: MObject, str: string, global = false): seq[MObject] =
   newSeq(result, 0)

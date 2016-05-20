@@ -12,7 +12,7 @@ proc getProp*(obj: MObject, name: string, all = true): MProperty
 proc getStrProp*(obj: MObject, name: string, all = true): string
 proc getAliases*(obj: MObject): seq[string]
 proc getLocation*(obj: MObject): MObject
-proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]]
+proc getContents*(obj: MObject): seq[MObject]
 proc getPropVal*(obj: MObject, name: string, all = true): MData
 proc getPropAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, p: MProperty]
 proc setProp*(obj: MObject, name: string, newVal: MData): tuple[p: MProperty, e: MData]
@@ -241,56 +241,37 @@ proc getLocation*(obj: MObject): MObject =
   else:
     return nil
 
-proc getRawContents(obj: MObject): tuple[hasContents: bool, contents: seq[MData]] =
-
+proc getRawContents(obj: MObject): seq[MData] =
   let contents = obj.getPropVal("contents")
+  return contents.listVal
 
-  if contents.isType(dList):
-    return (true, contents.listVal)
-  else:
-    return (false, @[])
+proc getContents*(obj: MObject): seq[MObject] =
+  newSeq(result, 0)
 
-
-proc getContents*(obj: MObject): tuple[hasContents: bool, contents: seq[MObject]] =
   let world = obj.getWorld()
-  if isNil(world): return (false, @[])
+  if isNil(world): return
 
-  var res: seq[MObject] = @[]
+  var contents = obj.getRawContents();
 
-  var (has, contents) = obj.getRawContents();
-
-  if has:
-    for o in contents:
-      if o.isType(dObj):
-        res.add(world.byID(o.objVal))
-
-    return (true, res)
-  else:
-    return (false, @[])
-
-
+  for o in contents:
+    if o.isType(dObj):
+      result.add(world.byID(o.objVal))
 
 proc addToContents*(obj: MObject, newMember: MObject): bool =
-  var (has, contents) = obj.getRawContents();
-  if has:
-    contents.add(newMember.md)
-    obj.setPropR("contents", contents)
-    return true
-  else:
-    return false
+  var contents = obj.getRawContents();
+  contents.add(newMember.md)
+  obj.setPropR("contents", contents)
+  return true
 
 proc removeFromContents*(obj: MObject, member: MObject): bool =
-  var (has, contents) = obj.getRawContents();
+  var contents = obj.getRawContents();
 
-  if has:
-    for idx, o in contents:
-      if o.objVal == member.getID():
-        system.delete(contents, idx)
+  for idx, o in contents:
+    if o.objVal == member.getID():
+      system.delete(contents, idx)
 
-    obj.setPropR("contents", contents)
-    return true
-  else:
-    return false
+  obj.setPropR("contents", contents)
+  return true
 
 proc moveTo*(obj: MObject, newLoc: MObject): bool =
   var loc = obj.getLocation()
