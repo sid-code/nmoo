@@ -132,11 +132,11 @@ proc dumpTask(task: Task): string =
   task.owner = nil
   task.world = nil
 
-  result.addLine($$task)
   result.addLine($self.getID())
   result.addLine($player.getID())
   result.addLine($caller.getID())
   result.addLine($owner.getID())
+  result.addLine($$task)
 
   task.self = self
   task.player = player
@@ -256,11 +256,16 @@ proc readObject(world: World, stream: FileStream) =
 
 proc readTask(world: World, stream: FileStream) =
   var task: Task
+  let self = readObjectID(world, stream)
+  let player = readObjectID(world, stream)
+  let caller = readObjectID(world, stream)
+  let owner = readObjectID(world, stream)
   load[Task](stream, task)
-  task.self = readObjectID(world, stream)
-  task.player = readObjectID(world, stream)
-  task.caller = readObjectID(world, stream)
-  task.owner = readObjectID(world, stream)
+
+  task.self = self
+  task.player = player
+  task.caller = caller
+  task.owner = owner
   task.world = world
   world.tasks.add(task)
 
