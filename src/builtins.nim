@@ -125,6 +125,7 @@ template checkExecute(what: MVerb) =
   if not obj.canExecute(verb):
     runtimeError(E_PERM, obj.toObjStr() & " cannot execute verb: " & what.names)
 
+# This is so that strings can be echoed without the quotes surrounding them.
 proc toEchoString*(x: MData): string =
   if x.isType(dStr):
     x.strVal
