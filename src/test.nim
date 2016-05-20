@@ -243,6 +243,20 @@ suite "evaluator":
     check result.isType(dStr)
     check result.strVal == "val"
 
+  test "setprop correctly changes property value":
+    discard evalS("""
+    (setprop #1 "newprop" 400)
+    """)
+    discard evalS("""
+    (setprop #1 "newprop" 450)
+    """)
+
+    var result = evalS("""
+    (getprop #1 "newprop")
+    """)
+
+    check result == 450.md
+
   test "setprop checks permissions":
     let result = evalS("""
     (setprop #1 "newprop" "oops")
