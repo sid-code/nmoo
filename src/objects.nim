@@ -8,6 +8,7 @@ import logging
 import times
 # NOTE: verbs is imported later on!
 
+proc blankObject*: MObject
 proc getProp*(obj: MObject, name: string, all = true): MProperty
 proc getStrProp*(obj: MObject, name: string, all = true): string
 proc getAliases*(obj: MObject): seq[string]
@@ -51,6 +52,24 @@ BuiltinPropertyData["fertile"] = 1.md
 proc initializeBuiltinProps*(obj: MObject) =
   for propName, value in BuiltinPropertyData.pairs:
     discard obj.setProp(propName, value)
+
+proc blankObject*: MObject =
+  result = MObject(
+    id: 0.id,
+    world: nil,
+    isPlayer: false,
+    props: @[],
+    verbs: @[],
+    parent: nil,
+    children: @[],
+
+    output: proc (obj: MObject, m: string) =
+      when defined(debug):
+        echo "sent to #$1: $2" % [$obj.getID(), m]
+  )
+
+  initializeBuiltinProps(result)
+
 
 # The following are convenience procs to ease the transition from
 # no builtin properties to builtin properties.

@@ -25,7 +25,7 @@ type
   OutputProc = proc(obj: MObject, msg: string)
 
   MObject* = ref object
-    id: ObjID
+    id*: ObjID
     world*: World
     isPlayer*: bool
 
@@ -335,26 +335,8 @@ proc toST*(data: MData): SymbolTable =
 proc dataToObj*(world: World, objd: MData): MObject =
   world.byID(objd.objVal)
 
-proc defaultOutput(obj: MObject, m: string) =
-  when defined(debug):
-    echo "sent to #$1: $2" % [$obj.getID(), m]
-
-
-proc blankObject*: MObject =
-  result = MObject(
-    id: 0.id,
-    world: nil,
-    isPlayer: false,
-    props: @[],
-    verbs: @[],
-    parent: nil,
-    children: @[],
-    output: defaultOutput
-  )
-
 proc send*(obj: MObject, msg: string) =
   obj.output(obj, msg)
-
 
 proc newProperty*(
   name: string,
