@@ -1,3 +1,6 @@
+# This is to be imported from the nakefile but it can be run standalone if you
+# really want.  (hence the when isMainModule block at the bottom)
+
 import strutils
 import nre
 import options
