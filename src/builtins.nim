@@ -919,16 +919,15 @@ defBuiltin "recycle":
     let obj = extractObject(args[0])
     checkOwn(obj)
 
-    let (has, contents) = obj.getContents()
-    if has:
-      for contained in contents:
-        # This is actually how LambdaMOO does it: no call to the move
-        # builtin instead a raw exitfunc call. I find this somewhat
-        # dubious but actually making a builtin call is difficult because
-        # of the phase mechanism.
-        discard contained.moveTo(nowhere)
-        discard obj.verbCall("exitfunc", player, caller, @[contained.md])
-        world.persist(contained)
+    let contents = obj.getContents()
+    for contained in contents:
+      # This is actually how LambdaMOO does it: no call to the move
+      # builtin instead a raw exitfunc call. I find this somewhat
+      # dubious but actually making a builtin call is difficult because
+      # of the phase mechanism.
+      discard contained.moveTo(nowhere)
+      discard obj.verbCall("exitfunc", player, caller, @[contained.md])
+      world.persist(contained)
 
     if isNil(obj.verbCall("recycle", player, caller, @[], callback = task.id)):
       # We don't actually care if the verb "recycle" exists
