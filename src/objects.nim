@@ -204,6 +204,8 @@ proc setProp*(obj: MObject, name: string, newVal: MData):
         p.val = defaultValue
       else:
         p.val = newVal
+    else:
+      p.val = newVal
 
   return (p, e)
 
