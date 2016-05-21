@@ -132,6 +132,27 @@ proc toEchoString*(x: MData): string =
   else:
     x.toCodeStr()
 
+## .. code-block::
+##
+##   (echo arg1:Any ...):List
+##
+## Takes any number of arguments of any type and outputs them to object on
+## which the verb is being run on. Each argument is passed to the
+## `toEchoString` proc before being output.
+##
+## .. code-block::
+##
+##   (let ((obj #5))
+##     (echo "object " obj " is an object"))
+##
+##   ;;; This outputs "object #5 is an object" to self
+##
+## The argument list is simply returned.
+##
+## NOTE: This is probably not what you want to call because you want to echo to
+## the player who typed the verb. If this builtin is called from a verb running
+## on some object that isn't a player, nobody will see he message. (look into
+## the ``notify`` builtin)
 defBuiltin "echo":
   var
     newArgs: seq[MData] = @[]
@@ -143,6 +164,16 @@ defBuiltin "echo":
   self.send(sendstr)
   return newArgs.md.pack
 
+## .. code-block::
+##
+##   (notify player:Obj message:Str):Str
+##
+## Sends a line of output ``message`` to ``player``. There are some
+## restrictions, however. The programmer who's permissions this task running
+## with must either own ``player`` or be a wizard. If one of these conditions
+## isn't met, `E_PERM` is raised.
+##
+## The value returned is the string that was printed.
 defBuiltin "notify":
   if args.len != 2:
     runtimeError(E_ARGS, "notify takes 2 arguments")
@@ -156,6 +187,21 @@ defBuiltin "notify":
   who.send(msg)
   return msg.md.pack
 
+## .. code-block::
+##
+##   (do expr1:Any expr2:Any ...):Any
+##
+## This builtin evaluates each expression passed to it in order and returns the
+## result of the last one evaluated. This is one way to do multiple things in a
+## lambda:
+##
+## .. code-block::
+##
+##   (lambda (x)
+##     (do
+##      (mangle x)
+##      (eat x)
+##      (clean-up)))
 defBuiltin "do":
   var newArgs: seq[MData] = @[]
   for arg in args:
@@ -167,6 +213,13 @@ defBuiltin "do":
   else:
     return @[].md.pack
 
+## .. code-block::
+##
+##   (eval code:Str):Any
+##
+## Treats ``code`` as actual code, evaluates it, and returns the result.
+## Internally, the code is compiled and loaded into a whole new task which is
+## then run. **Use sparingly**.
 defBuiltin "eval":
   if phase == 0:
     if args.len != 1:
@@ -189,6 +242,19 @@ defBuiltin "eval":
   if phase == 1:
     return args[1].pack
 
+## .. code-block::
+##
+##   (settaskperms new-perms:Obj):Obj
+##
+## Sets the current task's permissions to those of ``new-perms`` (which is also
+## returned). The main use of this is the idiom:
+##
+## .. code-block::
+##
+##   (setttaskperms caller)
+##
+## To make sure that a verb is no longer running with wizard permissions and
+## doesn't royally screw things up.
 defBuiltin "settaskperms":
   if args.len != 1:
     runtimeError(E_ARGS, "settaskperms takes 1 argument")
@@ -201,13 +267,28 @@ defBuiltin "settaskperms":
   task.owner = newPerms
   return newPerms.md.pack
 
+## .. code-block::
+##
+##   (callerperms):Obj
+##
+## Returns the object whose permissions the current task is running
+## with.
 defBuiltin "callerperms":
   if args.len != 0:
     runtimeError(E_ARGS, "callerperms takes no arguments")
 
   return task.owner.md.pack
 
-# (read [player])
+## .. code-block::
+##
+##   (read [player:Obj]):Str
+##
+## Reads a line of input from ``player``'s connection (if omitted it reads
+## from the player who entered the command that started this task).
+##
+## The programmer must own ``player`` or be a wizard or ``E_PERM`` is raised.
+##
+## **Use extremely sparingly**.
 defBuiltin "read":
   if phase == 0:
     var who: MObject
@@ -235,6 +316,18 @@ defBuiltin "read":
 
     return args[0].pack
 
+## .. code-block::
+##
+##   (err error-type:Err message:Str)
+##
+## Raises an error with type ``error-type`` and message ``message``.
+##
+## Example of use:
+## .. code-block::
+##
+##   (if (> count 10)
+##       (err E_ARGS "too many")
+##       (do-something-with count))
 defBuiltin "err":
   if args.len != 2:
     runtimeError(E_ARGS, "err takes 2 arguments")
@@ -247,8 +340,19 @@ defBuiltin "err":
   err.errMsg = msg
   return err.pack
 
-# (erristype err E_WHATEVER)
-# Checks whether err has error type E_WHATEVER
+## .. code-block::
+##
+##   (erristype err:Err err2:Err):Int
+##
+## Checks whether ``err`` has same error type as ``err2``. If true, it returns
+## ``1``, if not ``0``. This is useful in ``try`` expressions:
+##
+## .. code-block::
+##
+##   (try (error-prone-code)
+##        (if (erristype error E_PERM)     ; note: in catch block, `error` holds the error
+##            (echo "Permission error")
+##            (echo "Some other kind of error)))
 defBuiltin "erristype":
   if args.len != 2:
     runtimeError(E_ARGS, "erristype takes 2 arguments")
@@ -448,7 +552,31 @@ template getVerbOn(objd, verbdescd: MData, die = true,
 
   res
 
-# (getprop what propname)
+## .. code-block::
+##
+##   (getprop obj:Obj prop:Str):Any
+##
+## Gets the property `prop` of `obj`. If the property doesn't exist,
+## ``E_PROPNF`` is raised. The programmer should also have read access on the
+## object. If not, ``E_PERM`` is raised.
+##
+## There is a shorthand for this builtin but it must be used carefully because
+## it is rudimentary:
+##
+## .. code-block::
+##
+##   (echo "The value of #5.name is " #5.name)
+##
+## instead of:
+##
+## .. code-block::
+##
+##   (echo "The value of #5.name is " (getprop #5 "name"))
+##
+## In short, ``obj.prop`` expands to ``(getpop obj "prop")``, but don't expect
+## it to work with verb calls: ``obj.prop:verb()`` **will not** work and neither
+## will shenanigans like ``(callerperms).name``. However, these can be nested:
+## ``obj.location.name`` will work.
 defBuiltin "getprop":
   var useDefault = false
   var default = nilD
@@ -470,7 +598,18 @@ defBuiltin "getprop":
 
   return propObj.val.pack
 
-# (setprop what propname newprop)
+## .. code-block::
+##
+##   (setprop obj:Obj prop:Str new-val:Any):Any
+##
+## Companion of ``getprop``. It sets the property described by ``prop`` on
+## ``obj`` to ``new-val``. If ``prop`` cannot be found on ``obj`` then
+## ``E_PROPNF`` is raised. If the programmer doesn't have write access on
+## ``obj`` then ``E_PERM`` is raised. The value returned is the value that was
+## set.
+##
+## There is no cute shorthand for this builtin to avoid overcomplicating the
+## syntax.
 defBuiltin "setprop":
   if args.len != 3:
     runtimeError(E_ARGS, "setprop takes 3 arguments")
@@ -510,7 +649,14 @@ defBuiltin "setprop":
 
   return newVal.pack
 
-# (delprop what propname)
+## .. code-block::
+##
+##   (delprop obj:Obj prop:Str):Obj
+##
+## This builtin is for deleting a property from an object and all its
+## descendants. If the property is not found, then ``E_PROPNF`` is raised. If
+## the programmer does not have write permissions on ``obj`` then ``E_PERM`` is
+## raised.  The return value is ``obj``.
 defBuiltin "delprop":
   if args.len != 2:
     runtimeError(E_ARGS, "delprop takes 2 arguments")
@@ -523,9 +669,20 @@ defBuiltin "delprop":
 
   return obj.md.pack
 
-# (getpropinfo what propname)
-# result is (owner perms)
-# perms is [rwc]
+## .. code-block::
+##
+##   (getpropinfo obj:Obj prop:Str):List
+##
+## Retrieves information about the property referred to by ``prop`` on ``obj.
+## This information is a list whose first element is the owner of the property.
+## The second element is a string of characters taken from the set: ``r``, ``w`,
+## and ``c``. ``r`` signifies that the property is publicly readable. ``w``
+## signifies that the property is publicly writable. ``c`` signifies that the
+## owner of this property in this object's descendants should be the owner of
+## the child, not the owner of this object.
+##
+## If the property doesn't exist, then ``E_PROPNF`` is raised. If the
+## programmer does not have read access to ``obj`` then ``E_PERM`` is raised.
 defBuiltin "getpropinfo":
   if args.len != 2:
     runtimeError(E_ARGS, "getpropinfo takes 2 arguments")
@@ -538,10 +695,17 @@ defBuiltin "getpropinfo":
   return extractInfo(propObj).pack
 
 
-# (setpropinfo what propname newinfo)
-# newinfo is like result from getpropinfo but can
-# optionally have a third element specifying a new
-# name for the property
+## .. code-block::
+##
+##   (setpropinfo obj:Obj prop:Str new-info:List):Obj
+##
+## Sets the property ``prop`` on ``obj``'s info to ``new-info``. ``new-info``
+## is specified by ``(new-owner:Obj new-perms:Str [new-name:Str])``.
+## ``new-perms`` is in the same format as the part of the result of
+## ``getpropinfo``.
+##
+## If the property does not exist, ``E_PROPNF`` is raised and if the programmer
+## does not have write access to the ``obj`` then ``E_PERM`` is raised.
 defBuiltin "setpropinfo":
   if args.len != 3:
     runtimeError(E_ARGS, "setpropinfo takes 3 arguments")
@@ -561,8 +725,12 @@ defBuiltin "setpropinfo":
 
   return args[0].pack
 
-# (props obj)
-# returns a list of obj's properties
+## .. code-block::
+##
+##   (props obj:Obj):List
+##
+## Returns a list of properties defined directly on ``obj``. If the programmer
+## does not have read access to ``obj``, ``E_PERM`` is raised.
 defBuiltin "props":
   if args.len != 1:
     runtimeError(E_ARGS, "props takes 1 argument")
@@ -576,8 +744,12 @@ defBuiltin "props":
 
   return res.md.pack
 
-# (verbs obj)
-# returns a list of obj's verbs' names
+## .. code-block::
+##
+##   (verbs obj:Obj):List
+##
+## Returns a list of verbs defined directly on ``obj``. If the programmer does
+## not have read access to ``obj``, ``E_PERM`` is raised.
 defBuiltin "verbs":
   if args.len != 1:
     runtimeError(E_ARGS, "verbs takes 1 argument")
@@ -594,7 +766,17 @@ defBuiltin "verbs":
   return res.md.pack
 
 
-# (getverbinfo obj verb-desc)
+## .. code-block::
+##
+##   (getverbinfo obj:Obj verb:Str):List
+##
+## See the documentation of ``getpropinfo`` for the format of the list
+## returned.  The only difference is that instead of ``c`` in the permissions
+## there is ``x`` which signifies if the verb is publicly executable.
+##
+## If ``verb`` is not found on ``obj``, then ``E_VERBNF`` is raised. If the
+## programmer does not have read permissions on the object and the verb then
+## ``E_PERM`` is raised.
 defBuiltin "getverbinfo":
   if args.len != 2:
     runtimeError(E_ARGS, "getverbinfo takes 2 arguments")
@@ -605,7 +787,16 @@ defBuiltin "getverbinfo":
 
   return extractInfo(verb).pack
 
-# (setverbinfo obj verb-desc newinfo)
+## .. code-block::
+##
+##   (setverbinfo obj:Obj verb:Str new-info:List):Obj
+##
+## This is the companion verb to ``getverbinfo``. The ``new-info`` list
+## is of the same format as the return value of ``getverbinfo`` but can
+## contain one extra element at the end that specifies a new list of names
+## for the verb in a string.
+##
+## The return value is the ``obj``.
 defBuiltin "setverbinfo":
   if args.len != 3:
     runtimeError(E_ARGS, "setverbinfo takes 3 arguments")
@@ -621,7 +812,20 @@ defBuiltin "setverbinfo":
   world.persist(obj)
   return args[0].pack
 
-# (getverbargs obj verb-desc)
+## .. code-block::
+##
+##   (getverbargs obj:Obj verb:Str):List
+##
+## This builtin returns the arguments that the verb is supposed to operate on.
+## It will be in the list of the form:
+##
+## .. code-block::
+##
+##   ``(direct-object preposition indirect-object)``
+##
+## If ``verb`` does not exist on ``obj`` then ``E_VERBNF`` is raised. If the
+## programmer does not have read permissions on ``verb`` then ``E_PERM`` is
+## raised.
 defBuiltin "getverbargs":
   if args.len != 2:
     runtimeError(E_ARGS, "getverbargs takes 2 arguments")
@@ -632,7 +836,14 @@ defBuiltin "getverbargs":
 
   return extractArgs(verb).pack
 
-# (setverbargs obj verb-desc (objspec prepspec objspec))
+## .. code-block::
+##
+##   (setverbargs obj:Obj verb:Str new-args:List):Obj
+##
+## This is the companion verb to ``getverbargs``. ``setverbinfo`` is to
+## ``getverbinfo`` as this verb is to ``getverbargs``. The signature above
+## should be enough to infer how to use it. Write access is required or
+## ``E_PERM`` is raised.
 defBuiltin "setverbargs":
   if args.len != 3:
     runtimeError(E_ARGS, "setverbargs takes 3 arguments")
@@ -648,7 +859,12 @@ defBuiltin "setverbargs":
 
   return args[0].pack
 
-# (addverb obj names)
+## .. code-block::
+##
+##   (addverb obj:Obj new-verb-names:Str):Obj
+##
+## Adds a verb to ``obj`` with names specified by ``new-verb-names``. The new
+## verb's owner will be the programmer of this verb
 defBuiltin "addverb":
   if args.len != 2:
     runtimeError(E_ARGS, "addverb takes 2 arguments")
@@ -670,7 +886,16 @@ defBuiltin "addverb":
 
   return objd.pack
 
-# (delverb obj verb)
+## .. code-block::
+##
+##   (delverb obj:Obj verb:Str):Obj
+##
+## Deletes the verb ``verb`` off ``obj`` and all of its descendants. If the
+## string ``verb`` does not point to any verb on ``obj`` then ``E_VERBNF`` is
+## raised. If the programmer doesn't have write access to the ``obj`` then
+## ``E_PERM`` is raised.
+##
+## The return value is the ``obj``.
 defBuiltin "delverb":
   if args.len != 2:
     runtimeError(E_ARGS, "delverb takes 2 arguments")
@@ -1786,7 +2011,7 @@ defBuiltin "random":
 
   return (scaled + nmin).md.pack
 
-## Task operations
+# Task operations
 
 # (suspend [number-of-seconds])
 # number-of-seconds is optional and can be fractional.
@@ -1841,19 +2066,23 @@ defBuiltin "taskid":
 
   return task.id.md.pack
 
-# (queued-tasks)
-# Returns a list of lists.
-# Each list represents a task owned by the owner of this task
-# (or if a wizard, all tasks)
-#
-# Format: (task-id start-time programmer verb-loc verb-name line self)
-# task-id: The ID of the task
-# start-time: The time the task started
-# programmer: The programmer of that task
-# verb-loc: The object where the verb the task is running from is found
-# verb-name: The name of the verb the task is running
-# line: The line number the task is waiting to execute
-# self: The value of the task's "self" variable
+## .. code-block::
+##
+##   (queued-tasks):List
+##
+## Returns information about tasks that are waiting to run in the form of a
+## list of lists. Each list represents a task owned by the owner of this task
+## (or if a wizard, all tasks)
+##
+## Format: ``(task-id start-time programmer verb-loc verb-name line self)``
+##
+##   :``task-id``: The ID of the task
+##   :``start-time``: The time the task started
+##   :``programmer``: The programmer of that task
+##   :``verb-loc``: The object where the verb the task is running from is found
+##   :``verb-name``: The name of the verb the task is running
+##   :``line``: The line number the task is waiting to execute
+##   :``self``: The value of the task's ``self`` variable
 defBuiltin "queued-tasks":
   if args.len != 0:
     runtimeError(E_ARGS, "queued-tasks takes no argumnts")
@@ -1875,8 +2104,14 @@ defBuiltin "queued-tasks":
 
   return res.md.pack
 
-# (kill-task task-id)
-# Kills the task with id task-id
+## .. code-block::
+##
+##   (kill-task task-id:Int):Int
+##
+## Kills the task with id `task-id`. The programmer needs to be the programmer
+## of that task (or a wizard) or ``E_PERM`` is thrown. The task needs to be
+## suspended or awaiting input or ``E_ARGS`` is thrown. Also, if the task
+## simply does not exist then ``E_ARGS`` is thrown as well.
 defBuiltin "kill-task":
   if args.len != 1:
     runtimeError(E_ARGS, "kill-task takes 1 argument")
