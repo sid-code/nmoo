@@ -389,7 +389,8 @@ proc setArgs(verb: MVerb, args: VerbArgs) =
   verb.ioSpec = args.ioSpec
 
 template getPropOn(objd, propd: MData, die = true, useDefault = false,
-                   default = nilD, all = false): tuple[o: MObject, p: MProperty] =
+                   default = nilD, all = false, inherited = true):
+                     tuple[o: MObject, p: MProperty] =
   let objd2 = objd
   let obj = extractObject(objd2)
   var res: tuple[o: MObject, p: MProperty]
@@ -397,6 +398,9 @@ template getPropOn(objd, propd: MData, die = true, useDefault = false,
   let
     propName = extractString(propd)
     (objOn, propObj) = obj.getPropAndObj(propName, all)
+
+  if not all and not inherited and obj.propIsInherited(propObj):
+    runtimeError(E_PROPNF, "property $1 not found on $2" % [propName, $obj.toObjStr()])
 
   if isNil(propObj):
     if useDefault:
@@ -511,10 +515,7 @@ defBuiltin "delprop":
   if args.len != 2:
     runtimeError(E_ARGS, "delprop takes 2 arguments")
 
-  let (obj, prop) = getPropOn(args[0], args[1])
-
-  if prop.inherited:
-    runtimeError(E_PROPNF, "$1 does not define a property $2" % [obj.toObjStr, $args[1]])
+  let (obj, prop) = getPropOn(args[0], args[1], inherited = false)
 
   for moddedObj, deletedProp in obj.delPropRec(prop).items:
     discard deletedProp
