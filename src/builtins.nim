@@ -660,7 +660,7 @@ defBuiltin "addverb":
 
   var verb = newVerb(
     names = names,
-    owner = caller,
+    owner = owner,
   )
 
   verb.setCode("")
