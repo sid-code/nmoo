@@ -14,13 +14,13 @@ const
       "builtins",
       "persist",
       "compile",
-      "tasks"
+      "tasks",
   ]
   exes = {
     "main": mainDeps,
     "test": mainDeps,
     "setupmin": mainDeps,
-    "server": mainDeps
+    "server": mainDeps,
   }
 
   nimbleDeps = [
