@@ -1,5 +1,8 @@
 import nake/nake
 
+import streams
+import builtindocgen
+
 const
   defaultOptions = ""
 
@@ -94,6 +97,14 @@ task "setup", "sets up a minimal world":
 task "serve", "builds and starts the server":
   runTask("server")
   direShell(outDir / "server " & worldName)
+
+task "docs", "generate documentation":
+  let docoutfile = "doc/builtins.rst"
+  let inputStream = newFileStream("src/builtins.nim", fmRead)
+  let outputStream = newFileStream(docoutfile, fmWrite)
+
+  gendocs(inputStream, outputStream)
+  echo "Generated docs in ", docoutfile
 
 for info in exes:
   let (exe, deps) = info
