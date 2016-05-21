@@ -18,6 +18,8 @@ proc getPropVal*(obj: MObject, name: string, all = true): MData
 proc getPropAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, p: MProperty]
 proc setProp*(obj: MObject, name: string, newVal: MData): tuple[p: MProperty, e: MData]
 proc delPropRec*(obj: MObject, prop: MProperty): seq[tuple[o: MObject, p: MProperty]]
+proc propIsInherited*(obj: MObject, name: string): bool
+proc propIsInherited*(obj: MObject, prop: MProperty): bool
 proc getOwnProps*(obj: MObject): seq[string]
 proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
@@ -165,6 +167,18 @@ proc toObjStr*(objd: MData, world: World): string =
 
 import verbs
 
+proc hasPropCalled(obj: MObject, name: string): bool =
+  obj.getPropAndObj(name) != (nil, nil)
+
+# The following two procs assume that `obj` has a property called `name` and as
+# such does not bother to check.
+proc propIsInherited*(obj: MObject, name: string): bool =
+  let parent = obj.parent
+  return not isNil(parent) and obj.parent != obj and obj.parent.hasPropCalled(name)
+
+proc propIsInherited*(obj: MObject, prop: MProperty): bool =
+  propIsInherited(obj, prop.name)
+
 proc getPropAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, p: MProperty] =
   for p in obj.props:
     if p.name == name:
@@ -229,8 +243,8 @@ proc setProp*(obj: MObject, name: string, newVal: MData):
   return (p, e)
 
 proc delProp*(obj: MObject, prop: MProperty): MProperty =
-  for idx, pr in obj.props:
-    if pr.name == prop.name:
+  for idx, propName in obj.getOwnProps():
+    if propName == prop.name:
       system.delete(obj.props, idx)
       return prop
 
@@ -247,7 +261,8 @@ proc getOwnProps*(obj: MObject): seq[string] =
   newSeq(result, 0)
   for prop in obj.props:
     let name = prop.name
-    result.add(name)
+    if not propIsInherited(obj, name):
+      result.add(name)
 
 proc getLocation*(obj: MObject): MObject =
   let world = obj.getWorld()
