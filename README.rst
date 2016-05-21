@@ -53,7 +53,13 @@ First, you need to compile the nakefile:
 
     $ nim c nakefile.nim
 
-Then you can run the tests:
+You can generate docs (probably incomplete right now):
+
+::
+
+    $ ./nakefile docs
+
+And you can run the tests:
 
 ::
 
