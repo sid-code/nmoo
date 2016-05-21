@@ -48,6 +48,9 @@ task defaultTask, "builds everything":
 proc toSource(name: string): string =
   srcDir / name & ".nim"
 
+proc compile(source, output: string): bool =
+  direShell(nimExe, defaultOptions, extraOptions, "--out:" & output, "c", source)
+
 proc simpleBuild(name: string, deps: seq[string]) =
   task name, "builds " & name:
     let sourceFile = name.toSource()
@@ -59,7 +62,7 @@ proc simpleBuild(name: string, deps: seq[string]) =
     refresh = refresh or name.needsRefreshH(sourceFile)
 
     if refresh:
-      if direShell(nimExe, defaultOptions, extraOptions, "--out:" & outDir / name, "c", name.toSource()):
+      if compile(source = name.toSource, output = outDir / name):
         echo "success building " & name
     else:
       echo name & " is up to date"
