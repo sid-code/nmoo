@@ -668,14 +668,6 @@ defBuiltin "addverb":
   discard obj.addVerb(verb)
   world.persist(obj)
 
-  # The following is commented out because verbs are now checked
-  # recursively and no longer need to be added recursively.
-
-  # for tup in obj.addVerbRec(verb):
-  #   let (moddedObj, addedVerb) = tup
-  #   discard addedVerb
-  #   world.persist(moddedObj)
-
   return objd.pack
 
 # (delverb obj verb)
@@ -690,13 +682,6 @@ defBuiltin "delverb":
 
   discard obj.delVerb(verb)
   world.persist(obj)
-
-  # See "addverb" for why the following is commented out
-
-  # for tup in obj.delVerbRec(verb):
-  #   let (moddedObj, deletedVerb) = tup
-  #   discard deletedVerb
-  #   world.persist(moddedObj)
 
   return obj.md.pack
 
