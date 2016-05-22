@@ -1198,6 +1198,8 @@ defBuiltin "setparent":
   let oldParent = obj.parent
 
   let newParent = extractObject(args[1])
+  if not newParent.fertile and not isWizardT():
+    runtimeError(E_PERM, "cannot create child of infertile parent")
 
   var conductor = newParent
 
