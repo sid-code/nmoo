@@ -1664,7 +1664,11 @@ defBuiltin "fit":
     return str[0..length-1].md.pack
   elif strlen > length:
     let allowed = length - traillen
-    return (str[0..allowed-1] & trail).md.pack
+    if allowed <= 0:
+      return trail[0..length-1].md.pack
+    else:
+      let cutdown = str[0..allowed-1] & trail
+      return cutdown.md.pack
 
 defBuiltin "split":
   var sep = " "
