@@ -1928,11 +1928,6 @@ defBuiltin "pass":
     let holder = extractObject(holderd)
     let parent = holder.parent
 
-    let selfd = symtable["self"]
-    if not selfd.isType(dObj):
-      return nilD.pack
-    let self = extractObject(selfd)
-
     if isNil(parent) or parent == holder:
       return nilD.pack
 
