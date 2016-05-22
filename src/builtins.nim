@@ -2128,4 +2128,4 @@ defBuiltin "kill-task":
   otask.spush(nilD)
   otask.finish()
 
-  return task-id.md.pack
+  return taskID.md.pack
