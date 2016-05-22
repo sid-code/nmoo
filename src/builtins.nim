@@ -549,7 +549,6 @@ template getVerbOn(objd, verbdescd: MData, die = true,
   else:
     runtimeError(E_ARGS, "verb indices can only be strings or integers")
 
-
   res
 
 ## .. code-block::
