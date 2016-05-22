@@ -1307,7 +1307,6 @@ defBuiltin "verbcall":
 
   let obj = extractObject(args[0])
   let (holder, verb) = getVerbOn(args[0], args[1], all = true)
-  discard holder
 
   if phase == 0:
     if args.len > 3:
@@ -1322,6 +1321,7 @@ defBuiltin "verbcall":
       player = player,
       caller = self,
       cargs, symtable = symtable,
+      holder = holder,
       taskType = task.taskType, callback = task.id
     )
 
