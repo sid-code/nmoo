@@ -204,7 +204,7 @@ proc getVerb*(obj: MObject, index: int): MVerb =
     nil
 
 proc getVerbAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, v: MVerb] =
-  for v in obj.matchingVerbs(name, all):
+  for v in obj.matchingVerbs(name, false):
     return (obj, v)
 
   if all:
