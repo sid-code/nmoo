@@ -1631,20 +1631,33 @@ defBuiltin "strsub":
 # (fit string length filler=" " trail="")
 # If (len string) is less than length, then filler is added until it isn't
 # otherwise, string is cut short and trail is added, such that it doesn't exceed length
+proc reverse(str: var string) =
+  let length = str.len
+  if length < 2: return
+  for i in 0..length div 2 - 1:
+    swap(str[i], str[length - i - 1])
 
 defBuiltin "fit":
-  var
-    filler = " "
-    trail = ""
-
   if args.len notin 2..4:
     runtimeError(E_ARGS, "fit takes 2 to 4 arguments")
 
+  var filler = " "
+  var trail = ""
+  var res: string
+
   var str = extractString(args[0])
-  let length = extractInt(args[1])
+  var length = extractInt(args[1])
+  var leftPad = false
+
+  if length < 0:
+    length = -length
+    leftPad = true
 
   if args.len >= 3:
     filler = extractString(args[2])
+
+  if filler.len == 0:
+    filler = " "
 
   if args.len >= 4:
     trail = extractString(args[3])
@@ -1655,20 +1668,29 @@ defBuiltin "fit":
   let strlen = str.len
   let traillen = trail.len
 
+  if leftPad:
+    str.reverse
+    filler.reverse
+    trail.reverse
+
   if strlen == length:
-    return str.md.pack
+    res = str
   elif strlen < length:
     while str.len <= length:
       str &= filler
+    res = str[0..length - 1]
 
-    return str[0..length-1].md.pack
   elif strlen > length:
     let allowed = length - traillen
     if allowed <= 0:
-      return trail[0..length-1].md.pack
+      res = trail[0..length-1]
     else:
-      let cutdown = str[0..allowed-1] & trail
-      return cutdown.md.pack
+      res = str[0..allowed-1] & trail
+
+  if leftPad:
+    res.reverse
+
+  return res.md.pack
 
 defBuiltin "split":
   var sep = " "
