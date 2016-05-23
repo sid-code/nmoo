@@ -1628,15 +1628,35 @@ defBuiltin "strsub":
 
   return str.replace(fromv, to).md.pack
 
-# (fit string length filler=" " trail="")
-# If (len string) is less than length, then filler is added until it isn't
-# otherwise, string is cut short and trail is added, such that it doesn't exceed length
 proc reverse(str: var string) =
   let length = str.len
   if length < 2: return
   for i in 0..length div 2 - 1:
     swap(str[i], str[length - i - 1])
 
+## .. code-block
+##
+##   (fit str:Str length:Int filler:Str=" " trail:Str="")
+##
+## Fits the string ``str`` to be ``length`` characters by repeatedly adding
+## ``filler`` (and truncating when necessary) until length ``length`` is
+## reached. If ``str`` is already greater than ``length``, then it is cut down
+## appropriately and ``trail`` is appended. If ``trail`` is too long, then it is
+## truncated too.
+##
+## If ``length`` is positive then padding is applied to the right. If negative,
+## then it's absolute value will be taken but padding will be applied to the
+## left.
+##
+## Examples:
+##
+## .. code-block::
+##
+##   (fit "hello world" 6)          ; => "hello "
+##   (fit "hello world" 15 "#")     ; => "hello world####"
+##   (fit "hello world" 6 "" "...") ; => "hel..."
+##   (fit "hello world" -15 ">")    ; => ">>>>hello world"
+##
 defBuiltin "fit":
   if args.len notin 2..4:
     runtimeError(E_ARGS, "fit takes 2 to 4 arguments")
