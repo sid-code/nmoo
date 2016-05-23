@@ -601,3 +601,28 @@ suite "evaluator":
     let captures = result.listVal
     check captures.len == 1
     check captures[0] == "bcde".md
+
+  test "fit statement works":
+    var result = evalS("""(fit "hello world" 10)""")
+    check result == "hello worl".md
+
+    result = evalS("""(fit "hello world" 15)""")
+    check result == "hello world    ".md
+
+    result = evalS("""(fit "hello world" 15 "x")""")
+    check result == "hello worldxxxx".md
+
+    result = evalS("""(fit "hello world" 6 " " "...")""")
+    check result == "hel...".md
+
+    result = evalS("""(fit "hello world" 6 " " "abcdefg")""")
+    check result == "abcdef".md
+
+    result = evalS("""(fit "hello world" -15)""")
+    check result == "    hello world".md
+
+    result = evalS("""(fit "hello world" -15 "x")""")
+    check result == "xxxxhello world".md
+
+    result = evalS("""(fit "hello world" -6 " " "abcdefg")""")
+    check result == "bcdefg".md
