@@ -41,6 +41,7 @@ $(function() {
     keyMap: "vim",
     mode: "scheme",
     matchBrackets: true,
+    lineNumbers: true,
     theme: "base16-dark"
   });
   $(".CodeMirror").focus(function() { term.focus(false); });
