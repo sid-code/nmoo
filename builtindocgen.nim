@@ -5,17 +5,19 @@ import strutils
 import nre
 import options
 import streams
+import packages/docutils/rstgen
+import packages/docutils/rst
 
 const
   builtinsSourceFile = "src/builtins.nim"
 
 
-proc gendocs*(instream = newFileStream(builtinsSourceFile, fmRead),
-              outstream = newFileStream(stdout)) =
+proc genrstdocs*(infilename = builtinsSourceFile, outfilename: string) =
   var currentComment = ""
 
-  while not instream.atEnd():
-    let line = instream.readLine()
+  let outfile = open(outfilename, fmWrite)
+
+  for line in lines(infilename):
     if line.strip().len == 0:
       continue
 
@@ -33,10 +35,29 @@ proc gendocs*(instream = newFileStream(builtinsSourceFile, fmRead),
         let builtinName = matchOpt.get.captures.toSeq[0]
         let bNameLen = builtinName.len
         let numTildes = if bNameLen < 4: 4 else: bnameLen
-        outstream.writeLine(builtinName)
-        outStream.writeLine(repeat('~', numTildes))
-        outstream.writeLine(currentComment)
+        outfile.writeLine(builtinName)
+        outfile.writeLine(repeat('~', numTildes))
+        outfile.writeLine(currentComment)
       currentComment = ""
+
+  outfile.close()
+
+proc genhtmldocs*(rstinfile, outfile: string) =
+  var gen: RstGenerator
+  gen.initRstGenerator(outHtml, defaultConfig(), outfile, {})
+
+  # This is a param of rstParse, an undocumented yet important proc.
+  var wtf = false
+
+  let rst = readFile(rstinfile)
+  # I have no clue what most of the arguments do, so they're just going to be
+  # dummy values.
+  var parsedrst = rstParse(rst, rstinfile, 0, 0, wtf, {})
+
+  var generatedHtml = ""
+  gen.renderRstToOut(parsedrst, generatedHtml)
+  writeFile(outFile, generatedHtml)
+
 
 when isMainModule:
   gendocs()

@@ -1,6 +1,5 @@
 import nake/nake
 
-import streams
 import builtindocgen
 
 const
@@ -99,12 +98,15 @@ task "serve", "builds and starts the server":
   direShell(outDir / "server " & worldName)
 
 task "docs", "generate documentation":
-  let docoutfile = "doc/builtins.rst"
-  let inputStream = newFileStream("src/builtins.nim", fmRead)
-  let outputStream = newFileStream(docoutfile, fmWrite)
+  let infile = "src/builtins.nim"
+  let rstoutfile = "doc/builtins.rst"
+  let htmloutfile = "doc/builtins.html"
 
-  gendocs(inputStream, outputStream)
-  echo "Generated docs in ", docoutfile
+  genrstdocs(infile, rstoutfile)
+  echo "Generated rst docs in ", rstoutfile
+
+  genhtmldocs(rstoutfile, htmloutfile)
+  echo "Generated html docs in ", htmloutfile
 
 for info in exes:
   let (exe, deps) = info
