@@ -1634,7 +1634,7 @@ proc reverse(str: var string) =
   for i in 0..length div 2 - 1:
     swap(str[i], str[length - i - 1])
 
-## .. code-block
+## .. code-block::
 ##
 ##   (fit str:Str length:Int filler:Str=" " trail:Str="")
 ##
