@@ -322,8 +322,7 @@ defBuiltin "read":
 ##
 ## Raises an error with type ``error-type`` and message ``message``.
 ##
-## Example of use:
-## .. code-block::
+## Example of use::
 ##
 ##   (if (> count 10)
 ##       (err E_ARGS "too many")
