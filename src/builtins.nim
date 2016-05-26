@@ -1601,8 +1601,17 @@ defBuiltin "match":
     let msg = getCurrentException().msg
     runtimeError(E_ARGS, "regex error: " & msg)
 
-# (repeat str times)
-# (repeat "hello" 3) => "hellohellohello"
+## .. code-block::
+##
+##   (repeat str:Str times:Int)
+##
+## Returns a string consisting of ``str`` repeated ``times`` times.
+##
+## Example::
+##
+##   (repeat "hello" 4)
+##      ; => "hellohellohellohello"
+##
 defBuiltin "repeat":
   if args.len != 2:
     runtimeError(E_ARGS, "repeat takes 2 arguments")
