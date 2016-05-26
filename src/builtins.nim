@@ -132,7 +132,7 @@ proc toEchoString*(x: MData): string =
   else:
     x.toCodeStr()
 
-## .. code-block::
+## ::
 ##
 ##   (echo arg1:Any ...):List
 ##
@@ -140,7 +140,7 @@ proc toEchoString*(x: MData): string =
 ## which the verb is being run on. Each argument is passed to the
 ## `toEchoString` proc before being output.
 ##
-## .. code-block::
+## ::
 ##
 ##   (let ((obj #5))
 ##     (echo "object " obj " is an object"))
@@ -164,7 +164,7 @@ defBuiltin "echo":
   self.send(sendstr)
   return newArgs.md.pack
 
-## .. code-block::
+## ::
 ##
 ##   (notify player:Obj message:Str):Str
 ##
@@ -187,7 +187,7 @@ defBuiltin "notify":
   who.send(msg)
   return msg.md.pack
 
-## .. code-block::
+## ::
 ##
 ##   (do expr1:Any expr2:Any ...):Any
 ##
@@ -195,7 +195,7 @@ defBuiltin "notify":
 ## result of the last one evaluated. This is one way to do multiple things in a
 ## lambda:
 ##
-## .. code-block::
+## ::
 ##
 ##   (lambda (x)
 ##     (do
@@ -213,7 +213,7 @@ defBuiltin "do":
   else:
     return @[].md.pack
 
-## .. code-block::
+## ::
 ##
 ##   (eval code:Str):Any
 ##
@@ -242,14 +242,14 @@ defBuiltin "eval":
   if phase == 1:
     return args[1].pack
 
-## .. code-block::
+## ::
 ##
 ##   (settaskperms new-perms:Obj):Obj
 ##
 ## Sets the current task's permissions to those of ``new-perms`` (which is also
 ## returned). The main use of this is the idiom:
 ##
-## .. code-block::
+## ::
 ##
 ##   (setttaskperms caller)
 ##
@@ -267,7 +267,7 @@ defBuiltin "settaskperms":
   task.owner = newPerms
   return newPerms.md.pack
 
-## .. code-block::
+## ::
 ##
 ##   (callerperms):Obj
 ##
@@ -279,7 +279,7 @@ defBuiltin "callerperms":
 
   return task.owner.md.pack
 
-## .. code-block::
+## ::
 ##
 ##   (read [player:Obj]):Str
 ##
@@ -316,7 +316,7 @@ defBuiltin "read":
 
     return args[0].pack
 
-## .. code-block::
+## ::
 ##
 ##   (err error-type:Err message:Str)
 ##
@@ -339,14 +339,14 @@ defBuiltin "err":
   err.errMsg = msg
   return err.pack
 
-## .. code-block::
+## ::
 ##
 ##   (erristype err:Err err2:Err):Int
 ##
 ## Checks whether ``err`` has same error type as ``err2``. If true, it returns
 ## ``1``, if not ``0``. This is useful in ``try`` expressions:
 ##
-## .. code-block::
+## ::
 ##
 ##   (try (error-prone-code)
 ##        (if (erristype error E_PERM)     ; note: in catch block, `error` holds the error
@@ -550,7 +550,7 @@ template getVerbOn(objd, verbdescd: MData, die = true,
 
   res
 
-## .. code-block::
+## ::
 ##
 ##   (getprop obj:Obj prop:Str):Any
 ##
@@ -561,13 +561,13 @@ template getVerbOn(objd, verbdescd: MData, die = true,
 ## There is a shorthand for this builtin but it must be used carefully because
 ## it is rudimentary:
 ##
-## .. code-block::
+## ::
 ##
 ##   (echo "The value of #5.name is " #5.name)
 ##
 ## instead of:
 ##
-## .. code-block::
+## ::
 ##
 ##   (echo "The value of #5.name is " (getprop #5 "name"))
 ##
@@ -596,7 +596,7 @@ defBuiltin "getprop":
 
   return propObj.val.pack
 
-## .. code-block::
+## ::
 ##
 ##   (setprop obj:Obj prop:Str new-val:Any):Any
 ##
@@ -647,7 +647,7 @@ defBuiltin "setprop":
 
   return newVal.pack
 
-## .. code-block::
+## ::
 ##
 ##   (delprop obj:Obj prop:Str):Obj
 ##
@@ -667,7 +667,7 @@ defBuiltin "delprop":
 
   return obj.md.pack
 
-## .. code-block::
+## ::
 ##
 ##   (getpropinfo obj:Obj prop:Str):List
 ##
@@ -693,7 +693,7 @@ defBuiltin "getpropinfo":
   return extractInfo(propObj).pack
 
 
-## .. code-block::
+## ::
 ##
 ##   (setpropinfo obj:Obj prop:Str new-info:List):Obj
 ##
@@ -723,7 +723,7 @@ defBuiltin "setpropinfo":
 
   return args[0].pack
 
-## .. code-block::
+## ::
 ##
 ##   (props obj:Obj):List
 ##
@@ -742,7 +742,7 @@ defBuiltin "props":
 
   return res.md.pack
 
-## .. code-block::
+## ::
 ##
 ##   (verbs obj:Obj):List
 ##
@@ -764,7 +764,7 @@ defBuiltin "verbs":
   return res.md.pack
 
 
-## .. code-block::
+## ::
 ##
 ##   (getverbinfo obj:Obj verb:Str):List
 ##
@@ -785,7 +785,7 @@ defBuiltin "getverbinfo":
 
   return extractInfo(verb).pack
 
-## .. code-block::
+## ::
 ##
 ##   (setverbinfo obj:Obj verb:Str new-info:List):Obj
 ##
@@ -810,14 +810,14 @@ defBuiltin "setverbinfo":
   world.persist(obj)
   return args[0].pack
 
-## .. code-block::
+## ::
 ##
 ##   (getverbargs obj:Obj verb:Str):List
 ##
 ## This builtin returns the arguments that the verb is supposed to operate on.
 ## It will be in the list of the form:
 ##
-## .. code-block::
+## ::
 ##
 ##   ``(direct-object preposition indirect-object)``
 ##
@@ -834,7 +834,7 @@ defBuiltin "getverbargs":
 
   return extractArgs(verb).pack
 
-## .. code-block::
+## ::
 ##
 ##   (setverbargs obj:Obj verb:Str new-args:List):Obj
 ##
@@ -857,7 +857,7 @@ defBuiltin "setverbargs":
 
   return args[0].pack
 
-## .. code-block::
+## ::
 ##
 ##   (addverb obj:Obj new-verb-names:Str):Obj
 ##
@@ -884,7 +884,7 @@ defBuiltin "addverb":
 
   return objd.pack
 
-## .. code-block::
+## ::
 ##
 ##   (delverb obj:Obj verb:Str):Obj
 ##
@@ -1600,7 +1600,7 @@ defBuiltin "match":
     let msg = getCurrentException().msg
     runtimeError(E_ARGS, "regex error: " & msg)
 
-## .. code-block::
+## ::
 ##
 ##   (repeat str:Str times:Int)
 ##
@@ -1623,7 +1623,7 @@ defBuiltin "repeat":
 
   return str.repeat(times).md.pack
 
-## .. code-block::
+## ::
 ##
 ##   (strsub str:Str from:Str to:Str):Str
 ##
@@ -1650,7 +1650,7 @@ proc reverse(str: var string) =
   for i in 0..length div 2 - 1:
     swap(str[i], str[length - i - 1])
 
-## .. code-block::
+## ::
 ##
 ##   (fit str:Str length:Int filler:Str=" " trail:Str="")
 ##
@@ -1666,7 +1666,7 @@ proc reverse(str: var string) =
 ##
 ## Examples:
 ##
-## .. code-block::
+## ::
 ##
 ##   (fit "hello world" 6)          ; => "hello "
 ##   (fit "hello world" 15 "#")     ; => "hello world####"
@@ -2124,7 +2124,7 @@ defBuiltin "taskid":
 
   return task.id.md.pack
 
-## .. code-block::
+## ::
 ##
 ##   (queued-tasks):List
 ##
@@ -2162,7 +2162,7 @@ defBuiltin "queued-tasks":
 
   return res.md.pack
 
-## .. code-block::
+## ::
 ##
 ##   (kill-task task-id:Int):Int
 ##
