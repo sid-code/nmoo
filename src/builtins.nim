@@ -1615,19 +1615,17 @@ defBuiltin "repeat":
 
   return str.repeat(times).md.pack
 
-# .. code-block::
-#
-#   (strsub str:Str from:Str to:Str):Str
-#
-# Replaces all instances of ``from`` in ``str`` with ``to`` and returns the
-# result
-#
-# Example:
-#
-# .. code-block::
-# 
-#   (strsub "seventeen adventures" "ven" "poop")
-#      ; => "sepoopteen adpooptures"
+## .. code-block::
+##
+##   (strsub str:Str from:Str to:Str):Str
+##
+## Replaces all instances of ``from`` in ``str`` with ``to`` and returns the
+## result.
+##
+## Example::
+##
+##   (strsub "seventeen adventures" "ven" "poop")
+##      ; => "sepoopteen adpooptures"
 defBuiltin "strsub":
   if args.len != 3:
     runtimeError(E_ARGS, "strsub takes 3 arguments")
