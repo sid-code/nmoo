@@ -1235,9 +1235,32 @@ defBuiltin "query":
 
   return who.query(str).map(md).md.pack
 
-# (istype thingy typedesc)
-# typedesc is a string:
-#   int, float, str, sym, obj, list, err
+## ::
+##
+##   (istype x:Any typedesc:Str):Int
+##
+## Checks if ``x`` is of the type represented by the string ``typedesc``.
+## Possible values of ``typedesc`` are::
+##
+##   int        integer
+##   float      floating point number
+##   str        string
+##   sym        symbol
+##   obj        object
+##   list       list of anything
+##   err        error
+##   nil        the value 'nil'
+##
+## If an invalid type is given, then ``E_ARGS`` is raised.  If ``x`` is indeed
+## of the type described by ``typedesc`` then ``1`` is returned. If not, ``0``
+## is.
+##
+## Examples::
+##
+##   (istype "hello world" "str") ; => 1
+##   (istype 5 "int")             ; => 1
+##   (istype #100 "str")          ; => 0
+##   (istype nil "nil")           ; => 1
 defBuiltin "istype":
   if args.len != 2:
     runtimeError(E_ARGS, "istype takes 2 arguments")
