@@ -1477,7 +1477,17 @@ defBuiltin "cat":
       total &= arg.toEchoString()
     return total.md.pack
 
-# (head list)
+## ::
+##
+##   (head list:List):List
+##
+## Returns the first element of a list. If the list is empty then ``nil`` is
+## returned.
+##
+## Examples::
+##
+##   (head (1 2 3 4)) ; => 1
+##   (head ()) ; => nil
 defBuiltin "head":
   if args.len != 1:
     runtimeError(E_ARGS, "head takes 1 argument")
