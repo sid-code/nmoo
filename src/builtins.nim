@@ -1555,8 +1555,19 @@ defBuiltin "substr":
   else:
     return str[start .. ^ -endv].md.pack
 
-# (index string substr [ignore-case])
-# returns index of substr in string, or -1
+## ::
+##
+##   (index str:String substr:Str [ignore-case:Int = 0]):Int
+##
+## Returns the first index at which ``substr`` appears in ``str``. If
+## ``ignore-case`` is ``1`` then case will be ignored. If ``subsr`` is
+## not found then ``-1`` is returned.
+##
+## Examples::
+##
+##   (index "hello world" "llo") ; => 2
+##   (index "HELLO WORLD" "llo") ; => -1
+##   (index "HELLO WORLD" "llo" 1) ; => 2
 defBuiltin "index":
   var args = args
   case args.len:
