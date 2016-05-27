@@ -1484,7 +1484,7 @@ defBuiltin "head":
 
   let list = extractList(args[0])
   if list.len == 0:
-    return @[].md.pack
+    return nilD.pack
 
   return list[0].pack
 
