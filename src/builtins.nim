@@ -1550,7 +1550,23 @@ defBuiltin "len":
   else:
     runtimeError(E_ARGS, "len takes either a string or a list")
 
-# (substr string start end)
+## ::
+##
+##   (substr str:Str start:Int end:Int):Str
+##
+## Returns the substring of ``str`` from start position ``start`` until end
+## position ``end``. If ``end`` is negative, it is counted backwards from the
+## end of the string. If ``start`` is negative, ``E_ARGS`` is raised. If
+## ``start`` and ``end`` don't point to a valid substring (for example, if
+## ``start`` is ``6`` and ``end`` is ``3``) then the empty string is returned.
+##
+## Examples::
+##
+##   (substr "01234567" 2 5) ; => "2345"
+##   (substr "01234567" 0 -1) ; => "01234567"
+##   (substr "01234567" 2 -2) ; => "23456"
+##   (substr "01234567" -1 2) ; => E_ARGS
+##   (substr "01234567" 30 50) ; => "" (note, no error)
 defBuiltin "substr":
   if args.len != 3:
     runtimeError(E_ARGS, "substr takes 3 arguments")
