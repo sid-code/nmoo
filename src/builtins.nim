@@ -1584,10 +1584,35 @@ defBuiltin "index":
 
   return haystack.find(needle).md.pack
 
-# (match str pat)
-# pat is regex
-# if match successful: returns list of capturing groups
-# else: returns nil
+## ::
+##
+##   (match str:Str pat:Str):List
+##
+## Matches `pat` on `str` and if successful, returns a list of the strings that
+## were matched by capturing groups. If unsuccessful, returns nil. Note that the
+## match is anchored to the start and end of the string.
+##
+## Regex is more or less PCRE but use ``%`` instead of ``\``.
+##
+## Case insensitivity and other options are found in the documentation of
+## ``nre``, Nim's regex library:
+##
+##   https://github.com/nim-lang/Nim/blob/master/lib/impure/nre.nim#L87
+##
+## Examples::
+##
+##   (match "abc[def]ghi" ".*?%[(.*?)%].*?") ; => ("def")
+##   (match "HELLO WORLD" "(?i)(hello world)")
+##      ;; => ("hello world")
+##      ;; (?i) in this case means case insensitive
+#       ;; see the link above for more of these neat things
+##   (match "blah blah" "blah")
+##      ;; => nil
+##      ;; valiant effort, but the the regex must match the whole string
+##   (match "hello world" ".+")
+##      ;; => ()
+##      ;; There are no capturing groups but the regex matches so an empty list
+##      ;; is returned.
 defBuiltin "match":
   if args.len != 2:
     runtimeError(E_ARGS, "match takes 2 arguments")
