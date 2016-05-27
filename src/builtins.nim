@@ -1428,6 +1428,17 @@ defBuiltin "=":
   else:
     return 0.md.pack
 
+## ::
+##
+##   (nil? x:Any):Int
+##
+## Checks of ``x`` is ``nil``. If so, ``1`` is returned. If not, ``0`` is
+## returned.
+##
+## Examples::
+##
+##  (nil? 66) ; => 0
+##  (nil? nil) ; => 1
 defBuiltin "nil?":
   if args.len != 1:
     runtimeError(E_ARGS, "nil? takes 1 argument")
