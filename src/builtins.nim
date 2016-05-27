@@ -1415,7 +1415,22 @@ defBuiltin "not":
   let what = args[0]
   return (not what.truthy).int.md.pack
 
-# (= a b)
+## ::
+##
+##   (= x:Any y:Any):Int
+##
+## Checks if ``x`` is the "same thing" as ``y``. This involves looking through
+## lists and comparing their elements too. If ``x`` is indeed equal to ``y``
+## then ``1`` is returned. If not, ``0`` is returned.
+##
+## Examples::
+##
+##   (= 1 1)                         ; => 1
+##   (= (1 2 3) (1 2 3))             ; => 1
+##   (= (1 2 3) (1 2 3 4 5))         ; => 0
+##   (= (1 2 (1 2 3)) (1 2 (1 2 3))) ; => 1
+##   (= "hello world" "hello world") ; => 1
+##   (= #100 #100)                   ; => 1
 defBuiltin "=":
   if args.len != 2:
     runtimeError(E_ARGS, "= takes 2 arguments")
