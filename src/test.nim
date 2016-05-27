@@ -534,6 +534,9 @@ suite "evaluator":
     var result = evalS("(head (1 2 3 4))")
     check result == 1.md
 
+    result = evalS("(head ())")
+    check result == nilD
+
   test "tail statement works":
     var result = evalS("(tail (1 2 3 4))")
     check result.isType(dList)
