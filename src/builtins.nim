@@ -1668,7 +1668,7 @@ defBuiltin "repeat":
 ## Example::
 ##
 ##   (strsub "seventeen adventures" "ven" "poop")
-##      ; => "sepoopteen adpooptures"
+##      ;; => "sepoopteen adpooptures"
 defBuiltin "strsub":
   if args.len != 3:
     runtimeError(E_ARGS, "strsub takes 3 arguments")
