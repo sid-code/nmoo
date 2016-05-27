@@ -1254,8 +1254,17 @@ defBuiltin "istype":
   else:
     return 0.md.pack
 
-# (valid obj)
-# checks if an object is valid, e.g. it exists
+## ::
+##
+##   (valid obj:Obj):Int
+##
+## Check if ``obj`` is valid, meaning it actually refers to an object in the
+## database. If so, ``1`` is returned. If not, ``0`` is.
+##
+## Examples::
+##
+##   (valid #0) ; => 1
+##   (valid #49293) ; => 0  (assuming there isn't a #49293, of course)
 defBuiltin "valid":
   if args.len != 1:
     runtimeError(E_ARGS, "valid takes one argument")
