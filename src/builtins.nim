@@ -1499,7 +1499,17 @@ defBuiltin "head":
   return list[0].pack
 
 
-# (tail list)
+## ::
+##
+##   (tail list:List):List
+##
+## Returns all but the first elements of a list. If the list is empty then
+## the empty list is returned.
+##
+## Examples::
+##
+##   (tail (1 2 3 4)) ; => (2 3 4)
+##   (tail ()) ; => ()
 defBuiltin "tail":
   if args.len != 1:
     runtimeError(E_ARGS, "tail takes 1 argument")
