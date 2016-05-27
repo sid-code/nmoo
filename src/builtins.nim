@@ -1470,8 +1470,12 @@ defBuiltin "$":
   else:
     return what.toCodeStr().md.pack
 
-# Object tostring function
-# ($o obj) returns toObjStr(#6)
+## ::
+##
+##   ($o obj:Obj):Str
+##
+## Generates a string representation of ``obj``. It'll probably be of the form
+## ``"OBJECT-NAME (#OBJECT-NUMBER)"``.
 defBuiltin "$o":
   if args.len != 1:
     runtimeError(E_ARGS, "$o takes 1 argument")
