@@ -1455,10 +1455,24 @@ defBuiltin "$o":
   let what = extractObject(args[0])
   return what.toObjStr().md.pack
 
-# (cat str1 str2 ...)
-# (cat list1 list2 ...)
-# concats any number of strings or lists in a list
-# use (call cat (str-list/list-list)) to call it with a list
+## ::
+##
+##   (cat str:Str...):Str
+##   (cat list:List...):List
+##
+## Concatenates strings or lists together. All arguments must be of the same
+## type and either strings or lists.
+##
+## Examples::
+##
+##   (cat "hello " "world") ; => "hello world"
+##   (cat "hello" " " "world") ; => "hello world"
+##   (cat (1 2 3) (5 6 7) (1 2 3)) ; => (1 2 3 5 6 7 1 2 3)
+##   (cat "abcdef" (1 2 3)) ; => E_ARGS
+##
+##   ;; Note: If you want to concatenate all the strings in a list together you need to do:
+##   (call cat list-of-strings)
+##   ;; The same goes for lists.
 defBuiltin "cat":
   if args.len < 1:
     runtimeError(E_ARGS, "cat needs at least one string")
