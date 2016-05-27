@@ -1434,8 +1434,21 @@ defBuiltin "nil?":
 
   return args[0].isType(dNil).int.md.pack
 
-# tostring function
-# ($ obj) returns "#6", for example
+## ::
+##
+##   ($ x:Any):Str
+##
+## Returns a string representation of ``x``.
+##
+## Examples::
+##
+##   ($ 123)     ; => "123"
+##   ($ 123.456) ; => "123.456"
+##   ($ "abc")   ; => "abc"
+##   ($ 'abc)    ; => "abc"
+##   ($ #5)      ; => "#5"
+##   ($ (1 2 3)) ; => "(1 2 3)"
+##   ($ nil)     ; => "nil"
 defBuiltin "$":
   if args.len != 1:
     runtimeError(E_ARGS, "$ takes 1 argument")
