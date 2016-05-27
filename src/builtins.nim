@@ -1521,7 +1521,19 @@ defBuiltin "tail":
   else:
     runtimeError(E_ARGS, "tail takes either a string or a list")
 
-# (len list)
+## ::
+##
+##   (len list-or-str:List|Str):Int
+##
+## Returns the length of the argument. If it's a string, it returns the number
+## of characters in the string. If it's a list, it returns the number of
+## elements in the list.
+##
+## Examples::
+##
+##   (len "hello world") ; => 11
+##   (len (1 2 3)) ; => 3
+##   (len ()) ; => 0
 defBuiltin "len":
   if args.len != 1:
     runtimeError(E_ARGS, "len takes 1 argument")
