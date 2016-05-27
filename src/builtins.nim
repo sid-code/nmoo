@@ -1482,22 +1482,11 @@ defBuiltin "head":
   if args.len != 1:
     runtimeError(E_ARGS, "head takes 1 argument")
 
-  let listd = args[0]
+  let list = extractList(args[0])
+  if list.len == 0:
+    return @[].md.pack
 
-  if listd.isType(dList):
-    let list = listd.listVal
-    if list.len == 0:
-      return @[].md.pack
-
-    return list[0].pack
-  elif listd.isType(dStr):
-    let str = listd.strVal
-    if str.len == 0:
-      return "".md.pack
-
-    return str[0 .. 0].md.pack
-  else:
-    runtimeError(E_ARGS, "head takes either a string or a list")
+  return list[0].pack
 
 
 # (tail list)
