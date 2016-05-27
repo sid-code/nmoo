@@ -41,27 +41,19 @@ This project requires the nimble package ``bcrypt``. You can type
 ``nimble install bcrypt`` to install it. The other dependency is
 ``nake``, but since the nimble package doesn't have all the required
 features, the code for nake is included as a submodule. That's why when
-you clone this repository, you need to use the ``--recursive`` flag:
-
-::
+you clone this repository, you need to use the ``--recursive`` flag::
 
     $ git clone https://github.com/sid-code/nmoo --recursive
 
-First, you need to compile the nakefile:
-
-::
+First, you need to compile the nakefile::
 
     $ nim c nakefile.nim
 
-You can generate docs (probably incomplete right now):
-
-::
+You can generate docs (probably incomplete right now)::
 
     $ ./nakefile docs
 
-And you can run the tests:
-
-::
+And you can run the tests::
 
     $ ./nakefile tests
 
