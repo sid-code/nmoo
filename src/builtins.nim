@@ -1505,21 +1505,11 @@ defBuiltin "tail":
   if args.len != 1:
     runtimeError(E_ARGS, "tail takes 1 argument")
 
-  let listd = args[0]
-  if listd.isType(dList):
-    let list = listd.listVal
-    if list.len == 0:
-      return @[].md.pack
+  let list = extractList(args[0])
+  if list.len == 0:
+    return @[].md.pack
 
-    return list[1 .. ^1].md.pack
-  elif listd.isType(dStr):
-    let str = listd.strVal
-    if str.len == 0:
-      return "".md.pack
-
-    return str[1 .. ^1].md.pack
-  else:
-    runtimeError(E_ARGS, "tail takes either a string or a list")
+  return list[1 .. ^1].md.pack
 
 ## ::
 ##
