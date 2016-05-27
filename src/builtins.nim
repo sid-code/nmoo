@@ -1644,8 +1644,7 @@ defBuiltin "match":
 ##
 ## Example::
 ##
-##   (repeat "hello" 4)
-##      ; => "hellohellohellohello"
+##   (repeat "hello" 4) ; => "hellohellohellohello"
 ##
 defBuiltin "repeat":
   if args.len != 2:
