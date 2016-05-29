@@ -1208,6 +1208,16 @@ defBuiltin "parent":
   let obj = extractObject(args[0])
   return obj.parent.md.pack
 
+## ::
+##
+##   (children obj:Obj):List
+##
+## Returns a list of ``obj``'s children. Only immediate children are returned,
+## not children of these children.
+##
+## Examples::
+##
+##   (children #1) ; => (#2 #4 #8 #10 #45 #90)  (arbitrary example)
 defBuiltin "children":
   if args.len != 1:
     runtimeError(E_ARGS, "children takes 1 argument")
