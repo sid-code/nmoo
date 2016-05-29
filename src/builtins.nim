@@ -2304,8 +2304,16 @@ defBuiltin "resume":
 
   otask.resume(value)
 
-# (taskid)
-# Returns the currently running task's ID
+## ::
+##
+##   (taskid):Int
+##
+## Returns the currently running task's ID that can be used in other builtins
+## that require a task ID.
+##
+## Examples::
+##
+##   (taskid) ; => 19245  (arbitrary example)
 defBuiltin "taskid":
   if args.len != 0:
     runtimeError(E_ARGS, "taskid takes no arguments")
