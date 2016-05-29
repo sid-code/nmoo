@@ -1081,12 +1081,18 @@ defBuiltin "playerflag":
     else:
       runtimeError(E_ARGS, "playerflag takes 1 or 2 arguments")
 
-# (level obj)
-# returns obj's level
-# 0 = wizard
-# 1 = programmer
-# 2 = builder
-# 3 = regular
+## ::
+##
+##   (level obj:Obj):Int
+##
+## Returns ``obj``'s permission level.
+##
+## ::
+##
+##    0   wizard
+##    1   programmer
+##    2   builder
+##    3   regular
 defBuiltin "level":
   if args.len != 1:
     runtimeError(E_ARGS, "level takes 1 argument")
