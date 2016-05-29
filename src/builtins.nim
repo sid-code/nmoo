@@ -1100,9 +1100,19 @@ defBuiltin "level":
   let obj = extractObject(args[0])
   return obj.level.md.pack
 
-# (setlevel obj new-level)
-# sets obj's level to new-level
-# the programmer must be a wizard
+## ::
+##
+##   (setlevel obj:Obj new-level:Int):Int
+##
+## Sets ``obj``'s level to ``new-level``. If the level is not within ``0..3``
+## then ``E_ARGS`` is raised. If the programmer isn't a wizard then ``E_PERM``
+## is raised.
+##
+## Examples::
+##
+##   (setlevel #59 3) ; => 3
+##   (setlevel #59 5) ; => E_ARGS
+##   (setlevel #59 3) ; => E_PERM (if the programmer wasn't a wizard)
 defBuiltin "setlevel":
   if args.len != 2:
     runtimeError(E_ARGS, "setlevel takes 2 arguments")
