@@ -1175,6 +1175,16 @@ defBuiltin "recycle":
 
     return 1.md.pack
 
+## ::
+##
+##   (parent obj:Obj):Obj
+##
+## Returns the parent object of ``obj``.
+##
+## Examples::
+##
+##   (parent #5) ; => #1
+##
 defBuiltin "parent":
   if args.len != 1:
     runtimeError(E_ARGS, "parent takes 1 argument")
