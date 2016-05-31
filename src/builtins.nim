@@ -2284,9 +2284,20 @@ defBuiltin "suspend":
     task.tickCount = 0
     return args[^1].pack
 
-# (resume task-id [value])
-# Resumes task with id task-id and makes value the result of the
-# suspend that suspended the task
+## ::
+##
+##   (resume task-id:Int [value:Any = nil]):Any
+##
+## Resumes the task with id `task-id` and sets the return value of the suspend
+## call that suspended it in the first place to ``value`` (optional, defaulting
+## to ``nil``)
+##
+## If no task with id ``task-id`` exists or it does exist but isn't suspended,
+## ``E_ARGS`` is raised. If the programmer isn't a wizard and isn't the owner
+## of the task, then ``E_PERM`` is raised.
+##
+## TODO: figure out what 'owner of a task' really means. (Is it the programmer?
+## The player who started it? Someone else?)
 defBuiltin "resume":
   let alen = args.len
   if alen notin 1..2:
