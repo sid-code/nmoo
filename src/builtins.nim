@@ -2292,7 +2292,7 @@ defBuiltin "resume":
   if alen notin 1..2:
     runtimeError(E_ARGS, "resume takes 1 or 2 arguments")
   let taskID = extractInt(args[0])
-  let value = if alen == 2: args[1] else: 0.md
+  let value = if alen == 2: args[1] else: nilD
   let otask = world.getTaskByID(taskID)
 
   if isNil(otask):
