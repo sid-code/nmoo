@@ -2259,11 +2259,16 @@ defBuiltin "random":
 
 # Task operations
 
-# (suspend [number-of-seconds])
-# number-of-seconds is optional and can be fractional.
-#
-# If not provided, suspend will return return-value when
-# (resume this-task-id return-value) is called.
+## ::
+##
+##   (suspend [number-of-seconds:Int = Infinity]):Any
+##
+## Suspends the current task for ``number-of-seconds`` (optional, defaults to
+## infinity) seconds. If a number of seconds was given, this builtin finishes
+## execution when the timer is up and returns nil OR some other task calls
+## ``(resume THIS-TASK'S-ID [value = nil])`` in which case it will return
+## ``value`` as specified by the resumer. This second condition also applies when
+## the task is indefinitely suspended.
 defBuiltin "suspend":
   if phase == 0:
     var until = Time(0)
