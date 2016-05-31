@@ -2304,6 +2304,8 @@ defBuiltin "resume":
 
   otask.resume(value)
 
+  return value.pack
+
 ## ::
 ##
 ##   (taskid):Int
