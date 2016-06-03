@@ -863,7 +863,9 @@ defBuiltin "setverbargs":
 ##   (addverb obj:Obj new-verb-names:Str):Obj
 ##
 ## Adds a verb to ``obj`` with names specified by ``new-verb-names``. The new
-## verb's owner will be the programmer of this verb
+## verb's owner will be the programmer of this verb. If the programmer does not
+## have write permissions on ``obj``, ``E_PERM`` is raised. The return value of
+## this verb is the object that gained a new verb.
 defBuiltin "addverb":
   if args.len != 2:
     runtimeError(E_ARGS, "addverb takes 2 arguments")
