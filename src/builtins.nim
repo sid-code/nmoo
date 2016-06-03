@@ -871,6 +871,8 @@ defBuiltin "addverb":
   let objd = args[0]
   let obj = extractObject(objd)
 
+  checkWrite(obj)
+
   let names = extractString(args[1])
 
   var verb = newVerb(
