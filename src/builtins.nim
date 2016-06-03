@@ -2143,9 +2143,17 @@ defBuiltin "in":
 
   return list.find(el).md.pack
 
-# (range start end)
-# returns '(start start+1 start+2 ... end-1 end)
-# removes end - start + 1 ticks from the current task's ticks left
+## ::
+##
+##   (range start:Int end:Int):List
+##
+## returns ``(start start+1 start+2 ... end-1 end)``
+##
+## This operation can be expensive, and as such removes end - start + 1 ticks
+## from the current task's tick quota.
+##
+## **NOTE**: The future of this builtin is uncertain because it can easily eat up
+## a lot of memory.
 defBuiltin "range":
   if args.len != 2:
     runtimeError(E_ARGS, "range takes 2 arguments")
