@@ -820,7 +820,7 @@ defBuiltin "setverbinfo":
 ##
 ## ::
 ##
-##   ``(direct-object preposition indirect-object)``
+##   (direct-object preposition indirect-object)
 ##
 ## If ``verb`` does not exist on ``obj`` then ``E_VERBNF`` is raised. If the
 ## programmer does not have read permissions on ``verb`` then ``E_PERM`` is
