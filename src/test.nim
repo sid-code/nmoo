@@ -586,17 +586,17 @@ suite "evaluator":
 
   test "in statement works":
     var result = evalS("(in (1 2 3) 3)")
-    assert result.intVal == 2
+    check result.intVal == 2
 
     result = evalS("(in (1 2 3) 4)")
-    assert result.intVal == -1
+    check result.intVal == -1
 
   test "index statement works":
     var result = evalS("(index \"abcdefghij\" \"def\")")
-    assert result.intVal == 3
+    check result.intVal == 3
 
     result = evalS("(index \"abcdefghij\" \"adef\")")
-    assert result.intVal == -1
+    check result.intVal == -1
 
   test "range statement works":
     var result = evalS("(range 10 15)")
