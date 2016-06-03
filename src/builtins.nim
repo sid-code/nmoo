@@ -956,6 +956,14 @@ defBuiltin "setverbcode":
     let msg = getCurrentExceptionMsg()
     runtimeError(E_COMPILE, msg)
 
+## ::
+##
+##   (getverbcode obj:Obj verb:Str):Str
+##   (getverbcode obj:Obj verb-index:Int):Str
+##
+## Retrieves the code for the verb ``verb`` on ``obj`` (or the verb pointed to
+## by ``verb-index``). If the programmer does not have read permissions on the
+## verb, ``E_PERM`` is raised.`
 defBuiltin "getverbcode":
   if args.len != 2:
     runtimeError(E_ARGS, "getverbcode takes 2 arguments")
