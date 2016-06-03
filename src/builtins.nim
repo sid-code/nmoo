@@ -892,11 +892,12 @@ defBuiltin "addverb":
 ## ::
 ##
 ##   (delverb obj:Obj verb:Str):Obj
+##   (delverb obj:Obj verb-index:Int):Obj
 ##
-## Deletes the verb ``verb`` off ``obj`` and all of its descendants. If the
-## string ``verb`` does not point to any verb on ``obj`` then ``E_VERBNF`` is
-## raised. If the programmer doesn't have write access to the ``obj`` then
-## ``E_PERM`` is raised.
+## Deletes the verb with name ``verb`` or index ``verb-index`` off ``obj`` and
+## all of its descendants. If the string ``verb`` does not point to any verb on
+## ``obj`` then ``E_VERBNF`` is raised. If the programmer doesn't have write
+## access to the ``obj`` then ``E_PERM`` is raised.
 ##
 ## The return value is the ``obj``.
 defBuiltin "delverb":
