@@ -2156,7 +2156,12 @@ defBuiltin "range":
   let numberOfTicks = endv - start + 1
   task.tickCount += numberOfTicks
 
-  return toSeq(start..endv).map(md).md.pack
+  var res: seq[MData]
+  newSeq(res, 0)
+  for i in start..endv:
+    res.add(i.md)
+
+  return res.md.pack
 
 # (pass arg1 arg2 ...)
 # calls the parent verb
