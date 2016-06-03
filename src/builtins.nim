@@ -2233,8 +2233,18 @@ defBuiltin "phash":
 
   return hash(pass, salt).md.pack
 
-# (random [min] max)
-# generates a random number from min..max-1
+## ::
+##
+##   (random max:Int):Int
+##   (random min:Int max:Int):Int
+##
+## Generates a random integer between ``min`` and ``max - 1``, inclusive. If
+## only ``max`` is provided, ``min`` is assumed to be ``0``.
+##
+## Examples::
+##
+##   (random 10) ; => 4  (chosen by fair dice roll; guaranteed to be random)
+##   (random 10 20) ; => 13
 defBuiltin "random":
   var args = args
   var nmin, nmax: int
