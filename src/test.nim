@@ -598,6 +598,10 @@ suite "evaluator":
     result = evalS("(index \"abcdefghij\" \"adef\")")
     assert result.intVal == -1
 
+  test "range statement works":
+    var result = evalS("(range 10 15)")
+    check result == @[10.md, 11.md, 12.md, 13.md, 14.md, 15.md].md
+
   test "match statement works":
     var result = evalS("(match \"abcdef\" \"a(%w+)f\")")
     check result.isType(dList)
