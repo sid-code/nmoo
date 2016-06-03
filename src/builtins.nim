@@ -903,6 +903,8 @@ defBuiltin "delverb":
 
   let (obj, verb) = getVerbOn(args[0], args[1])
 
+  checkWrite(obj)
+
   if isNil(verb) or verb.inherited:
     runtimeError(E_VERBNF, "$1 does not define a verb $2" % [obj.toObjStr, $args[1]])
 
