@@ -768,6 +768,7 @@ defBuiltin "verbs":
 ## ::
 ##
 ##   (getverbinfo obj:Obj verb:Str):List
+##   (getverbinfo obj:Obj verb-index:Int):List
 ##
 ## See the documentation of ``getpropinfo`` for the format of the list
 ## returned.  The only difference is that instead of ``c`` in the permissions
@@ -789,6 +790,7 @@ defBuiltin "getverbinfo":
 ## ::
 ##
 ##   (setverbinfo obj:Obj verb:Str new-info:List):Obj
+##   (setverbinfo obj:Obj verb-index:Int new-info:List):Obj
 ##
 ## This is the companion verb to ``getverbinfo``. The ``new-info`` list
 ## is of the same format as the return value of ``getverbinfo`` but can
@@ -814,6 +816,7 @@ defBuiltin "setverbinfo":
 ## ::
 ##
 ##   (getverbargs obj:Obj verb:Str):List
+##   (getverbargs obj:Obj verb-index:Int):List
 ##
 ## This builtin returns the arguments that the verb is supposed to operate on.
 ## It will be in the list of the form:
@@ -838,6 +841,7 @@ defBuiltin "getverbargs":
 ## ::
 ##
 ##   (setverbargs obj:Obj verb:Str new-args:List):Obj
+##   (setverbargs obj:Obj verb-index:Int new-args:List):Obj
 ##
 ## This is the companion verb to ``getverbargs``. ``setverbinfo`` is to
 ## ``getverbinfo`` as this verb is to ``getverbargs``. The signature above
