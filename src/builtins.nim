@@ -916,7 +916,21 @@ defBuiltin "delverb":
   return obj.md.pack
 
 
-# (setverbcode obj verb-desc newcode)
+## ::
+##
+##   (setverbcode obj:Obj verb:Str new-code:Str):Obj
+##   (setverbcode obj:Obj verb-index:Int new-code:Str):Obj
+##
+## This builtin is used to set the source code of a verb. The verb should be
+## unambiguously referred to by ``verb`` or ``verb-index`` on ``obj`` to avoid
+## any issues. The programmer of this task must have write permissions on
+## the verb or ``E_PERM`` is rasied.
+##
+## If the verb fails to parse, ``E_PARSE`` is raised with the appropriate
+## message.
+##
+## If the verb fails to compile, ``E_COMPILE`` is raised with the appropriate
+## message.
 defBuiltin "setverbcode":
   if args.len != 3:
     runtimeError(E_ARGS, "setverbcode takes 3 arguments")
