@@ -386,8 +386,8 @@ impl inSWAP3:
   task.spush(c)
 
 impl inTRY:
-  let labels = operand.listVal
-  task.curFrame().tries.add(labels[0].intVal)
+  let label = operand.intVal
+  task.curFrame().tries.add(label)
 
 impl inETRY:
   discard task.curFrame.tries.pop()

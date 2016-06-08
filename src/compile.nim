@@ -238,8 +238,8 @@ proc render*(compiler: MCompiler): CpOutput =
     elif inst.itype == inLPUSH:
       code[idx] = ins(inPUSH, labels[op.symVal].md, inst.pos)
     elif inst.itype == inTRY:
-      let newLabels = op.listVal.map(proc(x: MData): MData = labels[x.symVal].md).md
-      code[idx] = ins(inTRY, newLabels, inst.pos)
+      let newLabel = labels[op.symVal].md
+      code[idx] = ins(inTRY, newLabel, inst.pos)
 
   code.add(ins(inHALT))
   return (entry, code)
@@ -445,7 +445,7 @@ defSpecial "try":
 
   let exceptLabel = compiler.makeSymbol()
   let endLabel = compiler.makeSymbol()
-  emit(ins(inTRY, @[exceptLabel].md))
+  emit(ins(inTRY, exceptLabel))
   compiler.codeGen(args[0])
   emit(ins(inETRY))
   emit(ins(inJMP, endLabel))
