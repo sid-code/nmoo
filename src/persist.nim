@@ -10,6 +10,7 @@ import types
 import objects
 import verbs
 import scripting
+import bytedump
 
 # object format:
 #
@@ -119,7 +120,8 @@ proc dumpObject*(obj: MObject): string =
     result.addLine(".")
 
 proc dumpTask(task: Task): string =
-  result = ""
+  let resultSS = newStringStream()
+
   let self = task.self
   let player = task.player
   let caller = task.caller
@@ -132,17 +134,19 @@ proc dumpTask(task: Task): string =
   task.owner = nil
   task.world = nil
 
-  result.addLine($self.getID())
-  result.addLine($player.getID())
-  result.addLine($caller.getID())
-  result.addLine($owner.getID())
-  result.addLine($$task)
+  resultSS.writeLine($self.getID())
+  resultSS.writeLine($player.getID())
+  resultSS.writeLine($caller.getID())
+  resultSS.writeLine($owner.getID())
+  resultSS.writeTask(task)
 
   task.self = self
   task.player = player
   task.caller = caller
   task.owner = owner
   task.world = world
+
+  return resultSS.data
 
 proc readNum(stream: FileStream): int =
   let line = stream.readLine().strip()
@@ -255,12 +259,11 @@ proc readObject(world: World, stream: FileStream) =
   obj.world = world
 
 proc readTask(world: World, stream: FileStream) =
-  var task: Task
   let self = readObjectID(world, stream)
   let player = readObjectID(world, stream)
   let caller = readObjectID(world, stream)
   let owner = readObjectID(world, stream)
-  load[Task](stream, task)
+  var task = stream.readTask()
 
   task.self = self
   task.player = player

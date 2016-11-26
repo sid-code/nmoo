@@ -17,6 +17,7 @@ const
       "persist",
       "compile",
       "tasks",
+      "bytedump"
   ]
   exes = {
     "main": mainDeps,
