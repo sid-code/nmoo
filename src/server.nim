@@ -12,6 +12,9 @@ import types
 proc taskFinished*(task: Task)
 proc findClient*(player: MObject): Client
 proc askForInput*(task: Task, client: Client)
+proc supplyTaskWithInput(client: Client, input: string)
+proc inputTaskRunning(client: Client): bool
+proc requiresInput(client: Client): bool
 
 var clog*: ConsoleLogger
 
@@ -27,11 +30,6 @@ proc `==`(c1, c2: Client): bool = c1.player == c2.player
 
 var clients {.threadvar.}: seq[Client]
 
-proc removeClient(client: Client) =
-  let index = clients.find(client)
-  if index >= 0:
-    system.delete(clients, index)
-
 proc findClient*(player: MObject): Client =
   for client in clients:
     if client.player == player:
@@ -45,11 +43,21 @@ proc callDisconnect(player: MObject) =
     discard dcTask.run()
 
 proc close(client: Client) =
+  client.sock.close()
+
+proc removeClient(client: Client) =
   let player = client.player
   if not isNil(player):
     player.callDisconnect()
 
-  client.sock.close()
+  if client.inputTaskRunning() and client.requiresInput():
+    client.supplyTaskWithInput(nil)
+
+  let index = clients.find(client)
+  if index >= 0:
+    system.delete(clients, index)
+
+  client.close()
 
 proc send(client: Client, msg: string) {.async.} =
   await client.sock.send(msg)
@@ -93,9 +101,6 @@ proc flushOutAll =
 
 proc queueIn(client: Client, msg: string) =
   client.inputQueue.insert(msg, 0)
-
-# Forward declaration for the following proc
-proc supplyTaskWithInput(client: Client, input: string)
 
 proc unqueueIn(client: Client): bool =
   if client.inputQueue.len == 0:
@@ -223,8 +228,6 @@ proc processClient(client: Client, address: string) {.async.} =
 
     # I think this means the client closed the connection?
     if line[0] == '\0':
-      if not isNil(client.player):
-        client.player.callDisconnect()
       removeClient(client)
       break
 
@@ -247,7 +250,6 @@ proc processClient(client: Client, address: string) {.async.} =
         if not isNil(oldClient):
           # We need to close the old client
           await oldClient.send("*** Your character has been connected to from $#. ***\c\L" % address)
-          oldClient.close()
           removeClient(oldClient)
 
         client.player = newPlayer
@@ -313,10 +315,13 @@ proc serve {.async.} =
 proc cleanUp() =
   if server != nil and not server.isClosed():
     info "Closing connections"
-    for client in clients:
+    var index = clients.len
+    while index > 0:
+      dec index
+      let client = clients[index]
       info "Closing a client..."
       waitFor client.send("Server is going down!\c\L")
-      client.close()
+      removeClient(client)
     server.close()
 
   world.persist()
