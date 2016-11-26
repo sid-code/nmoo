@@ -236,7 +236,6 @@ proc writeTask*(s: Stream, t: Task) =
   s.write(int32(t.pc))
 
   s.write(int32(t.frames.len))
-  echo t.frames
   for fr in t.frames:
     s.writeFrame(fr)
 
@@ -268,7 +267,6 @@ proc readTask*(s: Stream): Task =
   t.id = s.readInt32()
   t.name = s.readStrl()
   t.startTime = Time(s.readInt32())
-  echo "READING TASK " & t.name
 
   let stackd = s.readMData()
   t.stack = stackd.listVal
@@ -291,7 +289,6 @@ proc readTask*(s: Stream): Task =
     let fr = s.readFrame()
 
     t.frames.add(fr)
-  echo t.frames
 
   count = s.readInt32()
   newSeq(t.continuations, 0)
