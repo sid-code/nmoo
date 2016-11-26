@@ -235,7 +235,7 @@ type
     tasksWaitingForInput*: seq[Task]
     currentInputTask*: Task
 
-const nilD* = MData(dtype: dNil, nilVal: 1)
+let nilD* = MData(dtype: dNil, nilVal: 1)
 
 proc id*(x: int): ObjID = ObjID(x)
 proc getID*(obj: MObject): ObjID = obj.id
