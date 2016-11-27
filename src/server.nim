@@ -141,7 +141,7 @@ proc askForInput*(task: Task, client: Client) =
 proc supplyTaskWithInput(client: Client, input: string) =
   let task = client.tasksWaitingForInput.pop()
   when defined(debug): debug "Supplied task ", task.name, " with input ", input
-  task.resume(input.md)
+  task.resume(if input.isNil: nilD else: input.md)
 
 # Called whenever a task finishes. This is used to determine when
 # to flush queues/etc
