@@ -1,5 +1,6 @@
 import asyncnet
 import asyncdispatch
+import asyncio
 import strutils
 import net
 import times
@@ -258,7 +259,7 @@ proc processClient(client: Client, address: string) {.async.} =
         if not isNil(greetTask): discard greetTask.run()
         client.flushOut()
 
-var server: AsyncSocket
+var server: asyncnet.AsyncSocket
 const
   defaultHost = "localhost"
   defaultPort = Port(4444)
@@ -345,7 +346,9 @@ proc runServer =
     fatal "World \"$#\" doesn't exist." % worldName;
     quit(1)
 
-  world = loadWorld(worldName)
+  let disp = asyncio.newDispatcher()
+  world = loadWorld(worldName, disp)
+
   try:
     world.check()
   except InvalidWorldError:
@@ -363,6 +366,10 @@ proc runServer =
   asyncCheck serve()
 
   info "Listening for connections (end with ^C)"
+
+  info "Polling for verb code changes"
+  #asyncCheck pollForVerbCodeChanges(disp)
+
 
   var totalPulses = 0
   var totalPulseTime = 0.0
