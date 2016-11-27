@@ -1,5 +1,5 @@
-nmoo (tentative) is a MOO inspired by LambdaMOO
-===============================================
+nmoo is a MOO inspired by LambdaMOO
+===================================
 
 `LambdaMOO <http://en.wikipedia.org/wiki/LambdaMOO>`__ is an old virtual
 community that's still running. It's a text-based world that caught my eye with
