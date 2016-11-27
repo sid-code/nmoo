@@ -1,3 +1,5 @@
+# This code dumps and reads tasks from a compact binary format.
+
 import streams
 import times
 import tables
