@@ -1,3 +1,6 @@
+# This code starts a TCP server that people can control their players
+# through
+
 import asyncnet
 import asyncdispatch
 import asyncio
