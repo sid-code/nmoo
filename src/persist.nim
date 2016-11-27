@@ -371,7 +371,7 @@ proc persist*(world: World) =
   for idx, obj in world.getObjects()[]:
     objectCount += 1
     if isNil(obj):
-      let deadObject = getobjectFile(world.name, idx)
+      let deadObject = getObjectFile(world.name, idx)
       if fileExists(deadObject):
         moveFile(deadObject, trashDir / $idx)
     else:
