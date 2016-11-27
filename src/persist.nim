@@ -1,3 +1,6 @@
+# This code dumps objects and verbs into a somewhat human-readable plaintext
+# format.
+
 import os
 import streams
 import sequtils
