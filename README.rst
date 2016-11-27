@@ -2,46 +2,39 @@ nmoo (tentative) is a MOO inspired by LambdaMOO
 ===============================================
 
 `LambdaMOO <http://en.wikipedia.org/wiki/LambdaMOO>`__ is an old virtual
-community that's still running. It's a text-based world. If you're into
-that sort of thing, I highly recommend going in there once and seeing
-how it is.
+community that's still running. It's a text-based world that caught my eye with
+its interesting design principle: everything is an object in a parent-child
+inheritance hierarchy with a single root object. Rooms, players, containers,
+and everything else are described by properties that are either inherited from
+their parents or defined directly on them. Actions are carried out by executing
+"verbs" which can be modified by other verbs (and by extension, players). A MOO
+is the  kind of game in which the primary goals of players are not only to play
+and interact, but to build.
 
-The MOO idea that everything is an object and stems from a single root
-object caught my attention. I love how the game is 100% extensible - you
-can define any kind of object you want. Nothing is hard-coded, not even
-simple things like rooms or characters.
+This project is an attempt to create a system similar to LambdaMOO using a new
+programming language called Nim.
 
-This project is an attempt to create a system similar to LambdaMOO and
-also an attempt to learn Nim, a very interesting new systems programming
-language.
+I'm using the LambdaMOO `Programmer's Manual
+<http://www.hayseed.net/MOO/manuals/ProgrammersManual.html>`__ as a very loose
+guide for this project.
 
-I'm using the LambdaMOO `Programmer's
-Manual <http://www.hayseed.net/MOO/manuals/ProgrammersManual.html>`__ as
-a very loose specification for this project.
+How do I use this?
+==================
 
-The scripting language
-======================
+You can't really use it yet because this is just an engine. There's a whole
+world that I have to build within it which I have not completed yet. However,
+in the meantime you can run tests to make sure that some parts of the engine
+work properly on your system.
 
-It looks like Lisp and that's because that was the easiest thing to
-parse, but I wouldn't call it a Lisp dialect because the fact like it
-looks like Lisp is one of the only things it has in common with Lisp.
-This might change, however.
+The tools needed to build this package are `the Nim compiler
+<http://nim-lang.org/>`__ and the Nim package manager, `Nimble
+<https://github.com/nim-lang/nimble>`__.
 
-It's just supposed to be a flexible but very simple imperative DSL for
-describing what objects should do.
-
-Using
-=====
-
-The tools needed to build this package are `the Nim
-compiler <http://nim-lang.org/>`__ and the Nim package manager,
-`Nimble <https://github.com/nim-lang/nimble>`__.
-
-This project requires the nimble package ``bcrypt``. You can type
-``nimble install bcrypt`` to install it. The other dependency is
-``nake``, but since the nimble package doesn't have all the required
-features, the code for nake is included as a submodule. That's why when
-you clone this repository, you need to use the ``--recursive`` flag::
+This project requires the nimble package ``bcrypt``. You can type ``nimble
+install bcrypt`` to install it. The other dependency is ``nake``, but since the
+nimble package doesn't have all the required features, the code for nake is
+included as a submodule. That's why when you clone this repository, you need to
+use the ``--recursive`` flag::
 
     $ git clone https://github.com/sid-code/nmoo --recursive
 
@@ -49,31 +42,23 @@ First, you need to compile the nakefile::
 
     $ nim c nakefile.nim
 
-You can generate docs (probably incomplete right now)::
-
-    $ ./nakefile docs
-
-And you can run the tests::
+Then run the tests::
 
     $ ./nakefile tests
 
-That's about it for now. I'm working on getting a minimal world set up
-that can be used to build upon or just showcase the features. Before
-that, the server and other programs are useless.
+You can generate docs (which are probably incomplete right now)::
 
-HTML5 client
-============
+    $ ./nakefile docs
 
-I've created a HTML5 client (found in ``client/``) because it makes
-editing verbs easier than typing stuff into raw telnet.
+The scripting language
+======================
 
-The client makes some assumptions about the server if you want to use
-the client command "vedit" to edit verbs with CodeMirror. These
-assumptions are satisfied in a "core" database that I hope to release
-soon.
+Verb code is written using a custom S-expression based scripting language. The
+fundamental concepts of the language differ from traditional S-exp languages
+such as Lisp or Scheme because the fundamental data type is not the pair, but
+rather the MOO data type (which can hold numbers, strings, and lists among
+other things).
 
-Made possible by `jQuery Terminal <http://terminal.jcubic.pl/>`__ and
-`CodeMirror <https://codemirror.net/>`__
 
 License
 =======
