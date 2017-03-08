@@ -1958,8 +1958,14 @@ defBuiltin "split":
       runtimeError(E_ARGS, "split takes 2 arguments")
 
   let str = extractString(args[0])
-
-  return str.split(sep).map(md).md.pack
+  if sep.len == 0:
+    var chars: seq[MData]
+    newSeq(chars, 0)
+    for c in str:
+      chars.add(($c).md)
+    return chars.md.pack
+  else:
+    return str.split(sep).map(md).md.pack
 
 # (downcase str)
 # Makes every character in str lowercase
