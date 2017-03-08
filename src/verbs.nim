@@ -12,6 +12,11 @@ import querying
 import scripting
 import compile
 
+proc getVerb*(obj: MObject, name: string, all = true): MVerb
+proc getVerb*(obj: MObject, index: int): MVerb
+proc setCode*(verb: MVerb, newCode: string)
+import persist
+
 type
 
   Preposition = tuple[ptype: PrepType, image: string]
