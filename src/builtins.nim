@@ -503,9 +503,6 @@ template getPropOn(objd, propd: MData, die = true, useDefault = false,
     propName = extractString(propd)
     (objOn, propObj) = obj.getPropAndObj(propName, all)
 
-  if not all and not inherited and obj.propIsInherited(propObj):
-    runtimeError(E_PROPNF, "property $1 not found on $2" % [propName, $obj.toObjStr()])
-
   if isNil(propObj):
     if useDefault:
       res = (nil, newProperty("default", default, nil))
@@ -515,8 +512,10 @@ template getPropOn(objd, propd: MData, die = true, useDefault = false,
       else:
         return nilD.pack
   else:
-    res = (objOn, propObj)
+    if not all and not inherited and obj.propIsInherited(propObj):
+      runtimeError(E_PROPNF, "property $1 not found on $2" % [propName, $obj.toObjStr()])
 
+    res = (objOn, propObj)
   res
 
 template getVerbOn(objd, verbdescd: MData, die = true,
