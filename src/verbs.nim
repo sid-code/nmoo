@@ -439,6 +439,3 @@ proc handleLoginCommand*(player: MObject, command: string): MObject =
 
   player.send("Failed to run your login command; server is set up incorrectly.")
   return nil
-
-
-
