@@ -10,7 +10,6 @@ import tables
 import logging
 import asyncdispatch
 import asyncio
-import fsmonitor
 
 import types
 import objects
@@ -414,34 +413,6 @@ proc backupWorld(name: string) =
   copyDir(getWorldDir(name), backupDir)
 
 
-proc startVerbCodeWatcher(disp: Dispatcher, dir: string, action: proc (modifiedFile: string)) =
-  createDir(dir)
-  let rootMon = newMonitor()
-
-  proc addDir(subdir: string) =
-    let subMon = newMonitor()
-    subMon.add(subdir, {MonitorModify})
-    disp.register(subMon, proc(subm: FSMonitor, subev: MonitorEvent) =
-      case subev.kind:
-        of MonitorModify:
-          action(subdir / subev.name)
-        else: discard)
-
-  rootMon.add(dir, {MonitorCreate})
-  disp.register(rootMon, proc (m: FSMonitor, ev: MonitorEvent) =
-    case ev.kind:
-      of MonitorCreate:
-        addDir(ev.name)
-      else: discard)
-
-  for dir in walkDirs(dir / "*"):
-    addDir(dir)
-
-proc pollForVerbCodeChanges*(disp: Dispatcher, interval = 100) {.async.} =
-  while true:
-    discard disp.poll(1)
-    await sleepAsync(interval)
-
 proc loadWorld*(name: string, disp: Dispatcher = nil): World =
   info "Backing up world ", name, " before read..."
   backupWorld(name)
@@ -498,24 +469,6 @@ proc loadWorld*(name: string, disp: Dispatcher = nil): World =
   result.verbObj = objs[0]
 
   var oresult = result
-
-  startVerbCodeWatcher(disp, getVerbCodeDir(name), proc (modifiedFile: string) =
-    let parts = modifiedFile.split("/")
-    let objectID = parseInt(parts[3])
-    let verbIndex = parseInt(parts[4].split(".")[0].split("-")[1])
-    let obj = objs[objectID]
-    let verb = obj.getVerb(verbIndex)
-    try:
-      let newCode = readFile(modifiedFile)
-      verb.setCode(newCode)
-      oresult.persist(obj)
-      info "successfully edited code for ", obj.toObjStr()
-    except MParseError:
-      let msg = getCurrentExceptionMsg()
-      warn "code from ", modifiedFile, " failed to parse: ", msg
-    except MCompileError:
-      let msg = getCurrentExceptionMsg()
-      warn "code from ", modifiedFile, " failed to compile: ", msg)
 
 when isMainModule:
   let obj = blankObject()
