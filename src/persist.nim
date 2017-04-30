@@ -1,6 +1,8 @@
 # This code dumps objects and verbs into a somewhat human-readable plaintext
 # format.
 
+# Tasks are dumped to binary, however, using the bytedump module.
+
 import os
 import streams
 import sequtils
