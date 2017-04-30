@@ -370,10 +370,6 @@ proc runServer =
 
   info "Listening for connections (end with ^C)"
 
-  info "Polling for verb code changes"
-  #asyncCheck pollForVerbCodeChanges(disp)
-
-
   var totalPulses = 0
   var totalPulseTime = 0.0
 
