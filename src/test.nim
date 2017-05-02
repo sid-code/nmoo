@@ -205,6 +205,20 @@ suite "evaluator":
     check result.isType(dStr)
     check result.strVal == "it works"
 
+  test "parse statement works":
+    let result = evalS("""
+    (parse "(a b (c d e) 4.5)")
+    """)
+
+    check result == @["a".mds, "b".mds, @["c".mds, "d".mds, "e".mds].md, 4.5.md].md
+
+  test "eval statement works":
+    let result = evalS("""
+      (eval '(call (lambda (x) (+ x x)) (5)))
+    """)
+
+    check result == 10.md
+
   test "getprop statement works":
     var result = evalS("""
     (getprop #1 "name")
