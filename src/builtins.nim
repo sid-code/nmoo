@@ -1267,24 +1267,24 @@ defBuiltin "recycle":
 defBuiltin "renumber":
   runtimeError(E_BUILTIN, "renumber not implemented yet!")
 
-  if args.len != 1:
-    runtimeError(E_ARGS, "renumber takes 1 argument")
+  # if args.len != 1:
+  #   runtimeError(E_ARGS, "renumber takes 1 argument")
 
-  if not isWizardT():
-    runtimeError(E_PERM, "only wizards can renumber objects")
+  # if not isWizardT():
+  #   runtimeError(E_PERM, "only wizards can renumber objects")
 
-  let obj = extractObject(args[0])
-  let worldObjects = world.getObjects
-  var newNumber = worldObjects[].len
+  # let obj = extractObject(args[0])
+  # let worldObjects = world.getObjects
+  # var newNumber = worldObjects[].len
 
-  for idx, wobj in worldObjects[]:
-    if isNil(wobj):
-      newNumber = idx
+  # for idx, wobj in worldObjects[]:
+  #   if isNil(wobj):
+  #     newNumber = idx
 
-  let currentNumber = obj.getID().int
-  world.dbDelete(obj)
+  # let currentNumber = obj.getID().int
+  # world.dbDelete(obj)
 
-  obj.id = ObjID(newNumber)
+  # obj.id = ObjID(newNumber)
 
 
 ## ::
