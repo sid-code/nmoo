@@ -1243,6 +1243,52 @@ defBuiltin "recycle":
 
 ## ::
 ##
+##   (renumber obj:Obj):Obj
+##
+## Assigns a new object number to ``obj``. Updates all mentions of ``obj`` in
+## the parent/child hierarchy and location/contents hierarchy but nowhere else.
+## The new number will be the lowest available object number that isn't equal
+## to ``obj``'s number.
+##
+## This should **not** be used unless you know what you're doing.
+##
+## For the following examples, Imagine ``#10`` has a child ``#12`` and an
+## object ``#11`` in its contents. Naturally, ``#11`` has ``location`` set to
+## ``#10`` and ``#12``'s parent is ``#10``.
+##
+## Examples::
+##
+##   (renumber #10)  ; => #13  (#0 - #9 are already taken)
+##   (getprop #10 "contents") ; => E_ARGS  (#10 doesn't exist anymore!)
+##   (getprop #13 "contents") ; => (#12)
+##   (getprop #12 "location") ; => (#13)
+##   (parent #11) ; => #13
+##
+defBuiltin "renumber":
+  runtimeError(E_BUILTIN, "renumber not implemented yet!")
+
+  if args.len != 1:
+    runtimeError(E_ARGS, "renumber takes 1 argument")
+
+  if not isWizardT():
+    runtimeError(E_PERM, "only wizards can renumber objects")
+
+  let obj = extractObject(args[0])
+  let worldObjects = world.getObjects
+  var newNumber = worldObjects[].len
+
+  for idx, wobj in worldObjects[]:
+    if isNil(wobj):
+      newNumber = idx
+
+  let currentNumber = obj.getID().int
+  world.dbDelete(obj)
+
+  obj.id = ObjID(newNumber)
+
+
+## ::
+##
 ##   (parent obj:Obj):Obj
 ##
 ## Returns the parent object of ``obj``.
