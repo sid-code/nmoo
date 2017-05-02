@@ -1808,7 +1808,7 @@ defBuiltin "index":
 ##   (match "HELLO WORLD" "(?i)(hello world)")
 ##      ;; => ("hello world")
 ##      ;; (?i) in this case means case insensitive
-#       ;; see the link above for more of these neat things
+##      ;; see the link above for more of these neat things
 ##   (match "blah blah" "blah")
 ##      ;; => nil
 ##      ;; valiant effort, but the the regex must match the whole string
