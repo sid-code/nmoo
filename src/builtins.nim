@@ -1977,6 +1977,16 @@ defBuiltin "downcase":
 
   return str.toLower().md.pack
 
+# (upcase str)
+# Makes every character in str uppercase
+defBuiltin "upcase":
+  if args.len != 1:
+    runtimeError(E_ARGS, "upcase takes 1 arguments")
+
+  let str = extractString(args[0])
+
+  return str.toUpper().md.pack
+
 # (ord char)
 # returns the ascii code of char or the char at index of string
 defBuiltin "ord":
