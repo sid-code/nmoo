@@ -216,9 +216,30 @@ defBuiltin "do":
 
 ## ::
 ##
-##   (eval code:Str):Any
+##   (parse code:String):Any
 ##
-## Treats ``code`` as actual code, evaluates it, and returns the result.
+## Parses ``code`` and returns the object that it was
+
+defBuiltin "parse":
+  if args.len != 1:
+    runtimeError(E_ARGS, "parse takes 1 argument")
+
+  let code = extractString(args[0])
+
+  try:
+    var parser = newParser(code)
+    let parsed = parser.parseAtom()
+
+    return parsed.pack
+  except MParseError:
+    let msg = getCurrentExceptionMsg()
+    runtimeError(E_PARSE, "code failed to parse: $1" % msg)
+
+## ::
+##
+##   (eval form:Any):Any
+##
+## Treats ``form`` as actual code, evaluates it, and returns the result.
 ## Internally, the code is compiled and loaded into a whole new task which is
 ## then run. **Use sparingly**.
 defBuiltin "eval":
@@ -226,17 +247,14 @@ defBuiltin "eval":
     if args.len != 1:
       runtimeError(E_ARGS, "eval takes 1 argument")
 
-    var evalStr = extractString(args[0])
+    let form = args[0]
 
     try:
-      let instructions = compileCode(evalStr)
+      let instructions = compileCode(form)
       discard world.addTask("eval", self, player, caller, owner, symtable, instructions,
                             taskType = task.taskType, callback = task.id)
       task.setStatus(tsAwaitingResult)
       return 1.pack
-    except MParseError:
-      let msg = getCurrentExceptionMsg()
-      runtimeError(E_PARSE, "code failed to parse: $1" % msg)
     except MCompileError:
       let msg = getCurrentExceptionMsg()
       runtimeError(E_PARSE, "compile error: $1" % msg)
