@@ -26,7 +26,7 @@ import bcrypt
 proc arc4random: int32 {.importc: "arc4random".}
 
 proc strToType(str: string): tuple[b: bool, t: MDataType] =
-  case str.toLower():
+  case str.toLowerAscii():
     of "int": return (true, dInt)
     of "float": return (true, dFloat)
     of "str": return (true, dStr)
@@ -1828,8 +1828,8 @@ defBuiltin "index":
   var needle = extractString(args[1])
   let ignoreCase = args[2]
   if ignoreCase.truthy:
-    haystack = haystack.toLower()
-    needle = needle.toLower()
+    haystack = haystack.toLowerAscii()
+    needle = needle.toLowerAscii()
 
   return haystack.find(needle).md.pack
 
@@ -2039,7 +2039,7 @@ defBuiltin "downcase":
 
   let str = extractString(args[0])
 
-  return str.toLower().md.pack
+  return str.toLowerAscii().md.pack
 
 # (upcase str)
 # Makes every character in str uppercase
@@ -2049,7 +2049,7 @@ defBuiltin "upcase":
 
   let str = extractString(args[0])
 
-  return str.toUpper().md.pack
+  return str.toUpperAscii().md.pack
 
 # (ord char)
 # returns the ascii code of char or the char at index of string
