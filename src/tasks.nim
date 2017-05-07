@@ -468,7 +468,7 @@ proc step*(task: Task) =
     if task.tickCount >= task.tickQuota:
       task.doError(E_QUOTA.md("task has exceeded tick quota"))
 
-proc run*(task: Task, limit: int = 20000): TaskResult =
+proc run*(task: Task, limit = 20000): TaskResult =
   var limit = limit
   while limit > 0:
     case task.status:
