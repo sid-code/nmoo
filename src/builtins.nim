@@ -2293,13 +2293,9 @@ defBuiltin "pass":
       if oldArgsd.isType(dList):
         args = oldArgsd.listVal
 
-    let holderd = symtable["holder"]
-    if not holderd.isType(dObj):
-      return nilD.pack
-    let holder = extractObject(holderd)
-    let parent = holder.parent
+    let parent = self.parent
 
-    if isNil(parent) or parent == holder:
+    if isNil(parent) or parent == self:
       return nilD.pack
 
     let verbd = symtable["verb"]
@@ -2312,7 +2308,7 @@ defBuiltin "pass":
     if isNil(verb):
       runtimeError(E_VERBNF, "Pass failed, verb is not inherited.")
 
-    discard self.verbCallRaw(
+    discard parent.verbCallRaw(
       verb,
       player, caller,
       args, symtable = symtable, holder = parent, callback = task.id
