@@ -37,6 +37,15 @@ proc strToType(str: string): tuple[b: bool, t: MDataType] =
     of "nil": return (true, dNil)
     else: return (false, dInt)
 
+# turns all %s to \s because %s are easier to use within the server
+proc escapeRegex(pat: string): Regex =
+  re(pat.replace(re"%(.)", proc (m: RegexMatch): string =
+    let capt = m.captures[0]
+    if capt == "%":
+      return "%"
+    else:
+      return "\\" & capt))
+
 # Convenience templates: these are to be called from builtins to extract
 # values from their arguments but raising an error if they're not of the
 # correct data type.
@@ -1867,14 +1876,10 @@ defBuiltin "match":
     runtimeError(E_ARGS, "match takes 2 arguments")
 
   try:
-    let pat = extractString(args[1])
-    let regex = re(pat.replace(re"%(.)", proc (m: RegexMatch): string =
-      let capt = m.captures[0]
-      if capt == "%":
-        return "%"
-      else:
-        return "\\" & capt))
     let str = extractString(args[0])
+    let pat = extractString(args[1])
+    let regex = escapeRegex(pat)
+
     let matches = str.match(regex)
     if matches.isSome:
       let captures = nre.toSeq(matches.get().captures())
