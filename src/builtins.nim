@@ -1815,6 +1815,33 @@ defBuiltin "substr":
 
 ## ::
 ##
+##   (splice str:Str start:Int end:Int replacement:Str = ""):Str
+##
+## Analogue to JavaScript's splice
+defBuiltin "splice":
+  if args.len != 4:
+    runtimeError(E_ARGS, "splice takes 4 arguments")
+
+  var str = extractString(args[0])
+  let start = extractInt(args[1])
+  let endv = extractInt(args[2]) # end is a reserved word
+  let replacement = extractString(args[3])
+
+  if start < 0:
+    runtimeError(E_ARGS, "start index must be greater than 0")
+
+  if start >= str.len:
+    runtimeError(E_ARGS, "start index greater than length of string")
+
+  if endv >= 0:
+    str[start .. endv] = replacement
+  else:
+    str[start .. ^ -endv] = replacement
+
+  return str.md.pack
+
+## ::
+##
 ##   (index str:String substr:Str [ignore-case:Int = 0]):Int
 ##
 ## Returns the first index at which ``substr`` appears in ``str``. If

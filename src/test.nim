@@ -605,6 +605,25 @@ suite "evaluator":
     result = evalS("(in (1 2 3) 4)")
     check result.intVal == -1
 
+  test "splice statement works":
+    var result = evalS("""(splice "abcdef" 1 4 "1234")""")
+    check result == "a1234f".md
+
+    result = evalS("""(splice "abcdef" 1 -1 "123")""")
+    check result == "a123".md
+
+    result = evalS("""(splice "abcdefghijklmnop" 1 -2 "123")""")
+    check result == "a123p".md
+
+    result = evalS("""(splice "abcdefghijklmnop" 1 -10 "123")""")
+    check result == "a123hijklmnop".md
+
+    result = evalS("""(splice "abcdefghijklmnop" 40 -10 "123")""")
+    check result.isType(dErr)
+
+    result = evalS("""(splice "abcdefghijklmnop" -1 10 "123")""")
+    check result.isType(dErr)
+
   test "index statement works":
     var result = evalS("(index \"abcdefghij\" \"def\")")
     check result.intVal == 3
