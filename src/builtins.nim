@@ -1919,6 +1919,24 @@ defBuiltin "match":
 
 ## ::
 ##
+##   (gsub str:Str pat:Str replacement:Str):str
+defBuiltin "gsub":
+  if args.len != 3:
+    runtimeError(E_ARGS, "gsub takes 3 arguments")
+
+  try:
+    let str = extractString(args[0])
+    let pat = extractString(args[1])
+    let regex = escapeRegex(pat)
+    let replacement = extractString(args[2])
+
+    return nre.replace(str, regex, replacement).md.pack
+  except SyntaxError:
+    let msg = getCurrentException().msg
+    runtimeError(E_ARGS, "regex error: " & msg)
+
+## ::
+##
 ##   (repeat str:Str times:Int)
 ##
 ## Returns a string consisting of ``str`` repeated ``times`` times.
