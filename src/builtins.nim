@@ -1919,6 +1919,51 @@ defBuiltin "match":
 
 ## ::
 ##
+##   (find str:Str pat:Str start-index:Int = 0 end-index:Int = -1):List
+defBuiltin "find":
+  let alen = args.len
+  if alen < 2 or alen > 4:
+    runtimeError(E_ARGS, "find takes 2..4 arguments")
+
+  var startIndex = 0
+  var endIndex = -1
+
+  if alen > 2:
+    startIndex = extractInt(args[2])
+
+  if alen > 3:
+    endIndex = extractInt(args[3])
+
+  try:
+    let str = extractString(args[0])
+    let pat = extractString(args[1])
+    let regex = escapeRegex(pat)
+
+    if endIndex < 0:
+      endIndex = str.len + endIndex
+      if endIndex < 0:
+        runtimeError(E_ARGS, "end index out of bounds")
+
+    let matchopt = str.find(regex, startIndex, endIndex)
+    if matchopt.isSome:
+      let match = matchopt.get()
+      let matchBounds = match.matchBounds
+      let captures = nre.toSeq(match.captures())
+
+      let capturesd = captures.map(md)
+      var resultList = @[matchBounds.a.md, matchBounds.b.md]
+      resultList.add(capturesd)
+
+      return resultList.md.pack
+    else:
+      return nilD.pack
+
+  except SyntaxError:
+    let msg = getCurrentException().msg
+    runtimeError(E_ARGS, "regex error: " & msg)
+
+## ::
+##
 ##   (gsub str:Str pat:Str replacement:Str):str
 defBuiltin "gsub":
   if args.len != 3:
