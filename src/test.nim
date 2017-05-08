@@ -642,6 +642,13 @@ suite "evaluator":
     check captures.len == 1
     check captures[0] == "bcde".md
 
+  test "gsub statement works":
+    var result = evalS("""(gsub "a <bc> <defghi>" "<([^>]+)>" "$1")""")
+    check result == "a bc defghi".md
+
+    result = evalS("""(gsub "a <bc> <defghi>" "<(?<named>[^>]+)>" "$named")""")
+    check result == "a bc defghi".md
+
   test "fit statement works":
     var result = evalS("""(fit "hello world" 10)""")
     check result == "hello worl".md
