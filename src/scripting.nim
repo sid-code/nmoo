@@ -85,6 +85,7 @@ proc lex*(code: string): seq[Token] =
     elif commentMode:
       if c == "\n"[0]:
         commentMode = false
+        pos.nextLine()
     else:
       if c in Whitespace:
         addword()
