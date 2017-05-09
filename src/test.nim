@@ -660,13 +660,13 @@ suite "evaluator":
 
   test "find statement works":
     var result = evalS("""(find "hello %[n]" "%%%[([^%]]+)%]")""")
-    check result == @[6.md, 9.md, "n".md].md
+    check result == @[6.md, 9.md, @["n".md].md].md
 
     result = evalS("""(find "ayy lmao" "y" 3)""")
     check result == nilD
 
     result = evalS("""(find "ayy lmao" "y" 2)""")
-    check result == @[2.md, 2.md].md
+    check result == @[2.md, 2.md, @[].md].md
 
   test "gsub statement works":
     var result = evalS("""(gsub "a <bc> <defghi>" "<([^>]+)>" "$1")""")

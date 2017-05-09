@@ -1950,10 +1950,8 @@ defBuiltin "find":
       let matchBounds = match.matchBounds
       let captures = nre.toSeq(match.captures())
 
-      let capturesd = captures.map(md)
-      var resultList = @[matchBounds.a.md, matchBounds.b.md]
-      resultList.add(capturesd)
-
+      let capturesd = captures.map(md).md
+      var resultList = @[matchBounds.a.md, matchBounds.b.md, capturesd]
       return resultList.md.pack
     else:
       return nilD.pack
