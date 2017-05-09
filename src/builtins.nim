@@ -1513,6 +1513,7 @@ defBuiltin "verbcall":
 type
   BinFloatOp = proc(x: float, y: float): float
   BinIntOp = proc(x: int, y: int): int
+  ShortCircuitType = enum scNone, scOr, scAnd
 
 template extractFloatInto(into: var float, num: MData) =
   if num.isType(dInt):
@@ -1523,7 +1524,7 @@ template extractFloatInto(into: var float, num: MData) =
     runtimeError(E_ARGS, "invalid number " & $num)
 
 template defArithmeticOperator(name: string, op: BinFloatOp, logical = false,
-                               strictlyBinary = false) =
+                               strictlyBinary = false, shortCircuit = scNone) =
   defBuiltin name:
     if strictlyBinary:
       if args.len != 2:
@@ -1548,6 +1549,11 @@ template defArithmeticOperator(name: string, op: BinFloatOp, logical = false,
     if logical:
       acc = args[0].truthy.int.md
       for next in args[1 .. ^1]:
+        if shortCircuit == scOr and acc.truthy:
+          break
+        if shortCircuit == scAnd and not acc.truthy:
+          break
+
         acc = combine(acc, next.truthy.int.md)
     else:
       acc = args[0]
@@ -1568,8 +1574,8 @@ proc wrappedXor(a, b: float): float = (a.int xor b.int).float
 defArithmeticOperator("&", wrappedAnd)
 defArithmeticOperator("|", wrappedOr)
 defArithmeticOperator("^", wrappedXor)
-defArithmeticOperator("and", wrappedAnd, logical = true)
-defArithmeticOperator("or",  wrappedOr, logical = true)
+defArithmeticOperator("and", wrappedAnd, logical = true, shortCircuit = scAnd)
+defArithmeticOperator("or",  wrappedOr, logical = true, shortCircuit = scOr)
 defArithmeticOperator("xor", wrappedXor, logical = true)
 
 proc wrappedLT(a, b: float): float = (a < b).float
