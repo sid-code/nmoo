@@ -230,7 +230,7 @@ proc render*(compiler: MCompiler): CpOutput =
 
   for idx, inst in code:
     let op = inst.operand
-    if inst.itype in {inJ0, inJT, inJMP, inRETJ, inMCONT}:
+    if inst.itype in {inJ0, inJT, inJNT, inJMP, inRETJ, inMCONT}:
       if op.isType(dSym):
         let label = op.symVal
         let jumpLoc = labels[label]
@@ -502,6 +502,40 @@ defSpecial "cond":
     emit(ins(inLABEL, condLabel))
     compiler.codeGen(larg[1])
     emit(ins(inJMP, endLabel))
+
+defSpecial "or":
+  if args.len == 0:
+    emit(ins(inPUSH, 0.md))
+    return
+
+  let endLabel = compiler.makeSymbol()
+  for i in 0..args.len-2:
+    compiler.codeGen(args[i])
+    emit(ins(inDUP))
+    emit(ins(inJT, endLabel))
+    emit(ins(inPOP))
+
+  compiler.codeGen(args[^1])
+
+  # none of them turned out to be true
+  emit(ins(inLABEL, endLabel))
+
+defSpecial "and":
+  if args.len == 0:
+    emit(ins(inPUSH, 1.md))
+    return
+
+  let endLabel = compiler.makeSymbol()
+  for i in 0..args.len-2:
+    compiler.codeGen(args[i])
+    emit(ins(inDUP))
+    emit(ins(inJNT, endLabel))
+    emit(ins(inPOP))
+
+  compiler.codeGen(args[^1])
+
+  # none of them turned out to be false
+  emit(ins(inLABEL, endLabel))
 
 defSpecial "if":
   if args.len != 3:

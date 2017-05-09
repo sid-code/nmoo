@@ -169,6 +169,10 @@ impl inSTO:
 impl inPUSH:
   task.spush(operand)
 
+impl inDUP:
+  let top = task.top()
+  task.spush(top)
+
 impl inGTID:
   task.spush(task.id.md)
 
@@ -188,6 +192,12 @@ impl inJT:
   let where = operand.intVal
   let what = task.spop()
   if what.truthy:
+    task.pc = where
+
+impl inJNT:
+  let where = operand.intVal
+  let what = task.spop()
+  if not what.truthy:
     task.pc = where
 
 impl inJMP:
@@ -272,7 +282,7 @@ impl inCALL:
           let args = task.collect(numArgs)
           task.spush(args[0])
           task.callContinuation(contID)
-        
+
         #except:
         #  task.doError(E_ARGS.md("invalid continuation (error)"))
       else:
