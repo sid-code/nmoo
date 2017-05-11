@@ -20,7 +20,7 @@ proc supplyTaskWithInput(client: Client, input: string)
 proc inputTaskRunning(client: Client): bool
 proc requiresInput(client: Client): bool
 
-var clog*: ConsoleLogger
+var clog: ConsoleLogger
 
 import objects
 import verbs
