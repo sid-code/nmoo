@@ -1001,6 +1001,23 @@ defBuiltin "getverbcode":
 
   return verb.code.md.pack
 
+# EXPERIMENTAL
+defBuiltin "getverbbytecode":
+  if args.len != 2:
+    runtimeError(E_ARGS, "getverbcode takes 2 arguments")
+
+  let (obj, verb) = getVerbOn(args[0], args[1])
+  discard obj
+
+  checkRead(verb)
+
+  var res = ""
+  for i in verb.compiled.code:
+    res &= $i
+    res &= "\n"
+
+  return res.md.pack
+
 # (move what dest)
 defBuiltin "move":
   if args.len < 2: # We are actually allowed more arguments in later phases
