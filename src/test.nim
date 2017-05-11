@@ -101,7 +101,7 @@ suite "object tests":
     root.verbs.add(verb)
 
     verb.setCode("(do argstr)")
-    #check ($root.handleCommand("action root on root") == "@[\"root on root\"]")
+    #check $root.handleCommand("action root on root") == "@[\"root on root\"]"
     check true
 
   test "verbs call correctly":
@@ -116,7 +116,7 @@ suite "object tests":
     root.verbs.add(verb)
 
     verb.setCode("(do args)")
-    #check ($root.verbCall("action", root, @["hey".md]) == "@[@[\"hey\"]]")
+    #check $root.verbCall("action", root, @["hey".md]) == "@[@[\"hey\"]]"
     check true
 
 
@@ -285,7 +285,7 @@ suite "evaluator":
 
     check result.isType(dStr)
     let prop = root.getProp("newprop")
-    check (not isNil(prop))
+    check(not isNil(prop))
     check prop.owner == worthy
 
   test "setpropinfo works":
@@ -293,11 +293,11 @@ suite "evaluator":
     check result.isType(dObj)
     check result.objVal.int == 1
     let prop = root.getProp("name1")
-    check (not isNil(prop))
+    check(not isNil(prop))
     check prop.name == "name1"
     check prop.pubWrite
     check prop.pubRead
-    check (not prop.ownerIsParent)
+    check(not prop.ownerIsParent)
 
   test "setpropinfo checks permissions":
     var result = evalS("""(setpropinfo #1 "name" (#1 "rw" "name1"))""", unworthy)
@@ -321,7 +321,7 @@ suite "evaluator":
 
   test "verbs statement works":
     var result = evalS("(verbs #1)", worthy)
-    check ($result == "@[\"verb name\"]")
+    check $result == "@[\"verb name\"]"
 
   test "verbs checks permissions":
     root.pubRead = false
@@ -339,7 +339,7 @@ suite "evaluator":
   test "setverbinfo statement works":
     var result = evalS("(setverbinfo #1 \"verb\" (#1 \"rwx\" \"new ve*rb name\"))")
     result = evalS("(getverbinfo #1 \"verb\")")
-    check ($result == "@[#1, \"rwx\", \"new ve*rb name\"]")
+    check $result == "@[#1, \"rwx\", \"new ve*rb name\"]"
 
   test "getverbargs statement works":
     var result = evalS("(getverbargs #1 \"verb\")")
@@ -356,9 +356,9 @@ suite "evaluator":
   test "addverb statement works":
     var result = evalS("(addverb #1 \"cool varb\")")
     result = evalS("(getverbinfo #1 \"cool\")")
-    check ($result == "@[#1, \"rx\", \"cool varb\"]")
+    check $result == "@[#1, \"rx\", \"cool varb\"]"
     result = evalS("(getverbargs #1 \"cool\")")
-    check ($result == "@[\"none\", \"none\", \"none\"]")
+    check $result == "@[\"none\", \"none\", \"none\"]"
 
   test "delverb statement works":
     var result = evalS("(addverb #1 \"cool varb\")")
