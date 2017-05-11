@@ -176,7 +176,10 @@ proc toData(image: string, pos: CodePosition): MData =
         except ValueError:
           raise newException(MParseError, "malformed number " & image)
     else:
-      return image.mds
+      if image == "nil":
+        return nilD
+      else:
+        return image.mds
 
 proc toData(token: Token): MData =
   if token.ttype != tokAtom: return nilD
