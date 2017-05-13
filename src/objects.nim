@@ -66,8 +66,7 @@ proc blankObject*: MObject =
     children: @[],
 
     output: proc (obj: MObject, m: string) =
-      when defined(debug):
-        echo "sent to #$1: $2" % [$obj.getID(), m]
+      debug "sent to #$1: $2" % [$obj.getID(), m]
   )
 
   initializeBuiltinProps(result)
@@ -413,7 +412,7 @@ proc tick*(world: World) =
     let task = world.tasks[idx]
     if task.status == tsDone:
       if defined(showTicks):
-        echo "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
+        debug "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
 
     if task.status == tsSuspended:
       let suspendedUntil = task.suspendedUntil
