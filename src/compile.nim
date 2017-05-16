@@ -117,7 +117,7 @@ proc checkType(value: MData, expected: MDataType) =
   if not value.isType(expected):
     compileError("expected argument of type " & $expected & " instead got " & $value.dType)
 
-template defSpecial(name: string, body: stmt) {.immediate, dirty.} =
+template defSpecial(name: string, body: untyped) {.dirty.} =
   specials[name] = proc (compiler: MCompiler, args: seq[MData], pos: CodePosition) =
     proc emit(inst: Instruction, where = 0) =
       var inst = inst

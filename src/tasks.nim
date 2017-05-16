@@ -124,7 +124,7 @@ proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
 
 var instImpls = initTable[InstructionType, InstructionProc]()
 
-template impl(itype: InstructionType, body: stmt) {.immediate, dirty.} =
+template impl(itype: InstructionType, body: untyped) {.dirty.} =
   instImpls[itype] =
     proc(task: Task, operand: MData) =
       body

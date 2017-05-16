@@ -37,11 +37,11 @@ proc nextLine(pos: var CodePosition) =
 
 ## LEXER
 
-template addtoken {.immediate.} =
+template addtoken =
   result.add(curToken)
   curToken = Token(ttype: tokAtom, image: "", pos: pos)
 
-template addword {.immediate.} =
+template addword =
   if curWord.len > 0:
     curToken.ttype = tokAtom
     curToken.image = curWord
@@ -297,7 +297,7 @@ proc toCodeStr*(parsed: MData): string =
 
 # TODO: find out new meanings of immediate and dirty pragmas and see if they're
 # really needed here.
-template defBuiltin*(name: string, body: stmt) {.immediate, dirty.} =
+template defBuiltin*(name: string, body: untyped) {.dirty.} =
   template bname: string = name
   scripting.builtins[name] =
     proc (args: seq[MData], world: World,
