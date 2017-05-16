@@ -59,8 +59,8 @@ template extractFloat(d: MData): float =
   elif d.isType(dInt):
     res = d.intVal.float
   else:
-    let msg = "expected argument of type dInt or dFloat, instead got $#"
-    runtimeError(E_TYPE, msg % [$d.dtype])
+    let msg = "$#: expected argument of type dInt or dFloat, instead got $#"
+    runtimeError(E_TYPE, msg % [bname, $d.dtype])
 
   res
 
@@ -95,7 +95,7 @@ template runtimeError(error: MError, message: string) =
 template checkType(value: MData, expected: MDataType, ifnot: MError = E_TYPE) =
   if not value.isType(expected):
     runtimeError(ifnot,
-      "expected argument of type " & $expected &
+      bname & ": expected argument of type " & $expected &
       " instead got " & $value.dType)
 
 template isWizardT: bool = isWizard(task.owner)
