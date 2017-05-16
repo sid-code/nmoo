@@ -1529,7 +1529,6 @@ defBuiltin "verbcall":
 
 type
   BinFloatOp = proc(x: float, y: float): float
-  BinIntOp = proc(x: int, y: int): int
   ShortCircuitType = enum scNone, scOr, scAnd
 
 template extractFloatInto(into: var float, num: MData) =
