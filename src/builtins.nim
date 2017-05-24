@@ -1267,6 +1267,12 @@ defBuiltin "recycle":
 
     return 1.md.pack
 
+defBuiltin "maxobj":
+  if args.len != 0:
+    runtimeError(E_ARGS, "maxobj takes no arguments")
+
+  return (world.getObjects()[].len - 1).md.pack
+
 ## ::
 ##
 ##   (renumber obj:Obj):Obj
