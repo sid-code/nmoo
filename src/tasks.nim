@@ -312,6 +312,10 @@ impl inCALL:
             var symtable = envData.toST()
             for idx, name in bounds:
               symtable[name] = args[idx]
+
+            for name, val in task.globals:
+              symtable[name] = val
+
             task.foreignLambdaCall(symtable = symtable, expression = expression)
         else:
           task.doError(E_ARGS.md("lambda expected $1 args but got $2" %
