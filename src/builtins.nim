@@ -1702,6 +1702,40 @@ defBuiltin "$o":
 
 ## ::
 ##
+##   (toobj val:Int|Str):Obj
+##
+## Tries to convert ``val`` into a value of type ``object``.
+##
+## Examples::
+##
+##   (toobj 5)     ; => #5
+##   (toobj "5")   ; => #5
+##   (toobj "#5")  ; => #5
+##   (toobj "foo") ; will result in E_ARGS
+##   (toobj (1 2)) ; will result in E_TYPE
+defBuiltin "toobj":
+  if args.len != 1:
+    runtimeError(E_ARGS, "toobj takes 1 argument")
+
+  let val = args[0]
+  case val.dtype:
+    of dInt:
+      return val.intVal.ObjID.md.pack
+    of dStr:
+      var str = val.strVal
+      if str.len > 0 and str[0] == '#':
+        str = str[1..^1]
+
+      try:
+        return parseInt(str).ObjID.md.pack
+      except:
+        runtimeError(E_ARGS, bname & ": invalid object number: " & str)
+    else:
+      runtimeError(E_TYPE, bname & ": expected dInt or dStr, got " & $val.dtype)
+
+
+## ::
+##
 ##   (cat str:Str...):Str
 ##   (cat list:List...):List
 ##
