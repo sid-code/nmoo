@@ -125,6 +125,10 @@ proc unqueueIn(client: Client): bool =
 
   return true
 
+proc unqueueAll =
+  for client in clients:
+    discard client.unqueueIn()
+
 proc clearIn(client: Client) =
   setLen(client.inputQueue, 0)
 
@@ -379,7 +383,9 @@ proc mainLoop =
       totalPulses += 1
       totalPulseTime += elapsed
 
-      poll(int(250 - elapsed * 1000))
+
+      # handle input
+      unqueueAll()
 
   except:
     fatal getCurrentExceptionMsg()
