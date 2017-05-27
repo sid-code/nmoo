@@ -310,11 +310,12 @@ impl inCALL:
           else:
             let args = task.collect(numArgs)
             var symtable = envData.toST()
-            for idx, name in bounds:
-              symtable[name] = args[idx]
 
             for name, val in task.globals:
               symtable[name] = val
+
+            for idx, name in bounds:
+              symtable[name] = args[idx]
 
             task.foreignLambdaCall(symtable = symtable, expression = expression)
         else:
