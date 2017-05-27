@@ -27,6 +27,8 @@ import builtins
 import persist
 import tasks
 
+import editserv
+
 var world: World = nil
 
 proc `==`(c1, c2: Client): bool = c1.player == c2.player

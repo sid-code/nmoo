@@ -17,7 +17,8 @@ const
       "persist",
       "compile",
       "tasks",
-      "bytedump"
+      "bytedump",
+      "editserv"
   ]
   exes = {
     "main": mainDeps,
