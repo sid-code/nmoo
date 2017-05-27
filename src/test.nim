@@ -126,7 +126,7 @@ suite "lexer":
 
   test "lexer works":
     let lexed = lex(testStr)
-    check lexed.len == 4
+    check lexed.len == 5
 
 suite "parser":
   setup:
