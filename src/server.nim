@@ -385,6 +385,7 @@ proc mainLoop =
       totalPulses += 1
       totalPulseTime += elapsed
 
+      poll(int(50 - elapsed * 1000))
 
       # handle input
       unqueueAll()
