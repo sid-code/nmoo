@@ -132,7 +132,6 @@ proc clearInAll =
   for client in clients:
     client.clearIn()
 
-
 ## stuff for the read builtin
 
 # to be called from the read builtin
@@ -333,10 +332,7 @@ proc handler() {.noconv.} =
   info "Shutting down..."
   raise newException(Exception, "Received SIGINT")
 
-proc runServer =
-  clog = newConsoleLogger(fmtStr = "$date $time $levelname: ")
-  addHandler(clog)
-
+proc initWorld =
   var worldName: string
   if paramCount() < 1:
     worldName = "min"
@@ -359,17 +355,19 @@ proc runServer =
   world.verbObj.output = proc(obj: MObject, msg: string) =
     info "#0: " & msg
 
-  setControlCHook(handler)
+proc startServer {.async.} =
 
   (host, port) = getHostAndPort()
 
   info "Starting server:  host=$1   port=$2" % [host, $port]
-  asyncCheck serve()
+  await serve()
 
-  info "Listening for connections (end with ^C)"
 
+proc mainLoop =
   var totalPulses = 0
   var totalPulseTime = 0.0
+
+  setControlCHook(handler)
 
   try:
     while true:
@@ -391,4 +389,17 @@ proc runServer =
     cleanUp()
 
 when isMainModule:
-  runServer()
+  clog = newConsoleLogger(fmtStr = "$date $time $levelname: ")
+  addHandler(clog)
+
+  initWorld()
+
+  # start the nmoo server
+  asyncCheck startServer()
+  # start the edit server
+  asyncCheck startEditServer(world, Port(8080))
+
+  info "Terminate with ^C"
+
+  mainLoop()
+
