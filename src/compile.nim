@@ -206,7 +206,7 @@ template defSymbol(symtable: CSymTable, name: string): int =
   symtable[name] = index
   index
 
-template addLabel(compiler: MCompiler, section: expr): MData =
+template addLabel(compiler: MCompiler, section: untyped): MData =
   let name = compiler.makeSymbol()
 
   compiler.`section`.add(ins(inLABEL, name))

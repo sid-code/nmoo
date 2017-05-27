@@ -34,7 +34,7 @@ proc changeParent*(obj: MObject, newParent: MObject)
 proc addToContents*(obj: MObject, newMember: MObject): bool
 proc removeFromContents*(obj: MObject, member: MObject): bool
 
-template setPropR*(obj: MObject, name: string, newVal: expr) =
+template setPropR*(obj: MObject, name: string, newVal: untyped) =
   discard obj.setProp(name, newVal.md)
 
 # Builtin property data
