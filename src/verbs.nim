@@ -53,10 +53,10 @@ const
 
 ### Utilities
 proc objSpecToStr*(osp: ObjSpec): string =
-  ($osp).toLower[1 .. ^1]
+  ($osp).toLowerAscii[1 .. ^1]
 
 proc strToObjSpec*(osps: string): tuple[success: bool, result: ObjSpec] =
-  let realSpec = "o" & osps[0].toUpper & osps[1 .. ^1]
+  let realSpec = "o" & osps[0].toUpperAscii & osps[1 .. ^1]
   try:
     return (true, parseEnum[ObjSpec](realSpec))
   except:
@@ -72,7 +72,7 @@ proc prepSpecToStr*(psp: PrepType): string =
   return images.join("/")
 
 proc strToPrepSpec*(psps: string): tuple[success: bool, result: PrepType] =
-  let pspsLower = psps.toLower()
+  let pspsLower = psps.toLowerAscii()
 
   for prep in Prepositions:
     let (ptype, image) = prep
@@ -299,8 +299,8 @@ proc handleCommand*(player: MObject, command: string): Task =
     restStr = rest.join(" ")
     frest = parsed.fixedRest
 
-    doQuery = player.query(doString.toLower())
-    ioQuery = player.query(ioString.toLower())
+    doQuery = player.query(doString.toLowerAscii())
+    ioQuery = player.query(ioString.toLowerAscii())
 
     doQuerySuccess = doString.len > 0 and doQuery.len > 0
     ioQuerySuccess = ioString.len > 0 and ioQuery.len > 0
