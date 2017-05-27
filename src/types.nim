@@ -122,6 +122,23 @@ type
     E_PARSE,
     E_COMPILE
 
+  TokenType* = enum
+    tokOParen, tokCParen,
+    tokAtom, tokQuote,
+    tokEnd
+
+  Token* = object
+    ttype*: TokenType
+    image*: string
+    pos*: CodePosition
+
+  MParseError* = object of Exception
+
+  MParser* = ref object
+    code*: string
+    tokens*: seq[Token]
+    tindex*: int
+
   SymbolTable* = Table[string, MData]
   BuiltinProc* = proc(args: seq[MData], world: World,
                       self, player, caller, owner: MObject,

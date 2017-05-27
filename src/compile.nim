@@ -244,6 +244,14 @@ proc render*(compiler: MCompiler): CpOutput =
   code.add(ins(inHALT))
   return (entry, code)
 
+proc compileCode*(forms: seq[MData]): CpOutput =
+  let compiler = newCompiler()
+
+  for form in forms:
+    compiler.codeGen(form)
+
+  return compiler.render
+
 proc compileCode*(code: MData): CpOutput =
   let compiler = newCompiler()
   compiler.codeGen(code)
@@ -251,7 +259,7 @@ proc compileCode*(code: MData): CpOutput =
 
 proc compileCode*(code: string): CpOutput =
   var parser = newParser(code)
-  return compileCode(parser.parseAtom())
+  return compileCode(parser.parseFull())
 
 defSpecial "quote":
   verifyArgs("quote", args, @[dNil])

@@ -8,23 +8,6 @@ import sequtils
 import types
 import objects
 
-type
-  TokenType = enum
-    tokOParen, tokCParen,
-    tokAtom, tokQuote
-
-  Token = object
-    ttype: TokenType
-    image: string
-    pos: CodePosition
-
-  MParseError* = object of Exception
-
-  MParser* = ref object
-    code: string
-    tokens: seq[Token]
-    tindex: int
-
 proc `$`*(token: Token): string =
   token.image
 
@@ -116,6 +99,10 @@ proc lex*(code: string): seq[Token] =
 
   if strMode:
     raise newException(MParseError, "unterminated string meets end of code")
+
+  curToken.ttype = tokEnd
+  curToken.image = ""
+  addtoken()
 
 ## PARSER
 
@@ -273,6 +260,15 @@ proc parseList*(parser: var MParser): MData =
 
   result = resultL.md
   result.pos = pos
+
+proc parseFull*(parser: var MParser): MData =
+  var forms = @["do".mds]
+
+  while parser.peek().ttype != tokEnd:
+    forms.add(parser.parseAtom())
+
+  discard parser.consume(tokEnd)
+  return forms.md
 
 var builtins* = initTable[string, BuiltinProc]()
 
