@@ -3,7 +3,6 @@
 
 import asyncnet
 import asyncdispatch
-import asyncio
 import strutils
 import net
 import times
@@ -349,8 +348,7 @@ proc runServer =
     fatal "World \"$#\" doesn't exist." % worldName;
     quit(1)
 
-  let disp = asyncio.newDispatcher()
-  world = loadWorld(worldName, disp)
+  world = loadWorld(worldName)
 
   try:
     world.check()

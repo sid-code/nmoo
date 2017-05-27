@@ -415,7 +415,7 @@ proc backupWorld(name: string) =
   copyDir(getWorldDir(name), backupDir)
 
 
-proc loadWorld*(name: string, disp: Dispatcher = nil): World =
+proc loadWorld*(name: string): World =
   info "Backing up world ", name, " before read..."
   backupWorld(name)
   info "Completed backup."
