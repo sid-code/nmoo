@@ -193,10 +193,10 @@ type
 
   # First class continuations
   Continuation* = object
-    pc*: int
-    stack*: seq[MData]
+    pc*:      int
+    stack*:   seq[MData]
     globals*: SymbolTable
-    frames*: seq[Frame]
+    frames*:  seq[Frame]
 
   Task* = ref object
     id*: int
