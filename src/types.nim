@@ -163,7 +163,7 @@ type
     inSTO, inGET, inGGET, inGSTO, inCLIST,
     inPOPL, inPUSHL, inLEN, inSWAP, inSWAP3, inREV,
     inMENV, inGENV,
-    inTRY, inETRY
+    inTRY, inETRY,
     inHALT
 
   SymGen* = ref object
