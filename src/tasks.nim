@@ -136,9 +136,24 @@ proc top*(task: Task): MData =
   else:
     return task.stack[size - 1]
 
-proc foreignLambdaCall(task: Task, symtable: SymbolTable, expression: MData) =
+let foreignLambdaCache = newTable[MData, CpOutput]()
+
+proc foreignLambdaCall(task: Task, symtable: SymbolTable, lambda: seq[MData]) =
   task.setStatus(tsAwaitingResult)
-  let instructions = compileCode(expression)
+
+  var lambda = lambda
+  lambda[3] = 0.md # it doesn't matter where the lambda came from.
+  let expression = lambda[5]
+
+  var instructions: CpOutput
+
+  let cacheEntry = @[lambda.md, task.player.md].md
+  if foreignLambdaCache.hasKey(cacheEntry):
+    instructions = foreignLambdaCache[cacheEntry]
+  else:
+    instructions = compileCode(expression, task.player)
+    foreignLambdaCache[cacheEntry] = instructions
+
   discard task.world.addTask(
     name = task.name & "-lambda",
     self = task.self,
@@ -322,7 +337,7 @@ impl inCALL:
             for idx, name in bounds:
               symtable[name] = args[idx]
 
-            task.foreignLambdaCall(symtable = symtable, expression = expression)
+            task.foreignLambdaCall(symtable = symtable, lambda = lcall)
         else:
           task.doError(E_ARGS.md("lambda expected $1 args but got $2" %
                                  [$expectedNumArgs, $numArgs]))
