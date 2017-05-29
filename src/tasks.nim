@@ -68,7 +68,7 @@ proc doError*(task: Task, error: MData) =
 
     if frame.tries.len == 0:
       let pos = task.code[task.pc].pos
-      error.errMsg = "$1\nline $3, col $4 of $2" % [error.errMsg, task.name, $pos.line, $pos.col]
+      error.trace.add( (task.name, pos) )
       task.popFrame()
       continue
 

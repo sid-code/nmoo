@@ -365,6 +365,7 @@ defBuiltin "err":
   let msg = extractString(args[1])
 
   err.errMsg = msg
+  err.trace = @[]
   return err.pack
 
 ## ::

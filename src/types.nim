@@ -4,6 +4,7 @@
 # everywhere.
 
 import strutils
+import sequtils
 import tables
 import times
 import hashes
@@ -87,6 +88,7 @@ type
       of dErr:
         errVal*: MError
         errMsg*: string
+        trace*: seq[tuple[name: string, pos: CodePosition]]
       of dList: listVal*: seq[MData]
       of dObj: objVal*: ObjID
       of dNil: nilVal*: int # dummy
@@ -267,7 +269,7 @@ proc md*(x: float): MData {.procvar.} = MData(dtype: dFloat, floatVal: x)
 proc md*(x: string): MData {.procvar.} = MData(dtype: dStr, strVal: x)
 proc mds*(x: string): MData {.procvar.} = MData(dtype: dSym, symVal: x)
 proc md*(x: MError): MData {.procvar.} = MData(dtype: dErr, errVal: x, errMsg: "no message set")
-proc md*(x: MError, s: string): MData {.procvar.} = MData(dtype: dErr, errVal: x, errMsg: s)
+proc md*(x: MError, s: string): MData {.procvar.} = MData(dtype: dErr, errVal: x, errMsg: s, trace: @[])
 proc md*(x: seq[MData]): MData {.procvar.} = MData(dtype: dList, listVal: x)
 proc md*(x: ObjID): MData {.procvar.} = MData(dtype: dObj, objVal: x)
 proc md*(x: MObject): MData {.procvar.} = x.id.md
@@ -284,7 +286,7 @@ proc `$`*(x: MData): string {.inline.} =
     of dFloat: $x.floatVal
     of dStr: x.strVal.escape
     of dSym: "\'" & x.symVal
-    of dErr: $x.errVal & ": " & x.errMsg
+    of dErr: $x.errVal & ": " & x.errMsg & "\n" & x.trace.mapIt($it.pos & "  " & it.name).join("\n")
     of dList: $x.listVal
     of dObj: "#" & $x.objVal
     of dNil: "nil"
