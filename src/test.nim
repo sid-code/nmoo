@@ -130,14 +130,22 @@ suite "lexer":
 
 suite "parser":
   setup:
-    let testStr = "(echo \"hello world\" (sub-list \"who knew?\" 3.14))"
-    var parser = newParser(testStr)
-  test "parser works":
-    let
-      result = parser.parseList()
-      str = $result
+    proc parse(str: string): MData =
+      var parser = newParser(str)
+      return parser.parseFull()
 
-    check str == "@['echo, \"hello world\", @['sub-list, \"who knew?\", 3.14]]"
+  test "parser works":
+    let parsed = parse("(echo \"hello world\" (sub-list \"who knew?\" 3.14))")
+
+    check parsed == @["do".mds, @["echo".mds, "hello world".md, @["sub-list".mds, "who knew?".md, 3.14.md].md].md].md
+
+  test "quote works":
+    let parsed = parse("'(1 2 3)")
+    check parsed == @["do".mds, @["quote".mds, @[1.md, 2.md, 3.md].md].md].md
+
+  test "quasiquote/unquote works":
+    let parsed = parse("`(2 3 ,(x))")
+    check parsed == @["do".mds, @["quasiquote".mds, @[2.md, 3.md, @["unquote".mds, @["x".mds].md].md].md].md].md
 
 suite "evaluator":
   setup:
