@@ -311,6 +311,20 @@ proc `==`*(x: MData, y: MData): bool =
   else:
     return false
 
+proc hash*(x: MData): Hash =
+  var h = ord(x.dtype).hash
+  h = h !& case x.dtype:
+    of dInt: x.intVal.hash
+    of dFloat: x.floatVal.hash
+    of dStr: x.strVal.hash
+    of dSym: x.symVal.hash
+    of dErr: x.errVal.hash
+    of dList: x.listVal.hash
+    of dObj: x.objVal.int.hash
+    of dNil: 0.hash
+
+  return !$h
+
 proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
   return datum.dtype == dtype
 
