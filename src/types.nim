@@ -6,6 +6,7 @@
 import strutils
 import tables
 import times
+import hashes
 
 from asyncnet import AsyncSocket
 
