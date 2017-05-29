@@ -160,7 +160,7 @@ type
     inLPUSH, # strictly for labels - gets replaced by the renderer
     inGTID, # Push the task's ID onto the stack
     inMCONT, inCCONT, # first-class continuations
-    inSTO, inGET, inGGET, inCLIST,
+    inSTO, inGET, inGGET, inGSTO, inCLIST,
     inPOPL, inPUSHL, inLEN, inSWAP, inSWAP3, inREV,
     inMENV, inGENV,
     inTRY, inETRY

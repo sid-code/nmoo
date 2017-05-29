@@ -429,6 +429,14 @@ defSpecial "call":
 
   emit(ins(inACALL))
 
+defSpecial "define":
+  verifyArgs("define", args, @[dSym, dNil])
+
+  let symbol = args[0]
+  let value = args[1]
+  compiler.codeGen(value)
+  emit(ins(inGSTO, symbol))
+
 defSpecial "let":
   verifyArgs("let", args, @[dList, dNil])
 

@@ -212,6 +212,11 @@ impl inGGET:
   else:
     task.doError(E_UNBOUND.md("unbound symbol '$1'" % name))
 
+impl inGSTO:
+  let name = operand.symVal
+  let top = task.spop()
+  task.globals[name] = top
+
 impl inCLIST:
   let size = operand.intVal
   task.spush(task.collect(size).md)
