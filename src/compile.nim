@@ -190,14 +190,21 @@ proc codeGen*(compiler: MCompiler, data: MData) =
   else:
     compiler.radd(ins(inPUSH, data, data.pos))
 
-# Quoted data needs no extra processing
-proc codeGenQ*(compiler: MCompiler, code: MData) =
+# Quoted data needs no extra processing UNLESS quasiquoted in which case we need to watch for unqotes.
+proc codeGenQ(compiler: MCompiler, code: MData, quasi: bool) =
   if code.isType(dList):
     let list = code.listVal
-    for item in list:
-      compiler.codeGenQ(item)
-    let pos = code.pos
-    compiler.radd(ins(inCLIST, list.len.md, pos))
+
+    if quasi and list.len > 0 and list[0] == "unquote".mds:
+      if list.len == 2:
+        compiler.codeGen(list[1])
+      else:
+        compileError("unquote: too many arguments")
+    else:
+      for item in list:
+        compiler.codeGenQ(item, quasi)
+      let pos = code.pos
+      compiler.radd(ins(inCLIST, list.len.md, pos))
   else:
     compiler.radd(ins(inPUSH, code))
 
@@ -264,7 +271,12 @@ proc compileCode*(code: string): CpOutput =
 defSpecial "quote":
   verifyArgs("quote", args, @[dNil])
 
-  compiler.codeGenQ(args[0])
+  compiler.codeGenQ(args[0], false)
+
+defSpecial "quasiquote":
+  verifyArgs("quasiquote", args, @[dNil])
+
+  compiler.codeGenQ(args[0], true)
 
 defSpecial "lambda":
   verifyArgs("lambda", args, @[dList, dNil])

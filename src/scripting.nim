@@ -78,6 +78,14 @@ proc lex*(code: string): seq[Token] =
         curToken.ttype = tokQuote
         curToken.image = "'"
         addtoken()
+      elif c == '`' and curWord.len == 0:
+        curToken.ttype = tokQuasiQuote
+        curToken.image = "`"
+        addtoken()
+      elif c == ',' and curWord.len == 0:
+        curToken.ttype = tokUnquote
+        curToken.image = ","
+        addtoken()
       elif c == '(':
         addword()
         curToken.ttype = tokOParen
@@ -150,18 +158,15 @@ proc toData(image: string, pos: CodePosition): MData =
     of '"':
       return rest[0 .. ^2].md
     of Digits, '-', '.':
-      if image == "-": # special case
-        return "-".mds
-      else:
-        try:
-          if '.' in image or 'e' in image:
-            result = parseFloat(image).md
-          else:
-            result = parseInt(image).md
-        except OverflowError:
-          raise newException(MParseError, "number overflow " & image)
-        except ValueError:
-          raise newException(MParseError, "malformed number " & image)
+      try:
+        if '.' in image or 'e' in image:
+          result = parseFloat(image).md
+        else:
+          result = parseInt(image).md
+      except OverflowError:
+        raise newException(MParseError, "number overflow " & image)
+      except ValueError:
+        return image.mds
     else:
       if image == "nil":
         return nilD
@@ -205,13 +210,21 @@ proc consume(parser: var MParser, ttype: TokenType): Token =
   return tok
 proc parseList*(parser: var MParser): MData
 
+const QuoteTokens = {tokQuote, tokQuasiQuote, tokUnquote}
+
 proc parseAtom*(parser: var MParser): MData =
+  # An atom has two (potential) parts. The quote (optional), and the real stuff.
+  # Before grabbing the real stuff, we need to check if there's a quote in the way.
+  # If there is, we need to tack around the corresponding (quote ...) form.
+
+  var quoteTokType: TokenType
   var quotePos: CodePosition = (0, 0)
   var quote = false
 
   var next = parser.peek()
-  if next.ttype == tokQuote:
-    quotePos = parser.consume(tokQuote).pos
+  if next.ttype in QuoteTokens:
+    quoteTokType = next.ttype
+    quotePos = parser.consume(quoteTokType).pos
     next = parser.peek()
     quote = true
 
@@ -224,7 +237,17 @@ proc parseAtom*(parser: var MParser): MData =
       raise newException(MParseError, "unexpected token '" & next.image & "'")
 
   if quote:
-    var quoteSym = "quote".mds
+    var quoteSym: MData
+    case quoteTokType:
+      of tokQuote:
+        quoteSym = "quote".mds
+      of tokQuasiQuote:
+        quoteSym = "quasiquote".mds
+      of tokUnquote:
+        quoteSym = "unquote".mds
+      else:
+        raise newException(MParseError, "unknown quote token type: " & $quoteTokType)
+
     quoteSym.pos = quotePos
     result = @[quoteSym, result].md
 

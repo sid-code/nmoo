@@ -124,7 +124,8 @@ type
 
   TokenType* = enum
     tokOParen, tokCParen,
-    tokAtom, tokQuote,
+    tokAtom,
+    tokQuote, tokQuasiQuote, tokUnquote,
     tokEnd
 
   Token* = object
