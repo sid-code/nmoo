@@ -174,6 +174,7 @@ type
   CSymTable* = Table[string, int]
 
   MCompiler* = ref object
+    programmer*: MObject
     subrs*, real*: seq[Instruction]
     symtable*: CSymTable
     symgen*: SymGen

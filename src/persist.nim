@@ -215,13 +215,13 @@ proc readVerb(world: World, stream: FileStream): MVerb =
     code &= curLine & "\n"
     curLine = stream.readLine()
 
+  result.owner = readObjectID(world, stream)
+
   try:
-    result.setCode(code)
+    result.setCode(code, result.owner)
   except:
     warn "A verb called \"" & result.names & "\" failed to compile."
     warn "Message: " & getCurrentException().msg
-
-  result.owner = readObjectID(world, stream)
 
   result.inherited = readNum(stream) == 1
   let specs = stream.readLine().split(" ")

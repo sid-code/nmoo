@@ -14,7 +14,7 @@ import compile
 
 proc getVerb*(obj: MObject, name: string, all = true): MVerb
 proc getVerb*(obj: MObject, index: int): MVerb
-proc setCode*(verb: MVerb, newCode: string)
+proc setCode*(verb: MVerb, newCode: string, programmer: MObject)
 import persist
 
 type
@@ -273,9 +273,9 @@ proc verbCall*(owner: MObject, name: string, player, caller: MObject,
       return owner.verbCallRaw(v, player, caller, args, symtable = symtable, taskType = taskType, callback = callback)
   return nil
 
-proc setCode*(verb: MVerb, newCode: string) =
+proc setCode*(verb: MVerb, newCode: string, programmer: MObject) =
   verb.code = newCode
-  let compiled = compileCode(newCode)
+  let compiled = compileCode(newCode, programmer)
   verb.compiled = compiled
 
 proc preprocess(command: string): string =

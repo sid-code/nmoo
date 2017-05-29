@@ -235,7 +235,7 @@ proc handleCodeUpdate(req: Request, world: World) {.async.} =
   var msg: string = nil
 
   try:
-    verb.setCode(newCode)
+    verb.setCode(newCode, who)
   except MParseError:
     msg = "Parse error: " & getCurrentExceptionMsg()
     err = true

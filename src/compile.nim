@@ -4,6 +4,8 @@ import sequtils
 
 import types
 import scripting
+import objects
+
 from algorithm import reversed
 
 proc newCSymTable: CSymTable = initTable[string, int]()
@@ -34,8 +36,9 @@ proc toCST*(data: MData): CSymTable =
 
 proc newSymGen(prefix: string): SymGen = SymGen(counter: 0, prefix: prefix)
 proc newSymGen: SymGen = newSymGen("L")
-proc newCompiler: MCompiler =
+proc newCompiler(programmer: MObject): MCompiler =
   MCompiler(
+    programmer: programmer,
     real: @[],
     subrs: @[],
     symtable: newCSymTable(),
@@ -251,22 +254,22 @@ proc render*(compiler: MCompiler): CpOutput =
   code.add(ins(inHALT))
   return (entry, code)
 
-proc compileCode*(forms: seq[MData]): CpOutput =
-  let compiler = newCompiler()
+proc compileCode*(forms: seq[MData], programmer: MObject): CpOutput =
+  let compiler = newCompiler(programmer)
 
   for form in forms:
     compiler.codeGen(form)
 
   return compiler.render
 
-proc compileCode*(code: MData): CpOutput =
-  let compiler = newCompiler()
+proc compileCode*(code: MData, programmer: MObject): CpOutput =
+  let compiler = newCompiler(programmer)
   compiler.codeGen(code)
   return compiler.render
 
-proc compileCode*(code: string): CpOutput =
+proc compileCode*(code: string, programmer: MObject): CpOutput =
   var parser = newParser(code)
-  return compileCode(parser.parseFull())
+  return compileCode(parser.parseFull(), programmer)
 
 defSpecial "quote":
   verifyArgs("quote", args, @[dNil])

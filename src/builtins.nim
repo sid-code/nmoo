@@ -259,7 +259,9 @@ defBuiltin "eval":
     let form = args[0]
 
     try:
-      let instructions = compileCode(form)
+      # Design choice: the compiler runs with the permissions of THE PLAYER WHO TYPED THE COMMAND.
+      # This is used for executing compile-time code.
+      let instructions = compileCode(form, player)
       discard world.addTask("eval", self, player, caller, owner, symtable, instructions,
                             taskType = task.taskType, callback = task.id)
       task.setStatus(tsAwaitingResult)
@@ -913,7 +915,7 @@ defBuiltin "addverb":
     owner = owner,
   )
 
-  verb.setCode("")
+  verb.setCode("", owner)
 
   discard obj.addVerb(verb)
   world.persist(obj)
@@ -973,7 +975,7 @@ defBuiltin "setverbcode":
   let newCode = extractString(args[2])
 
   try:
-    verb.setCode(newCode)
+    verb.setCode(newCode, verb.owner)
     world.persist(obj)
     return nilD.pack
   except MParseError:

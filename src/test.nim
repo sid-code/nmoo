@@ -100,7 +100,7 @@ suite "object tests":
 
     root.verbs.add(verb)
 
-    verb.setCode("(do argstr)")
+    verb.setCode("(do argstr)", root)
     #check $root.handleCommand("action root on root") == "@[\"root on root\"]"
     check true
 
@@ -115,7 +115,7 @@ suite "object tests":
 
     root.verbs.add(verb)
 
-    verb.setCode("(do args)")
+    verb.setCode("(do args)", root)
     #check $root.verbCall("action", root, @["hey".md]) == "@[@[\"hey\"]]"
     check true
 
@@ -170,7 +170,7 @@ suite "evaluator":
     var symtable = newSymbolTable()
     proc evalS(code: string, who: MObject = root): MData =
       let name = "test task"
-      let compiled = compileCode(code)
+      let compiled = compileCode(code, who)
       let t = world.addTask(name, who, who, who, who, symtable, compiled, ttFunction, -1)
 
       let tr = t.run()
@@ -452,7 +452,7 @@ suite "evaluator":
       owner = obj,
     )
 
-    fverb.setCode("(get args 0)")
+    fverb.setCode("(get args 0)", root)
     discard obj.addVerb(fverb)
 
     symtable["obj"] = obj.md
