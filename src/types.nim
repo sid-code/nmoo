@@ -315,15 +315,15 @@ proc `==`*(x: MData, y: MData): bool =
 
 proc hash*(x: MData): Hash =
   var h = ord(x.dtype).hash
-  h = h !& case x.dtype:
-    of dInt: x.intVal.hash
-    of dFloat: x.floatVal.hash
-    of dStr: x.strVal.hash
-    of dSym: x.symVal.hash
-    of dErr: x.errVal.hash
-    of dList: x.listVal.hash
-    of dObj: x.objVal.int.hash
-    of dNil: 0.hash
+  case x.dtype:
+    of dInt: h = h !& x.intVal
+    of dFloat: h = h !& x.floatVal.hash
+    of dStr: h = h !& x.strVal.hash
+    of dSym: h = h !& x.symVal.hash
+    of dErr: h = h !& x.errVal.hash
+    of dList: h = h !& x.listVal.hash
+    of dObj: h = h !& x.objVal.int
+    of dNil: h = h !& 0
 
   return !$h
 
