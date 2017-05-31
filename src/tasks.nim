@@ -51,6 +51,9 @@ proc popFrame(task: Task) =
   discard task.frames.pop()
 
 proc collect(task: Task, num: int): seq[MData] =
+  if task.stack.len < num:
+    return nil
+
   newSeq(result, 0)
   for i in 0 .. num - 1:
     discard i
