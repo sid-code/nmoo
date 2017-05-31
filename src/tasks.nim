@@ -335,15 +335,18 @@ impl inCALL:
             task.pc = jmploc.intVal
           else:
             let args = task.collect(numArgs)
-            var symtable = envData.toST()
+            if isNil(args):
+              task.doError(E_INTERNAL.md, "insufficient arguments for lambda (need " & $numArgs & ")")
+            else:
+              var symtable = envData.toST()
 
-            for name, val in task.globals:
-              symtable[name] = val
+              for name, val in task.globals:
+                symtable[name] = val
 
-            for idx, name in bounds:
-              symtable[name] = args[idx]
+              for idx, name in bounds:
+                symtable[name] = args[idx]
 
-            task.foreignLambdaCall(symtable = symtable, lambda = lcall)
+              task.foreignLambdaCall(symtable = symtable, lambda = lcall)
         else:
           task.doError(E_ARGS.md("lambda expected $1 args but got $2" %
                                  [$expectedNumArgs, $numArgs]))
