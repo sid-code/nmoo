@@ -299,12 +299,15 @@ impl inCALL:
       if lcall[0] == "cont".mds:
         #try:
           let contID = lcall[1].intVal
-          if numArgs != 1:
+          if numArgs == 1:
+            let args = task.collect(numArgs)
+            if isNil(args):
+              task.doError(E_ARGS.md("missing argument to continuation"))
+            else:
+              task.spush(args[0])
+              task.callContinuation(contID)
+          else:
             task.doError(E_ARGS.md("continuations only take 1 argument"))
-
-          let args = task.collect(numArgs)
-          task.spush(args[0])
-          task.callContinuation(contID)
 
         #except:
         #  task.doError(E_ARGS.md("invalid continuation (error)"))
