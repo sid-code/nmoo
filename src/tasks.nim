@@ -302,7 +302,7 @@ impl inCALL:
           if numArgs == 1:
             let args = task.collect(numArgs)
             if isNil(args):
-              task.doError(E_ARGS.md("missing argument to continuation"))
+              task.doError(E_INTERNAL.md("missing argument to continuation"))
             else:
               task.spush(args[0])
               task.callContinuation(contID)
