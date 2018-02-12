@@ -266,7 +266,7 @@ proc startEditServer*(world: World, p: Port) {.async.} =
     error check
     return
 
-  proc cb(req: Request) {.async.} =
+  proc cb(req: Request) {.async, gcsafe.} =
     var parts = req.url.path.split("/")[1..^1]
     if parts[^1] == "":
       discard parts.pop()
