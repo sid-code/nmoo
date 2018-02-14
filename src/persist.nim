@@ -249,11 +249,13 @@ proc readObject(world: World, stream: FileStream) =
 
   obj.parent = readObjectID(world, stream, nil)
 
-  let children = stream.readLine().split(" ")
-  for child in children:
-    let childID = parseInt(child)
-    if childID > 0:
-      obj.children.add(world.byID(childID.id))
+  let childrenStr = stream.readLine()
+  if not childrenStr.isNilOrEmpty():
+    let children = childrenStr.split(" ")
+    for child in children:
+      let childID = parseInt(child)
+      if childID > 0:
+        obj.children.add(world.byID(childID.id))
 
   let numProps = readNum(stream)
   for i in 0 .. numProps - 1:
