@@ -1867,11 +1867,18 @@ defBuiltin "substr":
     runtimeError(E_ARGS, "substr takes 3 arguments")
 
   let str = extractString(args[0])
+  let strlen = str.len
   let start = extractInt(args[1])
-  let endv = extractInt(args[2]) # end is a reserved word
+  var endv = extractInt(args[2]) # end is a reserved word
 
   if start < 0:
     runtimeError(E_ARGS, "start index must be greater than 0")
+
+  if start >= strlen:
+    runtimeError(E_ARGS, "start index greater than length of string")
+
+  if endv >= strlen:
+    endv = strlen - 1
 
   if endv >= 0:
     return str[start .. endv].md.pack
