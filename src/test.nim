@@ -624,7 +624,11 @@ suite "evaluator":
     var result = evalS("""(substr "01234567" 2 5)""")
     check result == "2345".md
 
-    result = evalS("""(substr "01234567" 0 -1)""")
+    result = evalS("""(substr "01234567" 30 50)""")
+    check result == "".md
+
+  test "substr handles negative indices":
+    var result = evalS("""(substr "01234567" 0 -1)""")
     check result == "01234567".md
 
     result = evalS("""(substr "01234567" 2 -2)""")
@@ -632,9 +636,6 @@ suite "evaluator":
 
     result = evalS("""(substr "01234567" -1 2)""")
     check result.isType(dErr)
-
-    result = evalS("""(substr "01234567" 30 50)""")
-    check result == "".md
 
   test "splice statement works":
     var result = evalS("""(splice "abcdef" 1 4 "1234")""")
