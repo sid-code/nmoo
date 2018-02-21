@@ -613,6 +613,9 @@ suite "evaluator":
     result = evalS("(in (1 2 3) 4)")
     check result.intVal == -1
 
+    result = evalS("(in () 4)")
+    check result.intVal == -1
+
   test "substr statement works":
     var result = evalS("""(substr "01234567" 2 5)""")
     check result == "2345".md
