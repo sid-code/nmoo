@@ -16,6 +16,12 @@ proc readStrl(s: Stream): string =
   let slen = s.readInt32()
   return s.readStr(slen)
 
+proc writeTime(s: Stream, t: Time) =
+  s.write(t.toUnix())
+
+proc readTime(s: Stream): Time =
+  return fromUnix(s.readInt64())
+
 proc writeMData*(s: Stream, d: MData) =
   # The data type is encoded as an unsigned 8 bit integer. The 7 least
   # significant bits are used to encode the type, and the most significant
@@ -225,7 +231,7 @@ proc readPackage(s: Stream): Package =
 proc writeTask*(s: Stream, t: Task) =
   s.write(int32(t.id))
   s.writeStrl(t.name)
-  s.write(int32(t.startTime))
+  s.writeTime(t.startTime)
 
   s.writeMData(t.stack.md)
   
@@ -246,7 +252,7 @@ proc writeTask*(s: Stream, t: Task) =
     s.writeContinuation(cont)
 
   s.write(int8(t.status))
-  s.write(int32(t.suspendedUntil))
+  s.writeTime(t.suspendedUntil)
   s.write(int32(t.tickCount))
   s.write(int32(t.tickQuota))
 
@@ -268,7 +274,7 @@ proc readTask*(s: Stream): Task =
 
   t.id = s.readInt32()
   t.name = s.readStrl()
-  t.startTime = Time(s.readInt32())
+  t.startTime = s.readTime()
 
   let stackd = s.readMData()
   t.stack = stackd.listVal
@@ -300,7 +306,7 @@ proc readTask*(s: Stream): Task =
 
 
   t.status = TaskStatus(s.readInt8())
-  t.suspendedUntil = Time(s.readInt32())
+  t.suspendedUntil = s.readTime()
   t.tickCount = s.readInt32()
   t.tickQuota = s.readInt32()
 

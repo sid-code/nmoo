@@ -2567,7 +2567,7 @@ defBuiltin "random":
 ## the task is indefinitely suspended.
 defBuiltin "suspend":
   if phase == 0:
-    var until = Time(0)
+    var until = fromUnix(0)
     case args.len:
       of 0: discard
       of 1:

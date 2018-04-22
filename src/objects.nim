@@ -416,7 +416,7 @@ proc tick*(world: World) =
 
     if task.status == tsSuspended:
       let suspendedUntil = task.suspendedUntil
-      if suspendedUntil != Time(0) and getTime() >= suspendedUntil:
+      if suspendedUntil != fromUnix(0) and getTime() >= suspendedUntil:
         task.resume(nilD)
 
     if not task.isRunning(): continue

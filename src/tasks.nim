@@ -575,7 +575,7 @@ proc createTask*(id: int, name: string, startTime: Time, compiled: CpOutput,
     owner: owner,
 
     status: tsRunning,
-    suspendedUntil: Time(0),
+    suspendedUntil: fromUnix(0),
     tickCount: 0,
     tickQuota: tickQuota,
 
