@@ -1705,20 +1705,20 @@ defBuiltin "$o":
 
 ## ::
 ##
-##   (toobj val:Int|Str):Obj
+##   (object val:Int|Str):Obj
 ##
 ## Tries to convert ``val`` into a value of type ``object``.
 ##
 ## Examples::
 ##
-##   (toobj 5)     ; => #5
-##   (toobj "5")   ; => #5
-##   (toobj "#5")  ; => #5
-##   (toobj "foo") ; will result in E_ARGS
-##   (toobj (1 2)) ; will result in E_TYPE
-defBuiltin "toobj":
+##   (object 5)     ; => #5
+##   (object "5")   ; => #5
+##   (object "#5")  ; => #5
+##   (object "foo") ; will result in E_ARGS
+##   (object (1 2)) ; will result in E_TYPE
+defBuiltin "object":
   if args.len != 1:
-    runtimeError(E_ARGS, "toobj takes 1 argument")
+    runtimeError(E_ARGS, "object takes 1 argument")
 
   let val = args[0]
   case val.dtype:
