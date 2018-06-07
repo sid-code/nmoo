@@ -130,7 +130,10 @@ proc parseCommand*(str: string): ParsedCommand =
 
   # The [1 .. ^1] subscript is necessary because the string will
   # have a leading space
-  result.doString = doString[1 .. ^1]
+  if doString.isNilOrEmpty():
+    result.doString = ""
+  else:
+    result.doString = doString[1 .. ^1]
 
   while i < fixedWords.len:
     let word = fixedWords[i]
@@ -139,7 +142,10 @@ proc parseCommand*(str: string): ParsedCommand =
     ioString.add(" ")
     ioString.add(word)
 
-  result.ioString = ioString[1 .. ^1]
+  if ioString.isNilOrEmpty():
+    result.ioString = ""
+  else:
+    result.ioString = ioString[1 .. ^1]
 
 proc nameMatchesStr(name: string, str: string): bool =
   if name == "*": return true
