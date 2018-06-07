@@ -266,7 +266,7 @@ proc parseList*(parser: var MParser): MData =
     next = parser.peek()
   discard parser.consume(tokCParen)
 
-  # Shorthand syntax: (obj:verb arg1 arg2 ...) => (verbcall obj "verb" (arg1 arg2 ...))
+  # Shorthand syntax: (obj:verb arg1 arg2 ...) => (verbcall obj "verb" (list arg1 arg2 ...))
   if resultL.len > 0:
     let first = resultL[0]
     if first.isType(dSym):
@@ -274,7 +274,7 @@ proc parseList*(parser: var MParser): MData =
       let parts = name.split(":")
       if parts.len > 1:
         if resultL.len > 1:
-          resultL[1..^1] = [resultL[1..^1].md]
+          resultL[1..^1] = [("list".mds & resultL[1..^1]).md]
         resultL[0] = parts[0].toData(pos)
         resultL.insert(parts[1].md, 1)
         var verbCallSymbol = "verbcall".mds

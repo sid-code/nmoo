@@ -568,6 +568,13 @@ defSpecial "and":
   # none of them turned out to be false
   emit(ins(inLABEL, endLabel))
 
+defSpecial "list":
+  let alen = args.len
+  for arg in args:
+    propogateError(compiler.codeGen(arg))
+
+  emit(ins(inCLIST, alen.md))
+
 defSpecial "if":
   if args.len != 3:
     compileError("if takes 3 arguments (condition, if-true, if-false)")

@@ -1739,6 +1739,14 @@ defBuiltin "toobj":
 
 ## ::
 ##
+##   (list v:Any...):List
+## 
+## Constructs a list with ``v``s provided. ``(list)`` is an empty list.
+defBuiltin "list":
+  return args.md.pack
+
+## ::
+##
 ##   (cat str:Str...):Str
 ##   (cat list:List...):List
 ##
