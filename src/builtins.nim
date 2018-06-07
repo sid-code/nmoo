@@ -2705,3 +2705,7 @@ defBuiltin "kill-task":
   otask.finish()
 
   return taskID.md.pack
+
+when defined(nimTypeNames):
+  defBuiltin "dumpinsts":
+    dumpNumberOfInstances();
