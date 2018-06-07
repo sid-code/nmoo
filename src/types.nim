@@ -179,7 +179,13 @@ type
     symtable*: CSymTable
     symgen*: SymGen
 
-  SpecialProc* = proc(compiler: MCompiler, args: seq[MData], pos: CodePosition)
+    ## for macros
+    syntaxTransformers*: TableRef[string, SyntaxTransformer]
+
+  SyntaxTransformer* = ref object
+    code*: MData
+
+  SpecialProc* = proc(compiler: MCompiler, args: seq[MData], pos: CodePosition): MData
 
   MCompileError* = object of Exception
 

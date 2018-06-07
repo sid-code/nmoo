@@ -218,7 +218,7 @@ proc readVerb(world: World, stream: FileStream): MVerb =
   result.owner = readObjectID(world, stream)
 
   try:
-    result.setCode(code, result.owner)
+    result.setCode(code, result.owner, compileIt = false)
   except:
     warn "A verb called \"" & result.names & "\" failed to compile."
     warn "Message: " & getCurrentException().msg
@@ -471,6 +471,16 @@ proc loadWorld*(name: string): World =
   info "Read " & $taskCount & " tasks from disk."
 
   result.verbObj = objs[0]
+
+  for obj in result.getObjects()[]:
+    if not obj.isNil:
+      for v in obj.verbs:
+        # this time really compile it
+        try:
+          echo "compiling " & obj.toObjStr() & ":" & v.names & "..."
+          v.setCode(v.code, v.owner)
+        except MCompileError:
+          error "A verb " & obj.toObjStr() & ":" & v.names & " failed to compile."
 
   var oresult = result
 

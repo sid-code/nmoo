@@ -1,10 +1,21 @@
 import tables
+import options
 import strutils
 import sequtils
 
 import types
+
+proc newCompiler*(programmer: MObject): MCompiler
+proc codeGen*(compiler: MCompiler, data: MData): MData
+proc render*(compiler: MCompiler): CpOutput
+proc compileCode*(code: MData, programmer: MObject,
+                  syntaxTransformers: TableRef[string, SyntaxTransformer] = nil): CpOutput
+proc toCST*(data: MData): CSymTable
+
 import scripting
 import objects
+
+import tasks
 
 from algorithm import reversed
 
@@ -36,15 +47,15 @@ proc toCST*(data: MData): CSymTable =
 
 proc newSymGen(prefix: string): SymGen = SymGen(counter: 0, prefix: prefix)
 proc newSymGen: SymGen = newSymGen("L")
-proc newCompiler(programmer: MObject): MCompiler =
+proc newCompiler*(programmer: MObject): MCompiler =
   MCompiler(
     programmer: programmer,
     real: @[],
     subrs: @[],
     symtable: newCSymTable(),
-    symgen: newSymGen())
+    symgen: newSymGen(),
+    syntaxTransformers: newTable[string, SyntaxTransformer]())
 
-proc codeGen*(compiler: MCompiler, data: MData)
 
 proc genSym(symgen: SymGen): string =
   result = "$1$2" % [symgen.prefix, $symgen.counter]
@@ -90,12 +101,27 @@ proc `$`*(compiler: MCompiler): string =
 proc makeSymbol(compiler: MCompiler): MData =
   compiler.symgen.genSym().mds
 
-proc compileError(msg: string) =
-  raise newException(MCompileError, "Compiler error: " & msg)
+template compileError(msg: string) =
+  var error = E_COMPILE.md(msg)
+  return error
 
-proc getSymbol(symtable: CSymTable, name: string): int =
+template compileError(msg: string, pos: CodePosition) =
+  var error = E_COMPILE.md(msg)
+  error.trace.add( ("compilation", pos) )
+  return error
+
+template propogateError(error: MData) =
+  if error != E_NONE.md:
+    return error
+
+template propogateError(error: MData, traceLine: string, pos: CodePosition) =
+  if error != E_NONE.md:
+    error.trace.add( (traceLine, pos) )
+    return error
+
+proc getSymbol(symtable: CSymTable, name: string): MData =
   if symtable.hasKey(name):
-    return symtable[name]
+    return symtable[name].md
   else:
     compileError("unbound symbol '$1'" % [name])
 
@@ -103,25 +129,41 @@ proc getSymInst(symtable: CSymTable, sym: MData): Instruction =
   let pos = sym.pos
   let name = sym.symVal
 
-  try:
-    if builtinExists(name):
-      return ins(inPUSH, name.mds, pos)
+  if builtinExists(name):
+    return ins(inPUSH, name.mds, pos)
+  else:
+    let index = symtable.getSymbol(name)
+    if index.isType(dErr):
+      return ins(inGGET, name.mds, pos)
     else:
-      let index = symtable.getSymbol(name)
-      return ins(inGET, index.md, pos)
-  except:
-    return ins(inGGET, name.mds, pos)
+      return ins(inGET, index, pos)
+
 
 var specials = initTable[string, SpecialProc]()
 proc specialExists(name: string): bool =
   specials.hasKey(name)
 
-proc checkType(value: MData, expected: MDataType) =
-  if not value.isType(expected):
-    compileError("expected argument of type " & $expected & " instead got " & $value.dType)
+proc macroExists(compiler: MCompiler, name: string): bool =
+  compiler.syntaxTransformers.hasKey(name)
+
+proc callTransformer(compiler: MCompiler, name: string, code: MData): MData =
+  let transformer = compiler.syntaxTransformers[name]
+  let callCode = @["call".mds, transformer.code, @[@["quote".mds, code].md].md].md
+  var (cerr, tr) = compiler.staticEval(callCode)
+  propogateError(cerr, "during compilation of macro code", code.pos)
+
+  case tr.typ:
+    of trFinish:
+      return tr.res
+    of trSuspend:
+      compileError("macro " & name & " unexpectedly suspended")
+    of trError:
+      compileError("macro " & name & " had an error")
+    of trTooLong:
+      compileError("macro " & name & "  took too long")
 
 template defSpecial(name: string, body: untyped) {.dirty.} =
-  specials[name] = proc (compiler: MCompiler, args: seq[MData], pos: CodePosition) =
+  specials[name] = proc (compiler: MCompiler, args: seq[MData], pos: CodePosition): MData =
     proc emit(inst: Instruction, where = 0) =
       var inst = inst
       inst.pos = pos
@@ -133,10 +175,10 @@ template defSpecial(name: string, body: untyped) {.dirty.} =
       for inst in insts: emit(inst, where)
 
     body
-
+    return E_NONE.md
 
 # dNil means any type is allowed
-proc verifyArgs(name: string, args: seq[MData], spec: seq[MDataType]) =
+template verifyArgs(name: string, args: seq[MData], spec: seq[MDataType]) =
   if args.len != spec.len:
     compileError("$1: expected $2 arguments but got $3" %
       [name, $spec.len, $args.len])
@@ -146,35 +188,58 @@ proc verifyArgs(name: string, args: seq[MData], spec: seq[MDataType]) =
       compileError("$1: expected argument of type $2 but got $3" %
         [name, $e, $o.dtype])
 
-proc codeGen*(compiler: MCompiler, code: seq[MData], pos: CodePosition) =
+proc codeGen*(compiler: MCompiler, code: seq[MData], pos: CodePosition): MData =
   if code.len == 0:
     compiler.radd(ins(inCLIST, 0.md, pos))
-    return
+    return E_NONE.md
 
   let first = code[0]
 
   if first.isType(dSym):
     let name = first.symVal
-    if specialExists(name):
+    if compiler.macroExists(name):
+      let transformedCode = compiler.callTransformer(name, code.md)
+      var error = compiler.codeGen(transformedCode)
+      if error != E_NONE.md:
+        error.trace.add( ("macro call from", pos) )
+        return error
+
+      return E_NONE.md
+    elif specialExists(name):
       let
         args = code[1 .. ^1]
         prok = compile.specials[name]
-      prok(compiler, args, pos)
-      return
+
+      propogateError(prok(compiler, args, pos))
+      return E_NONE.md
     elif builtinExists(name):
       for arg in code[1 .. ^1]:
-        compiler.codeGen(arg)
+        propogateError(compiler.codeGen(arg))
+
       compiler.radd(ins(inPUSH, first, first.pos))
       compiler.radd(ins(inCALL, (code.len - 1).md, first.pos))
-      return
+      return E_NONE.md
+    else: # just spit out an ACALL and hope nothing blows up
+      let numArgs = code.len - 1
+      compiler.radd(ins(inPUSH, first, first.pos))
+      for arg in code[1 .. ^1]:
+        propogateError(compiler.codeGen(arg))
+
+      compiler.radd(ins(inCLIST, numArgs.md, first.pos))
+      propogateError(compiler.codeGen(first))
+      compiler.radd(ins(inACALL, numArgs.md, first.pos))
+      return E_NONE.md
+
 
   for data in code:
-    compiler.codeGen(data)
+    propogateError(compiler.codeGen(data))
   compiler.radd(ins(inCLIST, code.len.md, pos))
 
-proc codeGen*(compiler: MCompiler, data: MData) =
+  return E_NONE.md
+
+proc codeGen*(compiler: MCompiler, data: MData): MData =
   if data.isType(dList):
-    compiler.codeGen(data.listVal, data.pos)
+    propogateError(compiler.codeGen(data.listVal, data.pos))
   elif data.isType(dSym):
     let name = data.symVal
     if name[0] == '$':
@@ -184,7 +249,7 @@ proc codeGen*(compiler: MCompiler, data: MData) =
       var expanded = @[sym, 0.ObjID.md, name[1..^1].md].md
       expanded.pos = pos
 
-      compiler.codeGen(expanded)
+      return compiler.codeGen(expanded)
     else:
       try:
         compiler.radd(compiler.symtable.getSymInst(data))
@@ -193,23 +258,27 @@ proc codeGen*(compiler: MCompiler, data: MData) =
   else:
     compiler.radd(ins(inPUSH, data, data.pos))
 
+  return E_NONE.md
+
 # Quoted data needs no extra processing UNLESS quasiquoted in which case we need to watch for unqotes.
-proc codeGenQ(compiler: MCompiler, code: MData, quasi: bool) =
+proc codeGenQ(compiler: MCompiler, code: MData, quasi: bool): MData =
   if code.isType(dList):
     let list = code.listVal
 
     if quasi and list.len > 0 and list[0] == "unquote".mds:
       if list.len == 2:
-        compiler.codeGen(list[1])
+        propogateError(compiler.codeGen(list[1]))
       else:
         compileError("unquote: too many arguments")
     else:
       for item in list:
-        compiler.codeGenQ(item, quasi)
+        propogateError(compiler.codeGenQ(item, quasi))
       let pos = code.pos
       compiler.radd(ins(inCLIST, list.len.md, pos))
   else:
     compiler.radd(ins(inPUSH, code))
+
+  return E_NONE.md
 
 template defSymbol(symtable: CSymTable, name: string): int =
   let index = symtable.len
@@ -258,13 +327,22 @@ proc compileCode*(forms: seq[MData], programmer: MObject): CpOutput =
   let compiler = newCompiler(programmer)
 
   for form in forms:
-    compiler.codeGen(form)
+    let error = compiler.codeGen(form)
+    if error != E_NONE.md:
+      raise newException(MCompileError, $error)
 
   return compiler.render
 
-proc compileCode*(code: MData, programmer: MObject): CpOutput =
+proc compileCode*(code: MData, programmer: MObject,
+                  syntaxTransformers: TableRef[string, SyntaxTransformer] = nil): CpOutput =
   let compiler = newCompiler(programmer)
-  compiler.codeGen(code)
+  if not isNil(syntaxTransformers):
+    compiler.syntaxTransformers = syntaxTransformers
+
+  let error = compiler.codeGen(code)
+  if error != E_NONE.md:
+    raise newException(MCompileError, $error)
+
   return compiler.render
 
 proc compileCode*(code: string, programmer: MObject): CpOutput =
@@ -274,12 +352,12 @@ proc compileCode*(code: string, programmer: MObject): CpOutput =
 defSpecial "quote":
   verifyArgs("quote", args, @[dNil])
 
-  compiler.codeGenQ(args[0], false)
+  propogateError(compiler.codeGenQ(args[0], false))
 
 defSpecial "quasiquote":
   verifyArgs("quasiquote", args, @[dNil])
 
-  compiler.codeGenQ(args[0], true)
+  propogateError(compiler.codeGenQ(args[0], true))
 
 defSpecial "lambda":
   verifyArgs("lambda", args, @[dList, dNil])
@@ -290,7 +368,8 @@ defSpecial "lambda":
   let labelName = compiler.addLabel(subrs)
 
   for bound in bounds.reversed():
-    checkType(bound, dSym)
+    if not bound.isType(dSym):
+      compileError("lambda variables can only be symbols", bound.pos)
     let name = bound.symVal
     let index = compiler.symtable.defSymbol(name)
     compiler.subrs.add(ins(inSTO, index.md))
@@ -298,7 +377,9 @@ defSpecial "lambda":
   let
     subrsBeforeSize = compiler.subrs.len
     realBeforeSize = compiler.real.len
-  compiler.codeGen(expression)
+
+  propogateError(compiler.codeGen(expression))
+
   let
     subrsAfterSize = compiler.subrs.len
     realAfterSize = compiler.real.len
@@ -330,11 +411,11 @@ defSpecial "map":
   verifyArgs("map", args, @[dNil, dNil])
   let fn = args[0]
   # fn can either be a sym or a lambda but it doesn't matter
-  compiler.codeGen(fn)
+  propogateError(compiler.codeGen(fn))
 
   let index = compiler.symtable.defSymbol("__mapfn")
   emit(ins(inSTO, index.md))
-  compiler.codeGen(args[1])
+  propogateError(compiler.codeGen(args[1]))
   emit(ins(inREV))
   emit(ins(inCLIST, 0.md))
   let labelLocation = compiler.addLabel(real)
@@ -353,54 +434,54 @@ defSpecial "map":
   emit(ins(inPOP))
   compiler.symtable.del("__mapfn")
 
-proc genFold(compiler: MCompiler, fn, default, list: MData,
-             useDefault = true, right = true, pos: CodePosition = (0, 0)) =
+template genFold(compiler: MCompiler, fn, default, list: MData,
+                 useDefault = true, right = true, pos: CodePosition = (0, 0)) =
 
-  proc emit(inst: Instruction) =
+  proc emitx(inst: Instruction) =
     var inst = inst
     inst.pos = pos
     compiler.radd(inst)
 
-  compiler.codeGen(fn)
+  propogateError(compiler.codeGen(fn))
 
   let index = compiler.symtable.defSymbol("__redfn")
-  emit(ins(inSTO, index.md))
-  compiler.codeGen(list)                         # list
+  emitx(ins(inSTO, index.md))
+  propogateError(compiler.codeGen(list))  # list
 
   let after = compiler.makeSymbol()
   let emptyList = compiler.makeSymbol()
   if not useDefault:
-    emit(ins(inLEN))                # list len
-    emit(ins(inJ0, emptyList))      # list
+    emitx(ins(inLEN))                # list len
+    emitx(ins(inJ0, emptyList))      # list
 
   if right:
-    emit(ins(inREV))                # list-rev
+    emitx(ins(inREV))                # list-rev
 
   if useDefault:
-    compiler.codeGen(default)
+    propogateError(compiler.codeGen(default))
   else:
-    emit(ins(inPOPL))               # list-rev last
+    emitx(ins(inPOPL))               # list-rev last
 
-  emit(ins(inSWAP))                 # last list-rev
+  emitx(ins(inSWAP))                 # last list-rev
 
   let loop = compiler.addLabel(real)
-  emit(ins(inLEN))                  # last list-rev len
-  emit(ins(inJ0, after))            # last list-rev
-  emit(ins(inPOPL))                 # last1 list-rev last2
-  emit(ins(inSWAP3))                # list-rev last2 last1
-  emit(ins(inSWAP))                 # list-rev last1 last2
-  emit(ins(inGET, index.md))        # list-rev last1 last2 fn
-  emit(ins(inCALL, 2.md))           # list-rev result
-  emit(ins(inSWAP))                 # result list-rev
-  emit(ins(inJMP, loop))
+  emitx(ins(inLEN))                  # last list-rev len
+  emitx(ins(inJ0, after))            # last list-rev
+  emitx(ins(inPOPL))                 # last1 list-rev last2
+  emitx(ins(inSWAP3))                # list-rev last2 last1
+  emitx(ins(inSWAP))                 # list-rev last1 last2
+  emitx(ins(inGET, index.md))        # list-rev last1 last2 fn
+  emitx(ins(inCALL, 2.md))           # list-rev result
+  emitx(ins(inSWAP))                 # result list-rev
+  emitx(ins(inJMP, loop))
 
   if not useDefault:
-    emit(ins(inLABEL, emptyList))
-    compiler.codeGen(default)
-    emit(ins(inSWAP)) # So that the pop at the end pops off the empty list
+    emitx(ins(inLABEL, emptyList))
+    propogateError(compiler.codeGen(default))
+    emitx(ins(inSWAP)) # So that the pop at the end pops off the empty list
 
-  emit(ins(inLABEL, after))
-  emit(ins(inPOP))                  # result
+  emitx(ins(inLABEL, after))
+  emitx(ins(inPOP))                  # result
 
 defSpecial "reduce-right":
   verifyArgs("reduce-right", args, @[dNil, dNil])
@@ -424,17 +505,36 @@ defSpecial "fold-left":
 
 defSpecial "call":
   verifyArgs("call", args, @[dNil, dNil])
-  compiler.codeGen(args[1])
-  compiler.codeGen(args[0])
+  propogateError(compiler.codeGen(args[1]))
+  propogateError(compiler.codeGen(args[0]))
 
   emit(ins(inACALL))
+
+defSpecial "static-eval":
+  if args.len == 0:
+    compileError("static-eval: requires at least one argument")
+
+  for arg in args:
+    var (cerr, tr) = compiler.staticEval(arg)
+    propogateError(cerr, "during compile-time compilation(!)", arg.pos)
+    case tr.typ:
+      of trFinish:
+        propogateError(compiler.codeGen(tr.res))
+      of trSuspend:
+        compileError("compile-time evaluation unexpectedly suspended")
+      of trError:
+        compileError("compile-time evaluation had an error")
+      of trTooLong:
+        compileError("compile-time evaluation took too long")
+    
 
 defSpecial "define":
   verifyArgs("define", args, @[dSym, dNil])
 
   let symbol = args[0]
   let value = args[1]
-  compiler.codeGen(value)
+  propogateError(compiler.codeGen(value))
+  emit(ins(inDUP, symbol))
   emit(ins(inGSTO, symbol))
 
 defSpecial "let":
@@ -458,16 +558,26 @@ defSpecial "let":
     if not sym.isType(dSym):
       compileError("let: only symbols can be bound")
 
-    compiler.codeGen(val)
+    propogateError(compiler.codeGen(val))
     let symIndex = compiler.symtable.defSymbol(sym.symVal)
     binds.add(sym.symVal)
     emit(ins(inSTO, symIndex.md))
 
-  compiler.codeGen(args[1])
+  propogateError(compiler.codeGen(args[1]))
 
   # We're outside scope so unbind the symbols
   for bound in binds:
     compiler.symtable.del(bound)
+
+defSpecial "define-syntax":
+  verifyArgs("define-syntax", args, @[dSym, dNil])
+
+  let name = args[0].symVal
+  if compiler.macroExists(name):
+    compileError("define-syntax: macro " & name & " already exists.")
+
+  compiler.syntaxTransformers[name] = SyntaxTransformer(code: args[1])
+  emit(ins(inPUSH, nilD))
 
 defSpecial "try":
   let alen = args.len
@@ -477,20 +587,20 @@ defSpecial "try":
   let exceptLabel = compiler.makeSymbol()
   let endLabel = compiler.makeSymbol()
   emit(ins(inTRY, exceptLabel))
-  compiler.codeGen(args[0])
+  propogateError(compiler.codeGen(args[0]))
   emit(ins(inETRY))
   emit(ins(inJMP, endLabel))
   emit(ins(inLABEL, exceptLabel))
   let errorIndex = compiler.symtable.defSymbol("error")
   emit(ins(inSTO, errorIndex.md))
-  compiler.codeGen(args[1])
+  propogateError(compiler.codeGen(args[1]))
 
   # Out of rescue scope, so unbind "error" symbol
   compiler.symtable.del("error")
 
   emit(ins(inLABEL, endLabel))
   if alen == 3:
-    compiler.codeGen(args[2])
+    propogateError(compiler.codeGen(args[2]))
 
 defSpecial "cond":
   let endLabel = compiler.makeSymbol()
@@ -513,7 +623,7 @@ defSpecial "cond":
     let condLabel = compiler.makeSymbol()
     branchLabels.add(condLabel)
 
-    compiler.codeGen(larg[0])
+    propogateError(compiler.codeGen(larg[0]))
     emit(ins(inJT, condLabel))
 
   emit(ins(inJMP, elseLabel))
@@ -525,28 +635,28 @@ defSpecial "cond":
     let larg = arg.listVal
     if larg.len == 1:
       emit(ins(inLABEL, elseLabel))
-      compiler.codeGen(larg[0])
+      propogateError(compiler.codeGen(larg[0]))
       emit(ins(inLABEL, endLabel))
       break
 
     let condLabel = branchLabels[idx]
     emit(ins(inLABEL, condLabel))
-    compiler.codeGen(larg[1])
+    propogateError(compiler.codeGen(larg[1]))
     emit(ins(inJMP, endLabel))
 
 defSpecial "or":
   if args.len == 0:
     emit(ins(inPUSH, 0.md))
-    return
+    return E_NONE.md
 
   let endLabel = compiler.makeSymbol()
   for i in 0..args.len-2:
-    compiler.codeGen(args[i])
+    propogateError(compiler.codeGen(args[i]))
     emit(ins(inDUP))
     emit(ins(inJT, endLabel))
     emit(ins(inPOP))
 
-  compiler.codeGen(args[^1])
+  propogateError(compiler.codeGen(args[^1]))
 
   # none of them turned out to be true
   emit(ins(inLABEL, endLabel))
@@ -554,16 +664,16 @@ defSpecial "or":
 defSpecial "and":
   if args.len == 0:
     emit(ins(inPUSH, 1.md))
-    return
+    return E_NONE.md
 
   let endLabel = compiler.makeSymbol()
   for i in 0..args.len-2:
-    compiler.codeGen(args[i])
+    propogateError(compiler.codeGen(args[i]))
     emit(ins(inDUP))
     emit(ins(inJNT, endLabel))
     emit(ins(inPOP))
 
-  compiler.codeGen(args[^1])
+  propogateError(compiler.codeGen(args[^1]))
 
   # none of them turned out to be false
   emit(ins(inLABEL, endLabel))
@@ -578,7 +688,7 @@ defSpecial "list":
 defSpecial "if":
   if args.len != 3:
     compileError("if takes 3 arguments (condition, if-true, if-false)")
-  compiler.codeGen(@["cond".mds, @[args[0], args[1]].md, @[args[2]].md].md)
+  propogateError(compiler.codeGen(@["cond".mds, @[args[0], args[1]].md, @[args[2]].md].md))
 
 defSpecial "call-cc":
   verifyArgs("call-cc", args, @[dNil])
@@ -590,6 +700,6 @@ defSpecial "call-cc":
   emit(ins(inCLIST, 2.md))
   emit(ins(inCLIST, 1.md))
 
-  compiler.codeGen(args[0])
+  propogateError(compiler.codeGen(args[0]))
   emit(ins(inACALL))
   emit(ins(inLABEL, contLabel))

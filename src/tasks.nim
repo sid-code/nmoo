@@ -336,7 +336,7 @@ impl inCALL:
           else:
             let args = task.collect(numArgs)
             if isNil(args):
-              task.doError(E_INTERNAL.md, "insufficient arguments for lambda (need " & $numArgs & ")")
+              task.doError(E_INTERNAL.md("insufficient arguments for lambda (need " & $numArgs & ")"))
             else:
               var symtable = envData.toST()
 
@@ -357,7 +357,10 @@ impl inCALL:
   elif what.isType(dSym):
     # It's a builtin call
     let args = task.collect(numArgs)
-    task.builtinCall(what, args)
+    if isNil(args):
+      task.doError(E_INTERNAL.md("insufficient arguments for builtin (need " & $numArgs & ")"))
+    else:
+      task.builtinCall(what, args)
   else:
     task.doError(E_ARGS.md("cannot call '$1'" % [$what]))
 
@@ -592,3 +595,30 @@ proc createTask*(id: int, name: string, startTime: Time, compiled: CpOutput,
 
   task.pushFrame(newVSymTable())
   return task
+
+proc staticEval*(compiler: MCompiler, code: MData, name = "compile-time task"):
+                  tuple[compilationError: MData, tr: TaskResult] =
+  let programmer = compiler.programmer
+  let world = programmer.getWorld()
+
+  let ocompiler = newCompiler(programmer)
+  ocompiler.syntaxTransformers = compiler.syntaxTransformers
+  let compilationError = ocompiler.codeGen(code)
+  if compilationError != E_NONE.md:
+    result.compilationError = compilationError
+    return
+
+  let compiled = ocompiler.render()
+  let symtable = newSymbolTable()
+
+  let staticTask = world.addTask(
+    name = name,
+    self = programmer,
+    player = programmer,
+    caller = programmer,
+    owner = programmer,
+    symtable = symtable,
+    code = compiled)
+
+  return (E_NONE.md, staticTask.run())
+

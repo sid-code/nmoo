@@ -6,15 +6,30 @@ import strutils
 import tables
 import pegs
 
+
 import types
+
+proc getVerb*(obj: MObject, name: string, all = true): MVerb
+proc getVerb*(obj: MObject, index: int): MVerb
+proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true)
+proc objSpecToStr*(osp: ObjSpec): string
+proc prepSpecToStr*(psp: PrepType): string
+proc getVerbAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, v: MVerb]
+proc strToObjSpec*(osps: string): tuple[success: bool, result: ObjSpec]
+proc strToPrepSpec*(psps: string): tuple[success: bool, result: PrepType]
+proc addVerb*(obj: MObject, verb: MVerb): MVerb
+proc delVerb*(obj: MObject, verb: MVerb): MVerb
+proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
+                  args: seq[MData], symtable: SymbolTable = newSymbolTable(),
+                  holder: MObject = nil, taskType = ttFunction, callback = -1): Task
+proc verbCall*(owner: MObject, name: string, player, caller: MObject,
+               args: seq[MData], symtable = newSymbolTable(),
+               taskType = ttFunction, callback = -1): Task
+
 import objects
 import querying
 import scripting
 import compile
-
-proc getVerb*(obj: MObject, name: string, all = true): MVerb
-proc getVerb*(obj: MObject, index: int): MVerb
-proc setCode*(verb: MVerb, newCode: string, programmer: MObject)
 import persist
 
 type
@@ -279,10 +294,11 @@ proc verbCall*(owner: MObject, name: string, player, caller: MObject,
       return owner.verbCallRaw(v, player, caller, args, symtable = symtable, taskType = taskType, callback = callback)
   return nil
 
-proc setCode*(verb: MVerb, newCode: string, programmer: MObject) =
+proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true) =
   verb.code = newCode
-  let compiled = compileCode(newCode, programmer)
-  verb.compiled = compiled
+  if compileIt:
+    let compiled = compileCode(newCode, programmer)
+    verb.compiled = compiled
 
 proc preprocess(command: string): string =
   if command[0] == '(':
