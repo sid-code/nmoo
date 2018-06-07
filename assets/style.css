@@ -1,0 +1,39 @@
+#ui-container {
+  display: inline-block;
+  font-family: monospace;
+}
+
+#verbs-container {
+  display: inline-block;
+  vertical-align: top;
+  height: 100%;
+}
+
+  .CodeMirror {
+    border: 1px solid #BBBBBB;
+    width: 600px;
+    height: 500px;
+  }
+
+.verb {
+  padding: 2px;
+  transition: .2s;
+  cursor: pointer;
+}
+
+.verb:hover {
+  background-color: grey;
+}
+
+.verb:active {
+  background-color: black;
+}
+
+#errors {
+  color: red;
+  font-family: monospace;
+}
+
+.CodeMirror {
+  display: inline-block;
+}
