@@ -701,7 +701,7 @@ defBuiltin "delprop":
 ##
 ##   (getpropinfo obj:Obj prop:Str):List
 ##
-## Retrieves information about the property referred to by ``prop`` on ``obj.
+## Retrieves information about the property referred to by ``prop`` on ``obj``.
 ## This information is a list whose first element is the owner of the property.
 ## The second element is a string of characters taken from the set: ``r``, ``w`,
 ## and ``c``. ``r`` signifies that the property is publicly readable. ``w``
