@@ -5,7 +5,8 @@ author        = "Sidharth Kulkarni"
 description   = "[TODO: CHANGE]"
 license       = "MIT"
 srcDir        = "src"
-bin           = @["bin/nmoo"]
+binDir        = "bin"
+bin           = @["nmoo"]
 
 # Dependencies
 
