@@ -6,7 +6,7 @@ import packages/docutils/rstgen
 import packages/docutils/rst
 
 const
-  builtinsSourceFile = "src/builtins.nim"
+  builtinsSourceFile = "src/nmoopkg/builtins.nim"
 
 
 proc genrstdocs*(infilename = builtinsSourceFile, outfilename: string) =
@@ -18,7 +18,7 @@ proc genrstdocs*(infilename = builtinsSourceFile, outfilename: string) =
     if line.strip().len == 0:
       continue
 
-    if line[0] == '#' and line[1] == '#':
+    if line.len >= 2 and line[0] == '#' and line[1] == '#':
       if line.len == 2:
         currentComment &= "\n"
       else:
@@ -26,7 +26,7 @@ proc genrstdocs*(infilename = builtinsSourceFile, outfilename: string) =
           currentComment &= line[3..^1] & "\n"
         else:
           currentComment &= line[2..^1] & "\n"
-    elif line[0..9] == "defBuiltin":
+    elif line.len >= 10 and line[0..9] == "defBuiltin":
       let matchOpt = line.match(re"""defBuiltin "([^"]+)":.*""")
       if matchOpt.isSome:
         let builtinName = matchOpt.get.captures.toSeq[0]
@@ -54,6 +54,13 @@ proc genhtmldocs*(rstinfile, outfile: string) =
   var generatedHtml = ""
   gen.renderRstToOut(parsedrst, generatedHtml)
   writeFile(outFile, generatedHtml)
+
+proc gendocs* =
+  let rstFile = "doc/builtins.rst"
+  let htmlFile = "doc/builtins.html"
+
+  genrstdocs(outfilename = rstFile)
+  genhtmldocs(rstFile, htmlFile)
 
 
 when isMainModule:
