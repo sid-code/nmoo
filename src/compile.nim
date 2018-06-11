@@ -232,12 +232,12 @@ proc codeGen*(compiler: MCompiler, code: seq[MData], pos: CodePosition): MData =
       compiler.radd(ins(inACALL, numArgs.md, first.pos))
       return E_NONE.md
 
+  else:
+    for data in code:
+      propogateError(compiler.codeGen(data))
 
-  for data in code:
-    propogateError(compiler.codeGen(data))
-  compiler.radd(ins(inCLIST, code.len.md, pos))
-
-  return E_NONE.md
+    compiler.radd(ins(inCLIST, code.len.md, pos))
+    return E_NONE.md
 
 proc codeGen*(compiler: MCompiler, data: MData): MData =
   if data.isType(dList):
