@@ -5,7 +5,7 @@ author        = "Sidharth Kulkarni"
 description   = "[TODO: CHANGE]"
 license       = "MIT"
 srcDir        = "src"
-bin           = @["nmoo"]
+bin           = @["bin/nmoo"]
 
 # Dependencies
 
@@ -14,3 +14,6 @@ requires "bcrypt"
 
 task test, "Run tests":
   exec "nim c -r src/nmoopkg/test.nim"
+
+task docs, "Generate builtin function documentation":
+  exec "nim c -r src/nmoopkg/doc/builtindocgen.nim"
