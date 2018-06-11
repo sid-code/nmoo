@@ -720,7 +720,7 @@ suite "evaluator":
     check result == "bcdefg".md
 
   test "static evaluation works":
-    result = evalS("""(static-eval 5)""")
+    var result = evalS("""(static-eval 5)""")
     check result == 5.md
 
     # TODO: actually test static evaluation
