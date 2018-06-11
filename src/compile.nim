@@ -116,7 +116,7 @@ template propogateError(error: MData) =
     return errorV
 
 template propogateError(error: MData, traceLine: string, pos: CodePosition) =
-  let errorV = error
+  var errorV = error
   if errorV != E_NONE.md:
     errorV.trace.add( (traceLine, pos) )
     return errorV
