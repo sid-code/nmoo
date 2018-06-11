@@ -397,7 +397,7 @@ proc mainLoop =
     info totalPulses, " pulses, ", averagePulseTime, "ms average"
     cleanUp()
 
-when isMainModule:
+proc start* =
   clog = newConsoleLogger(fmtStr = "$date $time $levelname: ")
   addHandler(clog)
 
