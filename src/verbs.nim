@@ -204,6 +204,9 @@ proc matchesName(verb: MVerb, str: string): bool =
 
 proc allVerbsHelper(obj: MObject, collector: var seq[MVerb]) =
   collector.add(obj.verbs)
+  when not defined(release):
+    if isNil(obj.parent):
+      echo "oh boy, $#.parent == nil" % $obj
   if obj.parent != obj:
     allVerbsHelper(obj.parent, collector)
 
