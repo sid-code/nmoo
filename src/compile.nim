@@ -111,13 +111,15 @@ template compileError(msg: string, pos: CodePosition) =
   return error
 
 template propogateError(error: MData) =
-  if error != E_NONE.md:
-    return error
+  let errorV = error
+  if errorV != E_NONE.md:
+    return errorV
 
 template propogateError(error: MData, traceLine: string, pos: CodePosition) =
-  if error != E_NONE.md:
-    error.trace.add( (traceLine, pos) )
-    return error
+  let errorV = error
+  if errorV != E_NONE.md:
+    errorV.trace.add( (traceLine, pos) )
+    return errorV
 
 proc getSymbol(symtable: CSymTable, name: string): MData =
   if symtable.hasKey(name):
