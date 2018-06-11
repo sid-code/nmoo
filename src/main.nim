@@ -68,7 +68,7 @@ while true:
       discard os.execShellCmd("$EDITOR edit.tmp -c \"set filetype=lisp\"")
       let newCode = readFile("edit.tmp")
 
-      verb.setCode(newCode)
+      verb.setCode(newCode, player, compileIt = true)
       echo "Succesfully edited verb '$1'" % verbname
 
 
