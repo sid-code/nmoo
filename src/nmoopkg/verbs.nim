@@ -416,7 +416,7 @@ proc handleCommand*(player: MObject, command: string): Task =
     return nil
 
   let location = world.dataToObj(locationd)
-  if isNil(location.verbCall("huh", player, player, @[originalCommand.md], taskType = ttInput)):
+  if isNil(location) or isNil(location.verbCall("huh", player, player, @[originalCommand.md], taskType = ttInput)):
     player.send("Huh?")
 
   return nil
