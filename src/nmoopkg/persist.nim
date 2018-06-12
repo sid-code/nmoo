@@ -284,6 +284,9 @@ proc readObjectCount(world: World, stream: FileStream) =
   let ctr = readNum(stream)
   world.taskIDCounter = ctr
 
+proc setDefaultObjectCount(world: World) =
+  world.taskIDCounter = 0
+
 proc getWorldDir*(name: string): string =
   "worlds" / name
 
@@ -426,9 +429,13 @@ proc loadWorld*(name: string): World =
   var objs = result.getObjects()
   var maxid = 0
 
-  let objcountFile = newFileStream(getObjectCountFile(name), fmRead)
-  readObjectCount(result, objcountFile)
-  objcountFile.close()
+  try:
+    let objcountFile = openFileStream(getObjectCountFile(name), fmRead)
+    readObjectCount(result, objcountFile)
+    objcountFile.close()
+  except IOError:
+    warn "IO error when trying to read " & getObjectCountFile(name) & "; using default value"
+    setDefaultObjectCount(result)
 
   var objectCount = 0
   for fileName in walkFiles(dir / "*"):
