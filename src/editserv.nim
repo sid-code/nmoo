@@ -235,12 +235,12 @@ proc handleCodeUpdate(req: Request, world: World) {.async.} =
   var msg: string = nil
 
   try:
-    verb.setCode(newCode, who)
+    let error = verb.setCode(newCode, who)
+    if error != E_NONE.md:
+      err = true
+      msg = $error
   except MParseError:
     msg = "Parse error: " & getCurrentExceptionMsg()
-    err = true
-  except MCompileError:
-    msg = getCurrentExceptionMsg()
     err = true
 
   if err:

@@ -100,7 +100,7 @@ suite "object tests":
 
     root.verbs.add(verb)
 
-    verb.setCode("(do argstr)", root)
+    check verb.setCode("(do argstr)", root) == E_NONE.md
     #check $root.handleCommand("action root on root") == "@[\"root on root\"]"
     check true
 
@@ -115,7 +115,7 @@ suite "object tests":
 
     root.verbs.add(verb)
 
-    verb.setCode("(do args)", root)
+    check verb.setCode("(do args)", root) == E_NONE.md
     #check $root.verbCall("action", root, @["hey".md]) == "@[@[\"hey\"]]"
     check true
 
@@ -464,7 +464,7 @@ suite "evaluator":
       owner = obj,
     )
 
-    fverb.setCode("(get args 0)", root)
+    check fverb.setCode("(get args 0)", root) == E_NONE.md
     discard obj.addVerb(fverb)
 
     symtable["obj"] = obj.md

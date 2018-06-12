@@ -276,17 +276,15 @@ defBuiltin "eval":
 
     let form = args[0]
 
-    try:
-      # Design choice: the compiler runs with the permissions of THE PLAYER WHO TYPED THE COMMAND.
-      # This is used for executing compile-time code.
-      let instructions = compileCode(form, player)
-      discard world.addTask("eval", self, player, caller, owner, symtable, instructions,
-                            taskType = task.taskType, callback = task.id)
-      task.setStatus(tsAwaitingResult)
-      return 1.pack
-    except MCompileError:
-      let msg = getCurrentExceptionMsg()
-      runtimeError(E_PARSE, "compile error: $1" % msg)
+    # Design choice: the compiler runs with the permissions of THE PLAYER WHO TYPED THE COMMAND.
+    # This is used for executing compile-time code.
+    let instructions = compileCode(form, player)
+    checkForError(instructions.error)
+
+    discard world.addTask("eval", self, player, caller, owner, symtable, instructions,
+                        taskType = task.taskType, callback = task.id)
+    task.setStatus(tsAwaitingResult)
+    return 1.pack
   if phase == 1:
     return args[1].pack
 
@@ -933,7 +931,7 @@ defBuiltin "addverb":
     owner = owner,
   )
 
-  verb.setCode("", owner)
+  checkForError(verb.setCode("", owner))
 
   discard obj.addVerb(verb)
   world.persist(obj)
@@ -993,15 +991,13 @@ defBuiltin "setverbcode":
   let newCode = extractString(args[2])
 
   try:
-    verb.setCode(newCode, verb.owner)
+    let err = verb.setCode(newCode, verb.owner)
+    checkForError(err)
     world.persist(obj)
     return nilD.pack
   except MParseError:
     let msg = getCurrentExceptionMsg()
     runtimeError(E_PARSE, "code failed to parse: $1" % msg)
-  except MCompileError:
-    let msg = getCurrentExceptionMsg()
-    runtimeError(E_COMPILE, msg)
 
 ## ::
 ##

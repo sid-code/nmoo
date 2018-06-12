@@ -323,7 +323,7 @@ proc render*(compiler: MCompiler): CpOutput =
       code[idx] = ins(inTRY, newLabel, inst.pos)
 
   code.add(ins(inHALT))
-  return (entry, code)
+  return (entry, code, E_NONE.md)
 
 proc compileCode*(forms: seq[MData], programmer: MObject): CpOutput =
   let compiler = newCompiler(programmer)
@@ -331,7 +331,7 @@ proc compileCode*(forms: seq[MData], programmer: MObject): CpOutput =
   for form in forms:
     let error = compiler.codeGen(form)
     if error != E_NONE.md:
-      raise newException(MCompileError, $error)
+      return (0, nil, error)
 
   return compiler.render
 
@@ -343,7 +343,7 @@ proc compileCode*(code: MData, programmer: MObject,
 
   let error = compiler.codeGen(code)
   if error != E_NONE.md:
-    raise newException(MCompileError, $error)
+    return (0, nil, error)
 
   return compiler.render
 

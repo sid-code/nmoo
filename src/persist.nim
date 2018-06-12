@@ -217,11 +217,10 @@ proc readVerb(world: World, stream: FileStream): MVerb =
 
   result.owner = readObjectID(world, stream)
 
-  try:
-    result.setCode(code, result.owner, compileIt = false)
-  except:
+  let err = result.setCode(code, result.owner, compileIt = false)
+  if err != E_NONE.md:
     warn "A verb called \"" & result.names & "\" failed to compile."
-    warn "Message: " & getCurrentException().msg
+    warn $err
 
   result.inherited = readNum(stream) == 1
   let specs = stream.readLine().split(" ")
@@ -476,11 +475,11 @@ proc loadWorld*(name: string): World =
     if not obj.isNil:
       for v in obj.verbs:
         # this time really compile it
-        try:
-          echo "compiling " & obj.toObjStr() & ":" & v.names & "..."
-          v.setCode(v.code, v.owner)
-        except MCompileError:
+        echo "compiling " & obj.toObjStr() & ":" & v.names & "..."
+        let err = v.setCode(v.code, v.owner)
+        if err != E_NONE.md:
           error "A verb " & obj.toObjStr() & ":" & v.names & " failed to compile."
+          error $err
 
   var oresult = result
 

@@ -252,7 +252,7 @@ type
       of trTooLong: discard
 
   InstructionProc* = proc(task: Task, operand: MData)
-  CpOutput* = tuple[entry: int, code: seq[Instruction]]
+  CpOutput* = tuple[entry: int, code: seq[Instruction], error: MData]
 
   Client* = ref object
     world*: World
@@ -409,7 +409,7 @@ proc newVerb*(
   inherited: bool = false,
 
   code: string = "",
-  compiled: CpOutput = (0, nil),
+  compiled: CpOutput = (0, nil, E_NONE.md),
 
   doSpec: ObjSpec = oNone,
   ioSpec: ObjSpec = oNone,

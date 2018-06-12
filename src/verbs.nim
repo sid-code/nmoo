@@ -11,7 +11,7 @@ import types
 
 proc getVerb*(obj: MObject, name: string, all = true): MVerb
 proc getVerb*(obj: MObject, index: int): MVerb
-proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true)
+proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true): MData
 proc objSpecToStr*(osp: ObjSpec): string
 proc prepSpecToStr*(psp: PrepType): string
 proc getVerbAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, v: MVerb]
@@ -297,11 +297,14 @@ proc verbCall*(owner: MObject, name: string, player, caller: MObject,
       return owner.verbCallRaw(v, player, caller, args, symtable = symtable, taskType = taskType, callback = callback)
   return nil
 
-proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true) =
+proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true): MData =
   verb.code = newCode
   if compileIt:
     let compiled = compileCode(newCode, programmer)
+    if compiled.error != E_NONE.md:
+      return compiled.error
     verb.compiled = compiled
+  return E_NONE.md
 
 proc preprocess(command: string): string =
   if command[0] == '(':

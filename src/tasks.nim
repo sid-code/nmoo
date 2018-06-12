@@ -553,7 +553,7 @@ proc createTask*(id: int, name: string, startTime: Time, compiled: CpOutput,
            globals = newSymbolTable(), tickQuota: int, taskType: TaskType,
            callback: int): Task =
   let st = newVSymTable()
-  let (entry, code) = compiled
+  let (entry, code, err) = compiled
 
   let globals = addCoreGlobals(globals)
 
