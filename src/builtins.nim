@@ -50,35 +50,42 @@ proc escapeRegex(pat: string): Regex =
 # values from their arguments but raising an error if they're not of the
 # correct data type.
 template extractInt(d: MData): int =
-  checkType(d, dInt)
-  d.intVal
+  let dV = d
+  checkType(dV, dInt)
+  dV.intVal
+
 template extractFloat(d: MData): float =
+  let dV = d
   var res: float
-  if d.isType(dFloat):
-    res = d.floatVal
-  elif d.isType(dInt):
-    res = d.intVal.float
+  if dV.isType(dFloat):
+    res = dV.floatVal
+  elif dV.isType(dInt):
+    res = dV.intVal.float
   else:
     let msg = "$#: expected argument of type dInt or dFloat, instead got $#"
-    runtimeError(E_TYPE, msg % [bname, $d.dtype])
+    runtimeError(E_TYPE, msg % [bname, $dV.dtype])
 
   res
 
 template extractString(d: MData): string =
-  checkType(d, dStr)
-  d.strVal
+  let dV = d
+  checkType(dV, dStr)
+  dV.strVal
 template extractList(d: MData): seq[MData] =
-  checkType(d, dList)
-  d.listVal
+  let dV = d
+  checkType(dV, dList)
+  dV.listVal
 template extractError(d: MData): tuple[e: MError, s: string] =
-  checkType(d, dErr)
-  (d.errVal, d.errMsg)
+  let dV = d
+  checkType(dV, dErr)
+  (dV.errVal, dV.errMsg)
 
 template extractObject(objd: MData): MObject =
-  checkType(objd, dObj)
-  let obj = world.dataToObj(objd)
+  let objdV = objd
+  checkType(objdV, dObj)
+  let obj = world.dataToObj(objdV)
   if isNil(obj):
-    runtimeError(E_ARGS, "invalid object " & $objd)
+    runtimeError(E_ARGS, "invalid object " & $objdV)
 
   obj
 
@@ -86,54 +93,65 @@ template extractObject(objd: MData): MObject =
 # Builtins need to check permissions and types. If any of these
 # checks fail, then a error is thrown in the program.
 template checkForError(value: MData) =
-  if value.isType(dErr) and value.errVal != E_NONE:
-    return value.pack
+  let valueV = value
+  if valueV.isType(dErr) and valueV.errVal != E_NONE:
+    return valueV.pack
 
 template runtimeError(error: MError, message: string) =
   return error.md(message).pack
 
 template checkType(value: MData, expected: MDataType, ifnot: MError = E_TYPE) =
-  if not value.isType(expected):
+  let valueV = value
+  let expectedV = expected
+  if not valueV.isType(expectedV):
     runtimeError(ifnot,
-      bname & ": expected argument of type " & $expected &
-      " instead got " & $value.dType)
+      bname & ": expected argument of type " & $expectedV &
+      " instead got " & $valueV.dType)
 
 template isWizardT: bool = isWizard(task.owner)
 template owns(what: MObject): bool = task.owner.owns(what)
 
 template checkOwn(what: MObject) =
+  let whatV = what
   let obj = task.owner
-  if not obj.owns(what):
-    runtimeError(E_PERM, obj.toObjStr() & " doesn't own " & what.toObjStr())
+  if not obj.owns(whatV):
+    runtimeError(E_PERM, obj.toObjStr() & " doesn't own " & whatV.toObjStr())
 
 template checkRead(what: MObject) =
+  let whatV = what
   let obj = task.owner
-  if not obj.canRead(what):
-    runtimeError(E_PERM, obj.toObjStr() & " cannot read " & what.toObjStr())
+  if not obj.canRead(whatV):
+    runtimeError(E_PERM, obj.toObjStr() & " cannot read " & whatV.toObjStr())
 template checkWrite(what: MObject) =
+  let whatV = what
   let obj = task.owner
-  if not obj.canWrite(what):
-    runtimeError(E_PERM, obj.toObjStr() & " cannot write " & what.toObjStr())
+  if not obj.canWrite(whatV):
+    runtimeError(E_PERM, obj.toObjStr() & " cannot write " & whatV.toObjStr())
 template checkRead(what: MProperty) =
+  let whatV = what
   let obj = task.owner
-  if not obj.canRead(what):
-    runtimeError(E_PERM, obj.toObjStr() & " cannot read property: " & what.name)
+  if not obj.canRead(whatV):
+    runtimeError(E_PERM, obj.toObjStr() & " cannot read property: " & whatV.name)
 template checkWrite(what: MProperty) =
+  let whatV = what
   let obj = task.owner
-  if not obj.canWrite(what):
-    runtimeError(E_PERM, obj.toObjStr() & " cannot write property: " & what.name)
+  if not obj.canWrite(whatV):
+    runtimeError(E_PERM, obj.toObjStr() & " cannot write property: " & whatV.name)
 template checkRead(what: MVerb) =
+  let whatV = what
   let obj = task.owner
-  if not obj.canRead(what):
-    runtimeError(E_PERM, obj.toObjStr() & " cannot read verb: " & what.names)
+  if not obj.canRead(whatV):
+    runtimeError(E_PERM, obj.toObjStr() & " cannot read verb: " & whatV.names)
 template checkWrite(what: MVerb) =
+  let whatV = what
   let obj = task.owner
-  if not obj.canWrite(what):
-    runtimeError(E_PERM, obj.toObjStr() & " cannot write verb: " & what.names)
+  if not obj.canWrite(whatV):
+    runtimeError(E_PERM, obj.toObjStr() & " cannot write verb: " & whatV.names)
 template checkExecute(what: MVerb) =
+  let whatV = what
   let obj = task.owner
   if not obj.canExecute(verb):
-    runtimeError(E_PERM, obj.toObjStr() & " cannot execute verb: " & what.names)
+    runtimeError(E_PERM, obj.toObjStr() & " cannot execute verb: " & whatV.names)
 
 # This is so that strings can be echoed without the quotes surrounding them.
 proc toEchoString*(x: MData): string =
