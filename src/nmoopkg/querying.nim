@@ -48,6 +48,9 @@ proc query*(obj: MObject, str: string, global = false): seq[MObject] =
   let world = obj.getWorld()
   assert(not isNil(world))
 
+  if str.len == 0:
+    return @[]
+
   if str == "me":
     return @[obj]
   if str == "here":
