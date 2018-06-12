@@ -307,6 +307,8 @@ proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = tru
   return E_NONE.md
 
 proc preprocess(command: string): string =
+  if command.len == 0: return command
+
   if command[0] == '(':
     return "eval " & command
   return command
