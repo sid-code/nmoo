@@ -2,7 +2,3 @@ bin/*
 !bin/README.md
 
 nimcache
-
-nakefile
-
-

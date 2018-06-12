@@ -30,25 +30,19 @@ The tools needed to build this package are `the Nim compiler
 <http://nim-lang.org/>`__ and the Nim package manager, `Nimble
 <https://github.com/nim-lang/nimble>`__.
 
-This project requires the nimble package ``bcrypt``. You can type ``nimble
-install bcrypt`` to install it. The other dependency is ``nake``, but since the
-nimble package doesn't have all the required features, the code for nake is
-included as a submodule. That's why when you clone this repository, you need to
-use the ``--recursive`` flag::
+Start by cloning this repository::
 
-    $ git clone https://github.com/sid-code/nmoo --recursive
+    $ git clone https://github.com/sid-code/nmoo
 
-First, you need to compile the nakefile::
+   
+Then, simply build with nimble::
 
-    $ nim c nakefile.nim
+    $ nimble build
+  
+Check the bin directory for the server executable.
 
-Then run the tests::
-
-    $ ./nakefile tests
-
-You can generate docs (which are probably incomplete right now)::
-
-    $ ./nakefile docs
+You can also run tests with ``nimble test`` or generate docs with
+``nimble docs`` (they go into the ``doc/`` folder)
 
 The scripting language
 ======================
