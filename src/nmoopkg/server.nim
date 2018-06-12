@@ -235,7 +235,7 @@ proc processClient(client: Client, address: string) {.async.} =
     var line = await client.recvLine()
 
     # I think this means the client closed the connection?
-    if line[0] == '\0':
+    if line.len == 0 or line[0] == '\0':
       removeClient(client)
       break
 
