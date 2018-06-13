@@ -5,6 +5,7 @@ import asyncnet
 import asyncdispatch
 import strutils
 import net
+import streams
 import times
 import math
 import logging
@@ -238,6 +239,32 @@ proc processClient(client: Client, address: string) {.async.} =
     if line.len == 0 or line[0] == '\0':
       removeClient(client)
       break
+
+    if line[0] == '\x1B':
+      let stream = newStringStream(line)
+
+      try:
+        discard stream.readChar()
+        let codelen = stream.readInt32()
+        echo codelen
+        if codelen > 1 shl 16:
+          echo "codelen too long"
+          removeClient(client)
+          return
+        if codelen < 0:
+          removeClient(client)
+          return
+        var code: cstring
+        code = cast[cstring](alloc(codelen+1))
+        let res = await client.sock.recvInto(code, codelen)
+        echo res
+        echo code
+
+        dealloc(code)
+        continue
+      except EIO:
+        removeClient(client)
+        return
 
     when defined(debug): debug "Received ", line
 
