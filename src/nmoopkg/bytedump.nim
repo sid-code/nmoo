@@ -16,6 +16,14 @@ proc readStrl(s: Stream): string =
   let slen = s.readInt32()
   return s.readStr(slen)
 
+proc writePos(s: Stream, pos: CodePosition) =
+  s.write(int32(pos.line))
+  s.write(int32(pos.col))
+
+proc readPos(s: Stream): CodePosition =
+  result.line = s.readInt32()
+  result.col = s.readInt32()
+
 proc writeTime(s: Stream, t: Time) =
   s.write(t.toUnix())
 
@@ -36,8 +44,7 @@ proc writeMData*(s: Stream, d: MData) =
   s.write(dtype7bit)
 
   if needToWritePos:
-    s.write(int32(d.pos.line))
-    s.write(int32(d.pos.col))
+    s.writePos(d.pos)
 
   case d.dtype:
     of dInt:
@@ -55,6 +62,11 @@ proc writeMData*(s: Stream, d: MData) =
       let msg = d.errMsg
       s.write(int8(err))
       s.writeStrl(msg)
+
+      s.write(int32(d.trace.len))
+      for fdesc in d.trace:
+        s.writeStrl(fdesc.name)
+        s.writePos(fdesc.pos)
     of dList:
       let list = d.listVal
       s.write(int32(list.len))
@@ -90,6 +102,15 @@ proc readMData*(s: Stream): MData =
     of dErr:
       result.errVal = MError(s.readInt8())
       result.errMsg = s.readStrl()
+      var size = s.readInt32()
+      newSeq(result.trace, size)
+      setLen(result.trace, 0)
+      while size > 0:
+        dec size
+        let name = s.readStrl()
+        let pos = s.readPos()
+        result.trace.add( (name, pos) )
+
     of dList:
       var size = s.readInt32()
       newSeq(result.listVal, 0)
@@ -344,7 +365,17 @@ when isMainModule:
   ss = newStringStream()
   ss.writeMData(data)
   oss = newStringStream(ss.data)
-  let dataCopy = oss.readMData()
+  var dataCopy = oss.readMData()
+  assert data == dataCopy
+
+  data = E_ARGS.md("Invalid arguments")
+  data.trace.add( ("line 1", (1, 1)) )
+  data.trace.add( ("line 2", (2, 2)) )
+
+  ss = newStringStream()
+  ss.writeMData(data)
+  oss = newStringStream(ss.data)
+  dataCopy = oss.readMData()
   assert data == dataCopy
 
   var vst: VSymTable = initTable[int, MData]()
