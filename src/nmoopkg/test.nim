@@ -724,3 +724,5 @@ suite "evaluator":
     check result == 5.md
 
     # TODO: actually test static evaluation
+
+include tests/bdtest
