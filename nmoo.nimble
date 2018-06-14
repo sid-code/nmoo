@@ -12,6 +12,7 @@ bin           = @["nmoo"]
 
 requires "nim >= 0.17"
 requires "bcrypt"
+requires "nimboost"
 
 task test, "Run tests":
   exec "nim c -r src/nmoopkg/test.nim"
