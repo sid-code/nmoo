@@ -356,12 +356,12 @@ proc readTask*(s: Stream | AsyncStream): Future[Task] {.multisync.} =
 
   return t
   
-when not isMainModule:
-  import scripting
-  defBuiltin "twt":
-    var ss = newStringStream()
-    ss.writeTask(task)
-
-    var oss = newStringStream(ss.data)
-    let taskCopy = oss.readTask()
+#when not isMainModule:
+#  import scripting
+#  defBuiltin "twt":
+#    var ss = newStringStream()
+#    ss.writeTask(task)
+#
+#    var oss = newStringStream(ss.data)
+#    let taskCopy = oss.readTask()
 
