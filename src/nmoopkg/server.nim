@@ -13,6 +13,7 @@ import os
 
 import types
 
+proc send*(client: Client, msg: string) {.async.}
 proc taskFinished*(task: Task)
 proc findClient*(player: MObject): Client
 proc askForInput*(task: Task, client: Client)
@@ -27,6 +28,7 @@ import verbs
 import builtins
 import persist
 import tasks
+import sidechannel
 
 import editserv
 
@@ -65,7 +67,7 @@ proc removeClient(client: Client) =
 
   client.close()
 
-proc send(client: Client, msg: string) {.async.} =
+proc send*(client: Client, msg: string) {.async.} =
   await client.sock.send(msg)
 
 proc recvLine(client: Client): Future[string] {.async.} =
@@ -235,36 +237,13 @@ proc processClient(client: Client, address: string) {.async.} =
   while true:
     var line = await client.recvLine()
 
-    # I think this means the client closed the connection?
     if line.len == 0 or line[0] == '\0':
       removeClient(client)
       break
 
     if line[0] == '\x1B':
-      let stream = newStringStream(line)
-
-      try:
-        discard stream.readChar()
-        let codelen = stream.readInt32()
-        echo codelen
-        if codelen > 1 shl 16:
-          echo "codelen too long"
-          removeClient(client)
-          return
-        if codelen < 0:
-          removeClient(client)
-          return
-        var code: cstring
-        code = cast[cstring](alloc(codelen+1))
-        let res = await client.sock.recvInto(code, codelen)
-        echo res
-        echo code
-
-        dealloc(code)
-        continue
-      except EIO:
-        removeClient(client)
-        return
+      await client.processEscapeSequence()
+      continue
 
     when defined(debug): debug "Received ", line
 
