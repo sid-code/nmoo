@@ -18,18 +18,6 @@ type
 
   SideChannelResponsePayload = object
     
-
-# Until I find a better solution, this is how it has to be
-proc toUint32(buf: array[0..3, uint8]): uint32 =
-  result = buf[0]
-  result = result shl 1
-  result += buf[1]
-  result = result shl 1
-  result += buf[2]
-  result = result shl 1
-  result += buf[3]
-  echo buf[0], buf[1], buf[2], buf[3]
-
 proc processEscapeSequence*(client: Client) {.async.} =
   let stream = newAsyncSocketStream(client.sock)
   try:
