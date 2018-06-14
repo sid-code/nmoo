@@ -1,36 +1,49 @@
 # This code dumps and reads tasks from a compact binary format.
 
 import streams
+import asyncdispatch
+import boost/io/asyncstreams
 import times
 import tables
 
 import types
 
+# polyfill
+
+proc writeData(s: Stream, data: string) =
+  s.writeData(data.cstring, data.len)
+
+proc write[T](s: AsyncStream, x: T) {.async.} =
+  await s.writeBuffer(unsafeAddr x, sizeof int32)
+
+proc readStr(s: AsyncStream, length: int): Future[TaintedString] {.async.} =
+  return await s.readData(length)
+
 # Write a string by writing the length first then the string
-proc writeStrl(s: Stream, str: string) =
-  s.write(int32(str.len))
-  s.write(str)
+proc writeStrl(s: Stream | AsyncStream, str: string) {.multisync.} =
+  await s.write(int32(str.len))
+  await s.writeData(str)
 
 # Reads an int32 then reads that many characters into a string
-proc readStrl(s: Stream): string =
-  let slen = s.readInt32()
-  return s.readStr(slen)
+proc readStrl(s: Stream | AsyncStream): Future[string] {.multisync.} =
+  let slen = await s.readInt32()
+  return await s.readStr(int(slen))
 
-proc writePos(s: Stream, pos: CodePosition) =
-  s.write(int32(pos.line))
-  s.write(int32(pos.col))
+proc writePos(s: Stream | AsyncStream, pos: CodePosition) {.multisync.} =
+  await s.write(int32(pos.line))
+  await s.write(int32(pos.col))
 
-proc readPos(s: Stream): CodePosition =
-  result.line = s.readInt32()
-  result.col = s.readInt32()
+proc readPos(s: Stream | AsyncStream): Future[CodePosition] {.multisync.} =
+  result.line = await s.readInt32()
+  result.col = await s.readInt32()
 
-proc writeTime(s: Stream, t: Time) =
-  s.write(t.toUnix())
+proc writeTime(s: Stream | AsyncStream, t: Time) {.multisync.} =
+  await s.write(t.toUnix())
 
-proc readTime(s: Stream): Time =
-  return fromUnix(s.readInt64())
+proc readTime(s: Stream | AsyncStream): Future[Time] {.multisync.} =
+  return fromUnix(await s.readInt64())
 
-proc writeMData*(s: Stream, d: MData) =
+proc writeMData*(s: Stream | AsyncStream, d: MData) {.multisync.} =
   # The data type is encoded as an unsigned 8 bit integer. The 7 least
   # significant bits are used to encode the type, and the most significant
   # bit is flipped when the MData object has a position. If so, this position
@@ -41,49 +54,49 @@ proc writeMData*(s: Stream, d: MData) =
   if needToWritePos:
     dtype7bit = dtype7bit or uint8(1 shl 7) # sets the sign bit to 1
 
-  s.write(dtype7bit)
+  await s.write(dtype7bit)
 
   if needToWritePos:
-    s.writePos(d.pos)
+    await s.writePos(d.pos)
 
   case d.dtype:
     of dInt:
-      s.write(int64(d.intVal))
+      await s.write(int64(d.intVal))
     of dFloat:
-      s.write(float64(d.floatVal))
+      await s.write(float64(d.floatVal))
     of dStr:
       let str = d.strVal
-      s.writeStrl(str)
+      await s.writeStrl(str)
     of dSym:
       let sym = d.symVal
-      s.writeStrl(sym)
+      await s.writeStrl(sym)
     of dErr:
       let err = d.errVal
       let msg = d.errMsg
-      s.write(int8(err))
-      s.writeStrl(msg)
+      await s.write(int8(err))
+      await s.writeStrl(msg)
 
-      s.write(int32(d.trace.len))
+      await s.write(int32(d.trace.len))
       for fdesc in d.trace:
-        s.writeStrl(fdesc.name)
-        s.writePos(fdesc.pos)
+        await s.writeStrl(fdesc.name)
+        await s.writePos(fdesc.pos)
     of dList:
       let list = d.listVal
-      s.write(int32(list.len))
+      await s.write(int32(list.len))
       for el in list:
-        s.writeMData(el)
+        await s.writeMData(el)
     of dObj:
-      s.write(int32(d.objVal))
+      await s.write(int32(d.objVal))
     of dNil:
       discard
 
-proc readMData*(s: Stream): MData =
-  var dtype7bit = uint8(s.readInt8())
+proc readMData*(s: Stream | AsyncStream): Future[MData] {.multisync.} =
+  var dtype7bit = uint8(await s.readInt8())
   let firstBit = uint8(1) == dtype7bit shr 7
   if firstBit:
     dtype7bit = dtype7bit and (1 shl 7 - 1)
-    let line = int(s.readInt32())
-    let col = int(s.readInt32())
+    let line = int(await s.readInt32())
+    let col = int(await s.readInt32())
     result.pos = (line, col)
   else:
     result.pos = (0, 0)
@@ -92,254 +105,254 @@ proc readMData*(s: Stream): MData =
 
   case result.dtype:
     of dInt:
-      result.intVal = int(s.readInt64())
+      result.intVal = int(await s.readInt64())
     of dFloat:
-      result.floatVal = float(s.readFloat64())
+      result.floatVal = float(await s.readFloat64())
     of dStr:
-      result.strVal = s.readStrl()
+      result.strVal = await s.readStrl()
     of dSym:
-      result.symVal = s.readStrl()
+      result.symVal = await s.readStrl()
     of dErr:
-      result.errVal = MError(s.readInt8())
-      result.errMsg = s.readStrl()
-      var size = s.readInt32()
+      result.errVal = MError(await s.readInt8())
+      result.errMsg = await s.readStrl()
+      var size = await s.readInt32()
       newSeq(result.trace, size)
       setLen(result.trace, 0)
       while size > 0:
         dec size
-        let name = s.readStrl()
-        let pos = s.readPos()
+        let name = await s.readStrl()
+        let pos = await s.readPos()
         result.trace.add( (name, pos) )
 
     of dList:
-      var size = s.readInt32()
+      var size = await s.readInt32()
       newSeq(result.listVal, 0)
       while size > 0:
         dec size
-        result.listVal.add(s.readMData())
+        result.listVal.add(await s.readMData())
     of dObj:
-      result.objVal = ObjID(int(s.readInt32()))
+      result.objVal = ObjID(int(await s.readInt32()))
     of dNil:
       discard
 
-proc writeVSymTable(s: Stream, vst: VSymTable) =
-  s.write(int32(vst.len))
+proc writeVSymTable(s: Stream | AsyncStream, vst: VSymTable) {.multisync.} =
+  await s.write(int32(vst.len))
   for k, v in vst.pairs:
-    s.write(int32(k))
-    s.writeMData(v)
+    await s.write(int32(k))
+    await s.writeMData(v)
 
-proc readVSymTable(s: Stream): VSymTable =
+proc readVSymTable(s: Stream | AsyncStream): Future[VSymTable] {.multisync.} =
   result = initTable[int, MData]()
-  var count = s.readInt32()
+  var count = await s.readInt32()
   while count > 0:
     dec count
-    let key = int(s.readInt32())
-    let val = s.readMData()
+    let key = int(await s.readInt32())
+    let val = await s.readMData()
     result[key] = val
 
-proc writeCSymTable(s: Stream, cst: CSymTable) =
-  s.write(int32(cst.len))
+proc writeCSymTable(s: Stream | AsyncStream, cst: CSymTable) {.multisync.} =
+  await s.write(int32(cst.len))
   for k, v in cst.pairs:
-    s.writeStrl(k)
-    s.write(int32(v))
+    await s.writeStrl(k)
+    await s.write(int32(v))
   
-proc readCSymTable(s: Stream): CSymTable =
+proc readCSymTable(s: Stream | AsyncStream): Future[CSymTable] {.multisync.} =
   result = initTable[string, int]()
-  var count = s.readInt32()
+  var count = await s.readInt32()
   while count > 0:
     dec count
-    let key = s.readStrl()
-    let val = int(s.readInt32())
+    let key = await s.readStrl()
+    let val = int(await s.readInt32())
     result[key] = val
 
-proc writeSymbolTable(s: Stream, st: SymbolTable) =
-  s.write(int32(st.len))
+proc writeSymbolTable(s: Stream | AsyncStream, st: SymbolTable) {.multisync.} =
+  await s.write(int32(st.len))
   for k, v in st.pairs:
-    s.writeStrl(k)
-    s.writeMData(v)
+    await s.writeStrl(k)
+    await s.writeMData(v)
 
-proc readSymbolTable(s: Stream): SymbolTable =
+proc readSymbolTable(s: Stream | AsyncStream): Future[SymbolTable] {.multisync.} =
   result = newSymbolTable()
 
-  var count = s.readInt32()
+  var count = await s.readInt32()
   while count > 0:
     dec count
-    let key = s.readStrl()
-    let val = s.readMData()
+    let key = await s.readStrl()
+    let val = await s.readMData()
     result[key] = val
 
 
 proc `$`(fr: Frame): string =
   $fr.symtable & " " & $fr.tries
 
-proc writeFrame(s: Stream, fr: Frame) =
-  s.writeVSymTable(fr.symtable)
-  s.write(int32(fr.calledFrom))
+proc writeFrame(s: Stream | AsyncStream, fr: Frame) {.multisync.} =
+  await s.writeVSymTable(fr.symtable)
+  await s.write(int32(fr.calledFrom))
 
-  s.write(int32(fr.tries.len))
+  await s.write(int32(fr.tries.len))
   for t in fr.tries:
-    s.write(int32(t))
+    await s.write(int32(t))
 
-proc readFrame(s: Stream): Frame =
+proc readFrame(s: Stream | AsyncStream): Future[Frame] {.multisync.} =
   new result
-  result.symtable = s.readVSymTable()
-  result.calledFrom = s.readInt32()
+  result.symtable = await s.readVSymTable()
+  result.calledFrom = await s.readInt32()
 
-  var count = s.readInt32()
+  var count = await s.readInt32()
   newSeq(result.tries, 0)
   while count > 0:
     dec count
-    result.tries.add(int(s.readInt32()))
+    result.tries.add(int(await s.readInt32()))
 
-proc writeContinuation(s: Stream, cont: Continuation) =
-  s.write(int32(cont.pc))
+proc writeContinuation(s: Stream | AsyncStream, cont: Continuation) {.multisync.} =
+  await s.write(int32(cont.pc))
 
-  s.write(int32(cont.stack.len))
+  await s.write(int32(cont.stack.len))
   for el in cont.stack:
-    s.writeMData(el)
+    await s.writeMData(el)
 
-  s.writeSymbolTable(cont.globals)
+  await s.writeSymbolTable(cont.globals)
 
-  s.write(int32(cont.frames.len))
+  await s.write(int32(cont.frames.len))
   for fr in cont.frames:
-    s.writeFrame(fr)
+    await s.writeFrame(fr)
 
-proc readContinuation(s: Stream): Continuation =
-  result.pc = int(s.readInt32())
+proc readContinuation(s: Stream | AsyncStream): Future[Continuation] {.multisync.} =
+  result.pc = int(await s.readInt32())
 
   newSeq(result.stack, 0)
-  var count = s.readInt32()
+  var count = await s.readInt32()
   while count > 0:
     dec count
-    result.stack.add(s.readMData())
+    result.stack.add(await s.readMData())
 
-  result.globals = s.readSymbolTable()
+  result.globals = await s.readSymbolTable()
 
   newSeq(result.frames, 0)
-  count = s.readInt32()
+  count = await s.readInt32()
   while count > 0:
     dec count
-    result.frames.add(s.readFrame())
+    result.frames.add(await s.readFrame())
 
-proc writeInstruction(s: Stream, inst: Instruction) =
-  s.write(int8(inst.itype))
-  s.writeMData(inst.operand)
-  s.write(int32(inst.pos.line))
-  s.write(int32(inst.pos.col))
+proc writeInstruction(s: Stream | AsyncStream, inst: Instruction) {.multisync.} =
+  await s.write(int8(inst.itype))
+  await s.writeMData(inst.operand)
+  await s.write(int32(inst.pos.line))
+  await s.write(int32(inst.pos.col))
 
-proc readInstruction(s: Stream): Instruction =
-  result.itype = InstructionType(s.readInt8())
-  result.operand = s.readMData()
-  result.pos.line = s.readInt32()
-  result.pos.col = s.readInt32()
+proc readInstruction(s: Stream | AsyncStream): Future[Instruction] {.multisync.} =
+  result.itype = InstructionType(await s.readInt8())
+  result.operand = await s.readMData()
+  result.pos.line = await s.readInt32()
+  result.pos.col = await s.readInt32()
 
-proc writePackage(s: Stream, p: Package) =
-  s.write(int8(p.ptype))
+proc writePackage(s: Stream | AsyncStream, p: Package) {.multisync.} =
+  await s.write(int8(p.ptype))
   case p.ptype:
     of ptData:
-      s.writeMData(p.val)
+      await s.writeMData(p.val)
     of ptCall, ptInput:
-      s.write(int8(p.phase))
+      await s.write(int8(p.phase))
 
-proc readPackage(s: Stream): Package =
-  result.ptype = PackageType(s.readInt8())
+proc readPackage(s: Stream | AsyncStream): Future[Package] {.multisync.} =
+  result.ptype = PackageType(await s.readInt8())
   case result.ptype:
     of ptData:
-      result.val = s.readMData()
+      result.val = await s.readMData()
     of ptCall, ptInput:
-      result.phase = s.readInt8()
+      result.phase = await s.readInt8()
 
-proc writeTask*(s: Stream, t: Task) =
-  s.write(int32(t.id))
-  s.writeStrl(t.name)
-  s.writeTime(t.startTime)
+proc writeTask*(s: Stream | AsyncStream, t: Task) {.multisync.} =
+  await s.write(int32(t.id))
+  await s.writeStrl(t.name)
+  await s.writeTime(t.startTime)
 
-  s.writeMData(t.stack.md)
+  await s.writeMData(t.stack.md)
   
-  s.writeSymbolTable(t.globals)
+  await s.writeSymbolTable(t.globals)
 
-  s.write(int32(t.code.len))
+  await s.write(int32(t.code.len))
   for inst in t.code:
-    s.writeInstruction(inst)
+    await s.writeInstruction(inst)
 
-  s.write(int32(t.pc))
+  await s.write(int32(t.pc))
 
-  s.write(int32(t.frames.len))
+  await s.write(int32(t.frames.len))
   for fr in t.frames:
-    s.writeFrame(fr)
+    await s.writeFrame(fr)
 
-  s.write(int32(t.continuations.len))
+  await s.write(int32(t.continuations.len))
   for cont in t.continuations:
-    s.writeContinuation(cont)
+    await s.writeContinuation(cont)
 
-  s.write(int8(t.status))
-  s.writeTime(t.suspendedUntil)
-  s.write(int32(t.tickCount))
-  s.write(int32(t.tickQuota))
+  await s.write(int8(t.status))
+  await s.writeTime(t.suspendedUntil)
+  await s.write(int32(t.tickCount))
+  await s.write(int32(t.tickQuota))
 
-  s.write(int8(t.hasCallPackage))
-  s.writePackage(t.callPackage)
-  s.writeMData(t.builtinToCall)
-  s.writeMData(t.builtinArgs.md)
+  await s.write(int8(t.hasCallPackage))
+  await s.writePackage(t.callPackage)
+  await s.writeMData(t.builtinToCall)
+  await s.writeMData(t.builtinArgs.md)
 
-  s.write(int8(t.taskType))
-  s.write(int32(t.callback))
-  s.write(int32(t.waitingFor))
+  await s.write(int8(t.taskType))
+  await s.write(int32(t.callback))
+  await s.write(int32(t.waitingFor))
   
 
-proc readTask*(s: Stream): Task =
+proc readTask*(s: Stream | AsyncStream): Future[Task] {.multisync.} =
   var t: Task
   var count: int32
 
   new t
 
-  t.id = s.readInt32()
-  t.name = s.readStrl()
-  t.startTime = s.readTime()
+  t.id = await s.readInt32()
+  t.name = await s.readStrl()
+  t.startTime = await s.readTime()
 
-  let stackd = s.readMData()
+  let stackd = await s.readMData()
   t.stack = stackd.listVal
 
-  t.globals = s.readSymbolTable()
+  t.globals = await s.readSymbolTable()
   
   newSeq(t.code, 0)
-  count = s.readInt32()
+  count = await s.readInt32()
   while count > 0:
     dec count
-    let inst = s.readInstruction()
+    let inst = await s.readInstruction()
     t.code.add(inst)
 
-  t.pc = s.readInt32()
+  t.pc = await s.readInt32()
 
-  count = s.readInt32()
+  count = await s.readInt32()
   newSeq(t.frames, 0)
   while count > 0:
     dec count
-    let fr = s.readFrame()
+    let fr = await s.readFrame()
 
     t.frames.add(fr)
 
-  count = s.readInt32()
+  count = await s.readInt32()
   newSeq(t.continuations, 0)
   while count > 0:
     dec count
-    t.continuations.add(s.readContinuation())
+    t.continuations.add(await s.readContinuation())
 
 
-  t.status = TaskStatus(s.readInt8())
-  t.suspendedUntil = s.readTime()
-  t.tickCount = s.readInt32()
-  t.tickQuota = s.readInt32()
+  t.status = TaskStatus(await s.readInt8())
+  t.suspendedUntil = await s.readTime()
+  t.tickCount = await s.readInt32()
+  t.tickQuota = await s.readInt32()
 
-  t.hasCallPackage = s.readInt8() == 1
-  t.callPackage = s.readPackage()
-  t.builtinToCall = s.readMData()
-  let builtinArgsd = s.readMData()
+  t.hasCallPackage = (await s.readInt8()) == 1
+  t.callPackage = await s.readPackage()
+  t.builtinToCall = await s.readMData()
+  let builtinArgsd = await s.readMData()
   t.builtinArgs = builtinArgsd.listVal
 
-  t.taskType = TaskType(s.readInt8())
-  t.callback = s.readInt32()
-  t.waitingFor = s.readInt32()
+  t.taskType = TaskType(await s.readInt8())
+  t.callback = await s.readInt32()
+  t.waitingFor = await s.readInt32()
 
   return t
   
