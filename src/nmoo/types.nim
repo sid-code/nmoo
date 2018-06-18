@@ -123,7 +123,8 @@ type
 
     E_INTERNAL,
     E_PARSE,
-    E_COMPILE
+    E_COMPILE,
+    E_SIDECHAN
 
   TokenType* = enum
     tokOParen, tokCParen,
