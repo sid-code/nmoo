@@ -9,12 +9,9 @@ import server
 import bytedump
 
 type
-  SideChannelMsgHeader = object
-    id: array[0..3, uint8]      ## provide an unique id so that you can recognize responses
-    msgLen: array[0..3, uint8]  ## length of the payload (4 bytes, but has a max of 16k)
-
-  SideChannelError = enum
-    SCPayloadTooLong = 0
+  ## Provide an ID in the header so that the response can be linked to
+  ## it
+  SideChannelMsgHeader = array[0..3, uint8]
 
   SideChannelResponsePayload = object
     
