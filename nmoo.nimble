@@ -6,7 +6,7 @@ description   = "[TODO: CHANGE]"
 license       = "MIT"
 srcDir        = "src"
 binDir        = "bin"
-bin           = @["nmoo"]
+bin           = @["nmoo/server"]
 
 # Dependencies
 
