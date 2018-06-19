@@ -49,10 +49,6 @@ proc processEscapeSequence*(client: Client) {.async.} =
                                         client.player, client.player, client.player, client.player,
                                         symtable, instructions)
 
-    if isNil(t):
-      await stream.writeResponse(id, E_SIDECHAN.md("failed to add task for some reason"))
-      return
-
     let tr = t.run
     if tr.typ == trFinish:
       await stream.writeResponse(id, tr.res)

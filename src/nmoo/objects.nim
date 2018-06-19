@@ -1,3 +1,4 @@
+{.experimental: "notnil".}
 # This file has methods for manipulating objects and their properties
 
 import types
@@ -23,7 +24,7 @@ proc propIsInherited*(obj: MObject, prop: MProperty): bool
 proc getOwnProps*(obj: MObject): seq[string]
 proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
-              callback = -1): Task
+              callback = -1): Task not nil
 proc moveTo*(obj: MObject, newLoc: MObject): bool
 proc createChild*(parent: MObject): MObject
 proc createWorld*(name: string, persistent = true): World
@@ -430,7 +431,7 @@ proc tick*(world: World) =
 
 proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
-              callback = -1): Task =
+              callback = -1): Task not nil =
   let tickQuotad = world.getGlobal("tick-quota")
   let tickQuota = if tickQuotad.isType(dInt): tickQuotad.intVal else: 20000
 
