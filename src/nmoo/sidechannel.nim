@@ -42,7 +42,7 @@ proc processEscapeSequence*(client: Client) {.async.} =
                                         client.player, client.player, client.player, client.player,
                                         symtable, instructions)
 
-    let tr = t.run
+    let tr = t.run()
     if tr.typ == trFinish:
       await stream.writeResponse(id, tr.res)
     else:
