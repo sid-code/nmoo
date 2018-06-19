@@ -1,3 +1,4 @@
+{.experimental: "notnil".}
 import tables
 import hashes
 import strutils
@@ -551,7 +552,7 @@ proc addCoreGlobals(st: SymbolTable): SymbolTable =
 proc createTask*(id: int, name: string, startTime: Time, compiled: CpOutput,
            world: World, self, player, caller, owner: MObject,
            globals = newSymbolTable(), tickQuota: int, taskType: TaskType,
-           callback: int): Task =
+           callback: int): Task not nil =
   let st = newVSymTable()
   let (entry, code, err) = compiled
 
