@@ -4,6 +4,7 @@ import strutils
 import os
 import tables
 
+import server
 import types
 import objects
 import verbs
