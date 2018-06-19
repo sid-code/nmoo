@@ -15,6 +15,7 @@ import compile
 import util/msstreams # for multisync write
 
 proc writeResponse(s: Stream | AsyncStream, id: uint32, d: MData) {.multisync.} =
+  await s.writeChar(SideChannelEscapeChar)
   await s.write(id)
   await s.writeMData(d)
 
@@ -25,7 +26,6 @@ proc processEscapeSequence*(client: Client) {.async.} =
     id = await stream.readUint32()
     let d = await stream.readMData()
 
-    await stream.writeChar(SideChannelEscapeChar)
     let instructions = compileCode(d, client.player)
     if instructions.error != E_NONE.md:
       await stream.writeResponse(id, instructions.error)
