@@ -21,6 +21,8 @@ proc supplyTaskWithInput(client: Client, input: string)
 proc inputTaskRunning(client: Client): bool
 proc requiresInput(client: Client): bool
 
+const SideChannelEscapeChar* = '\x1C'
+
 var clog: ConsoleLogger
 
 import objects
@@ -241,7 +243,7 @@ proc processClient(client: Client, address: string) {.async.} =
       removeClient(client)
       break
 
-    if line[0] == '\x1B':
+    if line[0] == SideChannelEscapeChar:
       await client.processEscapeSequence()
       continue
 
