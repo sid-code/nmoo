@@ -145,7 +145,7 @@ proc parseCommand*(str: string): ParsedCommand =
 
   # The [1 .. ^1] subscript is necessary because the string will
   # have a leading space
-  if doString.isNilOrEmpty():
+  if doString.len == 0:
     result.doString = ""
   else:
     result.doString = doString[1 .. ^1]
@@ -157,7 +157,7 @@ proc parseCommand*(str: string): ParsedCommand =
     ioString.add(" ")
     ioString.add(word)
 
-  if ioString.isNilOrEmpty():
+  if ioString.len == 0:
     result.ioString = ""
   else:
     result.ioString = ioString[1 .. ^1]
