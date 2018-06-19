@@ -24,6 +24,10 @@ proc processEscapeSequence*(client: Client) {.async.} =
   var id: uint32 = 0
   try:
     id = await stream.readUint32()
+
+    if id == 0:
+      return
+
     let d = await stream.readMData()
 
     let instructions = compileCode(d, client.player)
