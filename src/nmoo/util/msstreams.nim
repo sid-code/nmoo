@@ -7,6 +7,9 @@ import boost/io/asyncstreams
 proc writeData*(s: Stream, data: string) =
   s.writeData(data.cstring, data.len)
 
+proc writeChar*(s: Stream, c: char) =
+  s.write(c)
+
 proc write*[T](s: AsyncStream, x: T) {.async.} =
   when T is uint32:
     await s.writeUint32(x)
