@@ -14,7 +14,31 @@ proc writeData(s: Stream, data: string) =
   s.writeData(data.cstring, data.len)
 
 proc write[T](s: AsyncStream, x: T) {.async.} =
-  await s.writeBuffer(unsafeAddr x, sizeof int32)
+  when T is uint32:
+    await s.writeUint32(x)
+    return
+
+  when T is int32:
+    await s.writeInt32(x)
+    return
+
+  when T is uint64:
+    await s.writeUint64(x)
+    return
+
+  when T is int64:
+    await s.writeInt64(x)
+    return
+
+  when T is float64:
+    await s.writeFloat64(x)
+    return
+
+  when T is uint8:
+    await s.writeUint8(x)
+    return
+
+  assert false
 
 proc readStr(s: AsyncStream, length: int): Future[TaintedString] {.async.} =
   return await s.readData(length)
