@@ -2,6 +2,7 @@ import strutils
 import endians
 import asyncnet
 import asyncdispatch
+import streams
 import boost/io/asyncstreams
 import tables
 
@@ -11,6 +12,7 @@ import tasks
 import bytedump
 import objects
 import compile
+import util/msstreams # for multisync write
 
 type
   ## Provide an ID in the header so that the response can be linked to
@@ -19,6 +21,10 @@ type
 
   SideChannelResponsePayload = object
     
+proc writeResponse(s: Stream | AsyncStream, id: uint32, d: MData) {.multisync.} =
+  await s.write(id)
+  await s.writeMData(d)
+
 proc processEscapeSequence*(client: Client) {.async.} =
   let stream = newAsyncSocketStream(client.sock)
   var id: uint32 = 0
@@ -26,10 +32,11 @@ proc processEscapeSequence*(client: Client) {.async.} =
     id = await stream.readUint32()
     let d = await stream.readMData()
 
+    await stream.writeChar(SideChannelEscapeChar)
     let instructions = compileCode(d, client.player)
     if instructions.error != E_NONE.md:
-      await stream.writeUint32(id)
-      await stream.writeMData(instructions.error)
+      await stream.writeResponse(id, instructions.error)
+      return
 
     var symtable = newSymbolTable()
     symtable = addCoreGlobals(symtable)
@@ -43,26 +50,22 @@ proc processEscapeSequence*(client: Client) {.async.} =
                                         symtable, instructions)
 
     if isNil(t):
-      await stream.writeUint32(id)
-      await stream.writeMData(E_SIDECHAN.md("failed to add task for some reason"))
+      await stream.writeResponse(id, E_SIDECHAN.md("failed to add task for some reason"))
       return
 
     let tr = t.run
     if tr.typ == trFinish:
-      await stream.writeUint32(id)
-      await stream.writeMData(tr.res)
+      await stream.writeResponse(id, tr.res)
     else:
-      await stream.writeUint32(id)
       case tr.typ:
         of trFinish: discard
         of trSuspend:
-          await stream.writeMData(E_SIDECHAN.md("side-channel task was suspended"))
+          await stream.writeResponse(id, E_SIDECHAN.md("side-channel task was suspended"))
         of trError:
-          await stream.writeMData(tr.err)
+          await stream.writeResponse(id, tr.err)
         of trTooLong:
-          await stream.writeMData(E_SIDECHAN.md("side-channel task took too long"))
+          await stream.writeResponse(id, E_SIDECHAN.md("side-channel task took too long"))
   except:
     if id != 0:
-      await stream.writeUint32(id)
-      await stream.writeMData("invalid".mds)
+      await stream.writeResponse(id, getCurrentExceptionMsg().md)
   
