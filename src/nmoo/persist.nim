@@ -482,7 +482,6 @@ proc loadWorld*(name: string): World =
     if not obj.isNil:
       for v in obj.verbs:
         # this time really compile it
-        echo "compiling " & obj.toObjStr() & ":" & v.names & "..."
         let err = v.setCode(v.code, v.owner)
         if err != E_NONE.md:
           error "A verb " & obj.toObjStr() & ":" & v.names & " failed to compile."
