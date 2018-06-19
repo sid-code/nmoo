@@ -14,13 +14,6 @@ import objects
 import compile
 import util/msstreams # for multisync write
 
-type
-  ## Provide an ID in the header so that the response can be linked to
-  ## it
-  SideChannelMsgHeader = array[0..3, uint8]
-
-  SideChannelResponsePayload = object
-    
 proc writeResponse(s: Stream | AsyncStream, id: uint32, d: MData) {.multisync.} =
   await s.write(id)
   await s.writeMData(d)
