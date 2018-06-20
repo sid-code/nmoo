@@ -183,6 +183,9 @@ suite "evaluator":
     proc evalS(code: string, who: MObject = root): MData =
       let name = "test task"
       let compiled = compileCode(code, who)
+      if compiled.error != E_NONE.md:
+        return compiled.error
+
       let t = world.addTask(name, who, who, who, who, symtable, compiled, ttFunction, -1)
 
       let tr = t.run()
