@@ -5,6 +5,8 @@ import sequtils
 
 import types
 
+const MaxMacroDepth = 100 # TODO: Make this world-configurable??
+
 proc newCompiler*(programmer: MObject): MCompiler
 proc codeGen*(compiler: MCompiler, data: MData): MData
 proc render*(compiler: MCompiler): CpOutput
@@ -54,6 +56,7 @@ proc newCompiler*(programmer: MObject): MCompiler =
     subrs: @[],
     symtable: newCSymTable(),
     symgen: newSymGen(),
+    depth: 0,
     syntaxTransformers: newTable[string, SyntaxTransformer]())
 
 
@@ -148,6 +151,33 @@ proc specialExists(name: string): bool =
 proc macroExists(compiler: MCompiler, name: string): bool =
   compiler.syntaxTransformers.hasKey(name)
 
+
+proc staticEval(compiler: MCompiler, code: MData, name = "compile-time task"):
+                  tuple[compilationError: MData, tr: TaskResult] =
+  let programmer = compiler.programmer
+  let world = programmer.getWorld()
+
+  let ocompiler = newCompiler(programmer)
+  ocompiler.syntaxTransformers = compiler.syntaxTransformers
+  let compilationError = ocompiler.codeGen(code)
+  if compilationError != E_NONE.md:
+    result.compilationError = compilationError
+    return
+
+  let compiled = ocompiler.render()
+  let symtable = newSymbolTable()
+
+  let staticTask = world.addTask(
+    name = name,
+    self = programmer,
+    player = programmer,
+    caller = programmer,
+    owner = programmer,
+    symtable = symtable,
+    code = compiled)
+
+  return (E_NONE.md, staticTask.run())
+
 proc callTransformer(compiler: MCompiler, name: string, code: MData): MData =
   let transformer = compiler.syntaxTransformers[name]
   let callCode = @["call".mds, transformer.code, @[@["quote".mds, code].md].md].md
@@ -201,7 +231,14 @@ proc codeGen*(compiler: MCompiler, code: seq[MData], pos: CodePosition): MData =
     let name = first.symVal
     if compiler.macroExists(name):
       let transformedCode = compiler.callTransformer(name, code.md)
+
+      if compiler.depth >= MaxMacroDepth:
+        return E_MAXREC.md("maximum macro recursion depth exceeded")
+
+      compiler.depth += 1
       var error = compiler.codeGen(transformedCode)
+      compiler.depth -= 1
+
       if error != E_NONE.md:
         error.trace.add( ("macro call from", pos) )
         return error

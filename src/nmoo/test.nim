@@ -183,6 +183,9 @@ suite "evaluator":
     proc evalS(code: string, who: MObject = root): MData =
       let name = "test task"
       let compiled = compileCode(code, who)
+      if compiled.error != E_NONE.md:
+        return compiled.error
+
       let t = world.addTask(name, who, who, who, who, symtable, compiled, ttFunction, -1)
 
       let tr = t.run()
@@ -724,5 +727,11 @@ suite "evaluator":
     check result == 5.md
 
     # TODO: actually test static evaluation
+
+  test "macro infinite recursion returns error":
+    var result = evalS(""" (define-syntax lol (lambda (code) `(do (echo "running code!") ,code))) (lol 4) """)
+    check result.isType(dErr)
+    check result.errVal == E_MAXREC
+
 
 include tests/bdtest

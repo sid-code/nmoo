@@ -11,7 +11,6 @@ import marshal
 import tables
 import logging
 import asyncdispatch
-import asyncio
 
 import types
 import objects

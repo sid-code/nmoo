@@ -120,6 +120,7 @@ type
     E_VERBNF,
     E_BOUNDS,
     E_QUOTA,
+    E_MAXREC,
 
     E_INTERNAL,
     E_PARSE,
@@ -179,6 +180,9 @@ type
     subrs*, real*: seq[Instruction]
     symtable*: CSymTable
     symgen*: SymGen
+
+    ## __compile-time__ call stack depth
+    depth*: int
 
     ## for macros
     syntaxTransformers*: TableRef[string, SyntaxTransformer]
