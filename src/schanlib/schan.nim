@@ -8,6 +8,7 @@ import nmoo/server
 import nmoo/sidechannel
 import nmoo/bytedump
 import nmoo/types
+import nmoo/scripting # for parser
 
 proc arc4random: uint32 {.importc: "arc4random".}
 
@@ -55,15 +56,20 @@ proc reader(scc: AsyncSideChannelClient) {.async.} =
 
         fut.complete(d)
 
+proc parse(str: string): MData =
+  var parser = newParser(str)
+  return parser.parseFull()
+
 proc main {.async.} =
   let sock = await connect("0.0.0.0", Port(4444))
   let scc = AsyncSideChannelClient(sock: sock, processing: newTable[uint32, Future[MData]]())
 
   asyncCheck reader(scc)
 
-  echo await scc.request(@["echo".mds, "hi".md].md)
-  echo await scc.request(@["let".mds, @[ @[ "x".mds, 5.md].md ].md,
-                           @["+".mds, "x".mds, 1.md].md].md)
+  echo await scc.request(parse(""" "hi" """))
+  echo await scc.request(parse(""" (let ((x 5)) (+ x 1)) """))
+  echo await scc.request(parse(""" (cat "Should be 5: " (call-cc (lambda (x) (x 5)))) """))
+  echo await scc.request(parse(""" (define-syntax lol (lambda (code) `(do (echo "running code!") ,(get code 1)))) (lol 4) """))
 
 
 waitFor main()
