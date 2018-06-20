@@ -16,7 +16,7 @@ requires "bcrypt"
 requires "nimboost"
 
 task test, "Run tests":
-  exec "nim c -r src/nmoopkg/test.nim"
+  exec "nim c -r src/nmoo/test.nim"
 
 task docs, "Generate builtin function documentation":
-  exec "nim c -r src/nmoopkg/doc/builtindocgen.nim"
+  exec "nim c -r src/nmoo/doc/builtindocgen.nim"
