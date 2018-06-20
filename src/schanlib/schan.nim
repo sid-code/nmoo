@@ -42,6 +42,9 @@ proc request(scc: AsyncSideChannelClient, req: MData): Future[MData] =
 proc reader(scc: AsyncSideChannelClient) {.async.} =
   while true:
     let c = await scc.sock.recv(1)
+    if c.len == 0:
+      break
+
     if c[0] == SideChannelEscapeChar:
       let stream = newAsyncSocketStream(scc.sock)
       let id = await stream.readUint32()
