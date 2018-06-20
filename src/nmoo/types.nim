@@ -120,6 +120,7 @@ type
     E_VERBNF,
     E_BOUNDS,
     E_QUOTA,
+    E_MAXREC,
 
     E_INTERNAL,
     E_PARSE,
