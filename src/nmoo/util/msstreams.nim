@@ -13,29 +13,20 @@ proc writeChar*(s: Stream, c: char) =
 proc write*[T](s: AsyncStream, x: T) {.async.} =
   when T is uint32:
     await s.writeUint32(x)
-    return
-
-  when T is int32:
+  elif T is int32:
     await s.writeInt32(x)
-    return
-
-  when T is uint64:
+  elif T is uint64:
     await s.writeUint64(x)
-    return
-
-  when T is int64:
+  elif T is int64:
     await s.writeInt64(x)
-    return
-
-  when T is float64:
+  elif T is float64:
     await s.writeFloat64(x)
-    return
-
-  when T is uint8:
+  elif T is uint8:
     await s.writeUint8(x)
-    return
-
-  assert false
+  elif T is int8:
+    await s.writeInt8(x)
+  else:
+    quit(0)
 
 proc readStr*(s: AsyncStream, length: int): Future[TaintedString] {.async.} =
   return await s.readData(length)
