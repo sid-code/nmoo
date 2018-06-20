@@ -164,7 +164,7 @@ proc toData(image: string, pos: CodePosition): MData =
         else:
           result = parseInt(image).md
       except OverflowError:
-        raise newException(MParseError, "number overflow " & image)
+        raise newException(MParseError, "literal number overflow " & image)
       except ValueError:
         return image.mds
     else:
