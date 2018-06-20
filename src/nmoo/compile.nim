@@ -5,6 +5,8 @@ import sequtils
 
 import types
 
+const MaxMacroDepth = 100 # TODO: Make this world-configurable??
+
 proc newCompiler*(programmer: MObject): MCompiler
 proc codeGen*(compiler: MCompiler, data: MData): MData
 proc render*(compiler: MCompiler): CpOutput
