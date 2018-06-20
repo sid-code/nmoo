@@ -7,6 +7,7 @@ license       = "MIT"
 srcDir        = "src"
 binDir        = "bin"
 bin           = @["nmoo/server"]
+skipFiles     = @["sidechtest.nim"]
 
 # Dependencies
 
