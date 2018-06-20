@@ -728,4 +728,10 @@ suite "evaluator":
 
     # TODO: actually test static evaluation
 
+  test "macro infinite recursion returns error":
+    var result = evalS(""" (define-syntax lol (lambda (code) `(do (echo "running code!") ,code))) (lol 4) """)
+    check result.isType(dErr)
+    check result.errVal == E_MAXREC
+
+
 include tests/bdtest
