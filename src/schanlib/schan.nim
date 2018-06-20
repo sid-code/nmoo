@@ -7,19 +7,16 @@ import nmoo/server
 import nmoo/sidechannel
 import nmoo/bytedump
 import nmoo/types
-import nmoo/scripting # for parser
 
 proc arc4random: uint32 {.importc: "arc4random".}
 
 type
-  AsyncSideChannelClient = object
-    sock: AsyncSocket
+  AsyncSideChannelClient* = object
+    sock*: AsyncSocket
     processing: TableRef[uint32, Future[MData]]
 
-proc connect(host: string, port: Port): Future[AsyncSocket] {.async.} =
-  let sock = newAsyncSocket()
-  await sock.connect(host, port)
-  return sock
+proc newAsyncSideChannelClient*(sock: AsyncSocket): AsyncSideChannelClient =
+  return AsyncSideChannelClient(sock: sock, processing: newTable[uint32, Future[MData]]())
 
 proc writeRequest(sock: AsyncSocket, id: uint32, req: MData) {.async.} =
   let stream = newAsyncSocketStream(sock)
@@ -27,7 +24,7 @@ proc writeRequest(sock: AsyncSocket, id: uint32, req: MData) {.async.} =
   await stream.writeUint32(id)
   await stream.writeMData(req)
 
-proc request(scc: AsyncSideChannelClient, req: MData): Future[MData] =
+proc request*(scc: AsyncSideChannelClient, req: MData): Future[MData] =
   let retFuture = newFuture[MData]("request")
   var id: uint32
   while true:
@@ -39,7 +36,7 @@ proc request(scc: AsyncSideChannelClient, req: MData): Future[MData] =
   asyncCheck writeRequest(scc.sock, id, req)
   return retFuture
 
-proc reader(scc: AsyncSideChannelClient) {.async.} =
+proc startReader*(scc: AsyncSideChannelClient) {.async.} =
   while true:
     let c = await scc.sock.recv(1)
     if c.len == 0:
@@ -54,21 +51,3 @@ proc reader(scc: AsyncSideChannelClient) {.async.} =
         scc.processing.del(id)
 
         fut.complete(d)
-
-proc parse(str: string): MData =
-  var parser = newParser(str)
-  return parser.parseFull()
-
-proc main {.async.} =
-  let sock = await connect("0.0.0.0", Port(4444))
-  let scc = AsyncSideChannelClient(sock: sock, processing: newTable[uint32, Future[MData]]())
-
-  asyncCheck reader(scc)
-
-  echo await scc.request(parse(""" "hi" """))
-  echo await scc.request(parse(""" (let ((x 5)) (+ x 1)) """))
-  echo await scc.request(parse(""" (cat "Should be 5: " (call-cc (lambda (x) (x 5)))) """))
-  echo await scc.request(parse(""" (define-syntax lol (lambda (code) `(do (echo "running code!") ,(get code 1)))) (lol 4) """))
-
-
-waitFor main()
