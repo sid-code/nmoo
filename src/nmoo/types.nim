@@ -180,6 +180,9 @@ type
     symtable*: CSymTable
     symgen*: SymGen
 
+    ## __compile-time__ call stack depth
+    depth*: int
+
     ## for macros
     syntaxTransformers*: TableRef[string, SyntaxTransformer]
 

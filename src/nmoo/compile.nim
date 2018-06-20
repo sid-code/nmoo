@@ -56,6 +56,7 @@ proc newCompiler*(programmer: MObject): MCompiler =
     subrs: @[],
     symtable: newCSymTable(),
     symgen: newSymGen(),
+    depth: 0,
     syntaxTransformers: newTable[string, SyntaxTransformer]())
 
 
@@ -230,7 +231,14 @@ proc codeGen*(compiler: MCompiler, code: seq[MData], pos: CodePosition): MData =
     let name = first.symVal
     if compiler.macroExists(name):
       let transformedCode = compiler.callTransformer(name, code.md)
+
+      if compiler.depth >= MaxMacroDepth:
+        return E_MAXREC.md("maximum macro recursion depth exceeded")
+
+      compiler.depth += 1
       var error = compiler.codeGen(transformedCode)
+      compiler.depth -= 1
+
       if error != E_NONE.md:
         error.trace.add( ("macro call from", pos) )
         return error
