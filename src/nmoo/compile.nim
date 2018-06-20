@@ -150,6 +150,33 @@ proc specialExists(name: string): bool =
 proc macroExists(compiler: MCompiler, name: string): bool =
   compiler.syntaxTransformers.hasKey(name)
 
+
+proc staticEval(compiler: MCompiler, code: MData, name = "compile-time task"):
+                  tuple[compilationError: MData, tr: TaskResult] =
+  let programmer = compiler.programmer
+  let world = programmer.getWorld()
+
+  let ocompiler = newCompiler(programmer)
+  ocompiler.syntaxTransformers = compiler.syntaxTransformers
+  let compilationError = ocompiler.codeGen(code)
+  if compilationError != E_NONE.md:
+    result.compilationError = compilationError
+    return
+
+  let compiled = ocompiler.render()
+  let symtable = newSymbolTable()
+
+  let staticTask = world.addTask(
+    name = name,
+    self = programmer,
+    player = programmer,
+    caller = programmer,
+    owner = programmer,
+    symtable = symtable,
+    code = compiled)
+
+  return (E_NONE.md, staticTask.run())
+
 proc callTransformer(compiler: MCompiler, name: string, code: MData): MData =
   let transformer = compiler.syntaxTransformers[name]
   let callCode = @["call".mds, transformer.code, @[@["quote".mds, code].md].md].md
