@@ -31,7 +31,7 @@ template addword =
     addtoken()
     curWord = ""
 
-proc lex*(code: string): seq[Token] =
+proc lex(code: string): seq[Token] =
   newSeq(result, 0)
   var
     pos: CodePosition = (1, 1)

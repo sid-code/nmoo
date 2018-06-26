@@ -119,15 +119,6 @@ suite "object tests":
     #check $root.verbCall("action", root, @["hey".md]) == "@[@[\"hey\"]]"
     check true
 
-
-suite "lexer":
-  setup:
-    let testStr = "(builtin \"stri\\\"ng\")"
-
-  test "lexer works":
-    let lexed = lex(testStr)
-    check lexed.len == 5
-
 suite "parser":
   setup:
     proc parse(str: string): MData =
