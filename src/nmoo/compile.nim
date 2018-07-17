@@ -213,10 +213,14 @@ template defSpecial(name: string, body: untyped) {.dirty.} =
     return E_NONE.md
 
 # dNil means any type is allowed
-template verifyArgs(name: string, args: seq[MData], spec: seq[MDataType]) =
-  if args.len != spec.len:
-    compileError("$1: expected $2 arguments but got $3" %
-      [name, $spec.len, $args.len])
+template verifyArgs(name: string, args: seq[MData], spec: seq[MDataType], varargs = false) =
+  if varargs:
+    if args.len < spec.len - 1:
+      compileError("$1: expected at least $2 arguments but got $3" %
+                   [$name, $(spec.len - 1), $args.len])
+  else:
+    if args.len != spec.len:
+      compileError("$1: expected $2 arguments but got $3" % [name, $spec.len, $args.len])
 
   for o, e in args.zip(spec).items:
     if e != dNil and not o.isType(e):
@@ -580,7 +584,7 @@ defSpecial "define":
   emit(ins(inGSTO, symbol))
 
 defSpecial "let":
-  verifyArgs("let", args, @[dList, dNil])
+  verifyArgs("let", args, @[dList, dNil], varargs = true)
 
   # Keep track of what's bound so we can unbind them later
   var binds: seq[string]
@@ -589,23 +593,25 @@ defSpecial "let":
   let asmts = args[0].listVal
   for assignd in asmts:
     if not assignd.isType(dList):
-      compileError("let: first argument must be a list of 2-size lists")
+      compileError("let: first argument must be a list of 2-size lists", pos)
     let assign = assignd.listVal
     if not assign.len == 2:
-      compileError("let: first argument must be a list of 2-size lists")
+      compileError("let: first argument must be a list of 2-size lists", pos)
 
     let sym = assign[0]
     let val = assign[1]
 
     if not sym.isType(dSym):
-      compileError("let: only symbols can be bound")
+      compileError("let: only symbols can be bound", pos)
 
     propogateError(compiler.codeGen(val))
     let symIndex = compiler.symtable.defSymbol(sym.symVal)
     binds.add(sym.symVal)
     emit(ins(inSTO, symIndex.md))
 
-  propogateError(compiler.codeGen(args[1]))
+  for i in 1..args.len-1:
+    if i > 1: emit(ins(inPOP))
+    propogateError(compiler.codeGen(args[i]))
 
   # We're outside scope so unbind the symbols
   for bound in binds:
