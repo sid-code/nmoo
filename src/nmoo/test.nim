@@ -205,6 +205,13 @@ suite "evaluator":
     check result.isType(dErr)
     check result.errVal == E_UNBOUND
 
+  test "let statement accepts multiple body forms":
+    let result = evalS("""
+    (let ((a 5) (b 10)) a b)
+    """)
+
+    check result == 10.md
+
   test "cond statement works":
     var result = evalS("""
     (cond (1 "it works") (0 "it doesn't work") ("it doesn't work!!!"))
