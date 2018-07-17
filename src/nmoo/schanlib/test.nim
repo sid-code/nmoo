@@ -20,10 +20,7 @@ proc main {.async.} =
   # This is so that we can receive responses
   asyncCheck scc.startReader()
 
-  echo await scc.request(parse(""" "hi" """))
-  echo await scc.request(parse(""" (let ((x 5)) (+ x 1)) """))
-  echo await scc.request(parse(""" (cat "Should be 5: " (call-cc (lambda (x) (x 5)))) """))
-  echo await scc.request(parse(""" (define-syntax lol (lambda (code) `(do (echo "running code!") ,(get code 1)))) (lol 4) """))
-
+  let prog = parse(stdin.readAll())
+  discard await scc.request(prog)
 
 waitFor main()
