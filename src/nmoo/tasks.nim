@@ -20,6 +20,7 @@ proc resume*(task: Task, val: MData)
 proc isRunning*(task: Task): bool = task.status in {tsRunning, tsReceivedInput}
 proc getTaskByID*(world: World, id: int): Task
 proc finish*(task: Task)
+proc addCoreGlobals*(st: SymbolTable): SymbolTable
 
 proc setStatus*(task: Task, newStatus: TaskStatus) =
   when defined(debug):
@@ -545,7 +546,7 @@ proc run*(task: Task, limit = 20000): TaskResult =
 
   return TaskResult(typ: trTooLong)
 
-proc addCoreGlobals(st: SymbolTable): SymbolTable =
+proc addCoreGlobals*(st: SymbolTable): SymbolTable =
   result = st
   result["nil"] = nilD
 

@@ -113,6 +113,9 @@ template compileError(msg: string, pos: CodePosition) =
   error.trace.add( ("compilation", pos) )
   return error
 
+template compileError(errord: MData) =
+  return errord
+
 template propogateError(error: MData) =
   let errorV = error
   if errorV != E_NONE.md:
@@ -188,11 +191,11 @@ proc callTransformer(compiler: MCompiler, name: string, code: MData): MData =
     of trFinish:
       return tr.res
     of trSuspend:
-      compileError("macro " & name & " unexpectedly suspended")
+      compileError("macro " & name & " unexpectedly suspended", code.pos)
     of trError:
-      compileError("macro " & name & " had an error")
+      compileError(tr.err)
     of trTooLong:
-      compileError("macro " & name & "  took too long")
+      compileError("macro " & name & "  took too long", code.pos)
 
 template defSpecial(name: string, body: untyped) {.dirty.} =
   specials[name] = proc (compiler: MCompiler, args: seq[MData], pos: CodePosition): MData =
@@ -210,10 +213,14 @@ template defSpecial(name: string, body: untyped) {.dirty.} =
     return E_NONE.md
 
 # dNil means any type is allowed
-template verifyArgs(name: string, args: seq[MData], spec: seq[MDataType]) =
-  if args.len != spec.len:
-    compileError("$1: expected $2 arguments but got $3" %
-      [name, $spec.len, $args.len])
+template verifyArgs(name: string, args: seq[MData], spec: seq[MDataType], varargs = false) =
+  if varargs:
+    if args.len < spec.len - 1:
+      compileError("$1: expected at least $2 arguments but got $3" %
+                   [$name, $(spec.len - 1), $args.len])
+  else:
+    if args.len != spec.len:
+      compileError("$1: expected $2 arguments but got $3" % [name, $spec.len, $args.len])
 
   for o, e in args.zip(spec).items:
     if e != dNil and not o.isType(e):
@@ -308,7 +315,7 @@ proc codeGenQ(compiler: MCompiler, code: MData, quasi: bool): MData =
       if list.len == 2:
         propogateError(compiler.codeGen(list[1]))
       else:
-        compileError("unquote: too many arguments")
+        compileError("unquote: too many arguments", code.pos)
     else:
       for item in list:
         propogateError(compiler.codeGenQ(item, quasi))
@@ -551,7 +558,7 @@ defSpecial "call":
 
 defSpecial "static-eval":
   if args.len == 0:
-    compileError("static-eval: requires at least one argument")
+    compileError("static-eval: requires at least one argument", pos)
 
   for arg in args:
     var (cerr, tr) = compiler.staticEval(arg)
@@ -560,11 +567,11 @@ defSpecial "static-eval":
       of trFinish:
         propogateError(compiler.codeGen(tr.res))
       of trSuspend:
-        compileError("compile-time evaluation unexpectedly suspended")
+        compileError("compile-time evaluation unexpectedly suspended", pos)
       of trError:
-        compileError("compile-time evaluation had an error")
+        compileError("compile-time evaluation had an error", pos)
       of trTooLong:
-        compileError("compile-time evaluation took too long")
+        compileError("compile-time evaluation took too long", pos)
     
 
 defSpecial "define":
@@ -577,7 +584,7 @@ defSpecial "define":
   emit(ins(inGSTO, symbol))
 
 defSpecial "let":
-  verifyArgs("let", args, @[dList, dNil])
+  verifyArgs("let", args, @[dList, dNil], varargs = true)
 
   # Keep track of what's bound so we can unbind them later
   var binds: seq[string]
@@ -586,23 +593,25 @@ defSpecial "let":
   let asmts = args[0].listVal
   for assignd in asmts:
     if not assignd.isType(dList):
-      compileError("let: first argument must be a list of 2-size lists")
+      compileError("let: first argument must be a list of 2-size lists", pos)
     let assign = assignd.listVal
     if not assign.len == 2:
-      compileError("let: first argument must be a list of 2-size lists")
+      compileError("let: first argument must be a list of 2-size lists", pos)
 
     let sym = assign[0]
     let val = assign[1]
 
     if not sym.isType(dSym):
-      compileError("let: only symbols can be bound")
+      compileError("let: only symbols can be bound", pos)
 
     propogateError(compiler.codeGen(val))
     let symIndex = compiler.symtable.defSymbol(sym.symVal)
     binds.add(sym.symVal)
     emit(ins(inSTO, symIndex.md))
 
-  propogateError(compiler.codeGen(args[1]))
+  for i in 1..args.len-1:
+    if i > 1: emit(ins(inPOP))
+    propogateError(compiler.codeGen(args[i]))
 
   # We're outside scope so unbind the symbols
   for bound in binds:
@@ -613,7 +622,7 @@ defSpecial "define-syntax":
 
   let name = args[0].symVal
   if compiler.macroExists(name):
-    compileError("define-syntax: macro " & name & " already exists.")
+    compileError("define-syntax: macro " & name & " already exists.", pos)
 
   compiler.syntaxTransformers[name] = SyntaxTransformer(code: args[1])
   emit(ins(inPUSH, nilD))
@@ -621,7 +630,7 @@ defSpecial "define-syntax":
 defSpecial "try":
   let alen = args.len
   if alen != 2 and alen != 3:
-    compileError("try: 2 or 3 arguments required")
+    compileError("try: 2 or 3 arguments required", pos)
 
   let exceptLabel = compiler.makeSymbol()
   let endLabel = compiler.makeSymbol()
@@ -650,10 +659,10 @@ defSpecial "cond":
 
   for arg in args:
     if not arg.isType(dList):
-      compileError("cond: each argument to cond must be a list")
+      compileError("cond: each argument to cond must be a list", pos)
     let larg = arg.listVal
     if larg.len == 0 or larg.len > 2:
-      compileError("cond: each argument to cond must be of length 1 or 2")
+      compileError("cond: each argument to cond must be of length 1 or 2", pos)
 
     if larg.len == 1:
       hadElseClause = true
@@ -668,7 +677,7 @@ defSpecial "cond":
   emit(ins(inJMP, elseLabel))
 
   if not hadElseClause:
-    compileError("cond: else clause required")
+    compileError("cond: else clause required", pos)
 
   for idx, arg in args:
     let larg = arg.listVal
@@ -726,7 +735,7 @@ defSpecial "list":
 
 defSpecial "if":
   if args.len != 3:
-    compileError("if takes 3 arguments (condition, if-true, if-false)")
+    compileError("if takes 3 arguments (condition, if-true, if-false)", pos)
   propogateError(compiler.codeGen(@["cond".mds, @[args[0], args[1]].md, @[args[2]].md].md))
 
 defSpecial "call-cc":

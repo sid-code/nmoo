@@ -5,6 +5,7 @@ import asyncnet
 import asyncdispatch
 import strutils
 import net
+import streams
 import times
 import math
 import logging
@@ -12,12 +13,15 @@ import os
 
 import types
 
+proc send*(client: Client, msg: string) {.async.}
 proc taskFinished*(task: Task)
 proc findClient*(player: MObject): Client
 proc askForInput*(task: Task, client: Client)
 proc supplyTaskWithInput(client: Client, input: string)
 proc inputTaskRunning(client: Client): bool
 proc requiresInput(client: Client): bool
+
+const SideChannelEscapeChar* = '\x1C'
 
 var clog: ConsoleLogger
 
@@ -26,6 +30,7 @@ import verbs
 import builtins
 import persist
 import tasks
+import sidechannel
 
 import editserv
 
@@ -64,7 +69,7 @@ proc removeClient(client: Client) =
 
   client.close()
 
-proc send(client: Client, msg: string) {.async.} =
+proc send*(client: Client, msg: string) {.async.} =
   await client.sock.send(msg)
 
 proc recvLine(client: Client): Future[string] {.async.} =
@@ -234,10 +239,13 @@ proc processClient(client: Client, address: string) {.async.} =
   while true:
     var line = await client.recvLine()
 
-    # I think this means the client closed the connection?
     if line.len == 0 or line[0] == '\0':
       removeClient(client)
       break
+
+    if line[0] == SideChannelEscapeChar:
+      await client.processEscapeSequence()
+      continue
 
     when defined(debug): debug "Received ", line
 

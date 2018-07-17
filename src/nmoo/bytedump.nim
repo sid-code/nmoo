@@ -7,27 +7,7 @@ import times
 import tables
 
 import types
-
-# polyfill
-
-proc writeData(s: Stream, data: string) =
-  s.writeData(data.cstring, data.len)
-
-proc write[T](s: AsyncStream, x: T) {.async.} =
-  await s.writeBuffer(unsafeAddr x, sizeof int32)
-
-proc readStr(s: AsyncStream, length: int): Future[TaintedString] {.async.} =
-  return await s.readData(length)
-
-# Write a string by writing the length first then the string
-proc writeStrl(s: Stream | AsyncStream, str: string) {.multisync.} =
-  await s.write(int32(str.len))
-  await s.writeData(str)
-
-# Reads an int32 then reads that many characters into a string
-proc readStrl(s: Stream | AsyncStream): Future[string] {.multisync.} =
-  let slen = await s.readInt32()
-  return await s.readStr(int(slen))
+import util/msstreams
 
 proc writePos(s: Stream | AsyncStream, pos: CodePosition) {.multisync.} =
   await s.write(int32(pos.line))
@@ -356,12 +336,12 @@ proc readTask*(s: Stream | AsyncStream): Future[Task] {.multisync.} =
 
   return t
   
-when not isMainModule:
-  import scripting
-  defBuiltin "twt":
-    var ss = newStringStream()
-    ss.writeTask(task)
-
-    var oss = newStringStream(ss.data)
-    let taskCopy = oss.readTask()
+#when not isMainModule:
+#  import scripting
+#  defBuiltin "twt":
+#    var ss = newStringStream()
+#    ss.writeTask(task)
+#
+#    var oss = newStringStream(ss.data)
+#    let taskCopy = oss.readTask()
 
