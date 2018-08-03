@@ -248,7 +248,7 @@ proc readObject(world: World, stream: FileStream) =
   obj.parent = readObjectID(world, stream, nil)
 
   let childrenStr = stream.readLine()
-  if not childrenStr.isNilOrEmpty():
+  if childrenStr.len != 0:
     let children = childrenStr.split(" ")
     for child in children:
       let childID = parseInt(child)
