@@ -248,7 +248,7 @@ impl inMENV:
   task.symtables.add(newST)
   let cst = task.spop().toCST()
 
-  # push the environment's ID onto the stack so that it can be accessed:w
+  # push the environment's ID onto the stack so that it can be accessed
   task.spush(envID.md)
   task.spush(cst.combine(newST).toData())
 
