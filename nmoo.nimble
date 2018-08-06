@@ -18,5 +18,8 @@ requires "nimboost"
 task test, "Run tests":
   exec "nim c -r src/nmoo/test.nim"
 
+task serve, "Run the server":
+  exec "nim c -r -d:debug -o:bin/server src/nmoo"
+
 task docs, "Generate builtin function documentation":
   exec "nim c -r src/nmoo/doc/builtindocgen.nim"
