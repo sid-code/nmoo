@@ -966,6 +966,17 @@ defBuiltin "delverb":
   return obj.md.pack
 
 
+defBuiltin "loadverb":
+  if args.len != 2:
+    runtimeError(E_ARGS, "loadverb takes 2 arguments (object and verb name)")
+
+  let (obj, verb) = getVerbOn(args[0], args[1])
+  checkWrite(verb)
+
+  let resultd = readVerbCode(world, obj, verb, player)
+  checkForError(resultd)
+  return verb.names.md.pack
+
 ## ::
 ##
 ##   (setverbcode obj:Obj verb:Str new-code:Str):Obj

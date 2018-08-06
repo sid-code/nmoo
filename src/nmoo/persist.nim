@@ -316,6 +316,9 @@ proc getVerbCodeDir(name: string): string =
 proc getObjVerbCodeDir(name: string, id: int): string =
   getVerbCodeDir(name) / $id
 
+proc getVerbCodeFile(verb: MVerb, index: int): string =
+  "$#-$#.scm".format(verb.names, index)
+
 proc writeVerbCode*(world: World, obj: MObject, init = false) =
   var dir = getObjVerbCodeDir(world.name, obj.getID().int)
   if init:
@@ -325,8 +328,23 @@ proc writeVerbCode*(world: World, obj: MObject, init = false) =
     createDir(dir)
 
   for index, v in obj.verbs:
-    var fileName = (dir / v.names) & "-" & $index & ".scm"
+    var fileName = dir / getVerbCodeFile(v, index)
     writeFile(fileName, v.code)
+
+proc readVerbCode*(world: World, obj: MObject, verb: MVerb, programmer: MObject): MData =
+  var dir = getObjVerbCodeDir(world.name, obj.getID().int)
+
+  let vstr = "$#:$#".format(obj.md.toCodeStr(), verb.names)
+
+  if not existsDir(dir):
+    return E_ARGS.md("cannot read code for verb $# because the verb code directory doesn't exist".format(vstr))
+
+  for index, v in obj.verbs:
+    if v == verb:
+      var fileName = dir / getVerbCodeFile(v, index)
+      return v.setCode(readFile(fileName), programmer)
+
+  return E_ARGS.md("cannot read code for verb $#".format(vstr))
 
 proc persist*(world: World, obj: MObject) =
   if not world.persistent: return
@@ -479,7 +497,10 @@ proc loadWorld*(name: string): World =
 
   for obj in result.getObjects()[]:
     if not obj.isNil:
+      writeVerbCode(result, obj)
       for v in obj.verbs:
+        when defined(debug):
+          debug "Compiling verb " & obj.toObjStr() & ":" & v.names
         # this time really compile it
         let err = v.setCode(v.code, v.owner)
         if err != E_NONE.md:
