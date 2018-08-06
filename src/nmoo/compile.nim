@@ -6,11 +6,12 @@ import sequtils
 import types
 
 const MaxMacroDepth = 100 # TODO: Make this world-configurable??
+const compilerDefaultOptions: set[MCompilerOptions] = {}
 
-proc newCompiler*(programmer: MObject): MCompiler
 proc codeGen*(compiler: MCompiler, data: MData): MData
 proc render*(compiler: MCompiler): CpOutput
 proc compileCode*(code: MData, programmer: MObject,
+                  options = compilerDefaultOptions,
                   syntaxTransformers: TableRef[string, SyntaxTransformer] = nil): CpOutput
 proc toCST*(data: MData): CSymTable
 
@@ -49,11 +50,12 @@ proc toCST*(data: MData): CSymTable =
 
 proc newSymGen(prefix: string): SymGen = SymGen(counter: 0, prefix: prefix)
 proc newSymGen: SymGen = newSymGen("L")
-proc newCompiler*(programmer: MObject): MCompiler =
+proc newCompiler(programmer: MObject, options: set[MCompilerOptions]): MCompiler =
   MCompiler(
     programmer: programmer,
     real: @[],
     subrs: @[],
+    options: options,
     symtable: newCSymTable(),
     symgen: newSymGen(),
     depth: 0,
@@ -160,7 +162,7 @@ proc staticEval(compiler: MCompiler, code: MData, name = "compile-time task"):
   let programmer = compiler.programmer
   let world = programmer.getWorld()
 
-  let ocompiler = newCompiler(programmer)
+  let ocompiler = newCompiler(programmer, compiler.options)
   ocompiler.syntaxTransformers = compiler.syntaxTransformers
   let compilationError = ocompiler.codeGen(code)
   if compilationError != E_NONE.md:
@@ -369,8 +371,8 @@ proc render*(compiler: MCompiler): CpOutput =
   code.add(ins(inHALT))
   return (entry, code, E_NONE.md)
 
-proc compileCode*(forms: seq[MData], programmer: MObject): CpOutput =
-  let compiler = newCompiler(programmer)
+proc compileCode*(forms: seq[MData], programmer: MObject, options = compilerDefaultOptions): CpOutput =
+  let compiler = newCompiler(programmer, options)
 
   for form in forms:
     let error = compiler.codeGen(form)
@@ -380,8 +382,9 @@ proc compileCode*(forms: seq[MData], programmer: MObject): CpOutput =
   return compiler.render
 
 proc compileCode*(code: MData, programmer: MObject,
+                  options = compilerDefaultOptions,
                   syntaxTransformers: TableRef[string, SyntaxTransformer] = nil): CpOutput =
-  let compiler = newCompiler(programmer)
+  let compiler = newCompiler(programmer, options)
   if not isNil(syntaxTransformers):
     compiler.syntaxTransformers = syntaxTransformers
 
@@ -391,9 +394,9 @@ proc compileCode*(code: MData, programmer: MObject,
 
   return compiler.render
 
-proc compileCode*(code: string, programmer: MObject): CpOutput =
+proc compileCode*(code: string, programmer: MObject, options = compilerDefaultOptions): CpOutput =
   var parser = newParser(code)
-  return compileCode(parser.parseFull(), programmer)
+  return compileCode(parser.parseFull(), programmer, options)
 
 defSpecial "quote":
   verifyArgs("quote", args, @[dNil])
