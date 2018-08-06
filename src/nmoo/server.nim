@@ -414,7 +414,7 @@ proc start* =
   # start the nmoo server
   asyncCheck startServer()
   # start the edit server
-  asyncCheck startEditServer(world, Port(8080))
+  #asyncCheck startEditServer(world, Port(8080))
 
   info "Terminate with ^C"
 
