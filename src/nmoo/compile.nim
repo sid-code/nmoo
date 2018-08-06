@@ -328,10 +328,13 @@ proc codeGenQ(compiler: MCompiler, code: MData, quasi: bool): MData =
 
   return E_NONE.md
 
-template defSymbol(symtable: CSymTable, name: string): int =
-  let index = symtable.len
-  symtable[name] = index
+template defSymbol(compilre: MCompiler, name: string): int =
+  let index = compiler.symtable.len
+  compiler.symtable[name] = index
   index
+
+template undefSymbol(compilre: MCompiler, name: string) =
+  del(compiler.symtable, name)
 
 template addLabel(compiler: MCompiler, section: untyped): MData =
   let name = compiler.makeSymbol()
@@ -420,7 +423,7 @@ defSpecial "lambda":
     if not bound.isType(dSym):
       compileError("lambda variables can only be symbols", bound.pos)
     let name = bound.symVal
-    let index = compiler.symtable.defSymbol(name)
+    let index = compiler.defSymbol(name)
     compiler.subrs.add(ins(inSTO, index.md))
 
   let
@@ -462,7 +465,7 @@ defSpecial "map":
   # fn can either be a sym or a lambda but it doesn't matter
   propogateError(compiler.codeGen(fn))
 
-  let index = compiler.symtable.defSymbol("__mapfn")
+  let index = compiler.defSymbol("__mapfn")
   emit(ins(inSTO, index.md))
   propogateError(compiler.codeGen(args[1]))
   emit(ins(inREV))
@@ -481,7 +484,7 @@ defSpecial "map":
   emit(ins(inJMP, labelLocation))
   emit(ins(inLABEL, afterLocation))
   emit(ins(inPOP))
-  compiler.symtable.del("__mapfn")
+  compiler.undefSymbol("__mapfn")
 
 template genFold(compiler: MCompiler, fn, default, list: MData,
                  useDefault = true, right = true, pos: CodePosition = (0, 0)) =
@@ -493,7 +496,7 @@ template genFold(compiler: MCompiler, fn, default, list: MData,
 
   propogateError(compiler.codeGen(fn))
 
-  let index = compiler.symtable.defSymbol("__redfn")
+  let index = compiler.defSymbol("__redfn")
   emitx(ins(inSTO, index.md))
   propogateError(compiler.codeGen(list))  # list
 
@@ -608,7 +611,7 @@ defSpecial "let":
       compileError("let: only symbols can be bound", pos)
 
     propogateError(compiler.codeGen(val))
-    let symIndex = compiler.symtable.defSymbol(sym.symVal)
+    let symIndex = compiler.defSymbol(sym.symVal)
     binds.add(sym.symVal)
     emit(ins(inSTO, symIndex.md))
 
@@ -618,7 +621,7 @@ defSpecial "let":
 
   # We're outside scope so unbind the symbols
   for bound in binds:
-    compiler.symtable.del(bound)
+    compiler.undefSymbol(bound)
 
 defSpecial "define-syntax":
   verifyArgs("define-syntax", args, @[dSym, dNil])
@@ -642,12 +645,12 @@ defSpecial "try":
   emit(ins(inETRY))
   emit(ins(inJMP, endLabel))
   emit(ins(inLABEL, exceptLabel))
-  let errorIndex = compiler.symtable.defSymbol("error")
+  let errorIndex = compiler.defSymbol("error")
   emit(ins(inSTO, errorIndex.md))
   propogateError(compiler.codeGen(args[1]))
 
   # Out of rescue scope, so unbind "error" symbol
-  compiler.symtable.del("error")
+  compiler.undefSymbol("error")
 
   emit(ins(inLABEL, endLabel))
   if alen == 3:
