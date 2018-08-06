@@ -36,6 +36,7 @@ proc request*(scc: AsyncSideChannelClient, req: MData): Future[MData] =
   asyncCheck writeRequest(scc.sock, id, req)
   return retFuture
 
+# start this with asyncCheck
 proc startReader*(scc: AsyncSideChannelClient) {.async.} =
   while true:
     let c = await scc.sock.recv(1)
