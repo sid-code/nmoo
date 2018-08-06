@@ -442,14 +442,14 @@ defSpecial "lambda":
 
   for bound in bounds:
     let name = bound.symVal
-    compiler.symtable.del(name)
+    compiler.undefSymbol(name)
   emit(ins(inRET), 1)
   emit(addedSubrs, 1)
 
   emit(ins(inLPUSH, labelName))
   emit(ins(inPUSH, compiler.symtable.toData()))
-  emit(ins(inMENV)) # This pushes the environment id AND a
-                                 # MData representation if it
+  emit(ins(inMENV)) # This pushes the environment id AND a MData
+                    # representation of it
 
   emit(ins(inGTID)) # Record the task ID in the lambda
   emit(ins(inPUSH, bounds.md))
