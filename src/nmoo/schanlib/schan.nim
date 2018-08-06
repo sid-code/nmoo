@@ -3,10 +3,10 @@ import asyncdispatch
 import boost/io/asyncstreams
 import tables
 
-import nmoo/server
-import nmoo/sidechannel
-import nmoo/bytedump
-import nmoo/types
+import ../server
+import ../sidechannel
+import ../bytedump
+import ../types
 
 proc arc4random: uint32 {.importc: "arc4random".}
 

@@ -2,10 +2,10 @@ import asyncnet
 import asyncdispatch
 
 import schan
-import nmoo/server
-import nmoo/types
-import nmoo/bytedump
-import nmoo/scripting # for parser
+import ../server
+import ../types
+import ../bytedump
+import ../scripting # for parser
 
 proc parse(str: string): MData =
   var parser = newParser(str)
