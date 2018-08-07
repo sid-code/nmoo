@@ -22,6 +22,45 @@ import tasks
 
 from algorithm import reversed
 
+
+## Error handling procs
+
+template compileError(msg: string) =
+  var error = E_COMPILE.md(msg)
+  return error
+
+template compileError(msg: string, pos: CodePosition) =
+  var error = E_COMPILE.md(msg)
+  error.trace.add( ("compilation", pos) )
+  return error
+
+template compileError(errord: MData) =
+  return errord
+
+template propogateError(error: MData) =
+  let errorV = error
+  if errorV != E_NONE.md:
+    return errorV
+
+template propogateError(error: MData, traceLine: string, pos: CodePosition) =
+  var errorV = error
+  if errorV != E_NONE.md:
+    errorV.trace.add( (traceLine, pos) )
+    return errorV
+
+
+## Symbol generation procs
+
+proc newSymGen(prefix: string): SymGen = SymGen(counter: 0, prefix: prefix)
+proc newSymGen: SymGen = newSymGen("L")
+
+proc genSym(symgen: SymGen): string =
+  result = "$1$2" % [symgen.prefix, $symgen.counter]
+  symgen.counter += 1
+
+
+## (C)ompiler symbol table construction/conversion
+
 proc newCSymTable: CSymTable = initTable[string, int]()
 proc toData(st: CSymTable): MData =
   var pairs: seq[MData] = @[]
@@ -47,9 +86,52 @@ proc toCST*(data: MData): CSymTable =
     let val = vald.intVal
     result[key] = val
 
+## Instruction constructors
 
-proc newSymGen(prefix: string): SymGen = SymGen(counter: 0, prefix: prefix)
-proc newSymGen: SymGen = newSymGen("L")
+template ins(typ: InstructionType, op: MData, position: CodePosition): Instruction =
+  Instruction(itype: typ, operand: op, pos: position)
+
+template ins(typ: InstructionType, op: MData): Instruction =
+  ins(typ, op, (0, 0))
+
+template ins(typ: InstructionType): Instruction =
+  ins(typ, nilD)
+
+## (C) Symbol table manipulating procs
+
+proc makeSymbol(compiler: MCompiler): MData =
+  compiler.symgen.genSym().mds
+
+proc getSymbol(symtable: CSymTable, name: string): MData =
+  if symtable.hasKey(name):
+    return symtable[name].md
+  else:
+    compileError("unbound symbol '$1'" % [name])
+
+proc getSymInst(symtable: CSymTable, sym: MData): Instruction =
+  let pos = sym.pos
+  let name = sym.symVal
+
+  if builtinExists(name):
+    return ins(inPUSH, name.mds, pos)
+  else:
+    let index = symtable.getSymbol(name)
+    if index.isType(dErr):
+      return ins(inGGET, name.mds, pos)
+    else:
+      return ins(inGET, index, pos)
+
+template defSymbol(compilre: MCompiler, name: string): int =
+  let index = compiler.symtable.len
+  compiler.symtable[name] = index
+  index
+
+template undefSymbol(compilre: MCompiler, name: string) =
+  del(compiler.symtable, name)
+
+
+## Constructor
+
 proc newCompiler(programmer: MObject, options: set[MCompilerOptions]): MCompiler =
   MCompiler(
     programmer: programmer,
@@ -62,27 +144,7 @@ proc newCompiler(programmer: MObject, options: set[MCompilerOptions]): MCompiler
     syntaxTransformers: newTable[string, SyntaxTransformer]())
 
 
-proc genSym(symgen: SymGen): string =
-  result = "$1$2" % [symgen.prefix, $symgen.counter]
-  symgen.counter += 1
-
-template ins(typ: InstructionType, op: MData, position: CodePosition): Instruction =
-  Instruction(itype: typ, operand: op, pos: position)
-
-template ins(typ: InstructionType, op: MData): Instruction =
-  ins(typ, op, (0, 0))
-
-template ins(typ: InstructionType): Instruction =
-  ins(typ, nilD)
-
-# shortcut for compiler.real.add
-template radd(compiler: MCompiler, inst: Instruction) =
-  compiler.real.add(inst)
-
-# shortcut for compiler.subrs.add
-template sadd(compiler: MCompiler, inst: Instruction) =
-  compiler.subrs.add(inst)
-
+## *->string conversions
 proc `$`*(ins: Instruction): string =
   let itypeStr = ($ins.itype)[2 .. ^1]
   if ins.operand == nilD:
@@ -103,50 +165,23 @@ proc `$`*(compiler: MCompiler): string =
 
   return slines.join("\n")
 
-proc makeSymbol(compiler: MCompiler): MData =
-  compiler.symgen.genSym().mds
 
-template compileError(msg: string) =
-  var error = E_COMPILE.md(msg)
-  return error
+## Code generation
 
-template compileError(msg: string, pos: CodePosition) =
-  var error = E_COMPILE.md(msg)
-  error.trace.add( ("compilation", pos) )
-  return error
+# shortcut for compiler.real.add
+template radd(compiler: MCompiler, inst: Instruction) =
+  compiler.real.add(inst)
 
-template compileError(errord: MData) =
-  return errord
+# shortcut for compiler.subrs.add
+template sadd(compiler: MCompiler, inst: Instruction) =
+  compiler.subrs.add(inst)
 
-template propogateError(error: MData) =
-  let errorV = error
-  if errorV != E_NONE.md:
-    return errorV
+template addLabel(compiler: MCompiler, section: untyped): MData =
+  let name = compiler.makeSymbol()
 
-template propogateError(error: MData, traceLine: string, pos: CodePosition) =
-  var errorV = error
-  if errorV != E_NONE.md:
-    errorV.trace.add( (traceLine, pos) )
-    return errorV
+  compiler.`section`.add(ins(inLABEL, name))
 
-proc getSymbol(symtable: CSymTable, name: string): MData =
-  if symtable.hasKey(name):
-    return symtable[name].md
-  else:
-    compileError("unbound symbol '$1'" % [name])
-
-proc getSymInst(symtable: CSymTable, sym: MData): Instruction =
-  let pos = sym.pos
-  let name = sym.symVal
-
-  if builtinExists(name):
-    return ins(inPUSH, name.mds, pos)
-  else:
-    let index = symtable.getSymbol(name)
-    if index.isType(dErr):
-      return ins(inGGET, name.mds, pos)
-    else:
-      return ins(inGET, index, pos)
+  name
 
 
 var specials = initTable[string, SpecialProc]()
@@ -327,21 +362,6 @@ proc codeGenQ(compiler: MCompiler, code: MData, quasi: bool): MData =
     compiler.radd(ins(inPUSH, code))
 
   return E_NONE.md
-
-template defSymbol(compilre: MCompiler, name: string): int =
-  let index = compiler.symtable.len
-  compiler.symtable[name] = index
-  index
-
-template undefSymbol(compilre: MCompiler, name: string) =
-  del(compiler.symtable, name)
-
-template addLabel(compiler: MCompiler, section: untyped): MData =
-  let name = compiler.makeSymbol()
-
-  compiler.`section`.add(ins(inLABEL, name))
-
-  name
 
 proc render*(compiler: MCompiler): CpOutput =
   ## Remove all label references and replace them
@@ -534,6 +554,8 @@ template genFold(compiler: MCompiler, fn, default, list: MData,
 
   emitx(ins(inLABEL, after))
   emitx(ins(inPOP))                  # result
+
+## Special form definitions
 
 defSpecial "reduce-right":
   verifyArgs("reduce-right", args, @[dNil, dNil])
