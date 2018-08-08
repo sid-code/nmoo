@@ -203,6 +203,17 @@ suite "evaluator":
 
     check result == 10.md
 
+  test "let statement shadows properly":
+    let result = evalS("""
+    (let ((a 5))
+      (list
+       a
+       (let ((a 10))
+         a)))
+    """)
+
+    check result == @[5.md, 10.md].md
+
   test "cond statement works":
     var result = evalS("""
     (cond (1 "it works") (0 "it doesn't work") ("it doesn't work!!!"))

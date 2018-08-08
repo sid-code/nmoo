@@ -121,13 +121,43 @@ proc getSymInst(symtable: CSymTable, sym: MData): Instruction =
     else:
       return ins(inGET, index, pos)
 
-template defSymbol(compilre: MCompiler, name: string): int =
+proc shadowName(name: string): string = "__SHADOW__" & name
+proc unshadowName(name: string): string =
+  if name.len > 10:
+    name[10..^1]
+  else:
+    name
+
+proc markSymbolShadowed(compiler: MCompiler, name: string) =
+  if name notin compiler.symtable:
+    return
+
+  let shadow = shadowName(name)
+  compiler.markSymbolShadowed(shadow)
+
+  compiler.symtable[shadow] = compiler.symtable[name]
+
+proc unmarkSymbolShadowed(compiler: MCompiler, name: string) =
+  let shadow = shadowName(name)
+  if shadow notin compiler.symtable:
+    return
+
+  compiler.symtable[name] = compiler.symtable[shadow]
+
+  if name in compiler.symtable:
+    del(compiler.symtable, shadow)
+
+template defSymbol(compiler: MCompiler, name: string): int =
+  if name in compiler.symtable:
+    compiler.markSymbolShadowed(name)
+
   let index = compiler.symtable.len
   compiler.symtable[name] = index
   index
 
-template undefSymbol(compilre: MCompiler, name: string) =
+template undefSymbol(compiler: MCompiler, name: string) =
   del(compiler.symtable, name)
+  compiler.unmarkSymbolShadowed(name)
 
 
 ## Constructor
