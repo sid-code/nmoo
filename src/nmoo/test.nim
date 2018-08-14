@@ -10,7 +10,7 @@ import compile
 import tasks
 import objects
 
-test "== operator works for MData":
+test "== operator compares MData values properly":
   var
     x = 2.md
     y = 2.md
@@ -25,6 +25,16 @@ test "== operator works for MData":
   x = @[2.md, "two".md, "three".mds].md
 
   check x != y
+
+test "== ignores line number information for MData":
+  var
+    x = 2.md
+    y = 2.md
+
+  x.pos = (10, 5)
+  y.pos = (10, 6)
+
+  check x == y
 
 suite "object tests":
   setup:
