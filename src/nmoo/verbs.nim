@@ -362,8 +362,7 @@ proc handleCommand*(player: MObject, command: string): Task =
     considerObject(iobject)
 
   let loc = player.getLocation()
-  if not isNil(loc):
-    considerObject(loc)
+  considerObject(loc)
 
   for o, v in objectVerbPairs.items:
     if not v.matchesName(verb):

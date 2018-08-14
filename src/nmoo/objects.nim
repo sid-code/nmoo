@@ -13,7 +13,7 @@ proc blankObject*: MObject
 proc getProp*(obj: MObject, name: string, all = true): MProperty
 proc getStrProp*(obj: MObject, name: string, all = true): string
 proc getAliases*(obj: MObject): seq[string]
-proc getLocation*(obj: MObject): MObject
+proc getLocation*(obj: MObject): MObject not nil
 proc getContents*(obj: MObject): seq[MObject]
 proc getPropVal*(obj: MObject, name: string, all = true): MData
 proc getPropAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, p: MProperty]
@@ -264,16 +264,21 @@ proc getOwnProps*(obj: MObject): seq[string] =
     if not propIsInherited(obj, name):
       result.add(name)
 
-proc getLocation*(obj: MObject): MObject =
+proc getLocation*(obj: MObject): MObject not nil =
   let world = obj.getWorld()
-  if isNil(world): return nil
+  if isNil(world):
+    raise newException(InvalidWorldError, "world is nil")
 
-  let loc = obj.getPropVal("location")
+  let locd = obj.getPropVal("location")
 
-  if loc.isType(dObj):
-    return world.byID(loc.objVal)
+  if locd.isType(dObj):
+    let loc = world.byID(locd.objVal)
+    if loc.isNil:
+      raise newException(InvalidWorldError, "$# doesn't exist".format(locd))
+    else:
+      return loc
   else:
-    return nil
+    raise newException(InvalidWorldError, "$#.location wasn't an object".format(locd))
 
 proc getRawContents(obj: MObject): seq[MData] =
   let contents = obj.getPropVal("contents")
@@ -310,8 +315,7 @@ proc removeFromContents*(obj: MObject, member: MObject): bool =
 
 proc moveTo*(obj: MObject, newLoc: MObject): bool =
   var loc = obj.getLocation()
-  if not isNil(loc):
-    discard loc.removeFromContents(obj)
+  discard loc.removeFromContents(obj)
 
   if newLoc.addToContents(obj):
     obj.setPropR("location", newLoc)
