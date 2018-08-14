@@ -522,6 +522,17 @@ suite "evaluator":
     check result.isType(dList)
     check result.listVal.len == 4
 
+  test "nested map statement works":
+    let result = evalS("""
+(map (lambda (x) (map (lambda (y) (+ y 1)) x))
+  (list (list 1 2 3) (list 2 3 4) (list 3 4 5)))
+    """)
+
+    check result == @[
+      @[2.md, 3.md, 4.md].md,
+      @[3.md, 4.md, 5.md].md,
+      @[4.md, 5.md, 6.md].md].md
+
   test "fold-right and friends work":
     var result = evalS("(fold-right + 0 (1 2 3 4))")
     check result == 10.md
