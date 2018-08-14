@@ -9,6 +9,7 @@ const MaxMacroDepth = 100 # TODO: Make this world-configurable??
 const compilerDefaultOptions: set[MCompilerOptions] = {}
 const MagicMapFunction = "__mapfn"
 const MagicFoldFunction = "__redfn"
+const MagicShadowPrefix = "__SHADOW__"
 
 proc codeGen*(compiler: MCompiler, data: MData): MData
 proc render*(compiler: MCompiler): CpOutput
@@ -123,7 +124,7 @@ proc getSymInst(symtable: CSymTable, sym: MData): Instruction =
     else:
       return ins(inGET, index, pos)
 
-proc shadowName(name: string): string = "__SHADOW__" & name
+proc shadowName(name: string): string = MagicShadowPrefix & name
 proc unshadowName(name: string): string =
   if name.len > 10:
     name[10..^1]
