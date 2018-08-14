@@ -543,6 +543,15 @@ suite "evaluator":
     result = evalS("(fold-right (lambda (x y) (+ x (* 2 y))) 0 (1 3 5 7))")
     check result == 32.md
 
+  test "nested fold-right works":
+    var result = evalS("""
+(let ((add-l (lambda (x y) (+ x y))))
+  (reduce-right (lambda (l1 l2) (call add-l (list (reduce-right add-l l1) (reduce-right add-l l2))))
+    (list (list 1 2 3) (list 4 5 6))))
+    """)
+
+    check result == 21.md
+
   test "arithmetic works":
     var result = evalS("(+ 3 4)")
     check result == 7.md
