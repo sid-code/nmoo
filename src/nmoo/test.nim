@@ -1,4 +1,5 @@
 import unittest
+import options
 import tables
 
 import types
@@ -35,6 +36,10 @@ test "== ignores line number information for MData":
   y.pos = (10, 6)
 
   check x == y
+
+proc checkOption[T](x: Option[T]): T =
+  check isSome(x)
+  return x.get()
 
 suite "object tests":
   setup:
