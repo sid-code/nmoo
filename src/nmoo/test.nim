@@ -737,6 +737,32 @@ suite "evaluator":
 
     # TODO: actually test static evaluation
 
+  test "macros expand at compile-time, not run-time":
+    world.verbObj.setPropR("root", root)
+    root.setPropR("macro-test-property", 100)
+    var result = evalS("""
+(do
+ (define-syntax makro (lambda (code)
+   (+ 1 (getprop $root "macro-test-property"))))
+
+ (define func (lambda ()
+   (makro)))
+
+ (define result-1 (func))
+
+ ;; this shouldn't affect the next line; $root.macro-test-property
+ ;; should be inlined into func.
+
+ (setprop $root "macro-test-property" 200)
+
+ (define result-2 (func))
+
+ (list result-1 result-2))
+""")
+
+    check result == @[101.md, 101.md].md
+
+
   test "macro infinite recursion returns error":
     var result = evalS(""" (define-syntax lol (lambda (code) `(do (echo "running code!") ,code))) (lol 4) """)
     check result.isType(dErr)
