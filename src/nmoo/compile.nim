@@ -587,6 +587,8 @@ template genFold(compiler: MCompiler, fn, default, list: MData,
   emitx(ins(inLABEL, after))
   emitx(ins(inPOP))                  # result
 
+  compiler.undefSymbol(MagicFoldFunction)
+
 ## Special form definitions
 
 defSpecial "reduce-right":
