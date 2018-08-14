@@ -292,7 +292,8 @@ proc getContents*(obj: MObject): seq[MObject] =
       result.add(world.byID(o.objVal))
 
 proc addToContents*(obj: MObject, newMember: MObject): bool =
-  var contents = obj.getRawContents();
+  # Note: we do not mutate the contents, rather we copy it
+  var contents = obj.getRawContents()
   contents.add(newMember.md)
   obj.setPropR("contents", contents)
   return true
