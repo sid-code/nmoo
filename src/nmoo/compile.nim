@@ -7,6 +7,8 @@ import types
 
 const MaxMacroDepth = 100 # TODO: Make this world-configurable??
 const compilerDefaultOptions: set[MCompilerOptions] = {}
+const MagicMapFunction = "__mapfn"
+const MagicFoldFunction = "__redfn"
 
 proc codeGen*(compiler: MCompiler, data: MData): MData
 proc render*(compiler: MCompiler): CpOutput
@@ -515,7 +517,7 @@ defSpecial "map":
   # fn can either be a sym or a lambda but it doesn't matter
   propogateError(compiler.codeGen(fn))
 
-  let index = compiler.defSymbol("__mapfn")
+  let index = compiler.defSymbol(MagicMapFunction)
   emit(ins(inSTO, index.md))
   propogateError(compiler.codeGen(args[1]))
   emit(ins(inREV))
@@ -534,7 +536,7 @@ defSpecial "map":
   emit(ins(inJMP, labelLocation))
   emit(ins(inLABEL, afterLocation))
   emit(ins(inPOP))
-  compiler.undefSymbol("__mapfn")
+  compiler.undefSymbol(MagicMapFunction)
 
 template genFold(compiler: MCompiler, fn, default, list: MData,
                  useDefault = true, right = true, pos: CodePosition = (0, 0)) =
@@ -546,7 +548,7 @@ template genFold(compiler: MCompiler, fn, default, list: MData,
 
   propogateError(compiler.codeGen(fn))
 
-  let index = compiler.defSymbol("__redfn")
+  let index = compiler.defSymbol(MagicFoldFunction)
   emitx(ins(inSTO, index.md))
   propogateError(compiler.codeGen(list))  # list
 
