@@ -11,31 +11,32 @@ import compile
 import tasks
 import objects
 
-test "== operator compares MData values properly":
-  var
-    x = 2.md
-    y = 2.md
+suite "core data tests":
+  test "== operator compares MData values properly":
+    var
+      x = 2.md
+      y = 2.md
 
-  check x == y
+    check x == y
 
-  x = @[1.md, "two".md, "three".mds].md
-  y = @[1.md, "two".md, "three".mds].md
+    x = @[1.md, "two".md, "three".mds].md
+    y = @[1.md, "two".md, "three".mds].md
 
-  check x == y
+    check x == y
 
-  x = @[2.md, "two".md, "three".mds].md
+    x = @[2.md, "two".md, "three".mds].md
 
-  check x != y
+    check x != y
 
-test "== ignores line number information for MData":
-  var
-    x = 2.md
-    y = 2.md
+  test "== ignores line number information for MData":
+    var
+      x = 2.md
+      y = 2.md
 
-  x.pos = (10, 5)
-  y.pos = (10, 6)
+    x.pos = (10, 5)
+    y.pos = (10, 6)
 
-  check x == y
+    check x == y
 
 proc checkOption[T](x: Option[T]): T =
   check isSome(x)
