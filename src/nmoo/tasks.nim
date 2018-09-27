@@ -413,7 +413,12 @@ impl inPUSHL:
   task.spush(list.md)
 
 impl inLEN:
-  var list = task.top().listVal
+  let listd = task.top()
+  if not listd.isType(dList):
+    task.doError(E_INTERNAL.md("not a list: ".format(listd)))
+    return
+
+  let list = listd.listVal
   task.spush(list.len.md)
 
 impl inSWAP:
