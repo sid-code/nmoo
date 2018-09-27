@@ -28,28 +28,29 @@ from algorithm import reversed
 
 ## Error handling procs
 
-template compileError(msg: string) =
-  var error = E_COMPILE.md(msg)
-  return error
-
-template compileError(msg: string, pos: CodePosition) =
-  var error = E_COMPILE.md(msg)
-  error.trace.add( ("compilation", pos) )
-  return error
 
 template compileError(errord: MData) =
   return errord
 
+template compileError(msg: string) =
+  let error = E_COMPILE.md(msg)
+  compileError(error)
+
+template compileError(msg: string, pos: CodePosition) =
+  var error = E_COMPILE.md(msg)
+  error.trace.add( ("compilation", pos) )
+  compileError(error)
+
 template propogateError(error: MData) =
   let errorV = error
   if errorV != E_NONE.md:
-    return errorV
+    compileError(errorV)
 
 template propogateError(error: MData, traceLine: string, pos: CodePosition) =
   var errorV = error
   if errorV != E_NONE.md:
     errorV.trace.add( (traceLine, pos) )
-    return errorV
+    compileError(errorV)
 
 
 ## Symbol generation procs
@@ -105,11 +106,11 @@ template ins(typ: InstructionType): Instruction =
 proc makeSymbol(compiler: MCompiler): MData =
   compiler.symgen.genSym().mds
 
-proc getSymbol(symtable: CSymTable, name: string): MData =
+proc getSymbol(symtable: CSymTable, name: string): Option[MData] =
   if symtable.hasKey(name):
-    return symtable[name].md
+    return some(symtable[name].md)
   else:
-    compileError("unbound symbol '$1'" % [name])
+    return none[MData]()
 
 proc getSymInst(symtable: CSymTable, sym: MData): Instruction =
   let pos = sym.pos
@@ -118,11 +119,11 @@ proc getSymInst(symtable: CSymTable, sym: MData): Instruction =
   if builtinExists(name):
     return ins(inPUSH, name.mds, pos)
   else:
-    let index = symtable.getSymbol(name)
-    if index.isType(dErr):
-      return ins(inGGET, name.mds, pos)
+    let indexO = symtable.getSymbol(name)
+    if indexO.isSome():
+      return ins(inGET, indexO.get(), pos)
     else:
-      return ins(inGET, index, pos)
+      return ins(inGGET, name.mds, pos)
 
 proc shadowName(name: string): string = MagicShadowPrefix & name
 proc unshadowName(name: string): string =
