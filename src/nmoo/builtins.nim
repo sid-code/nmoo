@@ -158,7 +158,7 @@ proc toEchoString*(x: MData): string =
   if x.isType(dStr):
     x.strVal
   else:
-    x.toCodeStr()
+    $x
 
 ## ::
 ##
@@ -1711,7 +1711,7 @@ defBuiltin "$":
   if what.isType(dStr):
     return what.pack
   else:
-    return what.toCodeStr().md.pack
+    return ($what).md.pack
 
 ## ::
 ##

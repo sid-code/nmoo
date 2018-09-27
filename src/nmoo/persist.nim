@@ -71,7 +71,7 @@ proc unpack3(packed: int): tuple[a: bool, b: bool, c: bool] =
   result.a = (p and 1) == 1
 
 proc dumpData(data: MData): string =
-  toCodeStr(@[data].md)
+  $(@[data].md)
 
 proc dumpObjID(obj: MObject): string =
   if isNil(obj):
@@ -334,7 +334,7 @@ proc writeVerbCode*(world: World, obj: MObject, init = false) =
 proc readVerbCode*(world: World, obj: MObject, verb: MVerb, programmer: MObject): MData =
   var dir = getObjVerbCodeDir(world.name, obj.getID().int)
 
-  let vstr = "$#:$#".format(obj.md.toCodeStr(), verb.names)
+  let vstr = "$#:$#".format($obj.md, verb.names)
 
   if not existsDir(dir):
     return E_ARGS.md("cannot read code for verb $# because the verb code directory doesn't exist".format(vstr))

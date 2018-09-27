@@ -361,7 +361,7 @@ suite "evaluator":
 
   test "verbs statement works":
     var result = evalS("(verbs #1)", worthy)
-    check $result == "@[\"verb name\"]"
+    check result == @["verb name".md].md
 
   test "verbs checks permissions":
     root.pubRead = false
@@ -379,7 +379,7 @@ suite "evaluator":
   test "setverbinfo statement works":
     var result = evalS("(setverbinfo #1 \"verb\" (#1 \"rwx\" \"new ve*rb name\"))")
     result = evalS("(getverbinfo #1 \"verb\")")
-    check $result == "@[#1, \"rwx\", \"new ve*rb name\"]"
+    check result == @[1.ObjID.md, "rwx".md, "new ve*rb name".md].md
 
   test "getverbargs statement works":
     var result = evalS("(getverbargs #1 \"verb\")")
@@ -396,9 +396,9 @@ suite "evaluator":
   test "addverb statement works":
     var result = evalS("(addverb #1 \"cool varb\")")
     result = evalS("(getverbinfo #1 \"cool\")")
-    check $result == "@[#1, \"rx\", \"cool varb\"]"
+    check result == @[1.ObjID.md, "rx".md, "cool varb".md].md
     result = evalS("(getverbargs #1 \"cool\")")
-    check $result == "@[\"none\", \"none\", \"none\"]"
+    check result == @["none".md, "none".md, "none".md].md
 
   test "delverb statement works":
     var result = evalS("(addverb #1 \"cool varb\")")
@@ -416,9 +416,9 @@ suite "evaluator":
 
     check result == 4.md
 
-  test "errisval statement works":
+  test "erristype statement works":
     var result = evalS("(try (+ a b) ((erristype error E_UNBOUND) (erristype error E_ARGS)))")
-    check $result == "@[1, 0]"
+    check result == @[1.md, 0.md].md
 
   test "move statement works":
     var genericContainer = root.createChild()

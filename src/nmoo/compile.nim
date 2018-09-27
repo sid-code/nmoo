@@ -183,7 +183,7 @@ proc `$`*(ins: Instruction): string =
   if ins.operand == nilD:
     return itypeStr & "\t"
   else:
-    return "$1\t$2\t$3" % [itypeStr, ins.operand.toCodeStr(), $ins.pos]
+    return "$1\t$2\t$3" % [itypeStr, $ins.operand, $ins.pos]
 
 proc `$`*(compiler: MCompiler): string =
   var slines: seq[string] = @[]
@@ -191,7 +191,7 @@ proc `$`*(compiler: MCompiler): string =
   for ins in all:
     var prefix = "\t"
     if ins.itype == inLABEL:
-      prefix = ins.operand.toCodeStr() & ":" & prefix
+      prefix = $ins.operand & ":" & prefix
     slines.add(prefix & $ins)
 
   slines[compiler.subrs.len] &= "\t<ENTRY>"

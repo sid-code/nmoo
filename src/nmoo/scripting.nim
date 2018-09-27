@@ -298,20 +298,6 @@ var builtins* = initTable[string, BuiltinProc]()
 proc builtinExists*(name: string): bool =
   builtins.hasKey(name)
 
-## DISPLAYING PARSED CODE
-
-proc toCodeStr*(parsed: MData): string =
-  result = ""
-  if parsed.isType(dList):
-    var list = parsed.listVal
-    result.add('(')
-    result.add(list.map(toCodeStr).join(" "))
-    result.add(')')
-  elif parsed.isType(dSym):
-    result.add(($parsed)[1 .. ^1])
-  else:
-    result.add($parsed)
-
 # defining builtins
 
 # TODO: find out new meanings of immediate and dirty pragmas and see if they're

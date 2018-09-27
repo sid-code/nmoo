@@ -294,6 +294,10 @@ proc pack*(x: MData): Package = Package(ptype: ptData, val: x)
 proc pack*(phase: int): Package = Package(ptype: ptCall, phase: phase)
 proc inputPack*(phase: int): Package = Package(ptype: ptInput, phase: phase)
 
+
+proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
+  return datum.dtype == dtype
+
 proc `$`*(x: ObjID): string {.borrow.}
 proc `==`*(x: ObjID, y: ObjID): bool {.borrow.}
 proc `$`*(x: MData): string {.inline.} =
@@ -303,7 +307,8 @@ proc `$`*(x: MData): string {.inline.} =
     of dStr: x.strVal.escape
     of dSym: "\'" & x.symVal
     of dErr: $x.errVal & ": " & x.errMsg & "\n" & x.trace.mapIt($it.pos & "  " & it.name).join("\n")
-    of dList: $x.listVal
+    of dList:
+      "(" & x.listVal.map(`$`).join(" ") & ")"
     of dObj: "#" & $x.objVal
     of dNil: "nil"
 
@@ -344,9 +349,6 @@ proc hash*(x: MData): Hash =
     of dNil: h = h !& 0
 
   return !$h
-
-proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
-  return datum.dtype == dtype
 
 proc truthy*(datum: MData): bool =
   return not datum.isType(dNil) and
