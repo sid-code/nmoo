@@ -61,7 +61,7 @@ proc removeClient(client: Client) =
     player.callDisconnect()
 
   if client.inputTaskRunning() and client.requiresInput():
-    client.supplyTaskWithInput(nil)
+    client.supplyTaskWithInput("")
 
   let index = clients.find(client)
   if index >= 0:
@@ -154,7 +154,8 @@ proc askForInput*(task: Task, client: Client) =
 proc supplyTaskWithInput(client: Client, input: string) =
   let task = client.tasksWaitingForInput.pop()
   when defined(debug): debug "Supplied task ", task.name, " with input ", input
-  task.resume(if input.isNil: nilD else: input.md)
+  # FIXME: if input is empty, this might result in invalid state
+  task.resume(input.md)
 
 # Called whenever a task finishes. This is used to determine when
 # to flush queues/etc

@@ -92,7 +92,7 @@ proc genObjectJSON(obj, requester: MObject): string =
 
 proc processQuery(queryStr: string): StringTableRef =
   var params = newStringTable(modeCaseInsensitive)
-  let parts = queryStr.split("&").mapIt(it.split("="))
+  let parts = queryStr.split("&").map(func (x: string): seq[string] = x.split("="))
 
   for part in parts:
     if part.len != 2:
@@ -232,7 +232,7 @@ proc handleCodeUpdate(req: Request, world: World) {.async.} =
   let oldCode = verb.code
 
   var err = false
-  var msg: string = nil
+  var msg = ""
 
   try:
     let error = verb.setCode(newCode, who)

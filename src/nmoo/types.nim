@@ -418,7 +418,7 @@ proc newVerb*(
   inherited: bool = false,
 
   code: string = "",
-  compiled: CpOutput = (0, nil, E_NONE.md),
+  compiled: CpOutput = (0, @[], E_NONE.md),
 
   doSpec: ObjSpec = oNone,
   ioSpec: ObjSpec = oNone,

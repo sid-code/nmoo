@@ -54,7 +54,7 @@ proc popFrame(task: Task) =
 
 proc collect(task: Task, num: int): seq[MData] =
   if task.stack.len < num:
-    return nil
+    return @[]
 
   newSeq(result, 0)
   for i in 0 .. num - 1:
@@ -303,11 +303,11 @@ impl inCALL:
           let contID = lcall[1].intVal
           if numArgs == 1:
             let args = task.collect(numArgs)
-            if isNil(args):
-              task.doError(E_INTERNAL.md("missing argument to continuation"))
-            else:
+            if args.len == numArgs:
               task.spush(args[0])
               task.callContinuation(contID)
+            else:
+              task.doError(E_INTERNAL.md("missing argument to continuation"))
           else:
             task.doError(E_ARGS.md("continuations only take 1 argument"))
 
@@ -337,9 +337,7 @@ impl inCALL:
             task.pc = jmploc.intVal
           else:
             let args = task.collect(numArgs)
-            if isNil(args):
-              task.doError(E_INTERNAL.md("insufficient arguments for lambda (need " & $numArgs & ")"))
-            else:
+            if args.len == numArgs:
               var symtable = envData.toST()
 
               for name, val in task.globals:
@@ -349,6 +347,8 @@ impl inCALL:
                 symtable[name] = args[idx]
 
               task.foreignLambdaCall(symtable = symtable, lambda = lcall)
+            else:
+              task.doError(E_INTERNAL.md("insufficient arguments for lambda (need " & $numArgs & ")"))
         else:
           task.doError(E_ARGS.md("lambda expected $1 args but got $2" %
                                  [$expectedNumArgs, $numArgs]))
@@ -359,10 +359,10 @@ impl inCALL:
   elif what.isType(dSym):
     # It's a builtin call
     let args = task.collect(numArgs)
-    if isNil(args):
-      task.doError(E_INTERNAL.md("insufficient arguments for builtin (need " & $numArgs & ")"))
-    else:
+    if args.len == numArgs:
       task.builtinCall(what, args)
+    else:
+      task.doError(E_INTERNAL.md("insufficient arguments for builtin (need " & $numArgs & ")"))
   else:
     task.doError(E_ARGS.md("cannot call '$1'" % [$what]))
 

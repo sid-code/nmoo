@@ -433,7 +433,7 @@ proc compileCode*(forms: seq[MData], programmer: MObject, options = compilerDefa
   for form in forms:
     let error = compiler.codeGen(form)
     if error != E_NONE.md:
-      return (0, nil, error)
+      return (0, @[], error)
 
   return compiler.render
 
@@ -446,7 +446,7 @@ proc compileCode*(code: MData, programmer: MObject,
 
   let error = compiler.codeGen(code)
   if error != E_NONE.md:
-    return (0, nil, error)
+    return (0, @[], error)
 
   return compiler.render
 

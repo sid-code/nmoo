@@ -257,16 +257,12 @@ proc delVerb*(obj: MObject, verb: MVerb): MVerb =
 
 proc call(verb: MVerb, world: World, self, player, caller, holder: MObject,
           symtable: SymbolTable, taskType = ttFunction, callback = -1): Task =
-  if not isNil(verb.compiled.code):
-    let name = "$#:$#" % [holder.toObjStr(), verb.names]
-    return world.addTask(
-      name,
-      self, player, caller, verb.owner,
-      symtable, verb.compiled, taskType, callback
-    )
-
-  else:
-    return nil
+  let name = "$#:$#" % [holder.toObjStr(), verb.names]
+  return world.addTask(
+    name,
+    self, player, caller, verb.owner,
+    symtable, verb.compiled, taskType, callback
+  )
 
 proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
                   args: seq[MData], symtable: SymbolTable = newSymbolTable(),

@@ -521,8 +521,7 @@ proc setInfo(prop: MProperty, info: PropInfo) =
   prop.pubWrite = "w" in info.perms
   prop.ownerIsParent = "c" in info.perms
 
-  if not isNil(info.newName):
-    prop.name = info.newName
+  prop.name = info.newName
 
 proc setInfo(verb: MVerb, info: VerbInfo) =
   verb.owner = info.owner
@@ -530,8 +529,7 @@ proc setInfo(verb: MVerb, info: VerbInfo) =
   verb.pubWrite = "w" in info.perms
   verb.pubExec = "x" in info.perms
 
-  if not isNil(info.newName):
-    verb.names = info.newName
+  verb.names = info.newName
 
 proc setArgs(verb: MVerb, args: VerbArgs) =
   verb.doSpec = args.doSpec
