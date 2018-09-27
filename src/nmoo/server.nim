@@ -227,6 +227,10 @@ proc processClient(client: Client, address: string) {.async.} =
   clients.add(client)
 
   await client.send("Welcome to the server!\c\L")
+
+  # This proc is how the player object communicates with the
+  # connection. It's set to a variable and not directly to
+  # `client.player.output` because it's re-used later.
   proc ssend(obj: MObject, msg: string) =
     client.queueOut(msg & "\c\L")
     discard client.unqueueOut()
@@ -240,10 +244,12 @@ proc processClient(client: Client, address: string) {.async.} =
   while true:
     var line = await client.recvLine()
 
+    # Disconnection check
     if line.len == 0 or line[0] == '\0':
       removeClient(client)
       break
 
+    # Check side channel escape code before basically everything else.
     if line[0] == SideChannelEscapeChar:
       await client.processEscapeSequence()
       continue
