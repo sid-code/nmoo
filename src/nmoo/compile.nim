@@ -398,8 +398,10 @@ proc codeGenQ(compiler: MCompiler, code: MData, quasi: bool): MData =
   return E_NONE.md
 
 proc render*(compiler: MCompiler): CpOutput =
-  ## Remove all label references and replace them
-  ## with numbers that refer to there they jump to
+  ## Remove all label references and replace them with numbers that
+  ## refer to where they jump
+  ##
+  ## Also, combine the `real` and `subrs` sections.
   ##
   ## Instructions that still use labels:
   ##   J0, JN0, JMP, LPUSH, TRY
