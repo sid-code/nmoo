@@ -38,6 +38,11 @@ suite "core data tests":
 
     check x == y
 
+  test "`$` works":
+    let x = @[@[1.md, 2.md, 3.md].md, 3.md].md
+    echo $x
+    check ($x) == "((1 2 3) 3)"
+
 proc checkOption[T](x: Option[T]): T =
   check isSome(x)
   return x.get()
