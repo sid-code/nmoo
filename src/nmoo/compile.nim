@@ -521,24 +521,30 @@ defSpecial "map":
   propogateError(compiler.codeGen(fn))
 
   let index = compiler.defSymbol(MagicMapFunction)
-  emit(ins(inSTO, index.md))
-  propogateError(compiler.codeGen(args[1]))
-  emit(ins(inREV))
-  emit(ins(inCLIST, 0.md))
-  let labelLocation = compiler.addLabel(real)
   let afterLocation = compiler.makeSymbol()
-  emit(ins(inSWAP))
-  emit(ins(inLEN))
+  let afterLocationCleanupDud = compiler.makeSymbol()
+  emit(ins(inSTO, index.md))                     # stack:
+  propogateError(compiler.codeGen(args[1]))      # stack: list
+  emit(ins(inLEN))                               # stack: list list-len
+  emit(ins(inJ0, afterLocationCleanupDud))       # (if not taken) stack: list
+  emit(ins(inREV))                               # stack: rev-list
+  emit(ins(inCLIST, 0.md))                       # stack: rev-list ()
+  let labelLocation = compiler.addLabel(real)
+  emit(ins(inSWAP))                              # stack: () rev-list
+  emit(ins(inLEN))                               # stack: () rev-list (len rev-list)
   emit(ins(inJ0, afterLocation))
-  emit(ins(inPOPL))
-  emit(ins(inGET, index.md))
-  emit(ins(inCALL, 1.md))
-  emit(ins(inSWAP3))
-  emit(ins(inSWAP))
-  emit(ins(inPUSHL))
+  emit(ins(inPOPL))                              # stack: () rev-list-1 rev-list-end
+  emit(ins(inGET, index.md))                     # stack: () rev-list-1 rev-list-end fn
+  emit(ins(inCALL, 1.md))                        # stack: () rev-list-1 mapped-res
+  emit(ins(inSWAP3))                             # stack: rev-list-1 mapped-res ()
+  emit(ins(inSWAP))                              # stack: rev-list-1 () mapped-res
+  emit(ins(inPUSHL))                             # stack: rev-list-1 (mapped-res)
   emit(ins(inJMP, labelLocation))
+  emit(ins(inLABEL, afterLocationCleanupDud))
+  emit(ins(inPUSH, @[].md))
+  emit(ins(inSWAP))
   emit(ins(inLABEL, afterLocation))
-  emit(ins(inPOP))
+  emit(ins(inPOP))                               # stack: () # WE LEAVE AN EMPTY LIST!
   compiler.undefSymbol(MagicMapFunction)
 
 template genFold(compiler: MCompiler, fn, default, list: MData,
