@@ -376,12 +376,33 @@ proc initWorld =
   world.verbObj.output = proc(obj: MObject, msg: string) =
     info "#0: " & msg
 
+proc runInitVerb(world: World): bool =
+  let initTask = world.verbObj.verbCall("server-started", world.verbObj, world.verbObj, @[])
+  if isNil(initTask):
+    warn "Server doesn't specify #0:server-started"
+    return true
+  let tr = initTask.run()
+  case tr.typ:
+    of trFinish:
+      world.verbObj.send("The task for #0:server-started returned " & $tr.res)
+      return true
+    of trSuspend:
+      world.verbObj.send("The task for #0:server-started got suspended!")
+      return false
+    of trError:
+      world.verbObj.send("The task for #0:server-started had an error.")
+      return false
+    of trTooLong:
+      world.verbObj.send("The task for #0:server-started ran for too long!")
+      return false
+
 proc startServer {.async.} =
 
-  (host, port) = getHostAndPort()
+  if runInitVerb(world):
+    (host, port) = getHostAndPort()
 
-  info "Starting server:  host=$1   port=$2" % [host, $port]
-  await serve()
+    info "Starting server:  host=$1   port=$2" % [host, $port]
+    await serve()
 
 
 proc mainLoop =
