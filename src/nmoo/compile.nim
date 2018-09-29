@@ -338,7 +338,6 @@ proc codeGen*(compiler: MCompiler, code: seq[MData], pos: CodePosition): MData =
       return E_NONE.md
     else: # just spit out an ACALL and hope nothing blows up
       let numArgs = code.len - 1
-      compiler.radd(ins(inPUSH, first, first.pos))
       for arg in code[1 .. ^1]:
         propogateError(compiler.codeGen(arg))
 
