@@ -308,7 +308,7 @@ proc `$`*(x: MData): string {.inline.} =
     of dSym: "\'" & x.symVal
     of dErr: $x.errVal & ": " & x.errMsg & "\n" & x.trace.mapIt($it.pos & "  " & it.name).join("\n")
     of dList:
-      "(" & x.listVal.map(`$`).join(" ") & ")"
+      "(" & x.listVal.mapIt($it).join(" ") & ")"
     of dObj: "#" & $x.objVal
     of dNil: "nil"
 
