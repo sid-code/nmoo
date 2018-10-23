@@ -538,6 +538,16 @@ suite "evaluator":
       @[3.md, 4.md, 5.md].md,
       @[4.md, 5.md, 6.md].md].md
 
+  test "pathological map case works":
+      let result = evals("""(define l
+  (lambda (x)
+    (map (lambda (y) (l (- y 1)))
+         (range 1 x))))
+(l 4)""")
+
+      check result == @[@[].md, @[@[].md].md, @[@[].md, @[@[].md].md].md,
+        @[@[].md, @[@[].md].md, @[@[].md, @[@[].md].md].md].md].md
+
   test "fold-right and friends work":
     var result = evalS("(fold-right + 0 (1 2 3 4))")
     check result == 10.md
