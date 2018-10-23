@@ -348,6 +348,9 @@ proc cleanUp() =
     server.close()
 
   world.persist()
+  debug "Releasing lock."
+  if not releaseLock(world.name):
+    fatal "Failed to release lock!"
 
 proc handler() {.noconv.} =
   info "Shutting down..."
@@ -365,6 +368,9 @@ proc initWorld =
     fatal "World \"$#\" doesn't exist." % worldName;
     quit(1)
 
+  if not acquireLock(worldName):
+    fatal "Failed to acquire lock ($#)." % worldName
+    quit(1)
   world = loadWorld(worldName)
 
   try:

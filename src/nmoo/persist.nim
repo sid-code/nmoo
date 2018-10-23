@@ -291,6 +291,9 @@ proc setDefaultObjectCount(world: World) =
 proc getWorldDir*(name: string): string =
   "worlds" / name
 
+proc getWorldLockFile(name: string): string =
+  getWorldDir(name) / "lock"
+
 proc getObjectDir*(name: string): string =
   getWorldDir(name) / "objects"
 
@@ -425,6 +428,22 @@ proc dbDelete*(world: World, obj: MObject) =
   let objFile = getObjectFile(world.name, id)
   let trashFile = getTrashDir(world.name) / $id
   moveFile(objFile, trashFile)
+
+proc acquireLock*(name: string): bool =
+  let lockFile = getWorldLockFile(name)
+  if existsFile(lockFile):
+    return false
+
+  writeFile(lockFile, "")
+  return true
+
+proc releaseLock*(name: string): bool =
+  let lockFile = getWorldLockFile(name)
+  if existsFile(lockFile):
+    removeFile(lockFile)
+    return true
+
+  return false
 
 proc backupWorld(name: string) =
   var suffix = 0
