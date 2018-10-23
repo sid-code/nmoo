@@ -298,23 +298,26 @@ impl inCALL:
     # It's a lambda or continuation call
     let lcall = what.listVal
     if lcall.len == 2:
-      if lcall[0] == "cont".mds:
-        #try:
-          let contID = lcall[1].intVal
-          if numArgs == 1:
-            let args = task.collect(numArgs)
-            if args.len == numArgs:
-              task.spush(args[0])
-              task.callContinuation(contID)
-            else:
-              task.doError(E_INTERNAL.md("missing argument to continuation"))
-          else:
-            task.doError(E_ARGS.md("continuations only take 1 argument"))
-
-        #except:
-        #  task.doError(E_ARGS.md("invalid continuation (error)"))
-      else:
+      if lcall[0] != "cont".mds:
         task.doError(E_ARGS.md("invalid continuation format"))
+        return
+
+      #try:
+      let contID = lcall[1].intVal
+      if numArgs != 1:
+        task.doError(E_ARGS.md("continuations only take 1 argument"))
+        return
+
+      let args = task.collect(numArgs)
+      if args.len != numArgs:
+        task.doError(E_INTERNAL.md("missing argument to continuation"))
+        return
+
+      task.spush(args[0])
+      task.callContinuation(contID)
+
+      #except:
+      #  task.doError(E_ARGS.md("invalid continuation (error)"))
 
     elif lcall.len == 6:
       try:
@@ -326,32 +329,33 @@ impl inCALL:
         let expectedNumArgs = bounds.len
         let expression = lcall[5]
 
-        if expectedNumArgs == numArgs:
-          if origin == task.id:
-            if task.nextInstruction().itype == inRET:
-              # we have a tail call!
-              # there's no need to push another stack frame
-              discard
-            else:
-              task.pushFrame(symtable = task.symtables[env])
-            task.pc = jmploc.intVal
-          else:
-            let args = task.collect(numArgs)
-            if args.len == numArgs:
-              var symtable = envData.toST()
-
-              for name, val in task.globals:
-                symtable[name] = val
-
-              for idx, name in bounds:
-                symtable[name] = args[idx]
-
-              task.foreignLambdaCall(symtable = symtable, lambda = lcall)
-            else:
-              task.doError(E_INTERNAL.md("insufficient arguments for lambda (need " & $numArgs & ")"))
-        else:
+        if expectedNumArgs != numArgs:
           task.doError(E_ARGS.md("lambda expected $1 args but got $2" %
                                  [$expectedNumArgs, $numArgs]))
+          return
+
+        if origin == task.id:
+          if task.nextInstruction().itype == inRET:
+            # we have a tail call!
+            # there's no need to push another stack frame
+            discard
+          else:
+            task.pushFrame(symtable = task.symtables[env])
+          task.pc = jmploc.intVal
+        else:
+          let args = task.collect(numArgs)
+          if args.len != numArgs:
+            task.doError(E_INTERNAL.md("insufficient arguments for lambda (need " & $numArgs & ")"))
+            return
+
+          var symtable = envData.toST()
+          for name, val in task.globals:
+            symtable[name] = val
+
+          for idx, name in bounds:
+            symtable[name] = args[idx]
+
+          task.foreignLambdaCall(symtable = symtable, lambda = lcall)
       except:
         task.doError(E_ARGS.md("invalid lambda"))
     else:
