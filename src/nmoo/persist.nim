@@ -110,6 +110,7 @@ proc dumpVerb(verb: MVerb): string =
   result.addLine(([$verb.doSpec, $verb.prepSpec, $verb.ioSpec].join(" ")))
   result.addLine($pack(verb.pubRead, verb.pubWrite, verb.pubExec))
 
+proc writeVerbCode*(world: World, obj: MObject, init = false)
 proc dumpObject*(obj: MObject): string =
   result = ""
   result.addLine($obj.getID())
@@ -122,6 +123,7 @@ proc dumpObject*(obj: MObject): string =
     result.addLine(".")
   result.addLine($obj.verbs.len)
   for verb in obj.verbs:
+    writeVerbCode(obj.world, obj)
     result.add(dumpVerb(verb))
     result.addLine(".")
 
