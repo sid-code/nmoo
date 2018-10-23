@@ -640,7 +640,8 @@ defSpecial "static-eval":
       of trSuspend:
         compileError("compile-time evaluation unexpectedly suspended", pos)
       of trError:
-        compileError("compile-time evaluation had an error", pos)
+        tr.err.errMsg = "compile time error: $#" % tr.err.errMsg
+        compileError(tr.err)
       of trTooLong:
         compileError("compile-time evaluation took too long", pos)
     
