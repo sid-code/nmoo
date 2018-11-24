@@ -1744,20 +1744,19 @@ defBuiltin "object":
     runtimeError(E_ARGS, "object takes 1 argument")
 
   let val = args[0]
-  case val.dtype:
-    of dInt:
-      return val.intVal.ObjID.md.pack
-    of dStr:
-      var str = val.strVal
-      if str.len > 0 and str[0] == '#':
-        str = str[1..^1]
+  if val.dtype == dInt:
+    return val.intVal.ObjID.md.pack
+  elif val.dtype == dStr:
+    var str = val.strVal
+    if str.len > 0 and str[0] == '#':
+      str = str[1..^1]
 
-      try:
-        return parseInt(str).ObjID.md.pack
-      except:
-        runtimeError(E_ARGS, bname & ": invalid object number: " & str)
-    else:
-      runtimeError(E_TYPE, bname & ": expected dInt or dStr, got " & $val.dtype)
+    try:
+      return parseInt(str).ObjID.md.pack
+    except:
+      runtimeError(E_ARGS, bname & ": invalid object number: " & str)
+  else:
+    runtimeError(E_TYPE, bname & ": expected dInt or dStr, got " & $val.dtype)
 
 
 ## ::
