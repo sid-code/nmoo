@@ -316,6 +316,8 @@ proc codeGen(compiler: MCompiler, code: seq[MData], pos: CodePosition): MData =
     let name = first.symVal
     if compiler.macroExists(name):
       let transformedCode = compiler.callTransformer(name, code.md)
+      if transformedCode.isType(dErr):
+        propogateError(transformedCode)
 
       if compiler.depth >= MaxMacroDepth:
         return E_MAXREC.md("maximum macro recursion depth exceeded")
