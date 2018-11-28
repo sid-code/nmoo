@@ -33,7 +33,6 @@ import persist
 import tasks
 import sidechannel
 
-import editserv
 
 var world: World = nil
 
