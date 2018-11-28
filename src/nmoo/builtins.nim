@@ -2732,3 +2732,18 @@ defBuiltin "kill-task":
 when defined(nimTypeNames):
   defBuiltin "dumpinsts":
     dumpNumberOfInstances();
+
+when defined(includeWizardUtils):
+  defBuiltin "file-contents":
+    if not isWizardT:
+      runtimeError(E_PERM, "you must be a wizard to call file-contents")
+
+    if args.len != 1:
+      runtimeError(E_ARGS, "file-contents takes 1 argument")
+
+    let fname = extractString(args[0])
+
+    try:
+      return readFile(fname)
+    except IOError:
+      runtimeError(E_INTERNAL, "file $# couldn't be opened" % fname)
