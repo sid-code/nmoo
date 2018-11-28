@@ -410,8 +410,8 @@ proc render*(compiler: MCompiler): CpOutput =
   ##   J0, JN0, JMP, LPUSH, TRY
 
   var labels = newCSymTable()
-  var code = compiler.subrs & compiler.real
-  let entry = compiler.subrs.len
+  var code = compiler.real & @[ins(inHALT)] & compiler.subrs
+  let entry = 0
 
   for idx, inst in code:
     if inst.itype == inLABEL:
@@ -430,7 +430,6 @@ proc render*(compiler: MCompiler): CpOutput =
       let newLabel = labels[op.symVal].md
       code[idx] = ins(inTRY, newLabel, inst.pos)
 
-  code.add(ins(inHALT))
   return (entry, code, E_NONE.md)
 
 proc compileCode*(forms: seq[MData], programmer: MObject, options = compilerDefaultOptions): CpOutput =
