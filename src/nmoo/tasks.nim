@@ -14,8 +14,20 @@ import logging
 ## VM (Task)
 
 # Some procs that builtins.nim needs
-proc spush*(task: Task, what: MData) = task.stack.add(what)
-proc spop*(task: Task): MData = task.stack.pop()
+proc spush*(task: Task, what: MData, depth = -1) =
+  task.stack.add(what)
+  when defined(depthStack):
+    let realDepth = if depth == -1: task.frames.len else: depth
+    task.depthStack.add(realDepth)
+
+proc spop*(task: Task): MData =
+  result = task.stack.pop()
+  when defined(depthStack):
+    let poppedDepth = task.depthStack.pop()
+    let curDepth = task.frames.len
+    if curDepth != poppedDepth:
+      warn "task violated depth stack"
+
 proc resume*(task: Task, val: MData)
 proc isRunning*(task: Task): bool = task.status in {tsRunning, tsReceivedInput}
 proc getTaskByID*(world: World, id: int): Task
@@ -381,9 +393,10 @@ impl inACALL:
   let what = task.spop()
   let argsd = task.spop()
   let args = argsd.listVal
+  let depth = task.frames.len + 1
   for arg in args:
-    task.spush(arg)
-  task.spush(what)
+    task.spush(arg, depth=depth)
+  task.spush(what, depth=depth)
   instImpls[inCALL](task, args.len.md)
 
 # algorithm.reversed is broken
@@ -603,6 +616,9 @@ proc createTask*(id: int, name: string, startTime: Time, compiled: CpOutput,
     waitingFor: -1
 
   )
+
+  when defined(depthStack):
+    task.depthStack = @[]
 
   task.pushFrame(newVSymTable())
   return task

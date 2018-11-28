@@ -225,6 +225,9 @@ type
     startTime*: Time
 
     stack*:     seq[MData]
+    when defined(depthStack):
+      depthStack*: seq[int]
+
     symtables*: seq[VSymTable]     ## All of the symbol tables
     globals*:   SymbolTable        ## Same type as used by parser
     code*:      seq[Instruction]
