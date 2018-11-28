@@ -10,6 +10,7 @@ import times
 import math
 import logging
 import os
+import logfmt
 
 import types
 
@@ -440,7 +441,7 @@ proc mainLoop =
     cleanUp()
 
 proc start* =
-  clog = newConsoleLogger(fmtStr = "$date $time $levelname: ")
+  clog = newConsoleLogger(fmtStr=MLogFmtStr)
   addHandler(clog)
 
   initWorld()
