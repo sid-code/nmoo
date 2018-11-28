@@ -11,8 +11,6 @@ const MagicMapFunction = "__mapfn"
 const MagicFoldFunction = "__redfn"
 const MagicShadowPrefix = "__SHADOW__"
 
-proc codeGen*(compiler: MCompiler, data: MData): MData
-proc render*(compiler: MCompiler): CpOutput
 proc compileCode*(code: MData, programmer: MObject,
                   options = compilerDefaultOptions,
                   syntaxTransformers: TableRef[string, SyntaxTransformer] = nil): CpOutput
@@ -225,6 +223,10 @@ proc specialExists(name: string): bool =
 proc macroExists(compiler: MCompiler, name: string): bool =
   compiler.syntaxTransformers.hasKey(name)
 
+
+# Forward declarations for `staticEval`
+proc codeGen(compiler: MCompiler, data: MData): MData
+proc render(compiler: MCompiler): CpOutput
 
 proc staticEval(compiler: MCompiler, code: MData, name = "compile-time task"):
                   tuple[compilationError: MData, tr: TaskResult] =
