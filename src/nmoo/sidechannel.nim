@@ -51,7 +51,6 @@ proc processEscapeSequence*(client: Client) {.async.} =
     symtable = addCoreGlobals(symtable)
     symtable["self"] = client.player.md
     symtable["player"] = client.player.md
-    symtable["owner"] = client.player.md
     symtable["caller"] = client.player.md
 
     let t = client.player.world.addTask("side-channel-task",
