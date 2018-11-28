@@ -1849,11 +1849,12 @@ defBuiltin "tail":
 
 ## ::
 ##
-##   (len list-or-str:List|Str):Int
+##   (len list-or-str:List|Str|Table):Int
 ##
-## Returns the length of the argument. If it's a string, it returns the number
-## of characters in the string. If it's a list, it returns the number of
-## elements in the list.
+## Returns the length of the argument. If it's a string, it returns
+## the number of characters in the string. If it's a list, it returns
+## the number of elements in the list. If it's a table, it returns the
+## number of pairs in it.
 ##
 ## Examples::
 ##
@@ -1866,15 +1867,13 @@ defBuiltin "len":
 
   let listd = args[0]
   if listd.isType(dList):
-    let list = listd.listVal
-
-    return list.len.md.pack
+    return listd.listVal.len.md.pack
   elif listd.isType(dStr):
-    let str = listd.strVal
-
-    return str.len.md.pack
+    return listd.strVal.len.md.pack
+  elif listd.isType(dTable):
+    return listd.tableVal.len.md.pack
   else:
-    runtimeError(E_ARGS, "len takes either a string or a list")
+    runtimeError(E_ARGS, "len takes either a string or a list or a map")
 
 ## ::
 ##
