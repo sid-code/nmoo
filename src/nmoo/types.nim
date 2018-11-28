@@ -76,7 +76,7 @@ type
     pubExec*: bool
 
   MDataType* = enum
-    dInt, dFloat, dStr, dSym, dErr, dList, dMap, dObj, dNil
+    dInt, dFloat, dStr, dSym, dErr, dList, dTable, dObj, dNil
 
   MData* = object
     pos*: CodePosition
@@ -90,7 +90,7 @@ type
         errMsg*: string
         trace*: seq[tuple[name: string, pos: CodePosition]]
       of dList: listVal*: seq[MData]
-      of dMap: mapVal*: Table[MData, MData]
+      of dTable: tableVal*: Table[MData, MData]
       of dObj: objVal*: ObjID
       of dNil: nilVal*: int # dummy
 
@@ -300,8 +300,8 @@ proc md*(x: seq[MData]): MData {.procvar.} = MData(dtype: dList, listVal: x)
 proc md*(x: ObjID): MData {.procvar.} = MData(dtype: dObj, objVal: x)
 proc md*(x: MObject): MData {.procvar.} = x.id.md
 proc md*(x: openArray[(MData, MData)]): MData {.procvar.} =
-  var mapVal = toTable(x)
-  MData(dtype: dMap, mapVal: mapVal)
+  var tableVal = toTable(x)
+  MData(dtype: dTable, tableVal: tableVal)
 
 proc pack*(x: MData): Package = Package(ptype: ptData, val: x)
 proc pack*(phase: int): Package = Package(ptype: ptCall, phase: phase)
@@ -328,7 +328,7 @@ proc `$`*(x: MData): string {.inline, procvar.} =
     of dErr: $x.errVal & ": " & x.errMsg & "\n" & x.trace.mapIt($it.pos & "  " & it.name).join("\n")
     of dList:
       "(" & x.listVal.mapIt($it).join(" ") & ")"
-    of dMap: `$M`(x.mapVal)
+    of dTable: `$M`(x.tableVal)
     of dObj: "#" & $x.objVal
     of dNil: "nil"
 
@@ -350,7 +350,7 @@ proc hash*(x: MData): Hash =
     of dErr: h = h !& x.errVal.hash
     # TODO: cache these (map and list)
     of dList: h = h !& x.listVal.hash
-    of dMap: h = h !& x.mapVal.hash
+    of dTable: h = h !& x.tableVal.hash
     of dObj: h = h !& x.objVal.int
     of dNil: h = h !& 0
 
@@ -365,7 +365,7 @@ proc `==`*(x: MData, y: MData): bool =
       of dSym: return x.symVal == y.symVal
       of dErr: return x.errVal == y.errVal
       of dList: return x.listVal == y.listVal
-      of dMap: return x.mapVal == y.mapVal
+      of dTable: return x.tableVal == y.tableVal
       of dObj: return x.objVal == y.objVal
       of dNil: return true
   else:

@@ -65,8 +65,8 @@ proc writeMData*(s: Stream | AsyncStream, d: MData) {.multisync.} =
       await s.write(int32(list.len))
       for el in list:
         await s.writeMData(el)
-    of dMap:
-      let hmap = d.mapVal
+    of dTable:
+      let hmap = d.tableVal
       await s.write(int32(hmap.len))
       for key, val in pairs(hmap):
         await s.writeMData(key)
@@ -116,7 +116,7 @@ proc readMData*(s: Stream | AsyncStream): Future[MData] {.multisync.} =
       while size > 0:
         dec size
         result.listVal.add(await s.readMData())
-    of dMap:
+    of dTable:
       var size = await s.readInt32()
       var mappairs: seq[(MData, MData)]
       while size > 0:
