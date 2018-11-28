@@ -240,6 +240,8 @@ proc staticEval(compiler: MCompiler, code: MData, name = "compile-time task"):
     result.compilationError = compilationError
     return
 
+  compiler.syntaxTransformers = ocompiler.syntaxTransformers
+
   let compiled = ocompiler.render()
   let symtable = newSymbolTable()
 
