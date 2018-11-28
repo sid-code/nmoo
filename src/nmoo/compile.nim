@@ -305,7 +305,7 @@ template verifyArgs(name: string, args: seq[MData], spec: seq[MDataType], vararg
       compileError("$1: expected argument of type $2 but got $3" %
         [name, $e, $o.dtype])
 
-proc codeGen*(compiler: MCompiler, code: seq[MData], pos: CodePosition): MData =
+proc codeGen(compiler: MCompiler, code: seq[MData], pos: CodePosition): MData =
   if code.len == 0:
     compiler.radd(ins(inCLIST, 0.md, pos))
     return E_NONE.md
@@ -360,7 +360,7 @@ proc codeGen*(compiler: MCompiler, code: seq[MData], pos: CodePosition): MData =
     compiler.radd(ins(inCLIST, code.len.md, pos))
     return E_NONE.md
 
-proc codeGen*(compiler: MCompiler, data: MData): MData =
+proc codeGen(compiler: MCompiler, data: MData): MData =
   if data.isType(dList):
     propogateError(compiler.codeGen(data.listVal, data.pos))
   elif data.isType(dSym):
@@ -403,7 +403,7 @@ proc codeGenQ(compiler: MCompiler, code: MData, quasi: bool): MData =
 
   return E_NONE.md
 
-proc render*(compiler: MCompiler): CpOutput =
+proc render(compiler: MCompiler): CpOutput =
   ## Remove all label references and replace them with numbers that
   ## refer to where they jump
   ##
