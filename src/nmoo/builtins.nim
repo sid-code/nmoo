@@ -973,6 +973,7 @@ defBuiltin "loadverb":
 
   let resultd = readVerbCode(world, obj, verb, player)
   checkForError(resultd)
+  world.persist(obj)
   return verb.names.md.pack
 
 ## ::
