@@ -312,7 +312,7 @@ proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
 
 
 proc `$M`(m: Table[MData, MData]): string =
-  result &= "(hmap"
+  result &= "(table"
   for k, v in pairs(m):
     result &= "($# $#)".format(k, v)
   result &= ")"
