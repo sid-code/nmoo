@@ -76,7 +76,7 @@ type
     pubExec*: bool
 
   MDataType* = enum
-    dInt, dFloat, dStr, dSym, dErr, dList, dObj, dNil
+    dInt, dFloat, dStr, dSym, dErr, dList, dMap, dObj, dNil
 
   MData* = object
     pos*: CodePosition
@@ -90,6 +90,7 @@ type
         errMsg*: string
         trace*: seq[tuple[name: string, pos: CodePosition]]
       of dList: listVal*: seq[MData]
+      of dMap: mapVal*: Table[MData, MData]
       of dObj: objVal*: ObjID
       of dNil: nilVal*: int # dummy
 
@@ -278,6 +279,11 @@ type
 
 let nilD* = MData(dtype: dNil, nilVal: 1)
 
+# forward declarations
+proc `$`*(x: MData): string {.inline, procvar.}
+proc hash*(x: MData): Hash
+proc `==`*(x: MData, y: MData): bool
+
 proc id*(x: int): ObjID = ObjID(x)
 proc getID*(obj: MObject): ObjID = obj.id
 proc setID*(obj: MObject, newID: ObjID) = obj.id = newID
@@ -293,18 +299,27 @@ proc md*(x: MError, s: string): MData {.procvar.} = MData(dtype: dErr, errVal: x
 proc md*(x: seq[MData]): MData {.procvar.} = MData(dtype: dList, listVal: x)
 proc md*(x: ObjID): MData {.procvar.} = MData(dtype: dObj, objVal: x)
 proc md*(x: MObject): MData {.procvar.} = x.id.md
+proc md*(x: openArray[(MData, MData)]): MData {.procvar.} =
+  var mapVal = toTable(x)
+  MData(dtype: dMap, mapVal: mapVal)
 
 proc pack*(x: MData): Package = Package(ptype: ptData, val: x)
 proc pack*(phase: int): Package = Package(ptype: ptCall, phase: phase)
 proc inputPack*(phase: int): Package = Package(ptype: ptInput, phase: phase)
 
-
 proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
   return datum.dtype == dtype
 
+
+proc `$M`(m: Table[MData, MData]): string =
+  result &= "(hmap"
+  for k, v in pairs(m):
+    result &= "($# $#)".format(k, v)
+  result &= ")"
+
 proc `$`*(x: ObjID): string {.borrow.}
 proc `==`*(x: ObjID, y: ObjID): bool {.borrow.}
-proc `$`*(x: MData): string {.inline.} =
+proc `$`*(x: MData): string {.inline, procvar.} =
   case x.dtype:
     of dInt: $x.intVal
     of dFloat: $x.floatVal
@@ -313,32 +328,17 @@ proc `$`*(x: MData): string {.inline.} =
     of dErr: $x.errVal & ": " & x.errMsg & "\n" & x.trace.mapIt($it.pos & "  " & it.name).join("\n")
     of dList:
       "(" & x.listVal.mapIt($it).join(" ") & ")"
+    of dMap: `$M`(x.mapVal)
     of dObj: "#" & $x.objVal
     of dNil: "nil"
 
-proc `==`*(x: MData, y: MData): bool =
-  if x.dtype == y.dtype:
-    case x.dtype:
-      of dInt: return x.intVal == y.intVal
-      of dFloat: return x.floatVal == y.floatVal
-      of dStr: return x.strVal == y.strVal
-      of dSym: return x.symVal == y.symVal
-      of dErr: return x.errVal == y.errVal
-      of dList:
-        let
-          xl = x.listVal
-          yl = y.listVal
-        if xl.len != yl.len:
-          return false
-        else:
-          for idx, el in xl:
-            if yl[idx] != el:
-              return false
-          return true
-      of dObj: return x.objVal == y.objVal
-      of dNil: return true
-  else:
-    return false
+proc hash(m: Table[MData, MData]): Hash =
+  var h = 0.hash
+  for k, v in pairs(m):
+    h = h !& k.hash
+    h = h !& v.hash
+
+  return !$h
 
 proc hash*(x: MData): Hash =
   var h = ord(x.dtype).hash
@@ -348,11 +348,28 @@ proc hash*(x: MData): Hash =
     of dStr: h = h !& x.strVal.hash
     of dSym: h = h !& x.symVal.hash
     of dErr: h = h !& x.errVal.hash
+    # TODO: cache these (map and list)
     of dList: h = h !& x.listVal.hash
+    of dMap: h = h !& x.mapVal.hash
     of dObj: h = h !& x.objVal.int
     of dNil: h = h !& 0
 
   return !$h
+
+proc `==`*(x: MData, y: MData): bool =
+  if x.dtype == y.dtype:
+    case x.dtype:
+      of dInt: return x.intVal == y.intVal
+      of dFloat: return x.floatVal == y.floatVal
+      of dStr: return x.strVal == y.strVal
+      of dSym: return x.symVal == y.symVal
+      of dErr: return x.errVal == y.errVal
+      of dList: return x.listVal == y.listVal
+      of dMap: return x.mapVal == y.mapVal
+      of dObj: return x.objVal == y.objVal
+      of dNil: return true
+  else:
+    return false
 
 proc truthy*(datum: MData): bool =
   return not datum.isType(dNil) and

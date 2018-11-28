@@ -65,6 +65,12 @@ proc writeMData*(s: Stream | AsyncStream, d: MData) {.multisync.} =
       await s.write(int32(list.len))
       for el in list:
         await s.writeMData(el)
+    of dMap:
+      let hmap = d.mapVal
+      await s.write(int32(hmap.len))
+      for key, val in pairs(hmap):
+        await s.writeMData(key)
+        await s.writeMData(val)
     of dObj:
       await s.write(int32(d.objVal))
     of dNil:
@@ -110,6 +116,15 @@ proc readMData*(s: Stream | AsyncStream): Future[MData] {.multisync.} =
       while size > 0:
         dec size
         result.listVal.add(await s.readMData())
+    of dMap:
+      var size = await s.readInt32()
+      var mappairs: seq[(MData, MData)]
+      while size > 0:
+        dec size
+        let key = await s.readMData()
+        let val = await s.readMData()
+        mappairs.add( (key, val) )
+      result = mappairs.md
     of dObj:
       result.objVal = ObjID(int(await s.readInt32()))
     of dNil:
