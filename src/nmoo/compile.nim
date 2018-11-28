@@ -258,7 +258,10 @@ proc staticEval(compiler: MCompiler, code: MData, name = "compile-time task"):
 
 proc callTransformer(compiler: MCompiler, name: string, code: MData): MData =
   let transformer = compiler.syntaxTransformers[name]
-  let callCode = @["call".mds, transformer.code, @[@["quote".mds, code].md].md].md
+  var callCode = @["call".mds, transformer.code, @[@["quote".mds, code].md].md].md
+  callCode.pos = code.pos
+  callCode.listVal[0].pos = code.pos
+
   var (cerr, tr) = compiler.staticEval(callCode)
   propogateError(cerr, "during compilation of macro code", code.pos)
 
