@@ -212,9 +212,9 @@ proc readVerb(world: World, stream: FileStream): MVerb =
     code = ""
     curLine = ""
 
-  while curLine != ".":
-    code &= curLine & "\n"
-    curLine = stream.readLine()
+  while curLine != ".\n":
+    code &= curLine
+    curLine = stream.readLine() & "\n"
 
   result.owner = readObjectID(world, stream)
 
