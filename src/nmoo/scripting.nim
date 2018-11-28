@@ -21,7 +21,7 @@ proc nextLine(pos: var CodePosition) =
 ## LEXER
 
 template addtoken =
-  result.add(curToken)
+  result.tokens.add(curToken)
   curToken = Token(ttype: tokAtom, image: "", pos: pos)
 
 template addword =
@@ -31,8 +31,9 @@ template addword =
     addtoken()
     curWord = ""
 
-proc lex(code: string): seq[Token] =
-  newSeq(result, 0)
+proc lex(code: string): tuple[tokens: seq[Token], error: MData] =
+  newSeq(result.tokens, 0)
+  result.error = E_NONE.md
   var
     pos: CodePosition = (1, 1)
     curToken = Token(ttype: tokAtom, image: "", pos: pos)
@@ -60,7 +61,9 @@ proc lex(code: string): seq[Token] =
           elif c == '\'':
             curWord &= "'"
           else:
-            raise newException(MParseError, "invalid escape \\" & c)
+            result.error = E_PARSE.md("Invalid escape \\" & c)
+            result.error.pos = pos
+            return
         else:
           curWord &= $c
 
@@ -184,9 +187,12 @@ proc newParser*(code: string): MParser =
   if fixedCode.len == 0:
     fixedCode = "()"
 
+  let (tokens, errd) = lex(fixedCode)
+
   MParser(
     code: fixedCode,
-    tokens: lex(fixedCode),
+    error: errd,
+    tokens: tokens,
     tindex: 0
   )
 
@@ -285,6 +291,9 @@ proc parseList*(parser: var MParser): MData =
   result.pos = pos
 
 proc parseFull*(parser: var MParser): MData =
+  if parser.error.errVal != E_NONE:
+    return parser.error
+
   var forms = @["do".mds]
 
   while parser.peek().ttype != tokEnd:

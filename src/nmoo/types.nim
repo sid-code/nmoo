@@ -142,6 +142,7 @@ type
 
   MParser* = ref object
     code*: string
+    error*: MData
     tokens*: seq[Token]
     tindex*: int
 

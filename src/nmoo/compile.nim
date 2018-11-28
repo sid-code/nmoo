@@ -460,7 +460,11 @@ proc compileCode*(code: MData, programmer: MObject,
 
 proc compileCode*(code: string, programmer: MObject, options = compilerDefaultOptions): CpOutput =
   var parser = newParser(code)
-  return compileCode(parser.parseFull(), programmer, options)
+  let parsed = parser.parseFull()
+  if parsed.isType(dErr):
+    return (0, @[], parsed)
+
+  return compileCode(parsed, programmer, options)
 
 defSpecial "quote":
   verifyArgs("quote", args, @[dNil])
