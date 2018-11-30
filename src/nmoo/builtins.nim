@@ -33,6 +33,7 @@ proc strToType(str: string): tuple[b: bool, t: MDataType] =
     of "sym": return (true, dSym)
     of "obj": return (true, dObj)
     of "list": return (true, dList)
+    of "table": return (true, dTable)
     of "err": return (true, dErr)
     of "nil": return (true, dNil)
     else: return (false, dInt)
