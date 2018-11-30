@@ -76,6 +76,10 @@ template extractList(d: MData): seq[MData] =
   let dV = d
   checkType(dV, dList)
   dV.listVal
+template extractTable(d: MData): Table[MData, MData] =
+  let dV = d
+  checkType(dV, dTable)
+  return dV.tableVal
 template extractError(d: MData): tuple[e: MError, s: string] =
   let dV = d
   checkType(dV, dErr)
