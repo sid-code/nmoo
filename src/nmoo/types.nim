@@ -299,6 +299,7 @@ proc md*(x: MError, s: string): MData {.procvar.} = MData(dtype: dErr, errVal: x
 proc md*(x: seq[MData]): MData {.procvar.} = MData(dtype: dList, listVal: x)
 proc md*(x: ObjID): MData {.procvar.} = MData(dtype: dObj, objVal: x)
 proc md*(x: MObject): MData {.procvar.} = x.id.md
+proc md*(x: Table[MData, MData]): MData {.procvar.} = MData(dtype: dTable, tableVal: x)
 proc md*(x: openArray[(MData, MData)]): MData {.procvar.} =
   var tableVal = toTable(x)
   MData(dtype: dTable, tableVal: tableVal)
