@@ -2476,6 +2476,31 @@ defBuiltin "setremove":
 
   return list.md.pack
 
+defBuiltin "tget":
+  if args.len != 2 and args.len != 3:
+    runtimeError(E_ARGS, "tget takes 2 or 3 arguments")
+
+  checkType(args[0], dTable)
+
+  template t: Table[MData, MData] = args[0].tableVal
+  if args[1] in t:
+    return t[args[1]].pack
+  else:
+    if args.len == 3:
+      return args[2].pack
+    else:
+      runtimeError(E_BOUNDS, "table does not contain key $#".format(args[1]))
+
+defBuiltin "tset":
+  if args.len != 3:
+    runtimeError(E_ARGS, "tset takes 3 argumments")
+
+  # This makes a copy!
+  var newTable = extractTable(args[0])
+  newTable[args[1]] = args[2]
+
+  return newTable.md.pack
+
 # (in list el)
 # returns index of el in list, or -1
 defBuiltin "in":
