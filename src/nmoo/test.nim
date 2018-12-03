@@ -639,6 +639,11 @@ suite "evaluator":
 
     check result == 3.md
 
+  test "len statement works on tables":
+    var result = evalS("(len (table (1 \"a\") (2 3)))")
+
+    check result == 2.md
+
   test "head statement works":
     var result = evalS("(head (1 2 3 4))")
     check result == 1.md
