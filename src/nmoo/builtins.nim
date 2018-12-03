@@ -1775,6 +1775,31 @@ defBuiltin "list":
 
 ## ::
 ##
+##   (table pairs:List...):Table
+##
+## Constructs a table. ``pairs`` is expected to be a plist (this means
+## that every argument to ``table`` must be a list of length 2),
+## otherwise ``E_ARGS`` is thrown. The table is initialized with the
+## pairs stored in ``pairs``.
+##
+## Example::
+##
+##   (table) ; creates an empty table
+##   (table '(a 5) '(b 10) '(c 30)) ; maps a to 5, b to 10, c to 30
+defBuiltin "table":
+  var tab = initTable[MData, MData]()
+  for argd in args:
+    if not argd.isType(dList):
+      runtimeError(E_ARGS, "arguments to table must be pairs")
+    let pair = argd.listVal
+    if len(pair) != 2:
+      runtimeError(E_ARGS, "arguments to table must be pairs")
+    tab[pair[0]] = pair[1]
+
+  return tab.md.pack
+
+## ::
+##
 ##   (cat str:Str...):Str
 ##   (cat list:List...):List
 ##
