@@ -1802,8 +1802,9 @@ defBuiltin "table":
 ##
 ##   (cat str:Str...):Str
 ##   (cat list:List...):List
+##   (cat table:Table...):Table
 ##
-## Concatenates strings or lists together. All arguments must be of the same
+## Concatenates strings or lists or tables together. All arguments must be of the same
 ## type and either strings or lists.
 ##
 ## Examples::
@@ -1826,6 +1827,12 @@ defBuiltin "cat":
     for argd in args:
       let arg = extractList(argd)
       total.add(arg)
+    return total.md.pack
+  if typ == dTable:
+    var total = initTable[MData, MData]()
+    for argd in args:
+      for key, val in pairs(extractTable(argd)):
+        total[key] = val
     return total.md.pack
   else:
     var total = ""
