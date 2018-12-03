@@ -21,6 +21,6 @@ proc main {.async.} =
   asyncCheck scc.startReader()
 
   let prog = parse(stdin.readAll())
-  discard await scc.request(prog)
+  echo $(await scc.request(prog))
 
 waitFor main()
