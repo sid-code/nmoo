@@ -698,6 +698,30 @@ suite "evaluator":
     result = evalS("(setremove (1 2) 3)")
     check result.listVal.len == 2
 
+  test "tget statement works":
+    var result = evalS("(tget (table (1 10) (2 20)) 2)")
+    check result == 20.md
+
+    result = evalS("(tget (table (1 10) (2 20)) 4)")
+    check result == E_BOUNDS.md
+
+    result = evalS("(tget (table (1 10) (2 20)) 4 nil)")
+    check result == nilD
+
+  test "tset statement works":
+    var result = evalS("(tset (table (1 10) (2 20)) 1 20)")
+    check result.dtype == dTable
+    check result.tableVal.len == 2
+    check result.tableVal[1.md] == 20.md
+
+    result = evalS("(tset (table (1 10) (2 20)) 3 20)")
+    check result.dtype == dTable
+    check result.tableVal.len == 3
+    check result.tableVal[3.md] == 20.md
+
+    result = evalS("(tset (table (1 10) (2 20)) 3)")
+    check result == E_ARGS.md
+
   test "in statement works":
     var result = evalS("(in (1 2 3) 3)")
     check result.intVal == 2
