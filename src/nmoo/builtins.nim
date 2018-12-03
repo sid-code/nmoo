@@ -2578,6 +2578,24 @@ defBuiltin "pass":
     let verbResult = args[^1]
     return verbResult.pack
 
+## ::
+##
+##    (time):Int
+##
+## Returns the current time in milliseconds since 1970-01-01 UTC.
+##
+## This will not be supported on non-64 bit platforms.
+defBuiltin "time":
+  when sizeof(int) < 8:
+    runtimeError(E_INTERNAL, "time not supported on non-64 bit platforms")
+
+  if args.len != 0:
+    runtimeError(E_ARGS, "time takes no parameters")
+  let curTime = getTime()
+  let seconds = toUnix(curTime)
+  let nanos = nanosecond(curTime)
+  return (seconds * 1000 + nanos div 1000000).int.md.pack
+
 # (gensalt [rounds])
 # generates a random salt to use
 # If rounds is not provided, then #0.default-salt-rounds is used
