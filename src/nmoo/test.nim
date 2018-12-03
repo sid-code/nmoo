@@ -614,7 +614,7 @@ suite "evaluator":
     var result = evalS("(= 3 3)")
     check result == 1.md
 
-    result = evalS("(= (3 3 \"cat\") (3 3 \"cat\"))")
+    result = evalS("(= (list 3 3 \"cat\" (table (4 4) (3 3))) (list 3 3 \"cat\" (table (4 4) (3 3))))")
     check result == 1.md
 
     result = evalS("(= (3 3 \"cat\" 4) (3 3 \"cat\"))")
