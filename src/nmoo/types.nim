@@ -315,7 +315,7 @@ proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
 proc `$M`(m: Table[MData, MData]): string =
   result &= "(table"
   for k, v in pairs(m):
-    result &= "($# $#)".format(k, v)
+    result &= " ($# $#)".format(k, v)
   result &= ")"
 
 proc `$`*(x: ObjID): string {.borrow.}
