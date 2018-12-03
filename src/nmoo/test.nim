@@ -590,6 +590,26 @@ suite "evaluator":
     result = evalS("(+ 3 (- 2 1))")
     check result == 4.md
 
+  test "table constructor works":
+    var result = evalS("(table)")
+    check result.dtype == dTable
+    check len(result.tableVal) == 0
+
+    result = evalS("(table (5 10) (10 20) '(a 40))")
+    check result.dtype == dTable
+    let tab = result.tableVal
+    check len(tab) == 3
+    check tab[5.md] == 10.md
+    check tab[10.md] == 20.md
+    check tab["a".mds] == 40.md
+
+  test "table constructor errors on invalid arguments":
+    var result = evalS("(table 5)")
+    check result == E_ARGS.md
+
+    result = evalS("(table (5) (10))")
+    check result == E_ARGS.md
+
   test "= statement works":
     var result = evalS("(= 3 3)")
     check result == 1.md
