@@ -424,24 +424,14 @@ proc mainLoop =
 
   try:
     while true:
-      let beforePulse = epochTime()
-      for x in 1..10:
-        world.tick()
-
-      let elapsed = epochTime() - beforePulse
-      totalPulses += 1
-      totalPulseTime += elapsed
-
-      poll(int(250 - elapsed * 1000))
-
+      poll()
       # handle input
+      world.tick()
       unqueueAll()
 
   except:
     fatal getCurrentExceptionMsg()
   finally:
-    let averagePulseTime = int(totalPulseTime / totalPulses.float * 100000) / 100
-    info totalPulses, " pulses, ", averagePulseTime, "ms average"
     cleanUp()
 
 proc start* =
