@@ -476,6 +476,7 @@ proc getTaskByID*(world: World, id: int): Task =
 proc resume*(task: Task, val: MData) =
   task.setStatus(tsRunning)
   if val.isType(dErr):
+    task.hasCallPackage = false
     task.doError(val)
   else:
     task.spush(val)
