@@ -168,7 +168,6 @@ proc taskFinished*(task: Task) =
     if isNil(callerClient):
       return
 
-
     if task.status == tsAwaitingInput:
       discard callerClient.unqueueIn()
     elif task.status == tsAwaitingResult:
@@ -236,7 +235,10 @@ proc processClient(client: Client, address: string) {.async.} =
     discard client.unqueueOut()
     # TODO: Make it so output is unqueued only between tasks
 
-  client.player.output = ssend
+  # This is a dummy version of `ssend`
+  proc devnull(obj: MObject, msg: string) =
+    discard obj
+    discard msg
 
   # Has the player connected to an existing character?
   var connected = false
@@ -251,8 +253,11 @@ proc processClient(client: Client, address: string) {.async.} =
 
     # Check side channel escape code before basically everything else.
     if line[0] == SideChannelEscapeChar:
+      client.player.output = devnull
       await client.processEscapeSequence()
       continue
+
+    client.player.output = ssend
 
     when defined(debug): debug "Received ", line
 
