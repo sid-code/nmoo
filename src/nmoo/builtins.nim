@@ -2558,7 +2558,7 @@ defBuiltin "pass":
     if isNil(verb):
       runtimeError(E_VERBNF, "Pass failed, verb is not inherited.")
 
-    discard parent.verbCallRaw(
+    discard self.verbCallRaw(
       verb,
       player, caller,
       args, symtable = symtable, holder = parent, callback = task.id
