@@ -5,6 +5,7 @@ import asyncdispatch
 import streams
 import boost/io/asyncstreams
 import tables
+import logging
 
 import types
 import server
@@ -41,6 +42,11 @@ proc processEscapeSequence*(client: Client) {.async.} =
 
     # compile the code!
     let instructions = compileCode(d, client.player)
+
+    when defined(dumpSideChannelCode):
+      for idx, instr in instructions.code:
+        debug "$#: $#".format(idx, instr)
+
     if instructions.error != E_NONE.md:
       await stream.writeResponse(id, instructions.error)
       return
