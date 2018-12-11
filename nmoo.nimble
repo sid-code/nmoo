@@ -14,6 +14,7 @@ skipFiles     = @["sidechtest.nim"]
 requires "nim >= 0.17"
 requires "bcrypt"
 requires "nimboost"
+requires "asynctools"
 
 task test, "Run tests":
   exec "nim c -r src/nmoo/test.nim"

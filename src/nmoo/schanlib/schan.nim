@@ -1,7 +1,9 @@
 import asyncnet
 import asyncdispatch
 import boost/io/asyncstreams
+import asynctools/asyncsync
 import tables
+import deques
 
 import ../server
 import ../sidechannel
@@ -11,18 +13,25 @@ import ../types
 proc arc4random: uint32 {.importc: "arc4random".}
 
 type
+
   AsyncSideChannelClient* = object
+    lock: AsyncLock
     sock*: AsyncSocket
     processing: TableRef[uint32, Future[MData]]
 
 proc newAsyncSideChannelClient*(sock: AsyncSocket): AsyncSideChannelClient =
-  return AsyncSideChannelClient(sock: sock, processing: newTable[uint32, Future[MData]]())
+  return AsyncSideChannelClient(
+    lock: newAsyncLock(),
+    sock: sock,
+    processing: newTable[uint32, Future[MData]]())
 
-proc writeRequest(sock: AsyncSocket, id: uint32, req: MData) {.async.} =
+proc writeRequest(sock: AsyncSocket, lock: AsyncLock, id: uint32, req: MData) {.async.} =
+  await lock.acquire()
   let stream = newAsyncSocketStream(sock)
-  await stream.writeLine("\x1C")
+  await stream.writeLine(""&SideChannelEscapeChar)
   await stream.writeUint32(id)
   await stream.writeMData(req)
+  lock.release()
 
 proc request*(scc: AsyncSideChannelClient, req: MData): Future[MData] =
   let retFuture = newFuture[MData]("request")
@@ -33,7 +42,7 @@ proc request*(scc: AsyncSideChannelClient, req: MData): Future[MData] =
       break
 
   scc.processing[id] = retFuture
-  asyncCheck writeRequest(scc.sock, id, req)
+  asyncCheck writeRequest(scc.sock, scc.lock, id, req)
   return retFuture
 
 # start this with asyncCheck
