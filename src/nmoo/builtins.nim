@@ -2816,6 +2816,7 @@ when defined(includeWizardUtils):
     let fname = extractString(args[0])
 
     try:
-      return readFile(fname)
+      return readFile(fname).md.pack
     except IOError:
-      runtimeError(E_INTERNAL, "file $# couldn't be opened" % fname)
+      runtimeError(E_INTERNAL,
+                   "file-contents: $#".format(getCurrentExceptionMsg()))
