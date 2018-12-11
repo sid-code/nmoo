@@ -465,6 +465,8 @@ proc compileCode*(code: string, programmer: MObject, options = compilerDefaultOp
   let parsed = parser.parseFull()
   if parsed.isType(dErr):
     return (0, @[], parsed)
+  if parser.error != E_NONE.md:
+     return (0, @[], parser.error)
 
   return compileCode(parsed, programmer, options)
 

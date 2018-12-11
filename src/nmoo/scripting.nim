@@ -109,7 +109,9 @@ proc lex(code: string): tuple[tokens: seq[Token], error: MData] =
         curWord &= $c
 
   if strMode:
-    raise newException(MParseError, "unterminated string meets end of code")
+    result.error = E_PARSE.md("unterminated string meets end of code")
+    result.error.pos = pos
+    return
 
   curToken.ttype = tokEnd
   curToken.image = ""
@@ -117,7 +119,14 @@ proc lex(code: string): tuple[tokens: seq[Token], error: MData] =
 
 ## PARSER
 
-proc toData(image: string, pos: CodePosition): MData =
+# returns (data, "") if there is no error, otherwise (nil, "error
+# description")
+#
+# Using Go-style error handling here seems dubious because I hardly do
+# that anywhere else. However, since an error is data and this
+# function can return arbitrary data values, there is no room for
+# out-of-band errors. Hence, the string in the returned tuple.
+proc toData(image: string, pos: CodePosition): (MData, string) =
   let
     leader = image[0]
     rest = image[1 .. ^1]
@@ -127,7 +136,10 @@ proc toData(image: string, pos: CodePosition): MData =
     let parts = image.split('.')
     if parts.len > 1:
       let objStr = parts[0..^2].join(".")
-      let obj = objStr.toData(pos)
+      let (obj, error) = objStr.toData(pos)
+
+      if error.len > 0:
+        return (nilD, error)
 
       var propname = parts[^1].md
       # compute the position of propname
@@ -136,51 +148,56 @@ proc toData(image: string, pos: CodePosition): MData =
       var getpropsym = "getprop".mds
       getpropsym.pos = pos
 
-      return @[getpropsym, obj, propname].md
+      return (@[getpropsym, obj, propname].md, "")
     else:
-      raise newException(MParseError, "misplaced dot in " & image)
+      return (nilD, "misplaced dot in " & image)
 
   try:
     let err = parseEnum[MError](image)
-    return err.md
+    return (err.md, "")
   except ValueError:
     discard
 
   case leader:
     of '#':
       if ':' in image:
-        return image.mds
+        return (image.mds, "")
 
       try:
         let num = parseInt(rest)
-        return num.ObjID.md
+        return (num.ObjID.md, "")
       except OverflowError:
-        raise newException(MParseError, "object id overflow " & image)
+        return (nilD, "object id overflow " & image)
       except ValueError:
-        raise newException(MParseError, "invalid object " & image)
+        return (nilD, "invalid object " & image)
     of '"':
-      return rest[0 .. ^2].md
+      return (rest[0 .. ^2].md, "")
     of Digits, '-', '.':
       try:
         if '.' in image or 'e' in image:
-          result = parseFloat(image).md
+          return (parseFloat(image).md, "")
         else:
-          result = parseInt(image).md
+          return (parseInt(image).md, "")
       except OverflowError:
-        raise newException(MParseError, "literal number overflow " & image)
+        return (nilD, "literal number overflow " & image)
       except ValueError:
-        return image.mds
+        return (image.mds, "")
     else:
       if image == "nil":
-        return nilD
+        return (nilD, "")
       else:
-        return image.mds
+        return (image.mds, "")
 
-proc toData(token: Token): MData =
-  if token.ttype != tokAtom: return nilD
-  var data = token.image.toData(token.pos)
+proc toData(token: Token): (MData, string) =
+  if token.ttype != tokAtom:
+    return (nilD, "")
+  var (data, error) = token.image.toData(token.pos)
+
+  if error.len > 0:
+    return (nilD, error)
+
   data.pos = token.pos
-  return data
+  return (data, "")
 
 proc newParser*(code: string): MParser =
   var fixedCode = code.strip()
@@ -196,22 +213,36 @@ proc newParser*(code: string): MParser =
     tindex: 0
   )
 
+
+template propogateError(parser: MParser) =
+  if parser.error.errVal != E_NONE:
+    # the empty return is fine, we just have to make sure we always
+    # propogate if there's the possibility of error. This allows us to
+    # use this template to propogate errors along call chains with
+    # varying return types.
+    return
+
+template parseError(parser: var MParser, estr: string, epos: CodePosition) =
+  parser.error = E_PARSE.md(estr)
+  parser.error.pos = epos
+  return
+
 proc getToken(parser: var MParser): Token =
   result = parser.tokens[parser.tindex]
   parser.tindex += 1
   if parser.tindex > parser.tokens.len:
-    raise newException(MParseError, "ran out of tokens unexpectedly")
+    parser.parseError("ran out of tokens unexpectedly", result.pos)
 
-proc peek(parser: MParser, distance: int = 0): Token =
+proc peek(parser: var MParser, distance: int = 0): Token =
   let index = parser.tindex + distance
   if index >= parser.tokens.len:
-    raise newException(MParseError, "ran out of tokens unexpectedly")
+    parser.parseError("ran out of tokens unexpectedly", parser.tokens[^1].pos)
   parser.tokens[index]
 
 proc consume(parser: var MParser, ttype: TokenType): Token =
   let tok = parser.getToken()
   if tok.ttype != ttype:
-    raise newException(MParseError, "expected token " & $ttype & ", instead got " & $tok.ttype)
+    parser.parseError("expected token " & $ttype & ", instead got " & $tok.ttype, tok.pos)
 
   return tok
 proc parseList*(parser: var MParser): MData
@@ -228,19 +259,27 @@ proc parseAtom*(parser: var MParser): MData =
   var quote = false
 
   var next = parser.peek()
+  parser.propogateError()
   if next.ttype in QuoteTokens:
     quoteTokType = next.ttype
     quotePos = parser.consume(quoteTokType).pos
+    parser.propogateError()
     next = parser.peek()
+    parser.propogateError()
     quote = true
 
   case next.ttype:
     of tokOParen:
       result = parser.parseList()
+      parser.propogateError()
     of tokAtom:
-      result = parser.consume(tokAtom).toData()
+      let (atom, errorStr) = parser.consume(tokAtom).toData()
+      parser.propogateError()
+      if errorStr.len > 0:
+        parser.parseError(errorStr, next.pos)
+      result = atom
     else:
-      raise newException(MParseError, "unexpected token '" & next.image & "'")
+      parser.parseError("unexpected token '" & next.image & "'", next.pos)
 
   if quote:
     var quoteSym: MData
@@ -252,7 +291,7 @@ proc parseAtom*(parser: var MParser): MData =
       of tokUnquote:
         quoteSym = "unquote".mds
       else:
-        raise newException(MParseError, "unknown quote token type: " & $quoteTokType)
+        parser.parseError("unknown quote token type: " & $quoteTokType, next.pos)
 
     quoteSym.pos = quotePos
     result = @[quoteSym, result].md
@@ -262,15 +301,24 @@ proc parseList*(parser: var MParser): MData =
 
   let oparen = parser.consume(tokOParen)
   let pos = oparen.pos
+  parser.propogateError()
 
   var next = parser.peek()
+  parser.propogateError()
+
   while next.ttype != tokCParen:
     if next.ttype == tokOParen:
       resultL.add(parser.parseList())
+      parser.propogateError()
     else:
       resultL.add(parser.parseAtom())
+      parser.propogateError()
+
     next = parser.peek()
+    parser.propogateError()
+
   discard parser.consume(tokCParen)
+  parser.propogateError()
 
   # Shorthand syntax: (obj:verb arg1 arg2 ...) => (verbcall obj "verb" (list arg1 arg2 ...))
   if resultL.len > 0:
@@ -281,7 +329,11 @@ proc parseList*(parser: var MParser): MData =
       if parts.len > 1:
         if resultL.len > 1:
           resultL[1..^1] = [("list".mds & resultL[1..^1]).md]
-        resultL[0] = parts[0].toData(pos)
+        let (lhs, error) = parts[0].toData(pos)
+        if error.len > 0:
+          parser.parseError(error, pos)
+
+        resultL[0] = lhs
         resultL.insert(parts[1].md, 1)
         var verbCallSymbol = "verbcall".mds
         verbCallSymbol.pos = first.pos
@@ -298,8 +350,11 @@ proc parseFull*(parser: var MParser): MData =
 
   while parser.peek().ttype != tokEnd:
     forms.add(parser.parseAtom())
+    parser.propogateError()
 
   discard parser.consume(tokEnd)
+  parser.propogateError()
+
   return forms.md
 
 var builtins* = initTable[string, BuiltinProc]()

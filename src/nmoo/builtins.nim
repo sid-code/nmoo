@@ -258,14 +258,11 @@ defBuiltin "parse":
 
   let code = extractString(args[0])
 
-  try:
-    var parser = newParser(code)
-    let parsed = parser.parseAtom()
+  var parser = newParser(code)
+  let parsed = parser.parseAtom()
+  checkForError(parser.error)
 
-    return parsed.pack
-  except MParseError:
-    let msg = getCurrentExceptionMsg()
-    runtimeError(E_PARSE, "code failed to parse: $1" % msg)
+  return parsed.pack
 
 ## ::
 ##
@@ -1005,14 +1002,10 @@ defBuiltin "setverbcode":
 
   let newCode = extractString(args[2])
 
-  try:
-    let err = verb.setCode(newCode, verb.owner)
-    checkForError(err)
-    world.persist(obj)
-    return nilD.pack
-  except MParseError:
-    let msg = getCurrentExceptionMsg()
-    runtimeError(E_PARSE, "code failed to parse: $1" % msg)
+  let err = verb.setCode(newCode, verb.owner)
+  checkForError(err)
+  world.persist(obj)
+  return nilD.pack
 
 ## ::
 ##

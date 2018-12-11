@@ -139,8 +139,6 @@ type
     image*: string
     pos*: CodePosition
 
-  MParseError* = object of Exception
-
   MParser* = ref object
     code*: string
     error*: MData

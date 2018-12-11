@@ -143,7 +143,9 @@ suite "parser":
   setup:
     proc parse(str: string): MData =
       var parser = newParser(str)
-      return parser.parseFull()
+      result = parser.parseFull()
+      if parser.error.errVal != E_NONE:
+        return parser.error
 
   test "parser works":
     let parsed = parse("(echo \"hello world\" (sub-list \"who knew?\" 3.14))")
