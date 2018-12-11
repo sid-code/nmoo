@@ -65,13 +65,14 @@ proc popFrame(task: Task) =
   discard task.frames.pop()
 
 proc collect(task: Task, num: int): seq[MData] =
-  if task.stack.len < num:
+  let stackLen = task.stack.len
+  if stackLen < num:
     return @[]
 
-  newSeq(result, 0)
-  for i in 0 .. num - 1:
-    discard i
-    result.insert(task.spop(), 0)
+  newSeq(result, num)
+  for i in 1 .. num:
+    result[num - i] = task.stack[stackLen - i]
+  task.stack.setLen(stackLen - num)
 
 proc doError*(task: Task, error: MData) =
   # prepare the error for modifying
