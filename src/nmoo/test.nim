@@ -164,6 +164,30 @@ suite "parser":
     let parsed = parse("(#0:filter closed door-list)")
     check parsed == @["do".mds, @["verbcall".mds, 0.ObjID.md, "filter".md, @["list".mds, "closed".mds, "door-list".mds].md].md].md
 
+  test "parser handles weird cases":
+    var parsed = parse("((((()))))")
+    check parsed.isType(dList)
+
+    parsed = parse("((((((")
+    check parsed.isType(dErr)
+
+  test "parser propogates unexpected token errors properly":
+    let parsed = parse("(let ((x 5) (y '(lambda (x) (+ x ))))) stuff)")
+    check parsed.isType(dErr)
+
+  test "parser treats 5.5.5 as a symbol":
+    let parsed = parse("5.5.5")
+    check parsed == @["do".mds, "5.5.5".mds].md
+
+  test "parser treats 5.5 as a float":
+    let parsed = parse("5.5")
+    check parsed == @["do".mds, md(5.5)].md
+
+  test "parser rejects trailing parens":
+    let parsed = parse("(abc))")
+    check parsed.isType(dErr)
+
+
 suite "evaluator":
   setup:
     var world = createWorld("test", persistent = false)
