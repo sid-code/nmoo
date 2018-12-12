@@ -162,7 +162,7 @@ proc readNum(stream: FileStream): int =
 
 proc readData(stream: FileStream): MData =
   let line = stream.readLine().strip()
-  var parser = newParser(line)
+  var parser = newParser(line, { poTransformDataForms })
 
   let
     resultd = parser.parseList()
