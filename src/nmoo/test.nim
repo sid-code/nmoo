@@ -235,8 +235,40 @@ suite "evaluator":
           return tr.res
         of trError:
           return tr.err
+        of trTooLong:
+          return E_QUOTA.md("task took too long!")
         else:
           return nilD
+
+    # macro to test later
+    let loopcode = """
+(define-syntax loop
+  (lambda (form)
+    (if (not (= (len form) 5))
+        (err E_ARGS "loop takes 4 arguments")
+        (let ((loopvars (get form 1))
+              (initvals (get form 2))
+              (cont-symbol (get form 3))
+              (body (get form 4)))
+          (if (not (istype loopvars "sym"))
+              (err E_ARGS "first argument to loop must be a symbol")
+              nil)
+          (if (not (istype initvals "list"))
+              (err E_ARGS "second argument to loop must be a list")
+              nil)
+          (if (not (istype cont-symbol "sym"))
+              (err E_ARGS "third argument to loop must be a symbol")
+              nil)
+          `(let ((_CONT (call-cc (lambda (cont)
+                                   (cont (list cont ,initvals)))))
+                 (,loopvars (get _CONT 1))
+                 (,cont-symbol (lambda (vals)
+                              ;; avoid nasty surprises
+                              (let ((realvals (if (istype vals "list") vals (list vals)))
+                                    (continuation (get _CONT 0)))
+                                (call continuation (list (list continuation realvals)))))))
+             ,body)))))
+"""
 
   test "let statement binds symbols locally":
     let result = evalS("""
@@ -896,6 +928,25 @@ suite "evaluator":
     var result = evalS(""" (define-syntax lol (lambda (code) `(do (echo "running code!") ,code))) (lol 4) """)
     check result.isType(dErr)
     check result.errVal == E_MAXREC
+
+  test "looping macro works":
+    var result = evalS(loopcode & """
+(loop loopstate '(15 0) continue
+  (let ((cur (get loopstate 0))
+        (sum (get loopstate 1)))
+    (if (<= cur 0)
+        sum
+        (call continue (list (list (- cur 1) (+ sum cur)))))))
+""")
+
+    check result == 120.md
+
+  test "looping macro can loop infinitely":
+    var result = evalS(loopcode & """
+(loop loopstate '(0) continue (call continue loopstate))
+""")
+
+    check result == E_QUOTA.md
 
 
 include tests/bdtest
