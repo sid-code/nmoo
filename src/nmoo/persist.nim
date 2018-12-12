@@ -456,11 +456,11 @@ proc backupWorld(name: string) =
 
   copyDir(getWorldDir(name), backupDir)
 
-
 proc loadWorld*(name: string): World =
-  info "Backing up world ", name, " before read..."
-  backupWorld(name)
-  info "Completed backup."
+  when defined(perniciousBackups):
+    info "Backing up world ", name, " before read..."
+    backupWorld(name)
+    info "Completed backup."
 
   result = createWorld(name)
   let dir = getObjectDir(name)
