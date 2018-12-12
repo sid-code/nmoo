@@ -16,11 +16,40 @@ requires "bcrypt"
 requires "nimboost"
 requires "asynctools"
 
+const coverage = false
+const debugBuild = false
+const devBuild = true
+const releaseBuild = false
+
 task test, "Run tests":
-  exec "nim c -r src/nmoo/test.nim"
+  var compilerParams: string
+  if coverage:
+    let gccParams = "'-ftest-coverage -fprofile-arcs'"
+
+    compilerParams &= " --debugger:native --passC:" & gccParams &
+      " --passL:" & gccParams &
+      " --nimcache:./nimcache"
+
+  if debugBuild:
+    compilerParams &= " -d:debug"
+
+  exec "nim c -r " & compilerParams & " src/nmoo/test.nim"
 
 task serve, "Run the server":
-  exec "nim c -r -d:debug -o:bin/server src/nmoo"
+  var compilerParams: string
+
+  compilerParams &= " -d:includeWizardUtils"
+
+  if debugBuild:
+    compilerParams &= " -d:debug"
+
+  if devBuild:
+    compilerParams &= " --debugger:native"
+
+  if releaseBuild:
+    compilerParams &= " -d:release"
+
+  exec "nim c -r " & compilerParams & " -o:bin/server src/nmoo"
 
 task docs, "Generate builtin function documentation":
   exec "nim c -r src/nmoo/doc/builtindocgen.nim"
