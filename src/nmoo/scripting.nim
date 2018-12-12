@@ -199,7 +199,7 @@ proc toData(token: Token): (MData, string) =
   data.pos = token.pos
   return (data, "")
 
-proc newParser*(code: string): MParser =
+proc newParser*(code: string, options: set[MParserOption] = {}): MParser =
   var fixedCode = code.strip()
   if fixedCode.len == 0:
     fixedCode = "()"
@@ -210,7 +210,8 @@ proc newParser*(code: string): MParser =
     code: fixedCode,
     error: errd,
     tokens: tokens,
-    tindex: 0
+    tindex: 0,
+    options: options
   )
 
 
@@ -296,6 +297,49 @@ proc parseAtom*(parser: var MParser): MData =
     quoteSym.pos = quotePos
     result = @[quoteSym, result].md
 
+proc transformVerbCallSyntax(parser: var MParser, form: var seq[MData], pos: CodePosition) =
+  assert(form.len > 0) # sanity check
+
+  let first = form[0]
+  let name = first.symVal
+  let parts = name.split(":")
+
+  if parts.len > 1:
+    if form.len > 1:
+      form[1..^1] = [("list".mds & form[1..^1]).md]
+      let (lhs, error) = parts[0].toData(pos)
+      if error.len > 0:
+        parser.parseError(error, pos)
+
+      form[0] = lhs
+      form.insert(parts[1].md, 1)
+      var verbCallSymbol = "verbcall".mds
+      verbCallSymbol.pos = first.pos
+      form.insert(verbCallSymbol, 0)
+
+proc transformDataForm(parser: var MParser, resultL: seq[MData], pos: CodePosition): MData =
+  # The goal here is to transform the data form:
+  #    '(table (a b) (c d))
+  # into a MData of type dTable, not dList.
+  #
+  # TODO: perhaps also transform (list a b c)?
+  var resultT = initTable[MData, MData]()
+  for i in 1..resultL.len - 1:
+    # do all of the checks
+    if not resultL[i].isType(dList):
+      parser.parseError("invalid table: format is (table (key1 val1) (key2 val2) ...)", pos)
+    let pair = resultL[i].listVal
+    if not pair.len == 2:
+      parser.parseError("invalid table pair: need len 2", resultL[i].pos)
+
+    let key = pair[0]
+    let val = pair[1]
+
+    resultT[key] = val
+
+  result = resultT.md
+  result.pos = pos
+
 proc parseList*(parser: var MParser): MData =
   var resultL: seq[MData] = @[]
 
@@ -320,24 +364,23 @@ proc parseList*(parser: var MParser): MData =
   discard parser.consume(tokCParen)
   parser.propogateError()
 
-  # Shorthand syntax: (obj:verb arg1 arg2 ...) => (verbcall obj "verb" (list arg1 arg2 ...))
-  if resultL.len > 0:
-    let first = resultL[0]
-    if first.isType(dSym):
-      let name = first.symVal
-      let parts = name.split(":")
-      if parts.len > 1:
-        if resultL.len > 1:
-          resultL[1..^1] = [("list".mds & resultL[1..^1]).md]
-        let (lhs, error) = parts[0].toData(pos)
-        if error.len > 0:
-          parser.parseError(error, pos)
+  if resultL.len == 0:
+    result = resultL.md
+    result.pos = pos
+    return
 
-        resultL[0] = lhs
-        resultL.insert(parts[1].md, 1)
-        var verbCallSymbol = "verbcall".mds
-        verbCallSymbol.pos = first.pos
-        resultL.insert(verbCallSymbol, 0)
+  let first = resultL[0]
+
+  # Shorthand syntax: (obj:verb arg1 arg2 ...) => (verbcall obj "verb" (list arg1 arg2 ...))
+  if first.isType(dSym):
+    parser.transformVerbCallSyntax(resultL, pos)
+    parser.propogateError()
+
+  if poTransformDataForms in parser.options:
+    if first == "table".mds:
+      result = parser.transformDataForm(resultL, pos)
+      parser.propogateError()
+      return
 
   result = resultL.md
   result.pos = pos

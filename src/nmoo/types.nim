@@ -139,11 +139,18 @@ type
     image*: string
     pos*: CodePosition
 
+  MParserOption* = enum
+    ## transform (table (a b) (c d)) into the appropriate data type
+    ## instead of just leaving it as a list. This should only ever be
+    ## used for data serialization.
+    poTransformDataForms
+
   MParser* = ref object
     code*: string
     error*: MData
     tokens*: seq[Token]
     tindex*: int
+    options*: set[MParserOption]
 
   SymbolTable* = Table[string, MData]
   BuiltinProc* = proc(args: seq[MData], world: World,
