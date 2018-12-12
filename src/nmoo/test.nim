@@ -142,9 +142,14 @@ suite "object tests":
 
 suite "parser":
   setup:
-    proc parse(str: string): MData =
-      var parser = newParser(str)
+    proc parse(str: string, options: set[MParserOption] = {}): MData =
+      var parser = newParser(str, options)
       result = parser.parseFull()
+      if parser.error.errVal != E_NONE:
+        return parser.error
+    proc parseOne(str: string, options: set[MParserOption] = {}): MData =
+      var parser = newParser(str, options)
+      result = parser.parseAtom()
       if parser.error.errVal != E_NONE:
         return parser.error
 
@@ -188,6 +193,10 @@ suite "parser":
     let parsed = parse("(abc))")
     check parsed.isType(dErr)
 
+  test "parser parses serialized tables properly":
+    let parsed = parseOne("(table (1 2) (3 4))", { poTransformDataForms })
+    check parsed.isType(dTable)
+    check parsed.tableVal.len == 2
 
 suite "evaluator":
   setup:
