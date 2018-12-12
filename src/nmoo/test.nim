@@ -1,6 +1,7 @@
 import unittest
 import options
 import tables
+import strutils
 
 import types
 import server
@@ -196,6 +197,9 @@ suite "evaluator":
     root.changeParent(root)
     root.level = 0
     world.add(root)
+
+    root.output = proc (o: MObject, msg: string) =
+      echo "Sent to $#: $#".format(o, msg)
 
     var worthy = root.createChild()
     worthy.level = 0
