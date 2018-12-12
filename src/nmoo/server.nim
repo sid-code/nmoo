@@ -179,6 +179,11 @@ proc taskFinished*(task: Task) =
         if isNil(cbTask):
           discard callerClient.unqueueIn()
       else:
+        let res = task.top()
+        if res.isType(dErr):
+          callerClient.queueOut($res & "\n")
+          discard callerClient.unqueueOut()
+
         discard callerClient.unqueueIn()
     elif task.status == tsSuspended and task == callerClient.currentInputTask:
       callerClient.setInputTask(nil)

@@ -500,11 +500,6 @@ proc finish*(task: Task) =
       # the system, and if it is, then debug more.
 
       warn "Warning: callback for task '$#' didn't exist." % [task.name]
-  else:
-    if res.isType(dErr):
-      task.caller.send("Traceback (most recent call first)\n" & $res)
-
-  server.taskFinished(task)
 
 proc registerCallback*(task, cbTask: Task) =
   cbTask.waitingFor = task.id
