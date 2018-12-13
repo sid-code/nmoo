@@ -550,8 +550,11 @@ proc run*(task: Task, limit = 20000): TaskResult =
 
         if isNil(otask):
           return TaskResult(typ: trSuspend)
-        let res = otask.run(limit)
-        if res.typ in {trError, trTooLong, trSuspend}: return res
+        var res = otask.run(limit)
+        if res.typ in {trError, trTooLong, trSuspend}:
+          if res.typ == trError:
+            res.err.trace.add(task.currentTraceLine())
+          return res
 
         if task.waitingFor > -1:
           system.delete(task.world.tasks, task.waitingFor)
