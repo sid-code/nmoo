@@ -305,7 +305,7 @@ proc transformVerbCallSyntax(parser: var MParser, form: var seq[MData], pos: Cod
   let parts = name.split(":")
 
   if parts.len > 1:
-    if form.len > 1:
+    if form.len > 0:
       form[1..^1] = [("list".mds & form[1..^1]).md]
       let (lhs, error) = parts[0].toData(pos)
       if error.len > 0:
