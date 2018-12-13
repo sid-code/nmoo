@@ -74,6 +74,10 @@ proc collect(task: Task, num: int): seq[MData] =
     result[num - i] = task.stack[stackLen - i]
   task.stack.setLen(stackLen - num)
 
+proc currentTraceLine(task: Task): (string, CodePosition) =
+  let pos = task.code[task.pc].pos
+  return ( task.name, pos )
+
 proc doError*(task: Task, error: MData) =
   # prepare the error for modifying
   # each stack frame/task callback will be a line
@@ -85,8 +89,7 @@ proc doError*(task: Task, error: MData) =
     let frame = task.curFrame()
 
     if frame.tries.len == 0:
-      let pos = task.code[task.pc].pos
-      error.trace.add( (task.name, pos) )
+      error.trace.add(task.currentTraceLine())
       task.popFrame()
       continue
 
