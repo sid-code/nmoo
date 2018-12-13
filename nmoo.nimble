@@ -16,10 +16,10 @@ requires "bcrypt"
 requires "nimboost"
 requires "asynctools"
 
-const coverage = false
-const debugBuild = false
+const coverage = getEnv("NMOO_COVERAGE") == "1"
+const debugBuild = getEnv("NMOO_DEBUG") == "1"
 const devBuild = true
-const releaseBuild = false
+const releaseBuild = getEnv("NMOO_RELEASE") == "1"
 
 task test, "Run tests":
   var compilerParams: string
