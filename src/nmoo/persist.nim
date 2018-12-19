@@ -164,10 +164,12 @@ proc readData(stream: FileStream): MData =
   let line = stream.readLine().strip()
   var parser = newParser(line, { poTransformDataForms })
 
-  let
-    resultd = parser.parseList()
-    res = resultd.listVal
+  let resultd = parser.parseList()
+  if parser.error != E_NONE.md:
+    let errStr = $parser.error
+    raise newException(Exception, errStr)
 
+  let res = resultd.listVal
   return res[0]
 
 proc readObjectID(world: World, stream: FileStream, default: MObject = nil):
