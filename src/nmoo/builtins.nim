@@ -2039,8 +2039,20 @@ defBuiltin "match":
 
     let matches = str.match(regex)
     if matches.isSome:
-      let captures = nre.toSeq(matches.get().captures())
-      return captures.map(md).md.pack
+      var captureList: seq[MData]
+      for capture in matches.get().captures().items():
+        when capture is Option[string]:
+          if capture.isSome():
+            captureList.add(capture.get().md)
+          else:
+            captureList.add(nilD)
+        elif capture is string:
+          captureList.add(capture.md)
+        else:
+          echo "ERROR: `capture` is of wrong type"
+          quit(1)
+
+      return captureList.md.pack
     else:
       return nilD.pack
   except SyntaxError:
@@ -2078,10 +2090,20 @@ defBuiltin "find":
     if matchopt.isSome:
       let match = matchopt.get()
       let matchBounds = match.matchBounds
-      let captures = nre.toSeq(match.captures())
+      var captureList: seq[MData]
+      for capture in match.captures().items():
+        when capture is Option[string]:
+          if capture.isSome():
+            captureList.add(capture.get().md)
+          else:
+            captureList.add(nilD)
+        elif capture is string:
+          captureList.add(capture.md)
+        else:
+          echo "ERROR: `capture` is of wrong type"
+          quit(1)
 
-      let capturesd = captures.map(md).md
-      var resultList = @[matchBounds.a.md, matchBounds.b.md, capturesd]
+      var resultList = @[matchBounds.a.md, matchBounds.b.md, captureList.md]
       return resultList.md.pack
     else:
       return nilD.pack
