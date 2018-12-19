@@ -5,6 +5,7 @@ import sequtils
 import strutils
 import tables
 import pegs
+import options
 
 
 import types
@@ -15,8 +16,8 @@ proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = tru
 proc objSpecToStr*(osp: ObjSpec): string
 proc prepSpecToStr*(psp: PrepType): string
 proc getVerbAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, v: MVerb]
-proc strToObjSpec*(osps: string): tuple[success: bool, result: ObjSpec]
-proc strToPrepSpec*(psps: string): tuple[success: bool, result: PrepType]
+proc strToObjSpec*(osps: string): Option[ObjSpec]
+proc strToPrepSpec*(psps: string): Option[PrepType]
 proc addVerb*(obj: MObject, verb: MVerb): MVerb
 proc delVerb*(obj: MObject, verb: MVerb): MVerb
 proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
@@ -70,12 +71,12 @@ const
 proc objSpecToStr*(osp: ObjSpec): string =
   ($osp).toLowerAscii[1 .. ^1]
 
-proc strToObjSpec*(osps: string): tuple[success: bool, result: ObjSpec] =
+proc strToObjSpec*(osps: string): Option[ObjSpec] =
   let realSpec = "o" & osps[0].toUpperAscii & osps[1 .. ^1]
   try:
-    return (true, parseEnum[ObjSpec](realSpec))
+    return some(parseEnum[ObjSpec](realSpec))
   except:
-    return (false, oNone)
+    return none[ObjSpec]()
 
 proc prepSpecToStr*(psp: PrepType): string =
   var images: seq[string] = @[]
@@ -86,15 +87,15 @@ proc prepSpecToStr*(psp: PrepType): string =
 
   return images.join("/")
 
-proc strToPrepSpec*(psps: string): tuple[success: bool, result: PrepType] =
+proc strToPrepSpec*(psps: string): Option[PrepType] =
   let pspsLower = psps.toLowerAscii()
 
   for prep in Prepositions:
     let (ptype, image) = prep
     if image == pspsLower:
-      return (true, ptype)
+      return some(ptype)
 
-  return (false, pNone)
+  return none[PrepType]()
 
 proc shellwords(str: string): seq[string] =
   newSeq(result, 0)
@@ -132,12 +133,10 @@ proc parseCommand*(str: string): ParsedCommand =
     let word = fixedWords[i]
     i += 1
 
-    var (success, ptype) = strToPrepSpec(word)
-    if success and ptype in {pNone, pAny}:
-      success = false
+    let pspecO = strToPrepSpec(word)
 
-    if success:
-      result.prep = (ptype, word)
+    if pspecO.isSome() and pspecO.get() notin {pNone, pAny}:
+      result.prep = (pspecO.get(), word)
       break
     else:
       doString.add(" ")

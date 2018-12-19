@@ -487,35 +487,33 @@ template verbInfoFromInput(info: seq[MData]): VerbInfo =
   res
 
 template objSpecFromData(ospd: MData): ObjSpec =
-  let
-    str = extractString(ospd)
-    (success, spec) = strToObjSpec(str)
+  let str = extractString(ospd)
+  let ospec = strToObjSpec(str)
 
-  if not success:
+  if not ospec.isSome():
     runtimeError(E_ARGS, "invalid object spec '$1'" % str)
 
-  spec
+  ospec.get()
 
 template prepSpecFromData(pspd: MData): PrepType =
-  let
-    str = extractString(pspd)
-    (success, spec) = strToPrepSpec(str)
+  let str = extractString(pspd)
+  let pspec: Option[PrepType] = cast[Option[PrepType]](strToPrepSpec(str))
 
-  if not success:
+  if not pspec.isSome():
     runtimeError(E_ARGS, "invalid preposition spec '$1'" % str)
 
-  spec
+  pspec.get()
 
 template verbArgsFromInput(info: seq[MData]): VerbArgs =
   if info.len != 3:
     runtimeError(E_ARGS, "verb args must be a list of size 3")
 
-  var result: VerbArgs
-  result.doSpec = objSpecFromData(info[0])
-  result.prepSpec = prepSpecFromData(info[1])
-  result.ioSpec = objSpecFromData(info[2])
+  var vargs: VerbArgs
+  vargs.doSpec = objSpecFromData(info[0])
+  vargs.prepSpec = prepSpecFromData(info[1])
+  vargs.ioSpec = objSpecFromData(info[2])
 
-  result
+  vargs
 
 proc setInfo(prop: MProperty, info: PropInfo) =
   prop.owner = info.owner
