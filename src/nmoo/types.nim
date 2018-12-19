@@ -8,7 +8,8 @@ import sequtils
 import tables
 import times
 import hashes
-
+import deques
+import streams
 from asyncnet import AsyncSocket
 
 type
@@ -145,11 +146,16 @@ type
     ## used for data serialization.
     poTransformDataForms
 
+  MLexer* = object
+    stream*: Stream
+    pos*: CodePosition
+    error*: MData
+
   MParser* = ref object
     code*: string
     error*: MData
-    tokens*: seq[Token]
-    tindex*: int
+    lexer*: MLexer
+    queuedTokens*: Deque[Token]
     options*: set[MParserOption]
 
   SymbolTable* = Table[string, MData]

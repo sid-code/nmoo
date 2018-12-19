@@ -4,6 +4,9 @@ import tables
 import strutils
 import math
 import sequtils
+import streams
+import deques
+from parseutils import parseHex
 
 import types
 import objects
@@ -18,104 +21,156 @@ proc nextLine(pos: var CodePosition) {.inline.} =
   pos.line += 1
   pos.col = 1
 
-## LEXER
+proc hasError[T](thingy: T): bool {.inline.} =
+  return thingy.error.errVal != E_NONE
 
-template addtoken =
-  result.tokens.add(curToken)
-  curToken = Token(ttype: tokAtom, image: "", pos: pos)
-
-template addword =
-  if curWord.len > 0:
-    curToken.ttype = tokAtom
-    curToken.image = curWord
-    addtoken()
-    curWord = ""
-
-proc lex(code: string): tuple[tokens: seq[Token], error: MData] =
-  newSeq(result.tokens, 0)
-  result.error = E_NONE.md
-  var
-    pos: CodePosition = (1, 1)
-    curToken = Token(ttype: tokAtom, image: "", pos: pos)
-    curWord = ""
-    strMode = false
-    commentMode = false
-    skipNext = false
-
-  for idx, c in code & " ":
-    pos.nextCol()
-    if strMode:
-      if c == '"' and not skipNext:
-        curWord &= "\""
-        strMode = false
-      elif c == '\\' and not skipNext:
-        skipNext = true
-      else:
-        if skipNext:
-          if c == 'n':
-            curWord &= "\n"
-          elif c == '"':
-            curWord &= "\""
-          elif c == '\\':
-            curWord &= "\\"
-          elif c == '\'':
-            curWord &= "'"
-          else:
-            result.error = E_PARSE.md("Invalid escape \\" & c)
-            result.error.pos = pos
-            return
-        else:
-          curWord &= $c
-
-        if skipNext: skipNext = false
-    elif commentMode:
-      if c == "\n"[0]:
-        commentMode = false
-        pos.nextLine()
-    else:
-      if c in Whitespace:
-        addword()
-        if c & "" == "\n": # why nim
-          pos.nextLine()
-      elif c == '\'' and curWord.len == 0:
-        curToken.ttype = tokQuote
-        curToken.image = "'"
-        addtoken()
-      elif c == '`' and curWord.len == 0:
-        curToken.ttype = tokQuasiQuote
-        curToken.image = "`"
-        addtoken()
-      elif c == ',' and curWord.len == 0:
-        curToken.ttype = tokUnquote
-        curToken.image = ","
-        addtoken()
-      elif c == '(':
-        addword()
-        curToken.ttype = tokOParen
-        curToken.image = "("
-        addtoken()
-      elif c == ')':
-        addword()
-        curToken.ttype = tokCParen
-        curToken.image = ")"
-        addtoken()
-      elif c == '"':
-        curWord = "\""
-        strMode = true
-      elif c == ';':
-        addword()
-        commentMode = true
-      else:
-        curWord &= $c
-
-  if strMode:
-    result.error = E_PARSE.md("unterminated string meets end of code")
-    result.error.pos = pos
+template propogateError[T](thingy: T) =
+  if thingy.hasError():
+    # the empty return is fine, we just have to make sure we always
+    # propogate if there's the possibility of error. This allows us to
+    # use this template to propogate errors along call chains with
+    # varying return types.
     return
 
-  curToken.ttype = tokEnd
-  curToken.image = ""
-  addtoken()
+## LEXER
+
+proc newLexer(code: string): MLexer =
+  MLexer(stream: newStringStream(code), pos: (1, 1), error: E_NONE.md)
+
+proc throwError(lexer: var MLexer, errstr: string) =
+  var error = E_PARSE.md(errstr)
+  error.pos = lexer.pos
+  lexer.error = error
+
+proc getChar(lexer: var MLexer): char =
+  if lexer.stream.atEnd():
+    return '\0'
+  else:
+    let c = lexer.stream.readChar()
+    if c == '\n':
+      lexer.pos.nextLine()
+    else:
+      lexer.pos.nextCol()
+    return c
+
+proc peekChar(lexer: var MLexer): char =
+  if lexer.stream.atEnd():
+    return '\0'
+  else:
+    return lexer.stream.peekChar()
+
+proc wantChar(lexer: var MLexer, msgIfNoChar: string): char =
+  result = lexer.getChar()
+  if result == '\0':
+    lexer.throwError(msgIfNoChar)
+
+proc getStringLiteral(lexer: var MLexer): string =
+  while true:
+    let strchr = lexer.wantChar("unterminated string meets end of code")
+    lexer.propogateError()
+
+    if strchr == '"':
+      return
+
+    elif strchr == '\\':
+      let escchr = lexer.getChar()
+      if escchr == '\0':
+        lexer.throwError("invalid escape")
+        return
+      elif escchr == '\'' or escchr == '\\':
+        result &= escchr
+      elif escchr == 'n':
+        result &= '\n'
+      elif escchr == 'x':
+        let hex1 = lexer.wantChar("invalid hex escape; should be \\xHH")
+        lexer.propogateError()
+        let hex2 = lexer.wantChar("invalid hex escape; should be \\xHH")
+        lexer.propogateError()
+
+        if hex1 notin HexDigits or hex2 notin HexDigits:
+          lexer.throwError("invalid hex esccape; only 0-9A-Fa-f allowed")
+          return
+
+        var ci: int
+        discard parseHex(hex1 & hex2, ci)
+        result &= chr(ci)
+    else:
+      result &= strchr
+
+const IdentCharsXL = AllChars - {'"', '`', ',', '\'', '(', ')', '\0'} - Whitespace
+
+proc getIdentifier(lexer: var MLexer): string =
+  while true:
+    if lexer.peekChar() notin IdentCharsXL:
+      return
+
+    result &= lexer.getChar()
+
+proc skipComment(lexer: var MLexer) =
+  var c = ';'
+  while c notin {'\n', '\0'}:
+    c = lexer.getChar()
+    discard
+
+proc getToken(lexer: var MLexer): Token =
+  # If the lexer is in an error state, don't do anything
+  lexer.propogateError()
+
+  result.pos = lexer.pos
+  result.ttype = tokAtom
+  result.image = ""
+
+  if lexer.stream.atEnd():
+    result.ttype = tokEnd
+    return
+
+  # skip all whitespace and comments before this token
+  var first = ' '
+  while first in Whitespace + {';'}:
+    if first == ';':
+      lexer.skipComment()
+    first = lexer.getChar()
+
+  # update the pos
+  result.pos = lexer.pos
+
+  # now we switch on the first character
+  case first:
+    of '\0':
+      result.ttype = tokEnd
+      result.image = "<end>"
+
+    of '"':
+      # start of a string literal
+      result.image = "\"$#\"".format(lexer.getStringLiteral())
+      lexer.propogateError()
+
+    of IdentCharsXL:
+      result.image = first & lexer.getIdentifier()
+      lexer.propogateError()
+
+    of '(':
+      result.ttype = tokOParen
+      result.image = "("
+
+    of ')':
+      result.ttype = tokCParen
+      result.image = ")"
+
+    of '\'':
+      result.ttype = tokQuote
+      result.image = "'"
+
+    of '`':
+      result.ttype = tokQuasiQuote
+      result.image = "`"
+
+    of ',':
+      result.ttype = tokUnquote
+      result.image = ","
+
+    else:
+      lexer.throwError("unrecognized character '$#'".format(first))
 
 ## PARSER
 
@@ -204,24 +259,16 @@ proc newParser*(code: string, options: set[MParserOption] = {}): MParser =
   if fixedCode.len == 0:
     fixedCode = "()"
 
-  let (tokens, errd) = lex(fixedCode)
+  #let (tokens, errd) = lex(fixedCode)
+  let lexer = newLexer(code)
 
   MParser(
     code: fixedCode,
-    error: errd,
-    tokens: tokens,
-    tindex: 0,
+    error: E_NONE.md,
+    lexer: lexer,
+    queuedTokens: initDeque[Token](),
     options: options
   )
-
-
-template propogateError(parser: MParser) =
-  if parser.error.errVal != E_NONE:
-    # the empty return is fine, we just have to make sure we always
-    # propogate if there's the possibility of error. This allows us to
-    # use this template to propogate errors along call chains with
-    # varying return types.
-    return
 
 template parseError(parser: var MParser, estr: string, epos: CodePosition) =
   parser.error = E_PARSE.md(estr)
@@ -229,16 +276,17 @@ template parseError(parser: var MParser, estr: string, epos: CodePosition) =
   return
 
 proc getToken(parser: var MParser): Token =
-  result = parser.tokens[parser.tindex]
-  parser.tindex += 1
-  if parser.tindex > parser.tokens.len:
-    parser.parseError("ran out of tokens unexpectedly", result.pos)
+  if len(parser.queuedTokens) > 0:
+    return parser.queuedTokens.popFirst()
+
+  result = parser.lexer.getToken()
+  if parser.lexer.hasError():
+    parser.error = parser.lexer.error
+    return
 
 proc peek(parser: var MParser, distance: int = 0): Token =
-  let index = parser.tindex + distance
-  if index >= parser.tokens.len:
-    parser.parseError("ran out of tokens unexpectedly", parser.tokens[^1].pos)
-  parser.tokens[index]
+  result = parser.getToken()
+  parser.queuedTokens.addLast(result)
 
 proc consume(parser: var MParser, ttype: TokenType): Token =
   let tok = parser.getToken()
