@@ -328,7 +328,7 @@ proc parseAtom*(parser: var MParser): MData =
         parser.parseError(errorStr, next.pos)
       result = atom
     else:
-      parser.parseError("unexpected token '" & next.image & "'", next.pos)
+      parser.parseError("unexpected token of type $#: '$#'".format(next.ttype, next.image), next.pos)
 
   if quote:
     var quoteSym: MData
