@@ -198,6 +198,11 @@ suite "parser":
     check parsed.isType(dTable)
     check parsed.tableVal.len == 2
 
+  test "parser handles escapes properly":
+    let parsed = parseOne("\"abc\\ndef\"")
+    check parsed == "abc\ndef".md
+
+
 suite "evaluator":
   setup:
     var world = createWorld("test", persistent = false)
