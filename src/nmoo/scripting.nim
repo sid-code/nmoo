@@ -8,13 +8,13 @@ import sequtils
 import types
 import objects
 
-proc `$`*(token: Token): string =
+proc `$`*(token: Token): string {.inline.} =
   token.image
 
-proc nextCol(pos: var CodePosition) =
+proc nextCol(pos: var CodePosition) {.inline.} =
   pos.col += 1
 
-proc nextLine(pos: var CodePosition) =
+proc nextLine(pos: var CodePosition) {.inline.} =
   pos.line += 1
   pos.col = 1
 
