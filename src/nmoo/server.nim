@@ -181,7 +181,7 @@ proc taskFinished*(task: Task) =
       else:
         let res = task.top()
         if res.isType(dErr):
-          callerClient.queueOut($res & "\n")
+          callerClient.queueOut($res & "\r\n")
           discard callerClient.unqueueOut()
 
         discard callerClient.unqueueIn()
@@ -224,19 +224,19 @@ proc processClient(client: Client, address: string) {.async.} =
   client.player = player
 
   if isNil(player):
-    await client.send(msg & "\c\L")
+    await client.send(msg & "\r\n")
     client.close()
     return
 
   clients.add(client)
 
-  await client.send("Welcome to the server!\c\L")
+  await client.send("Welcome to the server!\r\n")
 
   # This proc is how the player object communicates with the
   # connection. It's set to a variable and not directly to
   # `client.player.output` because it's re-used later.
   proc ssend(obj: MObject, msg: string) =
-    client.queueOut(msg & "\c\L")
+    client.queueOut(msg & "\r\n")
     discard client.unqueueOut()
     # TODO: Make it so output is unqueued only between tasks
 
@@ -282,7 +282,7 @@ proc processClient(client: Client, address: string) {.async.} =
         let oldClient = findClient(newPlayer)
         if not isNil(oldClient):
           # We need to close the old client
-          await oldClient.send("*** Your character has been connected to from $#. ***\c\L" % address)
+          await oldClient.send("*** Your character has been connected to from $#. ***\r\n" % address)
           removeClient(oldClient)
 
         client.player = newPlayer
@@ -353,7 +353,7 @@ proc cleanUp() =
       dec index
       let client = clients[index]
       info "Closing a client..."
-      waitFor client.send("Server is going down!\c\L")
+      waitFor client.send("Server is going down!\r\n")
       removeClient(client)
     server.close()
 
