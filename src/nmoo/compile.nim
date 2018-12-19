@@ -6,7 +6,7 @@ import sequtils
 import types
 
 const MaxMacroDepth = 100 # TODO: Make this world-configurable??
-const compilerDefaultOptions: set[MCompilerOptions] = {}
+const compilerDefaultOptions: set[MCompilerOption] = {}
 const MagicMapFunction = "__mapfn"
 const MagicFoldFunction = "__redfn"
 const MagicShadowPrefix = "__SHADOW__"
@@ -164,7 +164,7 @@ template undefSymbol(compiler: MCompiler, name: string) =
 
 ## Constructor
 
-proc newCompiler(programmer: MObject, options: set[MCompilerOptions]): MCompiler =
+proc newCompiler(programmer: MObject, options: set[MCompilerOption]): MCompiler =
   MCompiler(
     programmer: programmer,
     real: @[],

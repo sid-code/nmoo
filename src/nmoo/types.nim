@@ -182,13 +182,13 @@ type
 
   CSymTable* = Table[string, int]
 
-  MCompilerOptions* = enum
+  MCompilerOption* = enum
     coOptInline
 
   MCompiler* = ref object
     programmer*: MObject
     subrs*, real*: seq[Instruction]
-    options*: set[MCompilerOptions]
+    options*: set[MCompilerOption]
     symtable*: CSymTable
     symgen*: SymGen
 
