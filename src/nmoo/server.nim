@@ -381,7 +381,14 @@ proc initWorld =
   if not acquireLock(worldName):
     fatal "Failed to acquire lock ($#)." % worldName
     quit(1)
-  world = loadWorld(worldName)
+
+  try:
+    world = loadWorld(worldName)
+  except:
+    let msg = getCurrentExceptionMsg()
+    discard releaseLock(worldName)
+    fatal "Error while loading world: $#".format(msg)
+    quit(1)
 
   try:
     world.check()
