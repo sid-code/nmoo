@@ -10,6 +10,8 @@ import times
 import hashes
 import deques
 import streams
+import options
+
 from asyncnet import AsyncSocket
 
 type
@@ -56,6 +58,8 @@ type
     pWith, pAt, pInFront, pIn, pOn, pFrom, pOver,
     pThrough, pUnder, pBehind, pBeside, pFor, pIs,
     pAs, pOff, pNone, pAny
+
+  Preposition* = tuple[ptype: PrepType, image: string]
 
   ObjSpec* = enum
     oAny, oThis, oNone, oStr
@@ -420,6 +424,58 @@ proc toST*(data: MData): SymbolTable =
 
 proc dataToObj*(world: World, objd: MData): MObject =
   world.byID(objd.objVal)
+
+proc objSpecToStr*(osp: ObjSpec): string =
+  ($osp).toLowerAscii[1 .. ^1]
+
+const
+  Prepositions*: seq[Preposition] = @[
+    (pWith, "with"),
+    (pWith, "using"),
+    (pAt, "at"), (pAt, "to"),
+    (pInFront, "in front of"),
+    (pIn, "in"), (pIn, "inside"), (pIn, "into"),
+    (pOn, "on top of"), (pOn, "on"), (pOn, "onto"), (pOn, "upon"),
+    (pFrom, "out of"), (pFrom, "from inside"), (pFrom, "from"),
+    (pOver, "over"),
+    (pThrough, "through"),
+    (pUnder, "under"), (pUnder, "underneath"), (pUnder, "beneath"),
+    (pBehind, "behind"),
+    (pBeside, "beside"),
+    (pFor, "for"), (pFor, "about"),
+    (pIs, "is"),
+    (pAs, "as"),
+    (pOff, "off"), (pOff, "off of"),
+
+    (pNone, "none"),
+    (pAny, "any")
+  ]
+
+proc strToObjSpec*(osps: string): Option[ObjSpec] =
+  let realSpec = "o" & osps[0].toUpperAscii & osps[1 .. ^1]
+  try:
+    return some(parseEnum[ObjSpec](realSpec))
+  except:
+    return none[ObjSpec]()
+
+proc prepSpecToStr*(psp: PrepType): string =
+  var images: seq[string] = @[]
+  for prep in Prepositions:
+    let (ptype, image) = prep
+    if ptype == psp:
+      images.add(image)
+
+  return images.join("/")
+
+proc strToPrepSpec*(psps: string): Option[PrepType] =
+  let pspsLower = psps.toLowerAscii()
+
+  for prep in Prepositions:
+    let (ptype, image) = prep
+    if image == pspsLower:
+      return some(ptype)
+
+  return none[PrepType]()
 
 proc send*(obj: MObject, msg: string) =
   obj.output(obj, msg)

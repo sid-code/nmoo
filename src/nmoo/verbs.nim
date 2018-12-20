@@ -13,11 +13,7 @@ import types
 proc getVerb*(obj: MObject, name: string, all = true): MVerb
 proc getVerb*(obj: MObject, index: int): MVerb
 proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true): MData
-proc objSpecToStr*(osp: ObjSpec): string
-proc prepSpecToStr*(psp: PrepType): string
 proc getVerbAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, v: MVerb]
-proc strToObjSpec*(osps: string): Option[ObjSpec]
-proc strToPrepSpec*(psps: string): Option[PrepType]
 proc addVerb*(obj: MObject, verb: MVerb): MVerb
 proc delVerb*(obj: MObject, verb: MVerb): MVerb
 proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
@@ -35,7 +31,6 @@ import persist
 
 type
 
-  Preposition = tuple[ptype: PrepType, image: string]
   ParsedCommand = object
     verb: string
     rest: seq[string]
@@ -44,58 +39,6 @@ type
     ioString: string
     prep: Preposition
 
-const
-  Prepositions*: seq[Preposition] = @[
-    (pWith, "with"),
-    (pWith, "using"),
-    (pAt, "at"), (pAt, "to"),
-    (pInFront, "in front of"),
-    (pIn, "in"), (pIn, "inside"), (pIn, "into"),
-    (pOn, "on top of"), (pOn, "on"), (pOn, "onto"), (pOn, "upon"),
-    (pFrom, "out of"), (pFrom, "from inside"), (pFrom, "from"),
-    (pOver, "over"),
-    (pThrough, "through"),
-    (pUnder, "under"), (pUnder, "underneath"), (pUnder, "beneath"),
-    (pBehind, "behind"),
-    (pBeside, "beside"),
-    (pFor, "for"), (pFor, "about"),
-    (pIs, "is"),
-    (pAs, "as"),
-    (pOff, "off"), (pOff, "off of"),
-
-    (pNone, "none"),
-    (pAny, "any")
-  ]
-
-### Utilities
-proc objSpecToStr*(osp: ObjSpec): string =
-  ($osp).toLowerAscii[1 .. ^1]
-
-proc strToObjSpec*(osps: string): Option[ObjSpec] =
-  let realSpec = "o" & osps[0].toUpperAscii & osps[1 .. ^1]
-  try:
-    return some(parseEnum[ObjSpec](realSpec))
-  except:
-    return none[ObjSpec]()
-
-proc prepSpecToStr*(psp: PrepType): string =
-  var images: seq[string] = @[]
-  for prep in Prepositions:
-    let (ptype, image) = prep
-    if ptype == psp:
-      images.add(image)
-
-  return images.join("/")
-
-proc strToPrepSpec*(psps: string): Option[PrepType] =
-  let pspsLower = psps.toLowerAscii()
-
-  for prep in Prepositions:
-    let (ptype, image) = prep
-    if image == pspsLower:
-      return some(ptype)
-
-  return none[PrepType]()
 
 proc shellwords(str: string): seq[string] =
   newSeq(result, 0)
