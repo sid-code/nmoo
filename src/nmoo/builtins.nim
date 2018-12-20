@@ -497,7 +497,7 @@ template objSpecFromData(ospd: MData): ObjSpec =
 
 template prepSpecFromData(pspd: MData): PrepType =
   let str = extractString(pspd)
-  let pspec: Option[PrepType] = cast[Option[PrepType]](strToPrepSpec(str))
+  let pspec = strToPrepSpec(str)
 
   if not pspec.isSome():
     runtimeError(E_ARGS, "invalid preposition spec '$1'" % str)
