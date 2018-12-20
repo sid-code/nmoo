@@ -198,9 +198,16 @@ suite "parser":
     check parsed.isType(dTable)
     check parsed.tableVal.len == 2
 
-  test "parser handles escapes properly":
+  test "parser handles \\n escapes properly":
     let parsed = parseOne("\"abc\\ndef\"")
     check parsed == "abc\ndef".md
+
+  test "parser handles \\xHH escapes properly":
+    var parsed = parseOne("\"abc\\x0adef\"")
+    check parsed == "abc\ndef".md
+
+    parsed = parseOne("\"abc\\x11\\x22\\xFF\"")
+    check parsed == "abc\x11\x22\xFF".md
 
 
 suite "evaluator":
