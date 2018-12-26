@@ -392,12 +392,12 @@ proc truthy*(datum: MData): bool =
          not (datum.isType(dInt) and datum.intVal == 0 or
               datum.isType(dFloat) and datum.floatVal == 0)
 
-proc byID*(world: World, id: ObjID): MObject =
+proc byID*(world: World, id: ObjID): Option[MObject] =
   let idint = id.int
   if idint >= world.objects.len:
-    return nil
+    return none[MObject]()
   else:
-    return world.objects[id.int]
+    return some(world.objects[id.int])
 
 proc newSymbolTable*: SymbolTable = initTable[string, MData]()
 proc toData*(st: SymbolTable): MData =
@@ -422,7 +422,7 @@ proc toST*(data: MData): SymbolTable =
     let key = keyd.strVal
     result[key] = val
 
-proc dataToObj*(world: World, objd: MData): MObject =
+proc dataToObj*(world: World, objd: MData): Option[MObject] =
   world.byID(objd.objVal)
 
 proc objSpecToStr*(osp: ObjSpec): string =

@@ -11,6 +11,7 @@ import marshal
 import tables
 import logging
 import asyncdispatch
+import options
 
 import types
 import objects
@@ -182,8 +183,11 @@ proc readObjectID(world: World, stream: FileStream, default: MObject = nil):
   if id == -1:
     return world.verbObj
 
-  result = world.byID(id.id)
-  return if isNil(result): default else: result
+  let resultO = world.byID(id.id)
+  if resultO.isSome():
+    return resultO.get()
+  else:
+    return default
 
 proc readProp(world: World, stream: FileStream): MProperty =
   result = newProperty(
@@ -241,7 +245,10 @@ proc readVerb(world: World, stream: FileStream): MVerb =
 
 proc readObject(world: World, stream: FileStream) =
   let id = readNum(stream).id
-  var obj = world.byID(id)
+  var objO = world.byID(id)
+  assert objO.isSome()
+
+  let obj = objO.get()
   newSeq(obj.props, 0)
   newSeq(obj.children, 0)
   newSeq(obj.verbs, 0)
@@ -257,7 +264,11 @@ proc readObject(world: World, stream: FileStream) =
     for child in children:
       let childID = parseInt(child)
       if childID > 0:
-        obj.children.add(world.byID(childID.id))
+        let newChildO = world.byID(childID.id)
+        if newChildO.isSome():
+          obj.children.add(newChildO.get())
+        else:
+          warn "$# (read as child of $#) was invalid".format(id, childID)
 
   let numProps = readNum(stream)
   for i in 0 .. numProps - 1:

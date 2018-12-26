@@ -7,6 +7,7 @@ import strutils
 import tables
 import logging
 import times
+import options
 # NOTE: verbs is imported later on!
 
 proc blankObject*: MObject
@@ -159,13 +160,13 @@ proc `$`*(obj: MObject): string = obj.toObjStr
 proc toObjStr*(objd: MData, world: World): string =
   ## Converts MData holding objects into strings
   let
-    obj = world.dataToObj(objd)
-  if isNil(obj):
-    return "Invalid object ($1)" % $objd
+    objO = world.dataToObj(objd)
+  if objO.isSome():
+    return objO.get().toObjStr()
   else:
-    return obj.toObjStr()
+    return "Invalid object ($1)" % $objd
 
-import verbs
+#import verbs
 
 proc hasPropCalled(obj: MObject, name: string): bool =
   obj.getPropAndObj(name) != (nil, nil)
@@ -272,11 +273,14 @@ proc getLocation*(obj: MObject): MObject not nil =
   let locd = obj.getPropVal("location")
 
   if locd.isType(dObj):
-    let loc = world.byID(locd.objVal)
-    if loc.isNil:
-      raise newException(InvalidWorldError, "$# doesn't exist".format(locd))
-    else:
-      return loc
+    let locO = world.byID(locd.objVal)
+
+    if locO.isSome():
+      let loc = locO.get()
+      if not isNil(loc):
+        return loc
+
+    raise newException(InvalidWorldError, "$# doesn't exist".format(locd))
   else:
     raise newException(InvalidWorldError, "$#.location wasn't an object".format(locd))
 
@@ -294,7 +298,9 @@ proc getContents*(obj: MObject): seq[MObject] =
 
   for o in contents:
     if o.isType(dObj):
-      result.add(world.byID(o.objVal))
+      let containedO = world.byID(o.objVal)
+      if containedO.isSome():
+        result.add(containedO.get())
 
 proc addToContents*(obj: MObject, newMember: MObject): bool =
   # Note: we do not mutate the contents, rather we copy it
@@ -485,7 +491,11 @@ proc checkNowhere(world: World) =
   world.checkForGSymType("nowhere", dObj)
   let nowhered = world.getGlobal("nowhere")
 
-  let nowhere = world.dataToObj(nowhered)
+  let nowhereO = world.dataToObj(nowhered)
+  if not nowhereO.isSome():
+    raise newException(InvalidWorldError, "the $nowhere object didn't exist")
+
+  let nowhere = nowhereO.get()
 
   if isNil(nowhere.getProp("contents")):
     raise newException(InvalidWorldError, "the $nowhere object needs to have contents")
@@ -499,8 +509,11 @@ proc checkObjectHierarchyHelper(world: World, root: MObject) =
   world.persist(root)
 
 proc checkObjectHierarchy(world: World) =
-  let root = world.dataToObj(world.getGlobal("root"))
-  world.checkObjectHierarchyHelper(root)
+  let rootO = world.dataToObj(world.getGlobal("root"))
+  if rootO.isSome():
+    world.checkObjectHierarchyHelper(rootO.get())
+  else:
+    raise newException(InvalidWorldError, "$root object didn't exist")
 
 proc checkBuiltinProperties(world: World) =
   for obj in world.getObjects()[]:

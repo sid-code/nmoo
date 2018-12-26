@@ -10,6 +10,7 @@ import times
 import math
 import logging
 import os
+import options
 import logfmt
 
 import types
@@ -201,7 +202,11 @@ proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: stri
   case tr.typ:
     of trFinish:
       if tr.res.isType(dObj):
-        result.o = world.dataToObj(tr.res)
+        let playerO = world.dataToObj(tr.res)
+        if playerO.isSome():
+          result.o = playerO.get()
+        else:
+          world.verbObj.send("The task for #0:handle-new-connection returned a non-object!")
       else:
         if tr.res.isType(dStr):
           result.msg = tr.res.strVal

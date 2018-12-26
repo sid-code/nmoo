@@ -4,6 +4,7 @@
 import sequtils
 import strutils
 import tables
+import options
 
 import types
 import objects
@@ -33,12 +34,9 @@ proc getVicinity*(obj: MObject): seq[MObject] =
 
   let loc = obj.getLocation()
 
-  if not isNil(loc):
-    result.add(loc)
-    let contents = loc.getContents()
-    for o in contents: result.add(o)
-  else:
-    result.add(obj)
+  result.add(loc)
+  let surroundings = loc.getContents()
+  for o in surroundings: result.add(o)
 
   let contents = obj.getContents()
   for o in contents: result.add(o)
@@ -64,16 +62,18 @@ proc query*(obj: MObject, str: string, global = false): seq[MObject] =
     if not isNil(prop):
       let val = prop.val
       if val.isType(dObj):
-        return @[world.dataToObj(val)]
+        let valO = world.dataToObj(val)
+        assert valO.isSome()
+        return @[valO.get()]
 
   if str.len > 0:
     if str[0] == '#':
       try:
         let
           id = parseInt(str[1 .. ^1]).id
-          fobj = world.byID(id)
-        if not isNil(fobj):
-          result.add(fobj)
+          fobjO = world.byID(id)
+        if fobjO.isSome():
+          result.add(fobjO.get())
       except:
         discard # let it be
 

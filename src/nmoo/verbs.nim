@@ -352,8 +352,15 @@ proc handleCommand*(player: MObject, command: string): Task =
   if not locationd.isType(dObj):
     return nil
 
-  let location = world.dataToObj(locationd)
-  if isNil(location) or isNil(location.verbCall("huh", player, player, @[originalCommand.md], taskType = ttInput)):
+  let locationO = world.dataToObj(locationd)
+  if locationO.isSome():
+    let location = locationO.get()
+    let huhTask = location.verbCall("huh", player, player, @[originalCommand.md],
+                                    taskType = ttInput)
+
+    if isNil(huhTask):
+      player.send("Huh?")
+  else:
     player.send("Huh?")
 
   return nil
@@ -399,7 +406,11 @@ proc handleLoginCommand*(player: MObject, command: string): MObject =
   case tr.typ:
     of trFinish:
       if tr.res.isType(dObj):
-        return world.dataToObj(tr.res)
+        let resO = world.dataToObj(tr.res)
+        if resO.isSome():
+          return resO.get()
+        else:
+          return nil
       else:
         return nil
     of trSuspend:

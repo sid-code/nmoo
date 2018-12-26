@@ -89,10 +89,10 @@ template extractObject(objd: MData): MObject =
   let objdV = objd
   checkType(objdV, dObj)
   let obj = world.dataToObj(objdV)
-  if isNil(obj):
+  if not obj.isSome():
     runtimeError(E_ARGS, "invalid object " & $objdV)
 
-  obj
+  obj.get()
 
 # Error-checking templates:
 # Builtins need to check permissions and types. If any of these
@@ -1482,11 +1482,11 @@ defBuiltin "valid":
 
   let objd = args[0]
   checkType(objd, dObj)
-  let obj = world.dataToObj(objd)
-  if isNil(obj):
-    return 0.md.pack
-  else:
+  let objO = world.dataToObj(objd)
+  if objO.isSome():
     return 1.md.pack
+  else:
+    return 0.md.pack
 
 
 # (call lambda-or-builtin args)
