@@ -4,6 +4,7 @@ import strutils
 import sequtils
 
 import types
+import builtindef
 
 const MaxMacroDepth = 100 # TODO: Make this world-configurable??
 const compilerDefaultOptions: set[MCompilerOption] = {}

@@ -12,11 +12,12 @@ import types
 import objects
 import verbs
 import scripting
+import tasks
 import persist
 import compile
-import tasks
 import querying
 import server
+import builtindef
 
 # for hashing builtins
 import bcrypt
