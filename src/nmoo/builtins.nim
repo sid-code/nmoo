@@ -2558,6 +2558,24 @@ defBuiltin "tset":
 
   return newTable.md.pack
 
+defBuiltin "tdelete":
+  if args.len != 2:
+    runtimeError(E_ARGS, "tdelete takes 2 arguments")
+
+  var newTable = extractTable(args[0])
+  newTable.del(args[1])
+
+  return newTable.md.pack
+
+defBuiltin "tpairs":
+  if args.len != 1:
+    runtimeError(E_ARGS, "tpairs takes 1 argument")
+  var resultL: seq[MData] = @[]
+  for key, val in pairs(extractTable(args[0])):
+    resultL.add( @[key, val].md )
+
+  return resultL.md.pack
+
 # (in list el)
 # returns index of el in list, or -1
 defBuiltin "in":
