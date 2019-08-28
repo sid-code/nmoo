@@ -1046,10 +1046,9 @@ defBuiltin "getverbbytecode":
 
   checkRead(verb)
 
-  var res = ""
+  var res: seq[MData] = @[]
   for i in verb.compiled.code:
-    res &= $i
-    res &= "\n"
+    res.add( @[($i.itype)[2..^1].mds, i.operand, i.pos.line.md, i.pos.col.md].md )
 
   return res.md.pack
 
