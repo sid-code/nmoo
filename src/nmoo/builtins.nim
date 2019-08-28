@@ -1622,6 +1622,7 @@ defArithmeticOperator("+", `+`)
 defArithmeticOperator("-", `-`)
 defArithmeticOperator("*", `*`)
 defArithmeticOperator("/", `/`)
+defArithmeticOperator("%", `mod`)
 
 proc wrappedAnd(a, b: float): float = (a.int and b.int).float
 proc wrappedOr(a, b: float): float = (a.int or b.int).float
