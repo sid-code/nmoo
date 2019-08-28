@@ -1767,6 +1767,38 @@ defBuiltin "object":
   else:
     runtimeError(E_TYPE, bname & ": expected dInt or dStr, got " & $val.dtype)
 
+## ::
+##
+##   (parseint x:Str|Obj|Int):Int
+##
+## Attempts to convert ``x`` to an integer value. ``x`` can be
+## anything that resembles a number, so a str, object, or of course
+## int. If any other type is passed, ``E_TYPE`` will be raised. If
+## there is no suitable integer representation, ``E_ARGS`` is raised.
+##
+## Examples::
+##
+##   (parseint 5)     ; => 5
+##   (parseint #5)    ; => 5
+##   (parseint "-5")  ; => -5
+##   (parseint "5.5") ; => E_ARGS
+##   (parseint "abc") ; => E_ARGS
+defBuiltin "parseint":
+  if args.len != 1:
+    runtimeError(E_ARGS, "parseint takes 1 argument")
+
+  let arg = args[0]
+  if arg.isType(dInt):
+    return arg.pack
+  elif arg.isType(dObj):
+    return arg.objVal.int.md.pack
+  elif arg.isType(dStr):
+    try:
+      return parseInt(arg.strVal).md.pack
+    except:
+      runtimeError(E_ARGS, "failed to convert string to number $#".format(arg))
+  else:
+    runtimeError(E_TYPE, "parseint takes a int, obj, or str")
 
 ## ::
 ##
