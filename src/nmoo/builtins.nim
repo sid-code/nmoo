@@ -38,6 +38,18 @@ proc strToType(str: string): tuple[b: bool, t: MDataType] =
     of "nil": return (true, dNil)
     else: return (false, dInt)
 
+proc typeToStr(typ: MDataType): string =
+  case typ:
+    of dInt:   "int"
+    of dFloat: "float"
+    of dStr:   "str"
+    of dSym:   "sym"
+    of dObj:   "obj"
+    of dList:  "list"
+    of dTable: "table"
+    of dErr:   "err"
+    of dNil:   "nil"
+
 # turns all %s to \s because %s are easier to use within the server
 proc escapeRegex(pat: string): Regex =
   re(pat.replace(re"%(.)", proc (m: RegexMatch): string =
@@ -63,8 +75,8 @@ template extractFloat(d: MData): float =
   elif dV.isType(dInt):
     res = dV.intVal.float
   else:
-    let msg = "$#: expected argument of type dInt or dFloat, instead got $#"
-    runtimeError(E_TYPE, msg % [bname, $dV.dtype])
+    let msg = "$#: expected argument of type int or float, instead got $#"
+    runtimeError(E_TYPE, msg % [bname, typeToStr(dV.dtype)])
 
   res
 
@@ -110,8 +122,8 @@ template checkType(value: MData, expected: MDataType, ifnot: MError = E_TYPE) =
   let expectedV = expected
   if not valueV.isType(expectedV):
     runtimeError(ifnot,
-      bname & ": expected argument of type " & $expectedV &
-      " instead got " & $valueV.dType)
+      bname & ": expected argument of type " & typeToStr(expectedV) &
+        " instead got " & typeToStr(valueV.dType))
 
 template isWizardT: bool = isWizard(task.owner)
 template owns(what: MObject): bool = task.owner.owns(what)
