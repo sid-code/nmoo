@@ -20,6 +20,7 @@ const coverage = getEnv("NMOO_COVERAGE") == "1"
 const debugBuild = getEnv("NMOO_DEBUG") == "1"
 const devBuild = true
 const releaseBuild = getEnv("NMOO_RELEASE") == "1"
+const useGcAssert = getEnv("NMOO_GC_ASSERT") == "1"
 
 task test, "Run tests":
   var compilerParams: string
@@ -32,6 +33,9 @@ task test, "Run tests":
 
   if debugBuild:
     compilerParams &= " -d:debug"
+
+  if useGcAssert:
+    compilerParams &= " -d:useGcAssert"
 
   exec "nim c -r " & compilerParams & " src/nmoo/test.nim"
 
@@ -48,6 +52,9 @@ task serve, "Run the server":
 
   if releaseBuild:
     compilerParams &= " -d:release"
+
+  if useGcAssert:
+    compilerParams &= " -d:useGcAssert"
 
   exec "nim c -r " & compilerParams & " -o:bin/server src/nmoo"
 
