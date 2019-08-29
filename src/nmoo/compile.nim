@@ -648,7 +648,7 @@ defSpecial "static-eval":
 
   for arg in args:
     var (cerr, tr) = compiler.staticEval(arg)
-    propogateError(cerr, "during compile-time compilation(!)", arg.pos)
+    propogateError(cerr, "during compile-time compilation", arg.pos)
     case tr.typ:
       of trFinish:
         propogateError(compiler.codeGen(tr.res))
