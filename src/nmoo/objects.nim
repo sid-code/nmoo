@@ -343,14 +343,12 @@ proc getStrProp*(obj: MObject, name: string, all = true): string =
   else:
     return ""
 
-
 proc add*(world: World, obj: MObject) =
-  var objs = world.getObjects()
-  var newid = ObjID(objs[].len)
+  var newid = ObjID(world.objects.len)
 
   obj.setID(newid)
   obj.setWorld(world)
-  objs[].add(obj)
+  world.objects.add(obj)
 
 proc createWorld*(name: string, persistent = true): World =
   result = newWorld()

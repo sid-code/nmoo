@@ -20,7 +20,7 @@ type
   World* = ref object
     name*: string
     persistent*: bool
-    objects: seq[MObject]
+    objects*: seq[MObject]
     verbObj*: MObject # object that holds global verbs
     tasks*: seq[Task]
     taskIDCounter*: int
