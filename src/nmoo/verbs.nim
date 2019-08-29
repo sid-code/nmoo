@@ -106,6 +106,7 @@ proc parseCommand*(str: string): ParsedCommand =
     result.ioString = ioString[1 .. ^1]
 
 proc nameMatchesStr(name: string, str: string): bool =
+  if name == "": return false
   if name == "*": return true
 
   var
