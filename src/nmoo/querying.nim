@@ -30,8 +30,6 @@ proc matches(obj: MObject, str: string): bool =
   return false
 
 proc getVicinity*(obj: MObject): seq[MObject] =
-  newSeq(result, 0)
-
   let loc = obj.getLocation()
 
   result.add(loc)
