@@ -7,9 +7,7 @@ import sequtils
 import times
 
 import types
-import compile
-import scripting
-import server
+import builtindef
 import logging
 ## VM (Task)
 
@@ -34,12 +32,20 @@ proc getTaskByID*(world: World, id: int): Task
 proc finish*(task: Task)
 proc addCoreGlobals*(st: SymbolTable): SymbolTable
 
+proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
+              symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
+              callback = -1): Task not nil
+
 proc setStatus*(task: Task, newStatus: TaskStatus) =
   when defined(debug):
     debug "Task ", task.name, " entered state ", newStatus
   task.status = newStatus
-  if newStatus != tsRunning: server.taskFinished(task)
+  if newStatus != tsRunning:
+    task.world.taskFinishedCallback(task)
 
+proc run*(task: Task, limit = -1): TaskResult
+
+import compile
 import builtins
 
 proc hash(itype: InstructionType): auto = ord(itype).hash
@@ -114,7 +120,7 @@ proc setCallPackage(task: Task, package: Package, builtin: MData, args: seq[MDat
 proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
   let builtinName = builtin.symVal
   if builtinExists(builtinName):
-    let bproc = scripting.builtins[builtinName]
+    let bproc = builtindef.builtins[builtinName]
 
     # we pass in task.globals as the symtable because some builtins
     # ask for "caller" etc
@@ -539,9 +545,11 @@ proc step*(task: Task) =
     if task.tickCount >= task.tickQuota:
       task.doError(E_QUOTA.md("task has exceeded tick quota"))
 
-proc run*(task: Task, limit = 20000): TaskResult =
-  var limit = limit
-  while limit > 0:
+proc run*(task: Task, limit = -1): TaskResult =
+  if limit > -1:
+    task.tickQuota = limit
+
+  while task.tickQuota > 0:
     case task.status:
       of tsSuspended, tsAwaitingInput, tsReceivedInput:
         return TaskResult(typ: trSuspend)
@@ -550,7 +558,7 @@ proc run*(task: Task, limit = 20000): TaskResult =
 
         if isNil(otask):
           return TaskResult(typ: trSuspend)
-        var res = otask.run(limit)
+        var res = otask.run(limit=task.tickQuota)
         if res.typ in {trError, trTooLong, trSuspend}:
           if res.typ == trError:
             res.err.trace.add(task.currentTraceLine())
@@ -567,7 +575,7 @@ proc run*(task: Task, limit = 20000): TaskResult =
           return TaskResult(typ: trFinish, res: res)
       of tsRunning:
         task.step()
-    limit -= 1
+        task.tickQuota -= 1
 
   return TaskResult(typ: trTooLong)
 
@@ -625,3 +633,35 @@ proc createTask*(id: int, name: string, startTime: Time, compiled: CpOutput,
 
   task.pushFrame(newVSymTable())
   return task
+
+proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
+              symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
+              callback = -1): Task not nil =
+  let tickQuotad = world.getGlobal("tick-quota")
+  let tickQuota = if tickQuotad.isType(dInt): tickQuotad.intVal else: 20000
+
+  let newTask = createTask(
+    id = world.taskIDCounter,
+    name = name,
+    startTime = getTime(),
+    compiled = code,
+    world = world,
+    self = self,
+    player = player,
+    caller = caller,
+    owner = owner,
+    globals = symtable,
+    tickQuota = tickQuota,
+    taskType = taskType,
+    callback = callback)
+  world.taskIDCounter += 1
+
+  if callback > -1:
+    let cbTask = world.getTaskByID(callback)
+    if isNil(cbTask):
+      warn "Warning: callback for task '", newTask.name, "' doesn't exist."
+    else:
+      newTask.registerCallback(cbTask)
+
+  world.tasks.add(newTask)
+  return newTask

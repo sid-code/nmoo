@@ -11,12 +11,12 @@ import math
 import logging
 import os
 import options
+import sequtils
 import logfmt
 
 import types
 
 proc send*(client: Client, msg: string) {.async.}
-proc taskFinished*(task: Task)
 proc findClient*(player: MObject): Client
 proc askForInput*(task: Task, client: Client)
 proc supplyTaskWithInput(client: Client, input: string)
@@ -160,7 +160,7 @@ proc supplyTaskWithInput(client: Client, input: string) =
 
 # Called whenever a task finishes. This is used to determine when
 # to flush queues/etc
-proc taskFinished*(task: Task) =
+proc taskFinished(task: Task) =
   if task.status in {tsDone, tsSuspended}:
     flushOutAll()
 
@@ -401,6 +401,7 @@ proc initWorld =
     let exception = getCurrentException()
     warn "Invalid world: " & exception.msg & "."
 
+  world.taskFinishedCallback = taskFinished
   world.verbObj.output = proc(obj: MObject, msg: string) =
     info "#0: " & msg
 
@@ -423,6 +424,35 @@ proc runInitVerb(world: World): bool =
     of trTooLong:
       world.verbObj.send("The task for #0:server-started ran for too long!")
       return false
+
+proc tick(world: World) =
+  world.tasks.keepItIf(it.status != tsDone)
+  for idx in world.tasks.low..world.tasks.high:
+    let task = world.tasks[idx]
+    if task.status == tsDone:
+      if defined(showTicks):
+        debug "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
+
+    if task.status == tsSuspended:
+      let suspendedUntil = task.suspendedUntil
+      if suspendedUntil != fromUnix(0) and getTime() >= suspendedUntil:
+        task.resume(nilD)
+
+    if not task.isRunning(): continue
+    try:
+      let tr = task.run(task.tickQuota)
+      case tr.typ:
+        of trFinish, trSuspend:
+          discard
+        of trTooLong:
+          task.player.send("Your task ran for too long, so it was terminated.")
+        of trError:
+          task.player.send($tr.err)
+    except:
+      let exception = getCurrentException()
+      warn exception.repr
+      task.doError(E_INTERNAL.md(exception.msg))
+
 
 proc startServer {.async.} =
 

@@ -24,6 +24,7 @@ type
     verbObj*: MObject # object that holds global verbs
     tasks*: seq[Task]
     taskIDCounter*: int
+    taskFinishedCallback*: proc(t: Task)
 
   InvalidWorldError* = object of Exception
 
@@ -568,7 +569,11 @@ proc copy*(verb: MVerb): MVerb =
   )
 
 proc newWorld*: World =
-  World( objects: @[], verbObj: nil, tasks: @[], taskIDCounter: 0 )
+  World( objects: @[],
+         verbObj: nil,
+         tasks: @[],
+         taskIDCounter: 0,
+         taskFinishedCallback: proc(t: Task) = discard)
 
 proc getObjects*(world: World): ptr seq[MObject] =
   addr world.objects

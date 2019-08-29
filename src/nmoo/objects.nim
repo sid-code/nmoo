@@ -23,9 +23,6 @@ proc delPropRec*(obj: MObject, prop: MProperty): seq[tuple[o: MObject, p: MPrope
 proc propIsInherited*(obj: MObject, name: string): bool
 proc propIsInherited*(obj: MObject, prop: MProperty): bool
 proc getOwnProps*(obj: MObject): seq[string]
-proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
-              symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
-              callback = -1): Task not nil
 proc moveTo*(obj: MObject, newLoc: MObject): bool
 proc createChild*(parent: MObject): MObject
 proc createWorld*(name: string, persistent = true): World
@@ -415,67 +412,8 @@ proc createChild*(parent: MObject): MObject =
   newObj.changeParent(parent)
   return newObj
 
-import tasks
 
-# This proc is called by the server
-proc tick*(world: World) =
-  world.tasks.keepItIf(it.status != tsDone)
-  for idx in world.tasks.low..world.tasks.high:
-    let task = world.tasks[idx]
-    if task.status == tsDone:
-      if defined(showTicks):
-        debug "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
-
-    if task.status == tsSuspended:
-      let suspendedUntil = task.suspendedUntil
-      if suspendedUntil != fromUnix(0) and getTime() >= suspendedUntil:
-        task.resume(nilD)
-
-    if not task.isRunning(): continue
-    try:
-      discard task.run(task.tickQuota)
-    except:
-      let exception = getCurrentException()
-      warn exception.repr
-      task.doError(E_INTERNAL.md(exception.msg))
-
-
-proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
-              symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
-              callback = -1): Task not nil =
-  let tickQuotad = world.getGlobal("tick-quota")
-  let tickQuota = if tickQuotad.isType(dInt): tickQuotad.intVal else: 20000
-
-  let newTask = createTask(
-    id = world.taskIDCounter,
-    name = name,
-    startTime = getTime(),
-    compiled = code,
-    world = world,
-    self = self,
-    player = player,
-    caller = caller,
-    owner = owner,
-    globals = symtable,
-    tickQuota = tickQuota,
-    taskType = taskType,
-    callback = callback)
-  world.taskIDCounter += 1
-
-  if callback > -1:
-    let cbTask = world.getTaskByID(callback)
-    if isNil(cbTask):
-      warn "Warning: callback for task '", newTask.name, "' doesn't exist."
-    else:
-      newTask.registerCallback(cbTask)
-
-  world.tasks.add(newTask)
-  return newTask
-
-
-proc numTasks*(world: World): int = world.tasks.len
-
-import persist
+#import persist
 
 # Check if a symbol in the global symtable has a certain desired type
 proc checkForGSymType(world: World, sym: string, dtype: MDataType) =
