@@ -11,7 +11,7 @@ skipFiles     = @["sidechtest.nim"]
 
 # Dependencies
 
-requires "nim >= 0.17"
+requires "nim >= 0.20"
 requires "bcrypt"
 requires "nimboost"
 requires "asynctools"
