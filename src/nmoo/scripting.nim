@@ -345,6 +345,14 @@ proc parseAtom*(parser: var MParser): MData =
     quoteSym.pos = quotePos
     result = @[quoteSym, result].md
 
+## The verb call syntax sugar takes two forms. One for verb calling at
+## runtime, and another at compile time.
+##
+## Runtime:      (obj:verb arg1 arg2 ...)
+## Compile time: (@obj:verb args arg2 ...)
+##
+## Remember, if you call a verb at compile time, the arguments are
+## passed before evaluation.
 proc transformVerbCallSyntax(parser: var MParser, form: var seq[MData], pos: CodePosition) =
   assert(form.len > 0) # sanity check
 
@@ -352,16 +360,27 @@ proc transformVerbCallSyntax(parser: var MParser, form: var seq[MData], pos: Cod
   let name = first.symVal
   let parts = name.split(":")
 
+  var verbCallSymbol: MData
+
   if parts.len > 1:
     if form.len > 0:
-      form[1..^1] = [("list".mds & form[1..^1]).md]
-      let (lhs, error) = parts[0].toData(pos)
+      var lhsStr = parts[0]
+      if lhsStr[0] == '@':
+        # (x a b c) => (x (quote (a b c)))
+        form[1..^1] = [@["quote".mds, form[1..^1].md].md]
+        verbCallSymbol = "macrocall".mds
+        lhsStr = lhsStr[1..^1]
+      else:
+        # (x a b c) => (x (list a b c))
+        form[1..^1] = [("list".mds & form[1..^1]).md]
+        verbCallSymbol = "verbcall".mds
+
+      let (lhs, error) = lhsStr.toData(pos)
       if error.len > 0:
         parser.parseError(error, pos)
 
       form[0] = lhs
       form.insert(parts[1].md, 1)
-      var verbCallSymbol = "verbcall".mds
       verbCallSymbol.pos = first.pos
       form.insert(verbCallSymbol, 0)
 

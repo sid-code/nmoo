@@ -659,7 +659,34 @@ defSpecial "static-eval":
         compileError(tr.err)
       of trTooLong:
         compileError("compile-time evaluation took too long", pos)
-    
+
+defSpecial "macrocall":
+  if args.len != 3:
+    compileError("macrocall: requires at least one argument", pos)
+  let obj = args[0]
+  let verb = args[1]
+  let mcargs = args[2]
+
+  # how we will refer to this call
+  let callstr = "$#:$#".format(obj, verb)
+
+  var code = @["verbcall".mds, obj, verb, mcargs].md
+  code.pos = pos
+
+  var (cerr, tr) = compiler.staticEval(code)
+  propogateError(cerr, "during compile-time compilation", pos);
+
+  case tr.typ:
+    of trFinish:
+      propogateError(compiler.codeGen(tr.res))
+    of trSuspend:
+      compileError("macro call unexpectedly suspended", pos)
+    of trError:
+      tr.err.errMsg =
+        "compile time error in macro call $#: $#".format(callstr, tr.err.errMsg)
+      compileError(tr.err)
+    of trTooLong:
+      compileError("macro call $# took too long".format(callstr), pos)
 
 defSpecial "define":
   verifyArgs("define", args, @[dSym, dNil])
