@@ -442,8 +442,6 @@ proc checkObjectHierarchyHelper(world: World, root: MObject) =
     if child != root:
       world.checkObjectHierarchyHelper(child)
 
-  world.persist(root)
-
 proc checkObjectHierarchy(world: World) =
   let rootO = world.dataToObj(world.getGlobal("root"))
   if rootO.isSome():
