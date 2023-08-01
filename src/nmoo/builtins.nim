@@ -297,7 +297,7 @@ defBuiltin "eval":
     checkForError(instructions.error)
 
     discard world.addTask("eval", self, player, caller, owner, symtable, instructions,
-                        taskType = task.taskType, callback = task.id)
+                          taskType = task.taskType, callback = some(task.id))
     task.setStatus(tsAwaitingResult)
     return 1.pack
   if phase == 1:
@@ -1076,7 +1076,7 @@ defBuiltin "move":
 
     checkOwn(what)
 
-    let failure = isNil(dest.verbCall("accept", player, caller, @[what.md], callback = task.id))
+    let failure = isNil(dest.verbCall("accept", player, caller, @[what.md], callback = some(task.id)))
     if failure: # We were not able to call the verb
       runtimeError(E_FMOVE, "$1 didn't accept $2" % [dest.toObjStr(), what.toObjStr()])
 
@@ -1101,7 +1101,7 @@ defBuiltin "move":
     if isNil(oldLoc):
       phase += 1
     else:
-      let failure = isNil(oldLoc.verbCall("exitfunc", player, caller, @[what.md], callback = task.id))
+      let failure = isNil(oldLoc.verbCall("exitfunc", player, caller, @[what.md], callback = some(task.id)))
       if failure:
         # This means the verb didn't exist, but that's not an issue.
         phase += 1
@@ -1121,7 +1121,7 @@ defBuiltin "move":
       runtimeError(E_FMOVE, "moving $1 to $2 failed (it could already be at $2)" %
             [what.toObjStr(), dest.toObjStr()])
 
-    let failure = isNil(dest.verbCall("enterfunc", player, caller, @[what.md], callback = task.id))
+    let failure = isNil(dest.verbCall("enterfunc", player, caller, @[what.md], callback = some(task.id)))
     if failure:
       phase += 1
     else:
@@ -1266,7 +1266,7 @@ defBuiltin "recycle":
       discard obj.verbCall("exitfunc", player, caller, @[contained.md])
       world.persist(contained)
 
-    if isNil(obj.verbCall("recycle", player, caller, @[], callback = task.id)):
+    if isNil(obj.verbCall("recycle", player, caller, @[], callback = some(task.id))):
       # We don't actually care if the verb "recycle" exists
       phase = 1
     else:
@@ -1553,7 +1553,8 @@ defBuiltin "verbcall":
       caller = self,
       cargs, symtable = symtable,
       holder = holder,
-      taskType = task.taskType, callback = task.id
+      taskType = task.taskType,
+      callback = some(task.id)
     )
 
     if isNil(verbTask):
@@ -2644,7 +2645,8 @@ defBuiltin "pass":
     discard self.verbCallRaw(
       verb,
       player, caller,
-      args, symtable = symtable, holder = parent, callback = task.id
+      args, symtable = symtable, holder = parent,
+      callback = some(task.id)
     )
 
     task.setStatus(tsAwaitingResult)
@@ -2789,7 +2791,7 @@ defBuiltin "resume":
   let alen = args.len
   if alen notin 1..2:
     runtimeError(E_ARGS, "resume takes 1 or 2 arguments")
-  let taskID = extractInt(args[0])
+  let taskID = TaskID(extractInt(args[0]))
   let value = if alen == 2: args[1] else: nilD
   let otask = world.getTaskByID(taskID)
 
@@ -2818,7 +2820,7 @@ defBuiltin "taskid":
   if args.len != 0:
     runtimeError(E_ARGS, "taskid takes no arguments")
 
-  return task.id.md.pack
+  return task.id.int.md.pack
 
 ## ::
 ##
@@ -2846,7 +2848,7 @@ defBuiltin "queued-tasks":
     if isWizardT() or task.owner == otask.owner:
       if otask.status notin {tsSuspended, tsAwaitingInput}:
         continue
-      let taskID = otask.id.md
+      let taskID = otask.id.int.md
       let startTime = otask.suspendedUntil.toUnix.int.md
       let programmer = otask.owner.md
       let verbLoc = otask.globals["holder"]
@@ -2869,7 +2871,7 @@ defBuiltin "queued-tasks":
 defBuiltin "kill-task":
   if args.len != 1:
     runtimeError(E_ARGS, "kill-task takes 1 argument")
-  let taskID = extractInt(args[0])
+  let taskID = TaskID(extractInt(args[0]))
   let otask = world.getTaskByID(taskID)
 
   if isNil(otask):
@@ -2882,7 +2884,7 @@ defBuiltin "kill-task":
   otask.spush(nilD)
   otask.finish()
 
-  return taskID.md.pack
+  return taskID.int.md.pack
 
 when defined(nimTypeNames):
   defBuiltin "dumpinsts":

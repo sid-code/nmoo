@@ -5,6 +5,8 @@ import strutils
 import objects
 import sequtils
 import times
+import std/options
+import std/sugar
 
 import types
 import builtindef
@@ -28,13 +30,13 @@ proc spop*(task: Task): MData =
 
 proc resume*(task: Task, val: MData)
 proc isRunning*(task: Task): bool = task.status in {tsRunning, tsReceivedInput}
-proc getTaskByID*(world: World, id: int): Task
+proc getTaskByID*(world: World, id: TaskID): Task
 proc finish*(task: Task)
 proc addCoreGlobals*(st: SymbolTable): SymbolTable
 
 proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
-              callback = -1): Task not nil
+              callback = none(TaskID)): Task not nil
 
 proc setStatus*(task: Task, newStatus: TaskStatus) =
   when defined(debug):
@@ -189,7 +191,7 @@ proc foreignLambdaCall(task: Task, symtable: SymbolTable, lambda: seq[MData]) =
     owner = task.owner,
     symtable = symtable,
     code = instructions,
-    callback = task.id, # Resume this task when done
+    callback = some(task.id), # Resume this task when done
     taskType = task.taskType)
 
 
@@ -216,7 +218,7 @@ impl inDUP:
   task.spush(top)
 
 impl inGTID:
-  task.spush(task.id.md)
+  task.spush(task.id.int.md)
 
 impl inPOP:
   discard task.spop()
@@ -346,7 +348,7 @@ impl inCALL:
         let jmploc = lcall[0]
         let env = lcall[1].intVal
         let envData = lcall[2]
-        let origin = lcall[3].intVal
+        let origin = TaskID(lcall[3].intVal)
         let bounds = lcall[4].listVal.map(proc (x: MData): string = x.symVal)
         let expectedNumArgs = bounds.len
         let expression = lcall[5]
@@ -476,7 +478,7 @@ impl inETRY:
 impl inHALT:
   task.finish()
 
-proc getTaskByID*(world: World, id: int): Task =
+proc getTaskByID*(world: World, id: TaskID): Task =
   for task in world.tasks:
     if task.id == id:
       return task
@@ -497,21 +499,21 @@ proc finish*(task: Task) =
   let callback = task.callback
   var res = task.top()
 
-  if callback >= 0:
-    let cbTask = task.world.getTaskByID(callback)
+  callback.map(proc (t: TaskID) =
+    let cbTask = task.world.getTaskByID(t)
     if not isNil(cbTask):
       cbTask.tickCount += task.tickCount
-      cbTask.waitingFor = -1
+      cbTask.waitingFor = none(TaskID)
       cbTask.resume(res)
     else:
       # I've decided that a warning here should suffice. The maintainer should
       # make sure that the task's callback isn't crucial to the operation of
       # the system, and if it is, then debug more.
 
-      warn "Warning: callback for task '$#' didn't exist." % [task.name]
+      warn "Warning: callback for task '$#' didn't exist." % [task.name])
 
 proc registerCallback*(task, cbTask: Task) =
-  cbTask.waitingFor = task.id
+  cbTask.waitingFor = some(task.id)
 
 proc doCallPackage(task: Task) =
   let phase = task.callPackage.phase
@@ -554,7 +556,7 @@ proc run*(task: Task, limit = -1): TaskResult =
       of tsSuspended, tsAwaitingInput, tsReceivedInput:
         return TaskResult(typ: trSuspend)
       of tsAwaitingResult:
-        let otask = task.world.getTaskByID(task.waitingFor)
+        let otask = task.waitingFor.map(x => task.world.getTaskByID(x)).get(nil)
 
         if isNil(otask):
           return TaskResult(typ: trSuspend)
@@ -564,8 +566,10 @@ proc run*(task: Task, limit = -1): TaskResult =
             res.err.trace.add(task.currentTraceLine())
           return res
 
-        if task.waitingFor > -1:
-          system.delete(task.world.tasks, task.waitingFor)
+        task.waitingFor.map(
+          proc (id: TaskID) =
+            # TODO: FIX THIS
+            system.delete(task.world.tasks, int32(id)))
 
       of tsDone:
         let res = task.top()
@@ -583,10 +587,10 @@ proc addCoreGlobals*(st: SymbolTable): SymbolTable =
   result = st
   result["nil"] = nilD
 
-proc createTask*(id: int, name: string, startTime: Time, compiled: CpOutput,
+proc createTask*(id: TaskID, name: string, startTime: Time, compiled: CpOutput,
            world: World, self, player, caller, owner: MObject,
            globals = newSymbolTable(), tickQuota: int, taskType: TaskType,
-           callback: int): Task not nil =
+           callback: Option[TaskID]): Task not nil =
   let st = newVSymTable()
   let (entry, code, err) = compiled
 
@@ -624,7 +628,7 @@ proc createTask*(id: int, name: string, startTime: Time, compiled: CpOutput,
 
     taskType: taskType,
     callback: callback,
-    waitingFor: -1
+    waitingFor: none(TaskID)
 
   )
 
@@ -636,12 +640,12 @@ proc createTask*(id: int, name: string, startTime: Time, compiled: CpOutput,
 
 proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
-              callback = -1): Task not nil =
+              callback = none(TaskID)): Task not nil =
   let tickQuotad = world.getGlobal("tick-quota")
   let tickQuota = if tickQuotad.isType(dInt): tickQuotad.intVal else: 20000
 
   let newTask = createTask(
-    id = world.taskIDCounter,
+    id = TaskID(world.taskIDCounter),
     name = name,
     startTime = getTime(),
     compiled = code,
@@ -656,12 +660,12 @@ proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
     callback = callback)
   world.taskIDCounter += 1
 
-  if callback > -1:
-    let cbTask = world.getTaskByID(callback)
+  callback.map(proc (cbtask: TaskID) =
+    let cbTask = world.getTaskByID(cbtask)
     if isNil(cbTask):
       warn "Warning: callback for task '", newTask.name, "' doesn't exist."
     else:
-      newTask.registerCallback(cbTask)
+      newTask.registerCallback(cbTask))
 
   world.tasks.add(newTask)
   return newTask

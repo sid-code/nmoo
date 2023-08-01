@@ -319,7 +319,7 @@ proc getTrashDir(name: string): string =
 proc getTaskDir(name: string): string =
   getWorldDir(name) / "tasks"
 
-proc getTaskFile(name: string, id: int): string =
+proc getTaskFile(name: string, id: TaskID): string =
   getTaskDir(name) / $id
 
 proc getExtraFile(name: string, fileName: string): string =

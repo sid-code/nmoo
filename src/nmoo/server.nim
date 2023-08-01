@@ -13,6 +13,7 @@ import os
 import options
 import sequtils
 import logfmt
+import std/sugar
 
 import types
 
@@ -172,10 +173,11 @@ proc taskFinished(task: Task) =
     if task.status == tsAwaitingInput:
       discard callerClient.unqueueIn()
     elif task.status == tsAwaitingResult:
-      callerClient.setInputTask(task.world.getTaskByID(task.waitingFor))
+      task.waitingFor.map(
+        proc(t: TaskID) = callerClient.setInputTask(task.world.getTaskByID(t)))
     elif task.status == tsDone and task == callerClient.currentInputTask:
-      if task.callback > -1:
-        let cbTask = world.getTaskByID(task.callback)
+      if task.callback.isSome:
+        let cbTask = world.getTaskByID(task.callback.unsafeGet)
         callerClient.setInputTask(cbTask)
         if isNil(cbTask):
           discard callerClient.unqueueIn()

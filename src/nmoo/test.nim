@@ -248,7 +248,7 @@ suite "evaluator":
       if compiled.error != E_NONE.md:
         return compiled.error
 
-      let t = world.addTask(name, who, who, who, who, symtable, compiled, ttFunction, -1)
+      let t = world.addTask(name, who, who, who, who, symtable, compiled, ttFunction, none(TaskID))
 
       let tr = t.run()
       case tr.typ:

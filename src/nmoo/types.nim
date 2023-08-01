@@ -236,8 +236,9 @@ type
     globals*: SymbolTable
     frames*:  seq[Frame]
 
+  TaskID* = distinct int
   Task* = ref object
-    id*: int
+    id*: TaskID
     name*: string
     startTime*: Time
 
@@ -270,8 +271,8 @@ type
     builtinArgs*: seq[MData]
 
     taskType*: TaskType
-    callback*: int
-    waitingFor*: int
+    callback*: Option[TaskID]
+    waitingFor*: Option[TaskID]
 
   TaskResultType* = enum trFinish, trSuspend, trError, trTooLong
   TaskResult* = object
@@ -580,3 +581,6 @@ proc getObjects*(world: World): ptr seq[MObject] =
 
 proc getVerbObj*(world: World): MObject =
   world.verbObj
+
+proc `$`*(t: TaskID): string {.borrow.}
+proc `==`*(t1, t2: TaskID): bool {.borrow.}

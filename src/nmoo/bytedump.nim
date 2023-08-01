@@ -5,6 +5,8 @@ import asyncdispatch
 import boost/io/asyncstreams
 import times
 import tables
+import std/options
+import std/sugar
 
 import types
 import util/msstreams
@@ -276,9 +278,16 @@ proc writeTask*(s: Stream | AsyncStream, t: Task) {.multisync.} =
   await s.writeMData(t.builtinArgs.md)
 
   await s.write(int8(t.taskType))
-  await s.write(int32(t.callback))
-  await s.write(int32(t.waitingFor))
+  await s.write(t.callback.get(TaskID(-1)).int32)
+  await s.write(t.waitingFor.get(TaskID(-1)).int32)
   
+
+proc readTaskID(s: Stream | AsyncStream): Future[Option[TaskID]] {.multisync.} =
+  let id = await s.readInt32()
+  if id == -1:
+    return none(TaskID)
+  else:
+    return some(id.TaskID)
 
 proc readTask*(s: Stream | AsyncStream): Future[Task] {.multisync.} =
   var t: Task
@@ -286,7 +295,7 @@ proc readTask*(s: Stream | AsyncStream): Future[Task] {.multisync.} =
 
   new t
 
-  t.id = await s.readInt32()
+  t.id = TaskID(await s.readInt32())
   t.name = await s.readStrl()
   t.startTime = await s.readTime()
 
@@ -331,11 +340,12 @@ proc readTask*(s: Stream | AsyncStream): Future[Task] {.multisync.} =
   t.builtinArgs = builtinArgsd.listVal
 
   t.taskType = TaskType(await s.readInt8())
-  t.callback = await s.readInt32()
-  t.waitingFor = await s.readInt32()
+
+  t.callback = await s.readTaskID()
+  t.waitingFor = await s.readTaskID()
 
   return t
-  
+
 #when not isMainModule:
 #  import scripting
 #  defBuiltin "twt":

@@ -5,7 +5,7 @@ import sequtils
 import strutils
 import tables
 import pegs
-import options
+import std/options
 
 
 import types
@@ -18,10 +18,10 @@ proc addVerb*(obj: MObject, verb: MVerb): MVerb
 proc delVerb*(obj: MObject, verb: MVerb): MVerb
 proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
                   args: seq[MData], symtable: SymbolTable = newSymbolTable(),
-                  holder: MObject = nil, taskType = ttFunction, callback = -1): Task
+                  holder: MObject = nil, taskType = ttFunction, callback = none(TaskID)): Task
 proc verbCall*(owner: MObject, name: string, player, caller: MObject,
                args: seq[MData], symtable = newSymbolTable(),
-               taskType = ttFunction, callback = -1): Task
+               taskType = ttFunction, callback = none(TaskID)): Task
 
 import tasks
 import objects
@@ -200,7 +200,7 @@ proc delVerb*(obj: MObject, verb: MVerb): MVerb =
   return nil
 
 proc call(verb: MVerb, world: World, self, player, caller, holder: MObject,
-          symtable: SymbolTable, taskType = ttFunction, callback = -1): Task =
+          symtable: SymbolTable, taskType = ttFunction, callback = none(TaskID)): Task =
   let name = "$#:$#" % [holder.toObjStr(), verb.names]
   return world.addTask(
     name,
@@ -210,7 +210,7 @@ proc call(verb: MVerb, world: World, self, player, caller, holder: MObject,
 
 proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
                   args: seq[MData], symtable: SymbolTable = newSymbolTable(),
-                  holder: MObject = nil, taskType = ttFunction, callback = -1): Task =
+                  holder: MObject = nil, taskType = ttFunction, callback = none(TaskID)): Task =
   var
     world = caller.getWorld()
     symtable = symtable
@@ -230,7 +230,7 @@ proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
 
 proc verbCall*(owner: MObject, name: string, player, caller: MObject,
                args: seq[MData], symtable = newSymbolTable(),
-               taskType = ttFunction, callback = -1): Task =
+               taskType = ttFunction, callback = none(TaskID)): Task =
 
   for v in matchingVerbs(owner, name):
     if caller.canExecute(v):
