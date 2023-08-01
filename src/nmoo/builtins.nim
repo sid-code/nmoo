@@ -2847,7 +2847,7 @@ defBuiltin "queued-tasks":
       if otask.status notin {tsSuspended, tsAwaitingInput}:
         continue
       let taskID = otask.id.md
-      let startTime = otask.suspendedUntil.toSeconds.md
+      let startTime = otask.suspendedUntil.toUnix.int.md
       let programmer = otask.owner.md
       let verbLoc = otask.globals["holder"]
       let verbName = otask.globals["verb"]
