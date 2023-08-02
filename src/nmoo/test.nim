@@ -262,7 +262,7 @@ suite "evaluator":
           return nilD
 
     # macro to test later
-    let loopcode = """
+    let loopcode {.used.} = """
 (define-syntax loop
   (lambda (form)
     (if (not (= (len form) 5))

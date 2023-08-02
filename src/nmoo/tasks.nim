@@ -155,7 +155,7 @@ var instImpls = initTable[InstructionType, InstructionProc]()
 template impl(itype: InstructionType, body: untyped) {.dirty.} =
   instImpls[itype] =
     proc(world: World, tid: TaskID, operand: MData) =
-      let task = world.getTaskByID(tid)
+      let task {.used.} = world.getTaskByID(tid)
       body
 
 proc top*(task: Task): MData =

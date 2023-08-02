@@ -278,14 +278,14 @@ proc callTransformer(compiler: MCompiler, name: string, code: MData): MData =
 
 template defSpecial(name: string, body: untyped) {.dirty.} =
   specials[name] = proc (compiler: MCompiler, args: seq[MData], pos: CodePosition): MData =
-    proc emit(inst: Instruction, where = 0) =
+    proc emit(inst: Instruction, where = 0) {.used.} =
       var inst = inst
       inst.pos = pos
       if where == 0:
         compiler.radd(inst)
       else:
         compiler.sadd(inst)
-    proc emit(insts: seq[Instruction], where = 0) =
+    proc emit(insts: seq[Instruction], where = 0) {.used.} =
       for inst in insts: emit(inst, where)
 
     body
