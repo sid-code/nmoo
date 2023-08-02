@@ -89,9 +89,7 @@ proc readMData*(s: Stream | AsyncStream): Future[MData] {.multisync.} =
   else:
     result.pos = (0, 0)
 
-  result.dtype = MDataType(dtype7bit)
-
-  case result.dtype:
+  case MDataType(dtype7bit):
     of dInt:
       result.intVal = int(await s.readInt64())
     of dFloat:
@@ -114,7 +112,7 @@ proc readMData*(s: Stream | AsyncStream): Future[MData] {.multisync.} =
 
     of dList:
       var size = await s.readInt32()
-      newSeq(result.listVal, 0)
+      result.listVal = @[]
       while size > 0:
         dec size
         result.listVal.add(await s.readMData())
