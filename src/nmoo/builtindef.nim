@@ -9,8 +9,6 @@ proc builtinExists*(name: string): bool =
 
 # defining builtins
 
-# TODO: find out new meanings of immediate and dirty pragmas and see if they're
-# really needed here.
 template defBuiltin*(name: string, body: untyped) {.dirty.} =
   template bname: string {.used.} = name
   builtins[name] =
