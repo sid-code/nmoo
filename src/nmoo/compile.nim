@@ -509,8 +509,10 @@ defSpecial "lambda":
   let
     addedSubrs = compiler.subrs[subrsBeforeSize .. subrsAfterSize - 1]
     addedReal = compiler.real[realBeforeSize .. realAfterSize - 1]
-  compiler.subrs.delete(subrsBeforeSize, subrsAfterSize - 1)
-  compiler.real.delete(realBeforeSize, realAfterSize - 1)
+  if subrsBeforeSize < subrsAfterSize - 1:
+    compiler.subrs.delete(subrsBeforeSize, subrsAfterSize - 1)
+  if realBeforeSize < realAfterSize - 1:
+    compiler.real.delete(realBeforeSize, realAfterSize - 1)
   compiler.subrs.add(addedReal)
 
   for bound in bounds:
