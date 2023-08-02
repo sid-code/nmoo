@@ -50,9 +50,11 @@ proc findClient*(player: MObject): Client =
   return nil
 
 proc callDisconnect(player: MObject) =
-  player.verbCall("disconnect", world.verbObj, world.verbObj, @[]).map(
-    proc (dcTask: TaskID) =
-      discard world.run(world.getTaskByID(dcTask)))
+  var dcTask: Option[TaskID]
+  verbCall(dcTask, player, "disconnect", world.verbObj, world.verbObj, @[])
+
+  if dcTask.isSome:
+    discard world.run(world.getTaskByID(dcTask.unsafeGet))
 
 proc close(client: Client) =
   client.sock.close()
@@ -199,7 +201,8 @@ proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: stri
   result.o = nil
   result.msg = "*** Could not connect; the server is not set up correctly. ***"
 
-  let hcTask = world.verbObj.verbCall("handle-new-connection", world.verbObj, world.verbObj, @[address.md])
+  var hcTask: Option[TaskID]
+  verbCall(hcTask, world.verbObj, "handle-new-connection", world.verbObj, world.verbObj, @[address.md])
 
   if hcTask.isNone:
     return
@@ -297,7 +300,8 @@ proc processClient(client: Client, address: string) {.async.} =
 
         client.player = newPlayer
         newPlayer.output = ssend
-        let greetTask = newPlayer.verbCall("greet", newPlayer, newPlayer, @[], taskType = ttInput)
+        var greetTask: Option[TaskID]
+        verbCall(greetTask, newPlayer, "greet", newPlayer, newPlayer, @[], taskType = ttInput)
         greetTask.map(
           proc (tid: TaskID) =
             discard world.run(world.getTaskByID(tid)))
@@ -413,7 +417,8 @@ proc initWorld =
     info "#0: " & msg
 
 proc runInitVerb(world: World): bool =
-  let initTask = world.verbObj.verbCall("server-started", world.verbObj, world.verbObj, @[])
+  var initTask: Option[TaskID]
+  verbCall(initTask, world.verbObj, "server-started", world.verbObj, world.verbObj, @[])
   if initTask.isNone:
     warn "Server doesn't specify #0:server-started"
     return true

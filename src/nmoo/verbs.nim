@@ -16,12 +16,13 @@ proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = tru
 proc getVerbAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, v: MVerb]
 proc addVerb*(obj: MObject, verb: MVerb): MVerb
 proc delVerb*(obj: MObject, verb: MVerb): MVerb
-proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
+proc verbCallRaw*(res: var Option[TaskID],
+                  self: MObject, verb: MVerb, player, caller: MObject,
                   args: seq[MData], symtable: SymbolTable = newSymbolTable(),
-                  holder: MObject = nil, taskType = ttFunction, callback = none(TaskID)): Option[TaskID]
-proc verbCall*(owner: MObject, name: string, player, caller: MObject,
+                  holder: MObject = nil, taskType = ttFunction, callback = none(TaskID))
+proc verbCall*(res: var Option[TaskID], owner: MObject, name: string, player, caller: MObject,
                args: seq[MData], symtable = newSymbolTable(),
-               taskType = ttFunction, callback = none(TaskID)): Option[TaskID]
+               taskType = ttFunction, callback = none(TaskID))
 
 import tasks
 import objects
@@ -208,9 +209,10 @@ proc call(verb: MVerb, world: World, self, player, caller, holder: MObject,
     symtable, verb.compiled, taskType, callback
   ))
 
-proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
+proc verbCallRaw*(res: var Option[TaskID],
+                  self: MObject, verb: MVerb, player, caller: MObject,
                   args: seq[MData], symtable: SymbolTable = newSymbolTable(),
-                  holder: MObject = nil, taskType = ttFunction, callback = none(TaskID)): Option[TaskID] =
+                  holder: MObject = nil, taskType = ttFunction, callback = none(TaskID)) =
   var
     world = caller.getWorld()
     symtable = symtable
@@ -226,16 +228,16 @@ proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
   symtable["holder"] = holder.md
   symtable["verb"] = verb.names.md
 
-  return verb.call(world, self, player, caller, holder, symtable, taskType, callback)
+  res = verb.call(world, self, player, caller, holder, symtable, taskType, callback)
 
-proc verbCall*(owner: MObject, name: string, player, caller: MObject,
+proc verbCall*(res: var Option[TaskID], owner: MObject, name: string, player, caller: MObject,
                args: seq[MData], symtable = newSymbolTable(),
-               taskType = ttFunction, callback = none(TaskID)): Option[TaskID] =
+               taskType = ttFunction, callback = none(TaskID)) =
 
   for v in matchingVerbs(owner, name):
     if caller.canExecute(v):
-      return owner.verbCallRaw(v, player, caller, args, symtable = symtable, taskType = taskType, callback = callback)
-  return none(TaskID)
+      verbCallRaw(res, owner, v, player, caller, args, symtable = symtable, taskType = taskType, callback = callback)
+  res = none(TaskID)
 
 proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true): MData =
   verb.code = newCode
@@ -357,8 +359,9 @@ proc handleCommand*(player: MObject, command: string): Option[TaskID] =
   let locationO = world.dataToObj(locationd)
   if locationO.isSome():
     let location = locationO.get()
-    let huhTask = location.verbCall("huh", player, player, @[originalCommand.md],
-                                    taskType = ttInput)
+    var huhTask: Option[TaskID]
+    verbCall(huhTask, location, "huh", player, player, @[originalCommand.md],
+             taskType = ttInput)
 
     if huhTask.isNone:
       player.send("Huh?")
@@ -395,7 +398,8 @@ proc handleLoginCommand*(player: MObject, command: string): MObject =
   symtable["player"] = player.md
   symtable["self"] = verbObj.md
 
-  let lcTask = verbObj.verbCall("handle-login-command", player = player,
+  var lcTask: Option[TaskID]
+  verbCall(lcTask, verbObj, "handle-login-command", player = player,
                                 caller = verbObj, args, symtable = symtable,
                                 taskType = ttInput)
 
