@@ -81,25 +81,26 @@ proc writeMData*(s: Stream | AsyncStream, d: MData) {.multisync.} =
 proc readMData*(s: Stream | AsyncStream): Future[MData] {.multisync.} =
   var dtype7bit = uint8(await s.readInt8())
   let firstBit = uint8(1) == dtype7bit shr 7
-  if firstBit:
+
+  let pos = if firstBit:
     dtype7bit = dtype7bit and (1 shl 7 - 1)
     let line = int(await s.readInt32())
     let col = int(await s.readInt32())
-    result.pos = (line, col)
+    (line, col)
   else:
-    result.pos = (0, 0)
+    (0, 0)
 
   case MDataType(dtype7bit):
     of dInt:
-      result.intVal = int(await s.readInt64())
+      result = int(await s.readInt64()).md
     of dFloat:
-      result.floatVal = float(await s.readFloat64())
+      result = float(await s.readFloat64()).md
     of dStr:
-      result.strVal = await s.readStrl()
+      result = (await s.readStrl()).md
     of dSym:
-      result.symVal = await s.readStrl()
+      result = (await s.readStrl()).mds
     of dErr:
-      result.errVal = MError(await s.readInt8())
+      result = MError(await s.readInt8()).md
       result.errMsg = await s.readStrl()
       var size = await s.readInt32()
       newSeq(result.trace, size)
@@ -111,8 +112,8 @@ proc readMData*(s: Stream | AsyncStream): Future[MData] {.multisync.} =
         result.trace.add( (name, pos) )
 
     of dList:
+      result = @[].md
       var size = await s.readInt32()
-      result.listVal = @[]
       while size > 0:
         dec size
         result.listVal.add(await s.readMData())
@@ -126,9 +127,11 @@ proc readMData*(s: Stream | AsyncStream): Future[MData] {.multisync.} =
         mappairs.add( (key, val) )
       result = mappairs.md
     of dObj:
-      result.objVal = ObjID(int(await s.readInt32()))
+      result = ObjID(int(await s.readInt32())).md
     of dNil:
       discard
+
+  result.pos = pos
 
 proc writeVSymTable(s: Stream | AsyncStream, vst: VSymTable) {.multisync.} =
   await s.write(int32(vst.len))
