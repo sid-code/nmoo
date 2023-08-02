@@ -309,9 +309,7 @@ proc addToContents*(obj: MObject, newMember: MObject): bool =
 proc removeFromContents*(obj: MObject, member: MObject): bool =
   var contents = obj.getRawContents();
 
-  for idx, o in contents:
-    if o.objVal == member.getID():
-      system.delete(contents, idx)
+  contents.keepItIf(it.objVal != member.getID())
 
   obj.setPropR("contents", contents)
   return true
