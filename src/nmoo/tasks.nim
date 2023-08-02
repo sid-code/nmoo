@@ -30,22 +30,21 @@ proc spop*(task: Task): MData =
 
 proc resume*(task: Task, val: MData)
 proc isRunning*(task: Task): bool = task.status in {tsRunning, tsReceivedInput}
-proc getTaskByID*(world: World, id: TaskID): Task
 proc finish*(task: Task)
 proc addCoreGlobals*(st: SymbolTable): SymbolTable
 
 proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
-              callback = none(TaskID)): Task not nil
+              callback = none(TaskID)): TaskID
 
 proc setStatus*(task: Task, newStatus: TaskStatus) =
   when defined(debug):
     debug "Task ", task.name, " entered state ", newStatus
   task.status = newStatus
   if newStatus != tsRunning:
-    task.world.taskFinishedCallback(task)
+    task.world.taskFinishedCallback(task.world, task.id)
 
-proc run*(task: Task, limit = -1): TaskResult
+proc run*(world: World, task: Task, limit = -1): TaskResult
 
 import compile
 import builtins
@@ -136,7 +135,7 @@ proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
       pos = builtin.pos,
       symtable = task.globals,
       phase = phase,
-      task = task)
+      tid = task.id)
 
     if res.ptype == ptData:
       let val = res.val
@@ -155,7 +154,8 @@ var instImpls = initTable[InstructionType, InstructionProc]()
 
 template impl(itype: InstructionType, body: untyped) {.dirty.} =
   instImpls[itype] =
-    proc(task: Task, operand: MData) =
+    proc(world: World, tid: TaskID, operand: MData) =
+      let task = world.getTaskByID(tid)
       body
 
 proc top*(task: Task): MData =
@@ -409,7 +409,7 @@ impl inACALL:
   for arg in args:
     task.spush(arg, depth=depth)
   task.spush(what, depth=depth)
-  instImpls[inCALL](task, args.len.md)
+  instImpls[inCALL](world, tid, args.len.md)
 
 # algorithm.reversed is broken
 proc reversed[T](list: seq[T]): seq[T] =
@@ -478,13 +478,6 @@ impl inETRY:
 impl inHALT:
   task.finish()
 
-proc getTaskByID*(world: World, id: TaskID): Task =
-  for task in world.tasks:
-    if task.id == id:
-      return task
-
-  return nil
-
 proc resume*(task: Task, val: MData) =
   task.setStatus(tsRunning)
   if val.isType(dErr):
@@ -527,7 +520,7 @@ proc doCallPackage(task: Task) =
   if task.status == tsReceivedInput:
     task.setStatus(tsRunning)
 
-proc step*(task: Task) =
+proc step*(world: World, task: Task) =
   if not task.isRunning(): return
 
   if task.hasCallPackage:
@@ -538,7 +531,7 @@ proc step*(task: Task) =
     let operand = inst.operand
 
     if instImpls.hasKey(itype):
-      instImpls[itype](task, operand)
+      instImpls[itype](world, task.id, operand)
     else:
       raise newException(Exception, "instruction '$1' not implemented" % [$itype])
 
@@ -547,7 +540,7 @@ proc step*(task: Task) =
     if task.tickCount >= task.tickQuota:
       task.doError(E_QUOTA.md("task has exceeded tick quota"))
 
-proc run*(task: Task, limit = -1): TaskResult =
+proc run*(world: World, task: Task, limit = -1): TaskResult =
   if limit > -1:
     task.tickQuota = limit
 
@@ -560,7 +553,7 @@ proc run*(task: Task, limit = -1): TaskResult =
 
         if isNil(otask):
           return TaskResult(typ: trSuspend)
-        var res = otask.run(limit=task.tickQuota)
+        var res = world.run(otask, limit=task.tickQuota)
         if res.typ in {trError, trTooLong, trSuspend}:
           if res.typ == trError:
             res.err.trace.add(task.currentTraceLine())
@@ -578,7 +571,7 @@ proc run*(task: Task, limit = -1): TaskResult =
         else:
           return TaskResult(typ: trFinish, res: res)
       of tsRunning:
-        task.step()
+        world.step(task)
         task.tickQuota -= 1
 
   return TaskResult(typ: trTooLong)
@@ -640,7 +633,7 @@ proc createTask*(id: TaskID, name: string, startTime: Time, compiled: CpOutput,
 
 proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
               symtable: SymbolTable, code: CpOutput, taskType = ttFunction,
-              callback = none(TaskID)): Task not nil =
+              callback = none(TaskID)): TaskID =
   let tickQuotad = world.getGlobal("tick-quota")
   let tickQuota = if tickQuotad.isType(dInt): tickQuotad.intVal else: 20000
 
@@ -668,4 +661,4 @@ proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
       newTask.registerCallback(cbTask))
 
   world.tasks.add(newTask)
-  return newTask
+  return newTask.id

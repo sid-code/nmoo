@@ -24,7 +24,7 @@ type
     verbObj*: MObject # object that holds global verbs
     tasks*: seq[Task]
     taskIDCounter*: int
-    taskFinishedCallback*: proc(t: Task)
+    taskFinishedCallback*: proc(world: World, tid: TaskID)
 
   InvalidWorldError* = object of Exception
 
@@ -167,7 +167,7 @@ type
   BuiltinProc* = proc(args: seq[MData], world: World,
                       self, player, caller, owner: MObject,
                       symtable: SymbolTable, pos: CodePosition, phase: int,
-                      task: Task): Package
+                      tid: TaskID): Package
 
   Instruction* = object
     itype*: InstructionType
@@ -282,7 +282,7 @@ type
       of trError: err*: MData
       of trTooLong: discard
 
-  InstructionProc* = proc(task: Task, operand: MData)
+  InstructionProc* = proc(world: World, tid: TaskID, operand: MData)
   CpOutput* = tuple[entry: int, code: seq[Instruction], error: MData]
 
   Client* = ref object
@@ -574,7 +574,7 @@ proc newWorld*: World =
          verbObj: nil,
          tasks: @[],
          taskIDCounter: 0,
-         taskFinishedCallback: proc(t: Task) = discard)
+         taskFinishedCallback: proc(world: World, tid: TaskID) = discard)
 
 proc getObjects*(world: World): ptr seq[MObject] =
   addr world.objects
@@ -584,3 +584,10 @@ proc getVerbObj*(world: World): MObject =
 
 proc `$`*(t: TaskID): string {.borrow.}
 proc `==`*(t1, t2: TaskID): bool {.borrow.}
+
+proc getTaskByID*(world: World, id: TaskID): Task =
+  for task in world.tasks:
+    if task.id == id:
+      return task
+
+  return nil

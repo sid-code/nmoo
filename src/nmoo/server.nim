@@ -19,7 +19,7 @@ import types
 
 proc send*(client: Client, msg: string) {.async.}
 proc findClient*(player: MObject): Client
-proc askForInput*(task: Task, client: Client)
+proc askForInput*(world: World, tid: TaskID, client: Client)
 proc supplyTaskWithInput(client: Client, input: string)
 proc inputTaskRunning(client: Client): bool
 proc requiresInput(client: Client): bool
@@ -50,9 +50,9 @@ proc findClient*(player: MObject): Client =
   return nil
 
 proc callDisconnect(player: MObject) =
-  let dcTask = player.verbCall("disconnect", world.verbObj, world.verbObj, @[])
-  if not isNil(dcTask):
-    discard dcTask.run()
+  player.verbCall("disconnect", world.verbObj, world.verbObj, @[]).map(
+    proc (dcTask: TaskID) =
+      discard world.run(world.getTaskByID(dcTask)))
 
 proc close(client: Client) =
   client.sock.close()
@@ -125,10 +125,11 @@ proc unqueueIn(client: Client): bool =
   if client.tasksWaitingForInput.len > 0:
     client.supplyTaskWithInput(last)
   else:
-    let task = client.player.handleCommand(last)
-    if isNil(task):
+    let tid = client.player.handleCommand(last)
+    if tid.isNone:
       client.flushOut()
     else:
+      let task = world.getTaskByID(tid.unsafeGet)
       if task.taskType == ttInput:
         client.setInputTask(task)
 
@@ -148,7 +149,8 @@ proc clearInAll =
 ## stuff for the read builtin
 
 # to be called from the read builtin
-proc askForInput*(task: Task, client: Client) =
+proc askForInput*(world: World, tid: TaskID, client: Client) =
+  let task = world.getTaskByID(tid)
   when defined(debug): debug "Task ", task.name, " asked for input!"
   client.tasksWaitingForInput.add(task)
   client.flushOut()
@@ -161,7 +163,8 @@ proc supplyTaskWithInput(client: Client, input: string) =
 
 # Called whenever a task finishes. This is used to determine when
 # to flush queues/etc
-proc taskFinished(task: Task) =
+proc taskFinished(world: World, tid: TaskID) =
+  let task = world.getTaskByID(tid)
   if task.status in {tsDone, tsSuspended}:
     flushOutAll()
 
@@ -198,9 +201,9 @@ proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: stri
 
   let hcTask = world.verbObj.verbCall("handle-new-connection", world.verbObj, world.verbObj, @[address.md])
 
-  if isNil(hcTask):
+  if hcTask.isNone:
     return
-  let tr = hcTask.run
+  let tr = world.run(world.getTaskByID(hcTask.unsafeGet))
   case tr.typ:
     of trFinish:
       if tr.res.isType(dObj):
@@ -295,7 +298,9 @@ proc processClient(client: Client, address: string) {.async.} =
         client.player = newPlayer
         newPlayer.output = ssend
         let greetTask = newPlayer.verbCall("greet", newPlayer, newPlayer, @[], taskType = ttInput)
-        if not isNil(greetTask): discard greetTask.run()
+        greetTask.map(
+          proc (tid: TaskID) =
+            discard world.run(world.getTaskByID(tid)))
         client.flushOut()
 
 var server: asyncnet.AsyncSocket
@@ -409,10 +414,10 @@ proc initWorld =
 
 proc runInitVerb(world: World): bool =
   let initTask = world.verbObj.verbCall("server-started", world.verbObj, world.verbObj, @[])
-  if isNil(initTask):
+  if initTask.isNone:
     warn "Server doesn't specify #0:server-started"
     return true
-  let tr = initTask.run()
+  let tr = world.run(world.getTaskByID(initTask.unsafeGet))
   case tr.typ:
     of trFinish:
       world.verbObj.send("The task for #0:server-started returned " & $tr.res)
@@ -442,7 +447,7 @@ proc tick(world: World) =
 
     if not task.isRunning(): continue
     try:
-      let tr = task.run(task.tickQuota)
+      let tr = world.run(task, task.tickQuota)
       case tr.typ:
         of trFinish, trSuspend:
           discard

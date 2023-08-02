@@ -368,7 +368,7 @@ defBuiltin "read":
     if isNil(client):
       runtimeError(E_ARGS, who.toObjStr() & " has not been connected to!")
 
-    task.askForInput(client)
+    world.askForInput(tid, client)
     return 1.inputPack
   elif phase == 1:
     # sanity check
@@ -1076,8 +1076,7 @@ defBuiltin "move":
 
     checkOwn(what)
 
-    let failure = isNil(dest.verbCall("accept", player, caller, @[what.md], callback = some(task.id)))
-    if failure: # We were not able to call the verb
+    if dest.verbCall("accept", player, caller, @[what.md], callback = some(task.id)).isNone: # We were not able to call the verb
       runtimeError(E_FMOVE, "$1 didn't accept $2" % [dest.toObjStr(), what.toObjStr()])
 
     task.setStatus(tsAwaitingResult)
@@ -1101,8 +1100,7 @@ defBuiltin "move":
     if isNil(oldLoc):
       phase += 1
     else:
-      let failure = isNil(oldLoc.verbCall("exitfunc", player, caller, @[what.md], callback = some(task.id)))
-      if failure:
+      if oldLoc.verbCall("exitfunc", player, caller, @[what.md], callback = some(task.id)).isNone:
         # This means the verb didn't exist, but that's not an issue.
         phase += 1
       else:
@@ -1121,8 +1119,7 @@ defBuiltin "move":
       runtimeError(E_FMOVE, "moving $1 to $2 failed (it could already be at $2)" %
             [what.toObjStr(), dest.toObjStr()])
 
-    let failure = isNil(dest.verbCall("enterfunc", player, caller, @[what.md], callback = some(task.id)))
-    if failure:
+    if dest.verbCall("enterfunc", player, caller, @[what.md], callback = some(task.id)).isNone:
       phase += 1
     else:
       task.setStatus(tsAwaitingResult)
@@ -1266,7 +1263,7 @@ defBuiltin "recycle":
       discard obj.verbCall("exitfunc", player, caller, @[contained.md])
       world.persist(contained)
 
-    if isNil(obj.verbCall("recycle", player, caller, @[], callback = some(task.id))):
+    if obj.verbCall("recycle", player, caller, @[], callback = some(task.id)).isNone:
       # We don't actually care if the verb "recycle" exists
       phase = 1
     else:
@@ -1557,7 +1554,7 @@ defBuiltin "verbcall":
       callback = some(task.id)
     )
 
-    if isNil(verbTask):
+    if verbTask.isNone:
       runtimeError(E_VERBNF, "verb $#:$# has not been compiled (perhaps it failed earlier?)" %
                                 [obj.toObjStr(), verb.names])
     task.setStatus(tsAwaitingResult)

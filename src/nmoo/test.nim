@@ -250,7 +250,7 @@ suite "evaluator":
 
       let t = world.addTask(name, who, who, who, who, symtable, compiled, ttFunction, none(TaskID))
 
-      let tr = t.run()
+      let tr = world.run(world.getTaskByID(t))
       case tr.typ:
         of trFinish:
           return tr.res

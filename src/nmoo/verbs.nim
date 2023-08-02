@@ -18,10 +18,10 @@ proc addVerb*(obj: MObject, verb: MVerb): MVerb
 proc delVerb*(obj: MObject, verb: MVerb): MVerb
 proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
                   args: seq[MData], symtable: SymbolTable = newSymbolTable(),
-                  holder: MObject = nil, taskType = ttFunction, callback = none(TaskID)): Task
+                  holder: MObject = nil, taskType = ttFunction, callback = none(TaskID)): Option[TaskID]
 proc verbCall*(owner: MObject, name: string, player, caller: MObject,
                args: seq[MData], symtable = newSymbolTable(),
-               taskType = ttFunction, callback = none(TaskID)): Task
+               taskType = ttFunction, callback = none(TaskID)): Option[TaskID]
 
 import tasks
 import objects
@@ -200,17 +200,17 @@ proc delVerb*(obj: MObject, verb: MVerb): MVerb =
   return nil
 
 proc call(verb: MVerb, world: World, self, player, caller, holder: MObject,
-          symtable: SymbolTable, taskType = ttFunction, callback = none(TaskID)): Task =
+          symtable: SymbolTable, taskType = ttFunction, callback = none(TaskID)): Option[TaskID] =
   let name = "$#:$#" % [holder.toObjStr(), verb.names]
-  return world.addTask(
+  return some(world.addTask(
     name,
     self, player, caller, verb.owner,
     symtable, verb.compiled, taskType, callback
-  )
+  ))
 
 proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
                   args: seq[MData], symtable: SymbolTable = newSymbolTable(),
-                  holder: MObject = nil, taskType = ttFunction, callback = none(TaskID)): Task =
+                  holder: MObject = nil, taskType = ttFunction, callback = none(TaskID)): Option[TaskID] =
   var
     world = caller.getWorld()
     symtable = symtable
@@ -230,12 +230,12 @@ proc verbCallRaw*(self: MObject, verb: MVerb, player, caller: MObject,
 
 proc verbCall*(owner: MObject, name: string, player, caller: MObject,
                args: seq[MData], symtable = newSymbolTable(),
-               taskType = ttFunction, callback = none(TaskID)): Task =
+               taskType = ttFunction, callback = none(TaskID)): Option[TaskID] =
 
   for v in matchingVerbs(owner, name):
     if caller.canExecute(v):
       return owner.verbCallRaw(v, player, caller, args, symtable = symtable, taskType = taskType, callback = callback)
-  return nil
+  return none(TaskID)
 
 proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true): MData =
   verb.code = newCode
@@ -253,9 +253,9 @@ proc preprocess(command: string): string =
     return "eval " & command
   return command
 
-proc handleCommand*(player: MObject, command: string): Task =
+proc handleCommand*(player: MObject, command: string): Option[TaskID] =
   let command = preprocess(command.strip())
-  if command.len == 0: return nil
+  if command.len == 0: return none(TaskID)
 
   let originalCommand = command
 
@@ -352,7 +352,7 @@ proc handleCommand*(player: MObject, command: string): Task =
 
   let locationd = player.getPropVal("location")
   if not locationd.isType(dObj):
-    return nil
+    return none(TaskID)
 
   let locationO = world.dataToObj(locationd)
   if locationO.isSome():
@@ -360,12 +360,12 @@ proc handleCommand*(player: MObject, command: string): Task =
     let huhTask = location.verbCall("huh", player, player, @[originalCommand.md],
                                     taskType = ttInput)
 
-    if isNil(huhTask):
+    if huhTask.isNone:
       player.send("Huh?")
   else:
     player.send("Huh?")
 
-  return nil
+  return none(TaskID)
 
 # Return MObject because the goal of these commands is to determine the
 # player the connection owns.
@@ -399,11 +399,11 @@ proc handleLoginCommand*(player: MObject, command: string): MObject =
                                 caller = verbObj, args, symtable = symtable,
                                 taskType = ttInput)
 
-  if isNil(lcTask):
+  if lcTask.isNone:
     player.send("Failed to run your login command; server is set up incorrectly.")
     return nil
 
-  let tr = lcTask.run
+  let tr = world.run(world.getTaskByID(lcTask.unsafeGet))
   case tr.typ:
     of trFinish:
       if tr.res.isType(dObj):

@@ -1,5 +1,6 @@
 import types
 import tables
+import std/options
 
 var builtins* = initTable[string, BuiltinProc]()
 
@@ -16,5 +17,6 @@ template defBuiltin*(name: string, body: untyped) {.dirty.} =
     proc (args: seq[MData], world: World,
           self, player, caller, owner: MObject,
           symtable: SymbolTable, pos: CodePosition, phase = 0,
-          task: Task = nil): Package =
+          tid: TaskID): Package =
+      let task = world.getTaskByID(tid)
       body

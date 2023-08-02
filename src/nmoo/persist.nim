@@ -18,6 +18,7 @@ import objects
 import verbs
 import scripting
 import bytedump
+import tasks
 
 # object format:
 #
@@ -128,9 +129,10 @@ proc dumpObject*(obj: MObject): string =
     result.add(dumpVerb(verb))
     result.addLine(".")
 
-proc dumpTask(task: Task): string =
+proc dumpTask(world: World, tid: TaskID): string =
   let resultSS = newStringStream()
 
+  let task = world.getTaskByID(tid)
   let self = task.self
   let player = task.player
   let caller = task.caller
@@ -372,12 +374,12 @@ proc persist*(world: World, obj: MObject) =
   file.write(dumpObject(obj))
   file.close()
 
-proc persist*(world: World, task: Task) =
+proc persist*(world: World, tid: TaskID) =
   if not world.persistent: return
 
-  let fileName = getTaskFile(world.name, task.id)
+  let fileName = getTaskFile(world.name, tid)
   let file = newFileStream(fileName, fmWrite)
-  file.write(dumpTask(task))
+  file.write(dumpTask(world, tid))
   file.close()
 
 proc persistObjectCount(world: World) =
@@ -427,7 +429,7 @@ proc persist*(world: World) =
   var taskCount = 0
   for task in world.tasks:
     taskCount += 1
-    world.persist(task)
+    world.persist(task.id)
 
   info "Wrote " & $taskCount & " tasks to disk."
 
