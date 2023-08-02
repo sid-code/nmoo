@@ -1076,7 +1076,7 @@ defBuiltin "move":
 
     checkOwn(what)
 
-    if dest.verbCall("accept", player, caller, @[what.md], callback = some(task.id)).isNone: # We were not able to call the verb
+    if dest.verbCall("accept", player, caller, @[what.md], callback = some(tid)).isNone: # We were not able to call the verb
       runtimeError(E_FMOVE, "$1 didn't accept $2" % [dest.toObjStr(), what.toObjStr()])
 
     task.setStatus(tsAwaitingResult)
@@ -1100,7 +1100,7 @@ defBuiltin "move":
     if isNil(oldLoc):
       phase += 1
     else:
-      if oldLoc.verbCall("exitfunc", player, caller, @[what.md], callback = some(task.id)).isNone:
+      if oldLoc.verbCall("exitfunc", player, caller, @[what.md], callback = some(tid)).isNone:
         # This means the verb didn't exist, but that's not an issue.
         phase += 1
       else:
@@ -1119,7 +1119,7 @@ defBuiltin "move":
       runtimeError(E_FMOVE, "moving $1 to $2 failed (it could already be at $2)" %
             [what.toObjStr(), dest.toObjStr()])
 
-    if dest.verbCall("enterfunc", player, caller, @[what.md], callback = some(task.id)).isNone:
+    if dest.verbCall("enterfunc", player, caller, @[what.md], callback = some(tid)).isNone:
       phase += 1
     else:
       task.setStatus(tsAwaitingResult)
@@ -1263,7 +1263,7 @@ defBuiltin "recycle":
       discard obj.verbCall("exitfunc", player, caller, @[contained.md])
       world.persist(contained)
 
-    if obj.verbCall("recycle", player, caller, @[], callback = some(task.id)).isNone:
+    if obj.verbCall("recycle", player, caller, @[], callback = some(tid)).isNone:
       # We don't actually care if the verb "recycle" exists
       phase = 1
     else:
@@ -1551,7 +1551,7 @@ defBuiltin "verbcall":
       cargs, symtable = symtable,
       holder = holder,
       taskType = task.taskType,
-      callback = some(task.id)
+      callback = some(tid)
     )
 
     if verbTask.isNone:
@@ -2643,7 +2643,7 @@ defBuiltin "pass":
       verb,
       player, caller,
       args, symtable = symtable, holder = parent,
-      callback = some(task.id)
+      callback = some(tid)
     )
 
     task.setStatus(tsAwaitingResult)
@@ -2817,7 +2817,7 @@ defBuiltin "taskid":
   if args.len != 0:
     runtimeError(E_ARGS, "taskid takes no arguments")
 
-  return task.id.int.md.pack
+  return tid.int.md.pack
 
 ## ::
 ##
