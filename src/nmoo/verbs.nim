@@ -237,6 +237,7 @@ proc verbCall*(res: var Option[TaskID], owner: MObject, name: string, player, ca
   for v in matchingVerbs(owner, name):
     if caller.canExecute(v):
       verbCallRaw(res, owner, v, player, caller, args, symtable = symtable, taskType = taskType, callback = callback)
+      return
   res = none(TaskID)
 
 proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true): MData =
