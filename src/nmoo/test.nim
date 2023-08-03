@@ -508,51 +508,53 @@ suite "evaluator":
     check result == @[1.md, 0.md].md
 
   test "move statement works":
-    var genericContainer = root.createChild()
-    world.add(genericContainer)
-    genericContainer.setPropR("name", "generic container")
-    genericContainer.setPropR("contents", @[])
+    suite "move statement":
+      setup:
+        var genericContainer = root.createChild()
+        world.add(genericContainer)
+        genericContainer.setPropR("name", "generic container")
+        genericContainer.setPropR("contents", @[])
 
-    var nowhere = genericContainer.createChild()
-    world.add(nowhere)
-    nowhere.setPropR("name", "nowhere")
+        var nowhere = genericContainer.createChild()
+        world.add(nowhere)
+        nowhere.setPropR("name", "nowhere")
 
-    var genericThing = root.createChild()
-    world.add(genericThing)
-    genericThing.setPropR("name", "generic thing")
-    check genericThing.moveTo(nowhere)
+        var genericThing = root.createChild()
+        world.add(genericThing)
+        genericThing.setPropR("name", "generic thing")
+        check genericThing.moveTo(nowhere)
 
-    genericContainer.changeParent(genericThing)
+        genericContainer.changeParent(genericThing)
 
-    symtable["gencont"] = genericContainer.md
-    symtable["nowhere"] = nowhere.md
-    symtable["genthing"] = genericThing.md
+        symtable["gencont"] = genericContainer.md
+        symtable["nowhere"] = nowhere.md
+        symtable["genthing"] = genericThing.md
 
-    # Set up accept verb for containers
-    discard evalS("""
-    (do
-      (addverb gencont "accept")
-      (setverbcode gencont "accept" "1"))
-    """)
+        # Set up accept verb for containers
+        discard evalS("""
+        (do
+          (addverb gencont "accept")
+          (setverbcode gencont "accept" "1"))
+        """)
 
-    # move actually moves objects
-    var result = evalS("(move gencont nowhere)")
-    check genericContainer.getLocation() == nowhere
-    let contents = nowhere.getContents()
-    check genericContainer in contents
+      test "moved object is in destination":
+        let result = evalS("(move gencont nowhere)")
+        check genericContainer.getLocation() == nowhere
+        let contents = nowhere.getContents()
+        check genericContainer in contents
 
-    # move removes objects from previous location
-    result = evalS("(move genthing gencont)")
-    let contents2 = nowhere.getContents()
-    check contents2.len == 1
+      test "move removes objects from previous location":
+        let result = evalS("(move genthing gencont)")
+        let contents = nowhere.getContents()
+        check contents.len == 0
 
-    # for good measure
-    check genericThing.getLocation() == genericContainer
+        # for good measure
+        check genericThing.getLocation() == genericContainer
 
-    # recursive move
-    result = evalS("(move gencont gencont)")
-    check result.isType(dErr)
-    check result.errVal == E_RECMOVE
+      test "recursive move is forbidden":
+        let result = evalS("(move gencont gencont)")
+        check result.isType(dErr)
+        check result.errVal == E_RECMOVE
 
   test "lambda statement works":
     var result = evalS("(lambda (x y) (do x y))")
