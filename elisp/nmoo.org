@@ -1,0 +1,3 @@
+* nmoo emacs integration
+
+This directory is for emacs lisp code for interacting with nmoo.
