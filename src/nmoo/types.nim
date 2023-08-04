@@ -288,6 +288,7 @@ type
   Client* = ref object
     world*: World
     player*: MObject
+    address*: string
     sock*: AsyncSocket
     outputQueue*: seq[string]
     inputQueue*: seq[string]

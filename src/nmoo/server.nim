@@ -14,6 +14,7 @@ import options
 import sequtils
 import logfmt
 import std/sugar
+import std/tables
 
 import types
 
@@ -30,6 +31,7 @@ var clog: ConsoleLogger
 
 import objects
 import verbs
+import builtindef
 import builtins
 import persist
 import tasks
@@ -346,12 +348,19 @@ proc serve {.async.} =
   server = newAsyncSocket()
   server.setSockOpt(OptReuseAddr, true)
 
+  defBuiltin "clients":
+    if not isWizard(task.owner):
+      E_PERM.md("only wizards can use the " & bname & " builtin").pack
+    else:
+      clients.mapIt(@[it.player.md, it.address.md].md).md.pack
+
   server.bindAddr(port, host)
   server.listen()
 
   while true:
     let (address, socket) = await server.acceptAddr()
     let client = Client(
+      address: address,
       sock: socket,
       player: nil,
       outputQueue: @[],
@@ -507,4 +516,3 @@ proc start* =
   info "Terminate with ^C"
 
   mainLoop()
-
