@@ -292,8 +292,8 @@ type
     sock*: AsyncSocket
     outputQueue*: seq[string]
     inputQueue*: seq[string]
-    tasksWaitingForInput*: seq[Task]
-    currentInputTask*: Task
+    tasksWaitingForInput*: seq[TaskID]
+    currentInputTask*: Option[TaskID]
 
 let nilD* = MData(dtype: dNil, nilVal: 1)
 

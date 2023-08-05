@@ -15,6 +15,7 @@ import sequtils
 import logfmt
 import std/sugar
 import std/tables
+import std/options
 
 import types
 
@@ -82,12 +83,17 @@ proc recvLine(client: Client): Future[string] {.async.} =
   return await client.sock.recvLine()
 
 # client input task procs
-proc setInputTask(client: Client, inputTask: Task) =
-  client.currentInputTask = inputTask
+proc setInputTask(client: Client, tid: TaskID) =
+  client.currentInputTask = some(tid)
+proc clearInputTask(client: Client) =
+  client.currentInputTask = none(TaskID)
 
 proc inputTaskRunning(client: Client): bool =
   let inputTask = client.currentInputTask
-  return (not isNil(inputTask)) and inputTask.status notin {tsDone}
+  return inputTask
+    .flatMap((tid: TaskID) => option(world.getTaskById(tid)))
+    .map(t => t.status notin {tsDone})
+    .get(false)
 
 proc requiresInput(client: Client): bool =
   client.tasksWaitingForInput.len > 0 or not client.inputTaskRunning()
@@ -135,7 +141,7 @@ proc unqueueIn(client: Client): bool =
     else:
       let task = world.getTaskByID(tid.unsafeGet)
       if task.taskType == ttInput:
-        client.setInputTask(task)
+        client.setInputTask(tid.unsafeGet)
 
   return true
 
@@ -154,14 +160,16 @@ proc clearInAll =
 
 # to be called from the read builtin
 proc askForInput*(world: World, tid: TaskID, client: Client) =
-  let task = world.getTaskByID(tid)
-  when defined(debug): debug "Task ", task.name, " asked for input!"
-  client.tasksWaitingForInput.add(task)
+  when defined(debug): debug "Task ", $tid, " asked for input!"
+  client.tasksWaitingForInput.add(tid)
   client.flushOut()
 
 proc supplyTaskWithInput(client: Client, input: string) =
-  let task = client.tasksWaitingForInput.pop()
-  when defined(debug): debug "Supplied task ", task.name, " with input ", input
+  let tid = client.tasksWaitingForInput.pop()
+  when defined(debug): debug "Supplied task ", tid, " with input ", input
+  let task = world.getTaskById(tid)
+  if isNil(task):
+    warn "Tried to supply nonexistent task ", tid, " with input"
   # FIXME: if input is empty, this might result in invalid state
   task.resume(input.md)
 
@@ -180,12 +188,11 @@ proc taskFinished(world: World, tid: TaskID) =
     if task.status == tsAwaitingInput:
       discard callerClient.unqueueIn()
     elif task.status == tsAwaitingResult:
-      task.waitingFor.map(
-        proc(t: TaskID) = callerClient.setInputTask(task.world.getTaskByID(t)))
-    elif task.status == tsDone and task == callerClient.currentInputTask:
+      task.waitingFor.map(proc(t: TaskID) = callerClient.setInputTask(t))
+    elif task.status == tsDone and some(tid) == callerClient.currentInputTask:
       if task.callback.isSome:
         let cbTask = world.getTaskByID(task.callback.unsafeGet)
-        callerClient.setInputTask(cbTask)
+        callerClient.setInputTask(task.callback.unsafeGet)
         if isNil(cbTask):
           discard callerClient.unqueueIn()
       else:
@@ -195,8 +202,8 @@ proc taskFinished(world: World, tid: TaskID) =
           discard callerClient.unqueueOut()
 
         discard callerClient.unqueueIn()
-    elif task.status == tsSuspended and task == callerClient.currentInputTask:
-      callerClient.setInputTask(nil)
+    elif task.status == tsSuspended and some(tid) == callerClient.currentInputTask:
+      callerClient.clearInputTask()
       discard callerClient.unqueueIn()
 
 proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: string] =
@@ -367,7 +374,7 @@ proc serve {.async.} =
       outputQueue: @[],
       inputQueue: @[],
       tasksWaitingForInput: @[],
-      currentInputTask: nil)
+      currentInputTask: none(TaskID))
 
     asyncCheck processClient(client, address)
 
