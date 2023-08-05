@@ -14,7 +14,9 @@
   (lambda (data ohs)
     (cond
      ((istype data "obj")
-      (cat "<a href=\"" (ohs data) "\">" ($o data) "</a>"))
+      (cat "<a href=\"" (ohs data) "\">" 
+           ($webutils:escape-html ($o data)) 
+           "</a>"))
      ((istype data "table")
       (cat "(table "
            ($strutils:join
@@ -31,13 +33,12 @@
            ($strutils:join
             (map (lambda (d) (html-fragment-for-data d ohs)) data) " ")
            ")"))
-     
-     ((istype data "str")
-      (cat "\"" data "\""))
-     (($ data)))))
+     ((istype data "str") ($webutils:escape-html (cat "\"" data "\"")))
+     (($webutils:escape-html ($ data))))))
 
 (if (or (< (len args) 1) (> (len args) 2))
     (error E_ARGS (cat self ":" verb " takes 1 or 2 arguments"))
     (let ((data (get args 0))
-          (object-hyperlink-schema (get args 1 default-hyperlink-schema)))
-      ($webutils:escape-html (call html-fragment-for-data (list data object-hyperlink-schema)))))
+          (object-hyperlink-schema (get args 1 default-hyperlink-schema))
+          (fargs (list data object-hyperlink-schema)))
+      (call html-fragment-for-data fargs)))
