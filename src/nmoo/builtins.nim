@@ -365,10 +365,10 @@ defBuiltin "read":
       runtimeError(E_PERM, "you don't have permission to read from that connection")
 
     let client = findClient(who)
-    if isNil(client):
+    if client.isNone:
       runtimeError(E_ARGS, who.toObjStr() & " has not been connected to!")
 
-    world.askForInput(tid, client)
+    world.askForInput(tid, client.get)
     return 1.inputPack
   elif phase == 1:
     # sanity check

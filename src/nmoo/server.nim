@@ -20,7 +20,7 @@ import std/options
 import types
 
 proc send*(client: Client, msg: string) {.async.}
-proc findClient*(player: MObject): Client
+proc findClient*(player: MObject): Option[Client]
 proc askForInput*(world: World, tid: TaskID, client: Client)
 proc supplyTaskWithInput(client: Client, input: string)
 proc inputTaskRunning(client: Client): bool
@@ -45,12 +45,12 @@ proc `==`(c1, c2: Client): bool = c1.player == c2.player
 
 var clients {.threadvar.}: seq[Client]
 
-proc findClient*(player: MObject): Client =
+proc findClient*(player: MObject): Option[Client] =
   for client in clients:
     if client.player == player:
-      return client
+      return some(client)
 
-  return nil
+  return none(Client)
 
 proc callDisconnect(player: MObject) =
   var dcTask: Option[TaskID]
@@ -181,9 +181,11 @@ proc taskFinished(world: World, tid: TaskID) =
     flushOutAll()
 
   if task.taskType == ttInput:
-    let callerClient = findClient(task.caller)
-    if isNil(callerClient):
+    let callerClientO = findClient(task.caller)
+    if callerClientO.isNone:
       return
+
+    let callerClient = callerClientO.get
 
     if task.status == tsAwaitingInput:
       discard callerClient.unqueueIn()
@@ -300,9 +302,11 @@ proc processClient(client: Client, address: string) {.async.} =
       if not isNil(newPlayer):
         connected = true
         client.player.callDisconnect()
+
         # Find out if the player is already connected
-        let oldClient = findClient(newPlayer)
-        if not isNil(oldClient):
+        let oldClientO = findClient(newPlayer)
+        if oldClientO.isSome:
+          let oldClient = oldClientO.get
           # We need to close the old client
           await oldClient.send("*** Your character has been connected to from $#. ***\r\n" % address)
           removeClient(oldClient)
