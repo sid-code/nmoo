@@ -560,6 +560,10 @@ suite "evaluator":
     var result = evalS("(lambda (x y) (do x y))")
     check result.isType(dList)
 
+  test "lambda variable can be called directly":
+    var result = evalS("(let ((fn (lambda (x y) (do x y)))) (fn 1 2))")
+    check result == 2.md
+
   test "call-cc works":
     var result = evalS("(call-cc (lambda (x) (call x (5))))")
     check result == 5.md
