@@ -6,5 +6,4 @@
         (or (nil? name)
             (let ((find-result (find name search)))
               (and find-result
-                   (player:tell ($o obj))))))
-      (suspend 0.1)))))
+                   (player:tell ($o obj))))))))))
