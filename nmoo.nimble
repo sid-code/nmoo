@@ -18,24 +18,30 @@ requires "asynctools"
 
 const coverage = getEnv("NMOO_COVERAGE") == "1"
 const debugBuild = getEnv("NMOO_DEBUG") == "1"
-const devBuild = true
 const releaseBuild = getEnv("NMOO_RELEASE") == "1"
 const useGcAssert = getEnv("NMOO_GC_ASSERT") == "1"
+
+proc getBuildFlags(): string =
+  if debugBuild:
+    result &= " -d:debug"
+    result &= " --debugger:native"
+
+  if releaseBuild:
+    result &= " -d:release"
+
+  if useGcAssert:
+    result &= " -d:useGcAssert"
 
 task test, "Run tests":
   var compilerParams: string
   if coverage:
     let gccParams = "'-ftest-coverage -fprofile-arcs'"
 
-    compilerParams &= " --debugger:native --passC:" & gccParams &
+    compilerParams &= " --passC:" & gccParams &
       " --passL:" & gccParams &
       " --nimcache:./nimcache"
 
-  if debugBuild:
-    compilerParams &= " -d:debug"
-
-  if useGcAssert:
-    compilerParams &= " -d:useGcAssert"
+  compilerParams &= getBuildFlags()
 
   exec "nim c -r " & compilerParams & " src/nmoo/test.nim"
 
@@ -43,20 +49,14 @@ task serve, "Run the server":
   var compilerParams: string
 
   compilerParams &= " -d:includeWizardUtils"
-
-  if debugBuild:
-    compilerParams &= " -d:debug"
-
-  if devBuild:
-    compilerParams &= " --debugger:native"
-
-  if releaseBuild:
-    compilerParams &= " -d:release"
-
-  if useGcAssert:
-    compilerParams &= " -d:useGcAssert"
+  compilerParams &= getBuildFlags()
 
   exec "nim c -r " & compilerParams & " -o:bin/server src/nmoo"
+
+task serveHttp, "Run the http server":
+  var compilerParams: string
+  compilerParams &= getBuildFlags()
+  exec "nim c -r " & compilerParams & " -o:bin/httpd src/nmoo/httpd/httpd.nim"
 
 task docs, "Generate builtin function documentation":
   exec "nim c -r src/nmoo/doc/builtindocgen.nim"
