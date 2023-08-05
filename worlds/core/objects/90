@@ -1,0 +1,185 @@
+90
+0
+90
+90
+9
+level
+(0)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+pubread
+(1)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(1)
+7
+0
+0
+5
+.
+name
+("The Recycler")
+7
+0
+0
+5
+.
+location
+(#3)
+7
+0
+0
+5
+.
+contents
+((#139 #140 #141))
+7
+0
+0
+5
+.
+orphans
+(())
+7
+0
+0
+5
+.
+7
+_recycle
+(let ((what (get args 0)))
+  (if (not ($permutils:controls? caller what))
+      (err E_ARGS (cat caller " can't recycle " what ": permission denied"))
+  	  (if (playerflag what)
+          (err E_ARGS "I will not recycle a player.")
+          (do
+           ()    ;TODO: Kill all tasks
+           ($buildutils:recreate what $garbage)
+           (setprop what "owner" $garbageman)
+           (setprop what "name" (cat "Garbage Object " what))
+           (try (move what self)
+                (player:tell error))
+           0))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+_recreate
+(let ((cperms     (callerperms))
+      (new-parent (get args 0 #1))
+      (new-owner  (get args 1 cperms)))
+  (cond
+   ((not (or (= cperms new-owner) (= 0 (level new-owner))))
+    (err E_PERM (cat "cannot set new owner to " 
+                     new-owner
+                     " (insufficient privileges")))
+   ((not (valid new-parent))
+    (err E_ARGS (cat new-parent " is not a valid object.")))
+   ((not (playerflag new-owner))
+    (err E_ARGS (cat ($ new-owner) " is not a player.")))
+   ((not new-parent.fertile)
+    (err E_PERM (cat new-parent " is not fertile.")))
+   ((and (not (= new-owner new-parent.owner))
+         (not (= 0 (level new-owner)))
+         (not (= 0 (level cperms))))
+    (err E_PERM (cat new-owner " cannot create child of " new-parent)))
+   ((call-cc (lambda (return)
+               (do
+                (map (lambda (potential)
+                       (if (and (= potential.owner $garbageman)
+                                (= (parent potential) $garbage)
+                                (= 0 (len (children potential))))
+                           (call return ((self:setup-toad potential
+                                                         new-parent
+                                                         new-owner)))
+                           nil))
+                     
+                     self.contents)
+                (err E_QUOTA (cat "cannot find any garbage to recreate")))))))) ; Couldn't find anything
+.
+7
+0
+oThis pNone oThis
+5
+.
+accept
+
+.
+7
+0
+oNone pNone oNone
+5
+.
+setup-toad
+(if (not (= caller self))  ; this verb can only be called by $recycler
+    (err E_PERM (cat "Cannot call " self ":setup-toad"))
+    (let ((potential  (get args 0))
+          (new-parent  (get args 1))
+          (new-owner (get args 2)))
+      (do
+       (setprop potential "owner" new-owner)
+       (move potential $nowhere)
+       (self:add-orphan potential)
+       ($buildutils:recreate potential new-parent)
+       (self:remove-orphan potential)
+       potential)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+add-orphan
+(setprop self "orphans" (setadd self.orphans (get args 0)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+remove-orphan
+(setprop self "orphans" (setremove self.orphans (get args 0)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+_create
+(let ((new-parent (get args 0))
+      (new-owner  (get args 1 player)))
+  (do
+   (settaskperms caller)
+   (let ((created (self:_recreate new-parent)))
+     (if (nil? created)
+         (err E_QUOTA "temporary error: could not create object")
+         created))))
+.
+7
+0
+oThis pNone oThis
+5
+.

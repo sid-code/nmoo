@@ -1,0 +1,527 @@
+0
+0
+0
+
+46
+level
+(0)
+0
+0
+0
+5
+.
+owner
+(#0)
+0
+0
+0
+5
+.
+pubread
+(1)
+0
+0
+0
+5
+.
+pubwrite
+(0)
+0
+0
+0
+5
+.
+fertile
+(1)
+0
+0
+0
+5
+.
+root
+(#1)
+0
+0
+0
+5
+.
+nowhere
+(#3)
+0
+0
+0
+5
+.
+player
+(#6)
+0
+0
+0
+5
+.
+room
+(#4)
+0
+0
+0
+5
+.
+container
+(#2)
+0
+0
+0
+5
+.
+strutils
+(#12)
+0
+0
+0
+5
+.
+exit
+(#9)
+0
+0
+0
+5
+.
+listutils
+(#22)
+0
+0
+0
+5
+.
+objutils
+(#23)
+0
+0
+0
+5
+.
+name
+("The System Object")
+0
+0
+0
+5
+.
+guest
+(#29)
+0
+0
+0
+5
+.
+char-requests
+((("127.0.0.1") ("Johnny Test" "no-email@email.none" "127.0.0.1")))
+0
+0
+0
+5
+.
+wizard
+(#45)
+0
+0
+0
+5
+.
+verbutils
+(#47)
+0
+0
+0
+5
+.
+programmer
+(#8)
+0
+0
+0
+5
+.
+thing
+(#48)
+0
+0
+0
+5
+.
+host
+("0.0.0.0")
+0
+0
+0
+5
+.
+possible-objspecs
+(("this" "none" "any"))
+0
+0
+0
+5
+.
+possible-prepspecs
+(("with" "using" "at" "to" "in front of" "in" "inside" "into" "on top of" "on" "onto" "upon" "out of" "from inside" "from" "over" "through" "under" "underneath" "beneath" "behind" "beside" "for" "about" "is" "as" "off" "off of" "none" "any"))
+0
+0
+0
+5
+.
+builder
+(#75)
+7
+0
+0
+5
+.
+contents
+(())
+7
+0
+0
+5
+.
+location
+(#0)
+7
+0
+0
+5
+.
+recycler
+(#90)
+7
+0
+0
+5
+.
+buildutils
+(#97)
+7
+0
+0
+5
+.
+start-room
+(#88)
+7
+0
+0
+5
+.
+permutils
+(#98)
+7
+0
+0
+5
+.
+garbageman
+(#91)
+7
+0
+0
+5
+.
+garbage
+(#95)
+7
+0
+0
+5
+.
+buildopts
+(#100)
+7
+0
+0
+5
+.
+player-start
+(#88)
+7
+0
+0
+5
+.
+portal
+(#61)
+7
+0
+0
+5
+.
+genderutils
+(#101)
+7
+0
+0
+5
+.
+door
+(#103)
+7
+0
+0
+5
+.
+editserv
+(#108)
+7
+0
+0
+5
+.
+gender
+(#110)
+7
+0
+0
+5
+.
+codeutils
+(#112)
+7
+0
+0
+5
+.
+tick-quota
+(40000)
+7
+0
+0
+5
+.
+root-resource
+(#27)
+7
+0
+0
+5
+.
+resource
+(#107)
+7
+0
+0
+5
+.
+webutils
+(#119)
+7
+0
+0
+5
+.
+static-resource
+(#121)
+7
+0
+0
+5
+.
+12
+eval
+(echo "=> " (eval argstr))
+.
+1
+0
+oStr pAny oAny
+7
+.
+
+(let
+  ((obj (get args 0)))
+  
+  (if (= obj (parent obj))
+      (props obj)
+      (fold-right
+       (lambda (cur new-el)
+         (setadd cur new-el))
+       (#0:all-props (parent obj))
+       (props obj))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+handle-new-connection
+(let
+  ((address (get args 0))
+   (guests (children $guest))
+   (available-guests ($listutils:filter (lambda (x) x.available) guests))
+   (guest (get available-guests 0 nil)))
+  
+  (if (istype guest "nil")
+      (if (>= (len guests) 10)
+        "No more room!"
+        (let ((new-guest (create $guest)))
+          (do
+            (echo "Making a new guest to accomodate a player: " new-guest ".")
+            (setprop new-guest "name" "a guest")
+            (setprop new-guest "available" 0)
+            (setprop new-guest "address" address)
+            new-guest)))
+      (do
+        (echo "Found an existing guest, " guest ".")
+        (setprop guest "available" 0)
+        (setprop guest "address" address)
+        guest)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+handle-login-command
+(cond
+  ((= command "connect")
+    (if (< (len args) 2) (player:tell "Syntax: connect <name> <pass>")
+        (let ((name  (get args 0))
+              (passw (get args 1))
+              (target-player (#0:find-player name)))
+          
+         (if (nil? target-player)
+             (player:tell "Incorrect player/password combo.")
+             (if (#0:check-pass target-player passw) 
+                 (do
+                  (notify self (cat "Login: " ($o target-player) " from " 
+                                    player.address))
+                  (setprop target-player "address" player.address)
+                  target-player)
+                 (do
+                  (notify self (cat "Failed login attempt: " ($o target-player)
+                                    " from " player.address))
+                  (player:tell "Incorrect player/password combo.")))))))
+  ((= command "request")
+    (if (< (len args) 2) (player:tell "Syntax: request <name> <email>")
+       (let ((name (get args 0))
+            (email (get args 1)))
+          
+        (do
+           (#0:process-char-request name email)
+           (player:tell 
+            "Your request is being processed. Expect an email.")))))
+  ((do
+    (player:tell "Available commands: ")
+    (player:tell "  connect <name> <pass>    --- Connect to an existing character")
+    (player:tell "  request <name> <email>   --- Request a new character"))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+find-player
+(let
+  ((name (downcase (get args 0)))
+   (players ($objutils:descendents $player))
+   (matching-players
+      ($listutils:filter (lambda (pl) (= (downcase pl.name) name)) players)))
+  
+  (get matching-players 0 nil))
+.
+7
+0
+oThis pNone oThis
+5
+.
+check-pass
+(let
+  ((target (get args 0))
+   (passw  (get args 1))
+   (player-phash (getprop target "password-hash" ""))
+   (player-salt  (getprop target "password-salt" "")))
+
+  (= player-phash (phash passw player-salt)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+process-char-request
+(let
+  ((name (get args 0))
+   (email (get args 1))
+   (cur-reqs (getprop self "char-requests" ()))
+   (new-req (list name email caller.address)))
+  
+  (do
+    (setprop self "char-requests" (push cur-reqs new-req))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+set-pass
+(let
+  ((target (get args 0))
+   (newpass (get args 1)))
+  
+  (if (or (= player target) (= 0 (level player)))
+      (let ((salt (gensalt)))
+        (do
+          (setprop target "password-salt" salt)
+          (setprop target "password-hash" (phash newpass salt))))
+      (err E_PERM "only wizards can change passwords of other characters")))
+.
+7
+0
+oThis pNone oThis
+5
+.
+all-verbs
+(let ((obj (get args 0)))
+  (if (= obj (parent obj))
+      (verbs obj)
+      (cat (verbs obj) (self:all-verbs (parent obj)))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+server-started
+(map (lambda (guest)
+       (setprop guest "available" 1))
+     (children $guest))
+(echo "Marked all guests available")
+.
+7
+0
+oNone pNone oNone
+5
+.
+handle-http-request
+(verbcall $root-resource verb args)
+.
+7
+0
+oThis pNone oThis
+5
+.
+all-props
+(let
+  ((obj (get args 0)))
+  
+  (if (= obj (parent obj))
+      (props obj)
+      (fold-right
+       (lambda (cur new-el)
+         (setadd cur new-el))
+       (#0:all-props (parent obj))
+       (props obj))))
+.
+7
+0
+oThis pNone oThis
+5
+.

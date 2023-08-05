@@ -1,0 +1,126 @@
+109
+0
+48
+
+10
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Generic List")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(0)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+location
+(#7)
+7
+0
+0
+5
+.
+aliases
+(("Generic List"))
+7
+0
+0
+5
+.
+description
+("Generic List")
+7
+0
+0
+5
+.
+items
+((nil))
+7
+0
+0
+5
+.
+5
+description
+(let ((items self.items)
+      (num (len items)))
+  (if (= num 0)
+      (self:msg-empty)
+      (cat (self:msg)
+           (call cat (map (lambda (index)
+                            (list (fit ($ index) -3) ") " ($ (get items index)) "\n"))
+                          (range 0 (- num 1)))))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+msg
+"The list reads:"
+.
+7
+0
+oNone pNone oNone
+5
+.
+msg-empty
+"The list is empty."
+.
+7
+0
+oNone pNone oNone
+5
+.
+look
+(player:tell (self:description)) ; no name
+.
+7
+0
+oThis pNone oNone
+5
+.
+add
+(let ((items self.items))
+  (do
+   (setprop self "items" (push items dobj))
+   (player:tell "Added.")))
+.
+7
+0
+oAny pAt oThis
+5
+.

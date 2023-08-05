@@ -1,0 +1,6 @@
+(call (lambda (method path headers body args)
+        (let ((redirect-url (cat (tget headers "host") path))
+              ()
+
+        )
+      args)

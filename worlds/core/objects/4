@@ -1,0 +1,282 @@
+4
+0
+1
+88 92 52 55 136
+14
+level
+(0)
+4
+0
+0
+5
+.
+owner
+(#1)
+4
+0
+0
+5
+.
+pubread
+(1)
+4
+0
+0
+5
+.
+pubwrite
+(0)
+4
+0
+0
+5
+.
+fertile
+(1)
+4
+0
+0
+5
+.
+description
+("You are amazed by the genericity of this room.")
+4
+0
+0
+5
+.
+exits
+(())
+4
+0
+0
+5
+.
+name
+("Generic Room")
+4
+0
+0
+5
+.
+contents
+(())
+4
+0
+0
+5
+.
+entrances
+(())
+7
+0
+0
+5
+.
+leavemsg
+(nil)
+7
+0
+0
+5
+.
+oleavemsg
+(nil)
+7
+0
+0
+5
+.
+entermsg
+(nil)
+7
+0
+0
+5
+.
+oentermsg
+(nil)
+7
+0
+0
+5
+.
+15
+look
+(do
+  (player:tell self.name)
+  (player:tell 
+    (try (self:description)
+         "(No description set.)"))
+  (player:tell (self:get-exit-str))
+  (let ((cts (setremove self.contents player)))
+    (if (= 0 (len cts))
+        "Nothing"
+        (player:tell "You see "
+          ($strutils:joinlist
+            (map (lambda (obj) obj.name) cts)
+            "and" "nothing") "."))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+trymove
+(let ((dir (get args 0))
+      (exits (self:get-exits-by-dir dir)))
+  (if (= 0 (len exits))
+      (player:tell "You can't go that way.")
+      (let ((exit (get exits 0)))
+        (exit:trymove player))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+n*orth e*ast s*outh w*est u*p d*own
+(verbcall player.location "trymove" (list verb))
+.
+7
+0
+oNone pNone oNone
+5
+.
+get-exit-str
+(let ((exits self.exits)
+      (exit-names 
+        ($listutils:unique (map (lambda (exit) exit.dir)
+                                ($listutils:filter (lambda (exit) (not exit.hidden))
+                                           exits)))))
+  (cat "You can go " ($strutils:joinlist exit-names "or" "nowhere") "."))
+.
+7
+0
+oThis pNone oThis
+5
+.
+announce
+(let
+  ((announcer (get args 0))
+   (msg (get args 1))
+   (who (setremove self.contents announcer)))
+  
+  (map (lambda (obj) (obj:tell msg)) who))
+.
+7
+0
+oThis pNone oThis
+5
+.
+say
+(do
+  (player:tell "You say, \"" argstr "\"")
+  (self:announce player (cat player.name " says, \"" argstr "\"")))
+.
+7
+0
+oAny pAny oAny
+5
+.
+huh
+(player:tell "Huh?")
+.
+7
+0
+oNone pNone oNone
+5
+.
+recycle
+(do
+ (settaskperms player)
+ (map (lambda (ex)
+        (let ((dest ex.destination))
+          (dest:rm-entrance ex)))
+      self.exits))
+.
+7
+0
+oThis pNone oThis
+5
+.
+has-exit-dir?
+(let ((exit-dir (get args 0)))
+  (< 0 (len (self:get-exits-by-dir exit-dir))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+add-exit
+(do
+ (settaskperms player)
+ (let ((new-exit (get args 0))
+       (exits self.exits))
+   (setprop self "exits" (setadd exits new-exit))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+rm-exit
+(do
+ (settaskperms player)
+ (let ((new-exit (get args 0))
+       (exits self.exits))
+   (setprop self "exits" (setremove exits new-exit))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+rm-entrance
+(do
+ (settaskperms player)
+ (let ((entrance-to-remove (get args 0))
+       (entrances self.entrances))
+   (setprop self "entrances" (setremove entrances entrance-to-remove))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+add-entrance
+(do
+ (settaskperms player)
+ (let ((new-entrance (get args 0))
+       (entrances self.entrances))
+   (setprop self "entrances" (setadd entrances new-entrance))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+get-exits-by-dir
+(let ((dir (get args 0 nil))
+      (exits self.exits))
+    (if (istype dir "str")
+        ($listutils:filter (lambda (ex) ($strutils:starts-with ex.dir dir)) exits)
+        (err E_ARGS "must specify a direction to " verb)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+accept
+(let ((who (get args 0)))
+  (or
+   (= 0 (level who)) 1))
+   ;(= self.user who))) ; not at all sure what this did...
+.
+7
+0
+oNone pNone oNone
+5
+.

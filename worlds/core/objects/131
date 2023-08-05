@@ -1,0 +1,79 @@
+131
+0
+1
+133 134 137 132
+9
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Generic Resource Fragment")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(1)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+location
+(#7)
+7
+0
+0
+5
+.
+aliases
+(("Generic Resource Fragment"))
+7
+0
+0
+5
+.
+description
+("Generic Resource Fragment")
+7
+0
+0
+5
+.
+1
+render-partial
+(call (lambda (method path headers body args)
+        "You have rendered a generic fragment")
+      args)
+.
+7
+0
+oThis pNone oThis
+5
+.

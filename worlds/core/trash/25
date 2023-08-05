@@ -1,0 +1,45 @@
+25
+0
+0
+7
+5
+4
+
+4
+name
+("Outside")
+25
+0
+0
+5
+.
+contents
+(())
+25
+0
+0
+5
+.
+exits
+((#26 #49 #57 #58 #65 #66 #67))
+25
+0
+0
+5
+.
+description
+("You are outside in the big scary world.")
+25
+0
+0
+5
+.
+1
+undig
+
+.
+7
+0
+oAny pNone oNone
+5
+.

@@ -1,0 +1,8 @@
+(let ((items self.items)
+      (num (len items)))
+  (if (= num 0)
+      (self:msg-empty)
+      (cat (self:msg)
+           (call cat (map (lambda (index)
+                            (list (fit ($ index) -3) ") " ($ (get items index)) "\n"))
+                          (range 0 (- num 1)))))))

@@ -1,0 +1,134 @@
+9
+0
+1
+96 28 60 93 94 89 102 138
+11
+name
+("Generic Exit")
+7
+0
+0
+5
+.
+description
+("This is a generic-looking exit.")
+7
+0
+0
+5
+.
+source
+(#3)
+7
+0
+0
+5
+.
+destination
+(#3)
+7
+0
+0
+5
+.
+dir
+("north")
+7
+0
+0
+5
+.
+leavemsg
+("")
+7
+0
+0
+5
+.
+oleavemsg
+("")
+7
+0
+0
+5
+.
+oentermsg
+("")
+7
+0
+0
+5
+.
+entermsg
+("")
+7
+0
+0
+5
+.
+hidden
+(0)
+7
+0
+0
+5
+.
+door
+(nil)
+7
+0
+0
+5
+.
+3
+trymove
+(let ((who (get args 0))
+      (dest self.destination)
+      (door self.door)
+      (door-attempt (if door (door:try-enter who) 1)))
+  (if (valid dest)
+      (if door-attempt
+          (do
+           (move who dest)
+           (dest:look))
+          nil)
+      (who:tell "Exit didn't work because room was invalid.")))
+.
+7
+0
+oThis pNone oThis
+5
+.
+add-to
+(do
+ (settaskperms caller)
+ (let ((source (get args 0))
+       (dest (get args 1)))
+   (if (source:has-exit? self)
+       (err E_ARGS (cat source " already has exit " self))
+       (if (dest:has-entrance? self)
+           (err E_ARGS (cat dest " already has entrance " self))
+           (do
+            (source:add-exit self)
+            (dest:add-entrance self)
+            (setprop self "source" source)
+            (setprop self "destination" dest))))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+disconnect
+(let ((src  self.source)
+      (dest self.destination))
+  (do
+    (src:rm-exit self)
+    (dest:rm-entrance self)
+    self))
+.
+7
+0
+oNone pNone oNone
+5
+.

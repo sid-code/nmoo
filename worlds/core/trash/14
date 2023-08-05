@@ -1,0 +1,37 @@
+14
+0
+0
+1
+5
+4
+
+4
+name
+("The Second Room")
+14
+0
+0
+5
+.
+description
+("Another regular room.")
+14
+0
+0
+5
+.
+contents
+(())
+14
+0
+0
+5
+.
+exits
+((#18 #19 #24 #84))
+14
+0
+0
+5
+.
+0

@@ -1,0 +1,5 @@
+(let ((obj   (get args 0))
+      (vname (get args 1)))
+  ((getverbinfo obj vname)
+   (getverbargs obj vname)
+   (getverbcode obj vname)))

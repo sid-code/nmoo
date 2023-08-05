@@ -1,0 +1,356 @@
+8
+1
+75
+45 47 130
+8
+level
+(3)
+8
+0
+0
+5
+.
+owner
+(#1)
+8
+0
+0
+5
+.
+pubread
+(1)
+8
+0
+0
+5
+.
+pubwrite
+(0)
+8
+0
+0
+5
+.
+fertile
+(1)
+8
+0
+0
+5
+.
+name
+("Generic Programmer")
+8
+0
+0
+5
+.
+description
+("This is a programmer of the generic sort.")
+8
+0
+0
+5
+.
+contents
+(())
+8
+0
+0
+5
+.
+10
+@show
+(let ((show-obj
+       (lambda (obj)
+         (do
+          (player:tell "Object ID:  " dobj)
+          (player:tell "Name:       " (getprop dobj "name" "No name"))
+          (player:tell "Parent:     " ($o (parent dobj)))
+          (player:tell "Owner:      " dobj.owner)
+          
+          (player:tell "Verb definitions: ")
+          (map (lambda (verb) (player:tell "  " verb)) (verbs dobj))
+          
+          (player:tell "Properties: ")
+          (map (lambda (prop) (player:tell "    " prop ": " (getprop dobj prop)))
+               
+            (#0:all-props dobj)))))
+      (show-verb
+       (lambda (obj verb-ref)
+         (let ((info (getverbinfo obj verb-ref))
+               (verb-owner (get info 0))
+               (permissions (get info 1))
+               (verb-names (get info 2))
+               (args (getverbargs obj verb-ref))
+               (direct-object (get args 0))
+               (preposition (get args 1))
+               (indirect-object (get args 2)))
+           (do
+            (player:tell obj ":" verb-names)
+            (player:tell "Owner:            " ($o verb-owner))
+            (player:tell "Permissions:      " permissions)
+            (player:tell "Direct Object:    " direct-object)
+            (player:tell "Preposition:      " preposition)
+            (player:tell "Indirect object:  " indirect-object)))))
+      (show-prop
+       (lambda (obj prop-ref)
+         (let ((info (getpropinfo obj prop-ref))
+               (prop-owner (get info 0))
+               (permissions (get info 1))
+               (value (getprop obj prop-ref)))
+           (do
+            (player:tell obj "." prop-ref)
+            (player:tell "Owner:           " ($o prop-owner))
+            (player:tell "Permissions:     " permissions)
+            (player:tell "Value:           " value))))))
+            
+           
+  (cond
+   ((< -1 (index dobjstr "."))
+    (let ((parsed ($verbutils:parse-propstr dobjstr)))
+      (if (istype parsed "str")
+          (player:tell parsed) ; there was an error (this should probably never happen)
+          (let ((obj (get parsed 0)) ; now we have to check if the property actually exists
+                (prop-ref (get parsed 1)))
+            (try
+             (do
+              (getprop obj prop-ref)
+              (call show-prop (list obj prop-ref)))
+             (player:tell error))))))
+   ((< -1 (index dobjstr ":"))
+    (let ((parsed ($verbutils:parse-verbstr dobjstr)))
+      (if (istype parsed "str")
+          (player:tell parsed) ; there was an error parsing the verb or the verb wasn't found
+          (let ((obj-defined-on (get parsed 0))
+                (verb-ref (get parsed 1))
+                (obj (get parsed 2)))
+            (do
+             (if (not (= obj obj-defined-on))
+                 (player:tell "Object " obj " does not define that verb, but its ancestor "
+                              obj-defined-on " does.")
+                 nil)
+             (call show-verb (list obj-defined-on verb-ref)))))))
+   ((if (nil? dobj)
+        (player:tell "I don't see '" dobjstr "' here.")
+        (show-obj dobj)))))
+.
+7
+0
+oAny pAny oAny
+7
+.
+@verbs
+(do
+  (settaskperms caller)
+  (if (= 0 (len argstr))
+      (player:tell "Syntax: " verb " obj")
+      (if (nil? dobj)
+          (player:tell "I don't see " dobj " around here.")
+          (let ((verb-list (verbs dobj))
+                (num-verbs (len verb-list)))
+            (do 
+             (player:tell "Showing verbs for " ($o dobj) ":")
+             (player:tell "ID   Names                      Arguments")
+             (player:tell "---  -------------------------  ----------------")  
+             (map (lambda (idx)
+                    (echo (fit (cat ($ idx) ")  ") 5)
+                          (fit (get verb-list idx) 25) "  "
+                          ($verbutils:get-verb-argstr dobj idx)))
+                   (range 0 (- num-verbs 1))))))))
+.
+7
+0
+oAny pNone oNone
+5
+.
+@list
+(if (= 0 (len args)) (player:tell "Syntax: @list obj:verb [tags] [no-line-numbers]")
+  (let ((verb-str (get args 0))
+        (rest-args (slice args 1))
+        (show-tags? (< -1 (in rest-args "tags")))
+        (show-line-numbers? (= -1 (in rest-args "no-line-numbers")))
+        (allow-ancestors? (= -1 (in rest-args "no-ancestors")))
+        (verb-loc ($verbutils:parse-verbstr verb-str allow-ancestors?)))
+    (cond
+     ((istype verb-loc "str") (player:tell verb-loc))
+     ((istype verb-loc "list")
+      (let ((obj  (get verb-loc 0))
+            (vidx (get verb-loc 1))
+            (original-object (get verb-loc 2))
+            (vname (get (verbs obj) vidx)))
+       (do
+        (if (not (= obj original-object))
+            (player:tell "Verb \"" vname "\" not defined on "
+                         ($o original-object) " but rather on "
+                         ($o obj) ".")
+            0)
+        (if show-tags? (player:tell "{verbcode}") 0)
+        (if show-line-numbers?
+            (let ((lines (split (getverbcode obj vidx) "\n"))
+                  (max-line-len (len ($ (len lines)))))
+              (map (lambda (line-num)
+                     (player:tell (fit ($ (+ 1 line-num))
+                                       (* -1 max-line-len)
+                                       " ")
+                                  ": "
+                                  (get lines line-num)))
+                   (range 0 (- (len lines) 1))))
+            (player:tell (getverbcode obj vidx)))
+        (if show-tags? (player:tell "{/verbcode}") 0))))
+     ((player:tell "Something went terribly wrong. ($verbutils:parse-verbstr returned " verb-loc " which was of unexpected type.")))))
+.
+7
+0
+oAny pAny oAny
+5
+.
+@vedit
+(player:tell "@vedit does not work anymore, @program is the only way now :(")
+; (let ((verb-to-edit ($verbutils:parse-verbstr argstr)))
+;   (cond
+;    ((istype verb-to-edit "str") (player:tell verb-to-edit))
+;    ((istype verb-to-edit "list")
+;      (let ((url ($editor:edit verb-to-edit)))
+;       (player:tell (cat "Go to " url " to edit the verb."))))
+;    ((player:tell "Something has gone very wrong."))))
+.
+7
+0
+oAny pAny oAny
+5
+.
+@program
+(if (= 0 (len argstr))
+    (player:tell "Syntax: @program obj:verb")
+    ;; The second argument (0) means we only want verbs defined
+    ;; on the object, not on its ancestors
+    (let ((verb-loc ($verbutils:parse-verbstr argstr 0)))
+      (cond
+       ((istype verb-loc "str") (player:tell verb-loc))
+       ((istype verb-loc "list")
+        (let ((code (caller:read-till-dot)))
+         (do (setverbcode (get verb-loc 0) (get verb-loc 1) code)
+             (player:tell "Verb edited successfully!"))))
+       ((player:tell "Something has gone terribly wrong.")))))
+.
+7
+0
+oAny pAny oAny
+5
+.
+@verb
+(if (= (len args) 0)
+    (player:tell "Syntax: @verb obj:new-verb-name")
+    (let ((raw-parse ($verbutils:parse-verbstr-plumbing argstr))
+          (result-code (get raw-parse 0)))
+      (cond
+       ((= result-code 1)
+        (player:tell "Invalid verb string. Use \"obj:verb\""))
+       ((= result-code 2)
+        (player:tell "The object you specified was not found."))
+       ((= result-code 4)
+        (player:tell "Malformed argspec. Example: (any,to,this)"))
+       ((= result-code 5)
+        (player:tell "Invalid argspec: " (get raw-parse 5)))
+       ((let ((obj-defined-on (get raw-parse 1))
+              (obj (get raw-parse 3))
+              (verb-ref (get raw-parse 4))
+              (arg-spec (get raw-parse 5)))
+          (do
+           (if (= result-code 0)
+               (if (= obj-defined-on obj)
+                   (player:tell "Warning: " ($o obj) "already defines"
+                                "a verb with that name")
+                   0)
+               0)
+           (addverb obj verb-ref)
+           (if (nil? arg-spec)
+               0
+               (setverbargs obj verb-ref arg-spec))
+           (echo "Added verb called \"" verb-ref "\" to " ($o obj))))))))
+.
+7
+0
+oAny pAny oAny
+5
+.
+@mvverb
+(if (not (= (len args) 2)) 
+ (player:tell "Syntax: " verb " obj1:verb obj2")
+ (let ((verb-str   (get args 0))
+       (verb-loc   ($verbutils:parse-verbstr verb-str)))
+   (cond
+    ((istype verb-loc "str") (player:tell verb-loc))
+    ((istype verb-loc "list")
+      (let ((obj1       (get verb-loc 0))
+            (vidx       (get verb-loc 1))
+            (vname      (get (verbs obj1) vidx))
+            (obj2-ref   (get args 1))
+            (obj2       (get (query player obj2-ref) 0 nil)))
+       (if (nil? obj2)
+        (player:tell "I don't see " obj2-ref " here.")
+        (do
+         ($verbutils:move-verb obj1 vname obj2)
+         (echo "Successfully moved "
+               ($o obj1) ":" vname " to " ($o obj2) ".")))))
+           
+     ((echo "Something truly terrible has happened.")))))
+.
+7
+0
+oAny pAny oAny
+5
+.
+@prop
+(do
+ (settaskperms player)
+ (if (= 0 (len args))
+     (player:tell "Syntax: @prop <object>.<property>")
+     (let ((objprop-ref (get args 0))
+           (parsed ($verbutils:parse-propstr objprop-ref)))
+       (cond
+        ((istype parsed "str") (player:tell parsed)) ; string means error
+        ((istype parsed "list")
+         (let ((obj (get parsed 0))
+               (prop-ref (get parsed 1)))
+           (if ($verbutils:has-prop? obj prop-ref)
+               (player:tell obj "." prop-ref " = "
+                            (getprop obj prop-ref))
+               (try (do
+                     (setprop obj prop-ref nil)
+                     (player:tell "Created property " prop-ref " on " ($o obj) " (set to nil)."))
+                    (cond
+                      ((erristype error E_PERM)
+                       (player:tell "Failed to create new property (Permission denied)."))
+                      (error))))))
+        ((player:tell "Something terrible has happened. "
+                      "$verbutils:parse-propstr has returned a value of "
+                      "invalid type: " parsed))))))
+.
+7
+0
+oAny pAny oAny
+5
+.
+eval
+(echo "=> " (eval (parse argstr)))
+.
+7
+0
+oAny pAny oAny
+5
+.
+@rlverbs
+(if (nil? dobj) (player:tell "Syntax: " verb " #obj")
+    (do
+        (map (lambda (v)
+               (do (loadverb dobj v) (player:tell "Loaded " dobj ":" v)))
+             (verbs dobj))
+        (player:tell "Done loading verbs for " dobj ".")))
+.
+7
+0
+oAny pNone oNone
+5
+.

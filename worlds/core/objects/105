@@ -1,0 +1,130 @@
+105
+0
+104
+122 129
+10
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Generic Regexp Router")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(1)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+location
+(#7)
+7
+0
+0
+5
+.
+aliases
+(("Generic Garbage Object" "The Trapdoor" "Generic Regexp Router"))
+7
+0
+0
+5
+.
+description
+("Generic Regexp Router")
+7
+0
+0
+5
+.
+routes
+(())
+7
+0
+0
+5
+.
+1
+route
+(define-syntax loop
+  (lambda (form)
+    (if (not (= (len form) 5))
+        (err E_ARGS "loop takes 4 arguments")
+        (let ((loopvars (get form 1))
+              (initvals (get form 2))
+              (cont-symbol (get form 3))
+              (body (get form 4)))
+          (if (not (istype loopvars "sym"))
+              (err E_ARGS "first argument to loop must be a symbol")
+              nil)
+          (if (not (istype initvals "list"))
+              (err E_ARGS "second argument to loop must be a list")
+              nil)
+          (if (not (istype cont-symbol "sym"))
+              (err E_ARGS "third argument to loop must be a symbol")
+              nil)
+          `(let ((_CONT (call-cc (lambda (cont)
+                                   (cont (list cont ,initvals)))))
+                 (,loopvars (get _CONT 1))
+                 (,cont-symbol (lambda (vals)
+                              ;; avoid nasty surprises
+                              (let ((realvals (if (istype vals "list") vals (list vals)))
+                                    (continuation (get _CONT 0)))
+                                (call continuation (list (list continuation realvals)))))))
+             ,body)))))
+
+(let ((path (get args 0))
+      (routes (getprop self "routes" nil)))
+
+  (if (nil? routes)
+      (err E_PROPNF "this router needs to have a plist property `routes`")
+      nil)
+
+  (or (loop vs (0) continue
+            (let ((i (get vs 0)))
+              (if (>= i (len routes))
+                  nil
+                  (let ((entry  (get self.routes i nil))
+                        (pat    (get entry 0))
+                        (mat    (match path pat)))
+                    (if (nil? mat)
+                        (continue (+ i 1))
+                        (let ((rest (gsub path pat ""))
+                              (resrc  (get entry 1)))
+                          (list resrc rest mat)))))))
+      (list self.four-oh-four path '())))
+.
+7
+0
+oThis pNone oThis
+5
+.

@@ -1,0 +1,206 @@
+6
+1
+2
+29 75
+14
+level
+(3)
+6
+0
+0
+5
+.
+owner
+(#1)
+6
+0
+0
+5
+.
+pubread
+(1)
+6
+0
+0
+5
+.
+pubwrite
+(0)
+6
+0
+0
+5
+.
+fertile
+(1)
+6
+0
+0
+5
+.
+name
+("generic player")
+1
+1
+0
+5
+.
+aliases
+(())
+1
+1
+0
+5
+.
+contents
+(())
+2
+1
+0
+5
+.
+description
+("A generic player.")
+6
+0
+0
+5
+.
+password-salt
+("")
+6
+0
+0
+5
+.
+password-hash
+("")
+6
+0
+0
+5
+.
+location
+(#88)
+6
+0
+0
+5
+.
+address
+("")
+6
+0
+0
+5
+.
+gender
+(nil)
+7
+0
+0
+5
+.
+9
+location
+(echo 
+  (try 
+    (cat "You are located at " ($ caller.location) ".") 
+    "There is no location"))
+.
+7
+0
+oNone pNone oNone
+5
+.
+inv*entory
+(let ((cts caller.contents))
+  (if (= 0 (len cts))
+      (player:tell "You are empty-handed.")
+      (do 
+       (player:tell "You are carrying:")
+       (map (lambda (item) (player:tell " - " ($o item))) cts))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+where
+(echo self.location)
+.
+7
+0
+oNone pNone oNone
+5
+.
+greet
+(let
+  ((location (getprop self "location" nil)))
+  
+  (do
+    (echo "You have logged in as " (getprop self "name" "(no name)"))))
+    ;(if (nil? location) ()
+    ;  (location:look))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+chpass
+
+.
+7
+0
+oThis pNone oThis
+5
+.
+get
+(do
+ (player:tell "They don't want to be carried!")
+ (self:tell caller.name " tried to pick you up!"))
+.
+7
+0
+oThis pNone oNone
+5
+.
+@password
+(let ((curpass (get args 0 nil))
+      (newpass (get args 1 nil)))
+  (if (or (nil? curpass) (nil? newpass))
+      (player:tell "Syntax: " verb " old-password new-password")
+      (if (#0:check-pass caller curpass)
+          (do (#0:set-pass caller newpass)
+              (player:tell "Password succesfully changed."))
+          (player:tell "Incorrect password. The syntax is: " verb " old-password new-password"))))
+.
+7
+0
+oAny pAny oAny
+5
+.
+read-till-dot
+(let ((ct (call-cc (lambda (x) (list "" x)))))
+ (if (istype ct "str") (substr ct 1 -1)
+     (let ((buffer       (get ct 0))
+           (continuation (get ct 1))
+           (next-line    (read)))
+       (if (= next-line ".") 
+           (continuation buffer)
+           (continuation (list (cat buffer "\n" next-line) continuation))))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+help
+(player:tell "To be added")
+.
+7
+0
+oNone pNone oNone
+5
+.

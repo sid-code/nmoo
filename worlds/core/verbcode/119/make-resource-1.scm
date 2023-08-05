@@ -1,0 +1,6 @@
+;;; ($webutils:make-resources name:Str parent:Obj=$resource)
+(if (or (< (len args) 1) (> (len args) 2))
+    (err E_ARGS "1 or 2 arguments required")
+    (let ((name (get args 0))
+          (prnt (get args 1 $resource)))
+      (player:_create prnt name)))

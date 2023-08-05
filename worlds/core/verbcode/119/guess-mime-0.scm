@@ -1,0 +1,5 @@
+(let ((filename (get args 0))
+      (mtable self.mimetable)
+      (ext (get (match filename ".+?%.(%w+)$") 0 nil))
+      (guess (tget mtable ext "text/plain")))
+  guess)

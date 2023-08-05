@@ -1,0 +1,91 @@
+134
+0
+131
+
+9
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Standard Page Header")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(0)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+location
+(#7)
+7
+0
+0
+5
+.
+aliases
+(("Generic Resource Fragment" "Standard Page Header"))
+7
+0
+0
+5
+.
+description
+("Standard Page Header")
+7
+0
+0
+5
+.
+1
+render-partial
+(define login-button-frag #133)
+
+(define styles
+  (cat
+   ".login-button { float: right; }"))
+
+(define login-button-html (verbcall login-button-frag "render-partial" args))
+
+(cat
+ "<style>"
+ styles
+ "</style>"
+ "<div class='header'>"
+ "<span class='login-button'>" login-button-html "</span>"
+ "</div>")
+.
+7
+0
+oThis pNone oThis
+5
+.

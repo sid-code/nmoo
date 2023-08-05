@@ -1,0 +1,175 @@
+124
+0
+107
+
+6
+level
+(0)
+124
+0
+0
+5
+.
+name
+("The Authenticator")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(0)
+7
+0
+0
+5
+.
+sessions
+((table ("vaqkkxqbqtoowpiveqpeoqgfufwcfaapleyciwrgfymwoqsy" (#7 1567129455414)) ("abeytifdlorndcuwubelfiwirulwaioutzpndzyzqsavvibp" (#7 1567020067014)) ("xrmslzpnywhwjkrtvxeyuxzokhytnzkckpddegxlonkwrzjz" (#7 1567020107835)) ("sbqniuahcikqmzzuczzhnqnjrizbvfblbhsevnjyiznvtsgs" (#7 1556002414399)) ("zvdrxyvteohccjhljqhbudaxhjrqhqakxnezixizbmtcaaxx" (#7 1556002416212)) ("mjwvbfmedfqqbrjsnlczuhddmlxfcclrpoxepdnshcrahezy" (#7 1566335340392)) ("ssuubnxgkrpmoledodpmdjgpopmqxedhpelzhdkuppgadlri" (#7 1556002502643)) ("gjyvylyyocjxtjztxzlnmxrtmoswbbgddqvzjlkuzwpnucwg" (#7 1556002414809)) ("ytmsjbpuiwfougvdrbkwehlclneswjllyxrvoxmiiyxnbqpa" (#7 1556002430892)) ("yhwosustzqplvcqhgprpnxkmhacryroqksruplamjfelxdom" (#7 1556002412205)) ("hyxwcfyuoicwulmblechkfufrcyplbtixzucacmrdxyugzli" (#7 1555998058955)) ("txtpojxmhdhgmryohlfxcywnuijimxbfkaflpfefwlyxaxpt" (#7 1556002415205)) ("nuyckyjadhktxpzkryerdxqnhzqgancgyfgwtcbszyjyiics" (#7 1555998021474)) ("rwramhlgnecqwqwwlzrbiyxuanscktqakftqdutzkihirkgo" (#7 1556042864024)) ("ulqalplksgejgghqkooggcoorzvncyldwyresabafexxlxmk" (#7 1555998168033)) ("rrgeunnrlzzoluzkifhmxrtjvbjblbejduoctafsdgyqtupi" (#7 1555878528048)) ("unjddjaxnszldzzelqzdimtaxuumkbzehqygcalozmfkdkeh" (#7 1556002413207)) ("usjnoirnpvynvgphiveqvpvznhjkktwphmltprpaxzsbksbr" (#130 1551420347095)) ("imfgeftrfzchsrnovlijpoctlpjuhpsqmkkvjdndbqvgdsoc" (#130 1551420157416)) ("ahdrbtmyqpcfcwkqwpobthrnwrywnhocsiovixywrqthmfix" (#7 1555997579665)) ("kbxuqcbfiavlfwtnzakvwwirtjnfaoehxtfwagcllqueetlb" (#7 1556002380807)) ("fqqsuwaorfilnjdigarnkvytyfebobjpymxwwltueawkiuvj" (#7 1555997950616)) ("swhzbauyjwjgusnvfdmvnrxivrengbngjfckpfdeeuxzvpdj" (#7 1550962201148)) ("wcffnnhyubkkzarzggfbedickxwilmdcyfbdfgzovcudzgpa" (#7 1556046291597)) ("asdgxuxmlcukwsodsenpfuaxghzzhuihiqfhgnrfzquhwtxs" (#7 1556002410708)) ("raubvzvuyfywxckiudubpklazoceymwzokxyeqgwkzjjneac" (#7 1556043145377)) ("lahqngqluhlfpdvzktbsfomjnrnubunpajxhkstzibqsglny" (#7 1556002543632)) ("okwxazhlidecmtrgvdmfczmkmmzetgpmofpcifpawqnjhbaf" (#7 1556002375644)) ("cbhiivwflvruhbpcjfiqyywiwdzuhwlrlrqwcxeywxjbopyn" (#7 1556002413901)) ("ezvvhywahbbpawmedoopzzcgnvgpgelwcsnnhmtmpjwucbyz" (#7 1565899927178)) ("bxswdzmagzjsjgrxpdwcexekoomzmaaaaacvwexecwxplppr" (#7 1555997872211)) ("bsfhxieuzksnvvkjimkgbnooocdcutepqkjruphsparvjszd" (#7 1569784156517)) ("gyqrbshbkywjhshvfpuqkevmspnvjpjtaatmhdzuiplqfzit" (#7 1556042930370)) ("pbbscrilwfldpkffcuxczxsqhjeufrcsanncrnwmpquvmtwj" (#7 1556043093426)) ("vwosmtljnrzsjpxmlaryugzxktnodrygzkhlvudsjjaudnui" (#7 1556002406062)) ("ygocazzbgjyzqagpghlwpuhhmuqkqwfrgvqmbsarbrvknoxr" (#7 1555997802034)) ("vxdikjjdaxbnwmtegjyujkdeqcujsznlfjrovdlntwtdnzna" (#7 1569784011693)) ("odzqvujpmnkqsyketzayvfrkjbahflelnnizfgfzgjgazttp" (#7 1556673314016)) ("meirwrtyoluhdeqzpjiirmaowmuchkhtxvzyyehhsnazsagm" (#7 1557455437959)) ("usskzrrbskblulxzeozrlptcnqucqocvbspjnsjrtyxhllmd" (#130 1551426040573)) ("fdiivrgcoedxerglvtgjcpdrziycecwzkrkmdxrrnqrtgxpi" (#7 1555880892508))))
+124
+0
+0
+1
+.
+4
+resolve-session-token
+;; Access tokens are stored in a table that maps token strings to
+;; pairs of (player:Obj expiry:Int) where expiry is the time (ms since
+;; 1970 UTC) of expiry of the session.
+
+(call-cc
+ ;; "early return" idiom
+ (lambda (return)
+   (let ((token (get args 0))
+         ;; if the token doesn't exist, return early with nil
+         (attempt (or (tget self.sessions token nil) (call return '(nil))))
+         (who    (get attempt 0))
+         (expiry (get attempt 1))
+         (now    (time)))
+     (if (> now expiry)
+         (do (self:revoke-session-token token) nil)
+         who))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+issue-session-token
+;;; Usage:
+;;; (self:issue-session-token who:Object expire:Int=7200000):Str
+
+;;; where ``expires`` is the number of milliseconds for which the
+;;; issued token will be valid.
+
+;;; Things to note:
+;;;   arguments are in the ``args`` variable
+
+(let ((token  ($strutils:id-gen 48)) ;; Utility verb to generate random strings
+      ;; Who is the token being generated for
+      (who    (get args 0))
+      
+      ;; When does the token expire?
+      (expiry (+ (time) (get args 1 7200000))))
+  
+      ;; Note: ``get``'s 3rd argument is used if the second is out of bounds
+      ;; this is usued to implement the 7200000 ms default expiry
+  
+  ;; Everything is immutable: therefore, we have to retrieve the sessions table
+  ;; ``self.sessions``, use ``tset`` builtin function to add the token (along 
+  ;; with whose token it is and when it expires), and then use ``setprop`` to
+  ;; update the "sessions" property. This is admittedly somewhat unwieldy.
+  (setprop self "sessions" (tset self.sessions token (list who expiry)))
+  
+  ;; let bindings evaluate to the last expression evaluated in their body
+  token)
+.
+7
+0
+oThis pNone oThis
+5
+.
+revoke-session-token
+(let ((token (get args 0)))
+  (setprop self "sessions" (tdelete self.sessions token)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+handle-http-request
+(define plain-headers (table ("Content-Type" "text/plain")))
+(define html-headers  (table ("Content-Type" "text/html")))
+(define invalid-method-error
+  (list 405 plain-headers "Only POST requests allowed here."))
+(define make-invalid-format-error
+  (lambda (desc)
+    (list 400 plain-headers
+          (cat "Please supply a form-encoded non-empty authentication string"
+               " (user=<username>&pass=<password>[&redirect=<url>]). (" desc ")"))))
+(define invalid-password-error
+  (list 401 plain-headers "Invalid username/password combo."))
+
+(call-cc
+ (lambda (return)
+   (let ((method  (get args 0))
+         (path    (get args 1))
+         (headers (get args 2))
+         (body    (get args 3 nil))
+
+         ;; The name `GUARD-CLAUSE` is for clarity, this binding is unused
+         (GUARD-CLAUSE
+          (cond
+           ((not (= method 'post)) (return invalid-method-error))
+           ((nil? body)            (return (make-invalid-format-error "There was no body.")))
+           (nil)))
+
+         (login-request ($webutils:parse-query (cat "?" body)))
+         (username      (tget login-request "user" nil))
+         (password      (tget login-request "pass" nil))
+         (redirect      (tget login-request "redirect" nil))
+         
+         (GUARD-CLAUSE
+          (cond
+           ((= username nil) (return (make-invalid-format-error "There was no username.")))
+           ((= password nil) (return (make-invalid-format-error "There was no password.")))
+           (nil)))
+
+         (player-object (or (#0:find-player username) (return invalid-password-error)))
+         (check (or (#0:check-pass player-object password) (return invalid-password-error)))
+
+         ;; Password confirmed!
+
+         ;; First, issue the token
+         (token (self:issue-session-token player-object))
+
+         ;; Then, set the cookie
+         (resp-headers-old (tset html-headers "Set-Cookie" (cat "Session-Token=" token)))
+         (resp-headers (if (nil? redirect)
+                           resp-headers-old
+                           ;; I KNOW I KNOW, IT COULD BE HTTPS
+                           (tset resp-headers-old "Location" (cat "http" "://" (tget headers "host" "/") redirect))))
+         (status-code (if (nil? redirect) 200 301)))
+     (list status-code resp-headers
+           (cat "You are logged in as " ($webutils:html-fragment-for-data player-object))))))
+.
+7
+0
+oThis pNone oThis
+5
+.

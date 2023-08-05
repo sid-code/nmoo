@@ -1,0 +1,170 @@
+22
+0
+22
+22
+8
+level
+(0)
+22
+0
+0
+5
+.
+owner
+(#1)
+22
+0
+0
+5
+.
+pubread
+(1)
+22
+0
+0
+5
+.
+pubwrite
+(0)
+22
+0
+0
+5
+.
+fertile
+(1)
+22
+0
+0
+5
+.
+name
+("List Utilities")
+22
+0
+0
+5
+.
+contents
+(())
+22
+0
+0
+5
+.
+location
+(#0)
+22
+0
+0
+5
+.
+6
+unique
+(let ((lst (get args 0)))
+
+  (fold-right setadd () lst))
+.
+7
+0
+oNone pNone oNone
+5
+.
+assoc-pair
+;;; (:assoc-pair assoclist key default=nil)
+;;; Searches in `assoclist` for `(key  any-value)` and returns this pair
+;;; If not found, returns `default` (which defaults to nil)
+
+
+;;; Note: if the "pair" contains more than two values, any extra values are
+;;; ignored and the whole thing is still returned.
+
+
+(let ((assoclist (get args 0))
+      (key       (get args 1))
+      (default   (get args 2 nil)))
+  (call-cc (lambda (return)
+             (do
+              (map (lambda (pair)
+                     (if (and (istype pair "list")
+                              (<= 2 (len pair)))
+                         (if (= key (get pair 0))
+                             (return pair)
+                             nil)
+                         nil))
+                   assoclist)
+              default))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+assoc-set
+;;; (:assoc-set assoclist key new-value)
+;;; If a `(key, any-value)` pair exists in `assoclist`, it is removed.
+;;; Then, a `(key, new-value)` pair is added to `assoclist`.
+
+
+(let ((assoclist    (get args 0))
+      (key          (get args 1))
+      (new-value    (get args 2))
+      (existing     (self:assoc-pair assoclist key (list key new-value)))
+      (new-existing (set existing 1 new-value)))
+  (setadd (setremove assoclist existing) new-existing))
+.
+7
+0
+oThis pNone oThis
+5
+.
+assoc
+;;; same as assoc-pair but returns only the second value
+(let ((assoclist (get args 0))
+      (key       (get args 1))
+      (default   (get args 2 nil)))
+  (get (self:assoc-pair assoclist key ()) 1 default))
+.
+7
+0
+oNone pNone oNone
+5
+.
+filter
+(let
+  ((fn (get args 0))
+   (lst (get args 1)))
+   
+  
+  (fold-right (lambda (acc next)
+                 (if (call fn (list next))
+                     (push acc next)
+                     acc))
+              
+              () lst))
+.
+7
+0
+oThis pNone oThis
+5
+.
+countup
+(let ((func (get args 0))
+      (low  (get args 1))
+      (high (get args 2))
+      (state (call-cc (lambda (x) (list low x)))))
+  (if (nil? state) ; stopping condition
+      nil ; return
+      (let ((idx (get state 0))
+            (cont (get state 1)))
+        (if (> idx high)
+            (cont nil)
+            (do
+             (func idx)
+             (cont ((+ idx 1) cont)))))))
+.
+7
+0
+oNone pNone oNone
+5
+.

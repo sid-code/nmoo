@@ -1,0 +1,39 @@
+10
+0
+0
+1
+5
+1
+11
+2
+name
+("Test Object")
+10
+0
+0
+5
+.
+description
+("This is a tiny test object.")
+10
+0
+0
+5
+.
+2
+testverb
+(do args)
+.
+7
+0
+oNone pNone oNone
+5
+.
+description
+(cat "Description: " (pass))
+.
+7
+0
+oNone pNone oNone
+5
+.

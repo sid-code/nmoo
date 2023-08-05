@@ -1,0 +1,89 @@
+(define codemirror-css
+  "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.45.0/codemirror.css")
+(define codemirror-js
+  "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.45.0/codemirror.js")
+(define codemirror-vim-js
+  "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.45.0/keymap/vim.js")
+(define codemirror-scheme-js
+  "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.45.0/mode/scheme/scheme.min.js")
+
+(define codemirror-css-config
+  (cat "<style>"
+       ".CodeMirror { height: auto; }"
+       "</style>"))
+(define codemirror-stuff
+  (cat "<link rel='stylesheet' href='" codemirror-css "'>"
+       "<script src='" codemirror-js "'></script>"
+       "<script src='" codemirror-scheme-js "'></script>"
+       "<script src='" codemirror-vim-js "'></script>"
+       codemirror-css-config))
+
+(define editor-ui-code
+  (cat "function getFormattedDate() {"
+       "  var date = new Date();"
+       "  var str = date.getFullYear() + '-' +"
+       "    (date.getMonth() + 1) + '-' +"
+       "    date.getDate() + ' ' +"
+       "    date.getHours() + ':' +"
+       "    date.getMinutes() + ':' +"
+       "    date.getSeconds();"
+       "  return str;"
+       "}"
+       "const ed = CodeMirror.fromTextArea("
+       "   document.querySelector('#editor'),"
+       "   { lineNumbers: true, mode: 'scheme', keyMap: 'vim' }"
+       ");"))
+(define editor-ui-events
+  (cat "const save = document.querySelector('#save');"
+       "const evaluate = document.querySelector('#evaluate');"
+       "const status = document.querySelector('#status');"
+       "const result = document.querySelector('#result');"
+       "save.addEventListener('click', () => {"
+       "  fetch(location.pathname, { method: 'POST', body: ed.getValue() })"
+       "    .then( (res) => {"
+       "       if (res.ok) {"
+       "          status.style.color = '';"
+       "          status.innerText = `Verb code updated at ${getFormattedDate()};`"
+       "       } else {"
+       "          status.style.color = 'red';"
+       "          res.text().then( (msg) => status.innerText = msg );"
+       "       }"
+       "     });"
+       "});"
+       "evaluate.addEventListener('click', () => {"
+       "  fetch('/eval', { method: 'POST', body: ed.getValue() })"
+       "    .then( (res) => {"
+       "       if (res.ok) {"
+       "          status.style.color = '';"
+       "          status.innerText = `Code evaluated at ${getFormattedDate()}`;"
+       "          res.text().then( (msg) => result.innerText = msg );"
+       "       } else {"
+       "          status.style.color = 'red';"
+       "          res.text().then( (msg) => status.innerText = msg );"
+       "       }"
+       "     });"
+       "});"))
+       
+
+(define verb-editor-ui
+  (lambda (obj verb-num)
+    (let ((code (getverbcode obj verb-num))
+          (info (getverbinfo obj verb-num))
+          (verb-owner (get info 0))
+          (verb-perms (get info 1))
+          (verb-name (get info 2))
+          (verb-ref (cat ($ obj) ":" verb-name)))
+      (cat codemirror-stuff
+           "<p><button id='save'>Save</button>&nbsp;&nbsp;<span id='status'></span>"
+           "<p><button id='evaluate'>Evaluate</button>&nbsp&nbsp;Result: <span id='result'></span>"
+           "<p>You are editing " ($webutils:html-fragment-for-data obj) ":" verb-name
+           "<p>Verb permissions: " verb-perms
+           "<p>Verb owned by: " ($webutils:html-fragment-for-data verb-owner)
+           "<textarea id='editor'>" ($webutils:escape-html code) "</textarea>"
+           "<script>" editor-ui-code editor-ui-events "</script>"))))
+
+(call (lambda (method path headers body pargs)
+        (let ((obj (get pargs 0))
+              (verb-num (get pargs 1)))
+          (verb-editor-ui obj verb-num)))
+      args)

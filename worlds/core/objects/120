@@ -1,0 +1,114 @@
+120
+0
+107
+
+8
+level
+(0)
+120
+0
+0
+5
+.
+name
+("Eval Demo")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(0)
+7
+0
+0
+5
+.
+aliases
+(("i" "Generic Web Resource" "Eval Demo"))
+7
+0
+0
+5
+.
+description
+("Eval Demo")
+7
+0
+0
+5
+.
+location
+(#7)
+120
+0
+0
+5
+.
+2
+handle-http-request
+(let ((hverb (get args 0)))
+  (cond
+   ((= hverb 'get) (pass))
+   ((= hverb 'post)
+    (let ((headers (get args 2))
+          (body (get args 3)))
+      (settaskperms (tget headers "authuser" player))
+      (list 200 (table ("Content-Type" "text/plain"))
+            (try ($ (eval (parse body))) ($ error)))))
+   ((list 400 (table ("Content-Type" "text/plain")) "verb not supported"))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+render
+(verbcall #123 "render" args)
+;(call (lambda (method path headers args body)
+;        (let ((header
+;               (cat "<!DOCTYPE HTML><html>"
+;                    "<head><meta charset='utf8'><title>eval demo</title></head>"
+;                    "<body>"))
+;              (footer
+;               (cat "</body></html>"))
+;              (script
+;               (cat "<script>document.getElementById('submit').addEventListener('click',"
+;                    "function() { var code = document.getElementById('code').value;"
+;                    "             fetch(location.pathname, { method: 'post',"
+;                    "                          headers: { 'Content-Type': 'text/plain' },"
+;                    "                          body: code })"
+;                    "             .then(resp => resp.text().then(t => {"
+;                    "               document.getElementById('result').innerText = t;"
+;                    "             }));"
+;                    "}"
+;                    ");"
+;                    "</script>")))
+;          (list 200 (table ("Content-Type" "text/html"))
+;                (cat header
+;                     "<p><textarea id='code'></textarea>"
+;                     "<p><button id='submit'>eval</button>"
+;                     "<p><div id='result'></div>"
+;                     script
+;                     footer))))
+;      args)
+.
+7
+0
+oThis pNone oThis
+5
+.

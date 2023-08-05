@@ -1,0 +1,141 @@
+112
+0
+1
+
+10
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Code Utilities")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(1)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+location
+(#7)
+7
+0
+0
+5
+.
+aliases
+(("Code Utilities"))
+7
+0
+0
+5
+.
+description
+("Code Utilities")
+7
+0
+0
+5
+.
+contents
+(())
+112
+0
+0
+5
+.
+4
+macro-letf
+
+.
+7
+0
+oThis pNone oThis
+5
+.
+make-extractor
+
+.
+7
+0
+oThis pNone oThis
+5
+.
+loop
+(let ((form args))
+  (if (not (= (len form) 4))
+      (err E_ARGS (cat "loop takes 4 arguments (" (len form)" provided: " form ".)"))
+      (let ((loopvars (get form 0))
+            (initvals (get form 1))
+            (cont-symbol (get form 2))
+            (body (get form 3)))
+        (if (not (istype loopvars "sym"))
+            (err E_ARGS "first argument to loop must be a symbol")
+            nil)
+        (if (not (istype initvals "list"))
+            (err E_ARGS "second argument to loop must be a list")
+            nil)
+        (if (not (istype cont-symbol "sym"))
+            (err E_ARGS "third argument to loop must be a symbol")
+            nil)
+        `(let ((_CONT (call-cc (lambda (cont)
+                                 (cont (list cont ,initvals)))))
+               (,loopvars (get _CONT 1))
+               (,cont-symbol (lambda (vals)
+                               ;; avoid nasty surprises
+                               (let ((realvals (if (istype vals "list") vals (list vals)))
+                                     (continuation (get _CONT 0)))
+                                 (call continuation (list (list continuation realvals)))))))
+           ,body))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+setf
+(if (not (= (len args) 2))
+    (err E_ARGS "setf takes exactly 2 arguments")
+    (let ((loc     (get args 0))
+          (new-val (get args 1)))
+      (cond
+       ((istype loc "sym")
+        (err E_ARGS "cannot setf an arbitrary symbol"))
+       ((or (not (istype loc "list") (> (len loc) 1)))
+        (err E_ARGS (cat "what could you possibly hope setf'ing " loc " would achieve?")))
+       ((let ((fst
+.
+7
+0
+oThis pNone oThis
+5
+.

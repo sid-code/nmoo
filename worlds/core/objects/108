@@ -1,0 +1,104 @@
+108
+0
+1
+
+10
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Verb edit server")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(0)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+location
+(#7)
+7
+0
+0
+5
+.
+aliases
+(("Verb edit server"))
+7
+0
+0
+5
+.
+description
+("Verb edit server")
+7
+0
+0
+5
+.
+access-tokens
+(((#7 "hifuyopz") (#8 "gyjltwth")))
+7
+0
+0
+5
+.
+2
+check-access-token
+(let ((token (get args 0))
+      (search ($listutils:filter (lambda (pair) (= token (get pair 1))) self.access-tokens)))
+  (if (< 0 (len search))
+      (get (get search 0) 0)
+      nil))
+.
+7
+0
+oNone pNone oNone
+5
+.
+generate-access-token
+(let ((access-tokens self.access-tokens)
+      (token ($strutils:id-gen 8))
+      (who (get args 0))
+      (existing-token ($listutils:assoc access-tokens who)))
+  (if (nil? existing-token)
+      (do
+       (setprop self "access-tokens" (push access-tokens (list who token)))
+       token)
+      existing-token))
+.
+7
+0
+oThis pNone oThis
+5
+.

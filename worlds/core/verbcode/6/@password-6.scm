@@ -1,0 +1,8 @@
+(let ((curpass (get args 0 nil))
+      (newpass (get args 1 nil)))
+  (if (or (nil? curpass) (nil? newpass))
+      (player:tell "Syntax: " verb " old-password new-password")
+      (if (#0:check-pass caller curpass)
+          (do (#0:set-pass caller newpass)
+              (player:tell "Password succesfully changed."))
+          (player:tell "Incorrect password. The syntax is: " verb " old-password new-password"))))

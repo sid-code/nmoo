@@ -1,0 +1,12 @@
+(do
+ (player:tell "Preliminary helpfile:\n")
+ (player:tell "Right now, this world is barren and incomplete.")
+ (player:tell "You can poke around with the following verbs: ")
+ (player:tell "  @show, @verbs, @list, eval")
+ (player:tell "eval takes a s-exp (or literal) as its argument, and can be shortcutted by typing")
+ (player:tell "the s-exp by itself, similar to LambdaMOO's ';'. For example: ")
+ (player:tell "  (children #1)")
+ (player:tell "Will show you the children of #1")
+ (player:tell "You can find a list of these builtin functions by generating the docs by running")
+ (player:tell "  ./nakefile docs")
+ (player:tell "in the source root directory."))

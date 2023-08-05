@@ -1,0 +1,416 @@
+75
+1
+6
+8
+9
+level
+(3)
+75
+0
+0
+5
+.
+owner
+(#7)
+75
+0
+0
+5
+.
+pubread
+(1)
+75
+0
+0
+5
+.
+pubwrite
+(0)
+75
+0
+0
+5
+.
+fertile
+(1)
+75
+0
+0
+5
+.
+name
+("Generic Builder")
+75
+0
+0
+5
+.
+description
+("The most generic builder you could imagine!")
+7
+0
+0
+5
+.
+location
+(#3)
+75
+0
+0
+5
+.
+build-options
+(())
+7
+0
+0
+5
+.
+15
+@dig
+;;; Syntax: @dig <new-room-name>
+;;;     or: @dig <dir> to <new-room-name>
+;;;     or: @dig <dir> to <existing-room-number>
+
+(do
+    (settaskperms caller)
+    (cond
+     ((= 0 (len argstr))
+      (player:tell "Syntax: <INSERT HELP HERE>"))
+     ((= -1 (index argstr " to ")) ; no exit specified
+      (let ((new-room (self:new-room-named argstr)))
+	(player:tell "New room created: " ($o new-room))))
+     ((let ((spl (split argstr " to "))
+	    (dir (get spl 0))
+	    (full-dir ($strutils:expand-exit-name dir))
+	    (new-name (get spl 1))
+	    (loc (getprop caller "location")))
+	(cond
+	 ((= 0 (len dir))
+	  (player:tell "You need to specify a direction."))
+	 ((= 0 (len new-name))
+	  (player:tell "You need to specify a new name."))
+	 ((loc:has-exit-dir? full-dir)
+	  (player:tell "An exit in direction " full-dir " already exists!"))
+	 ((let ((other-room 
+		 (if (nil? iobj)
+		     (let ((new-room (self:new-room-named new-name)))
+		       (do
+			   (player:tell "New room created: " ($o new-room))
+			   new-room))
+		     iobj))
+		(new-exit (self:new-exit full-dir loc other-room)))
+	    (do
+		(player:tell "New exit created: " ($o new-exit))
+		(player:tell "Attempting to link " loc " to " other-room
+			     " in direction " full-dir ".")
+	      (try (do
+		       (self:connect-rooms-with loc other-room new-exit)
+		       (player:tell "Success!"))
+		   (if (erristype error E_PERM)
+		       (player:tell "I couldn't link the room.  Perhaps you could"
+				    " ask this room's owner?")
+		       error))))))))))
+.
+7
+0
+oAny pAny oAny
+5
+.
+new-room-named
+(do
+ (settaskperms caller)
+ (let ((new-room (self:_create $room)))
+   (do
+    (setprop new-room "name" (get args 0))
+    new-room)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+new-exit
+(do
+ (let ((exit-dir (get args 0))
+       (exit-src (get args 1))
+       (exit-dest (get args 2))
+       (new-exit (self:_create $exit)))
+   (do
+    (setprop new-exit "name" (cat "exit to " exit-dest))
+    (setprop new-exit "dir" exit-dir)
+    (setprop new-exit "source" exit-src)
+    (setprop new-exit "destination" exit-dest)
+    new-exit)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+@undig
+(do
+  (settaskperms caller)
+  (if (= 0 (len argstr))
+    (player:tell "Syntax: @undig <direction> [no-recycle]")
+
+    (let ((loc        player.location)
+          (asplit     (split argstr " "))
+          (dir        (get asplit 0 nil))
+          (no-recycle (= (get asplit 1 nil) "no-recycle")))
+
+      (cond
+        ((nil? loc)
+         (player:tell "You need to move somewhere before un-digging!"))
+        ((nil? dir)
+         (player:tell "You need to specify a direction to un-dig."))
+        ((let ((candidates (loc:get-exits-by-dir dir))
+               (candlen    (len candidates)))
+           (cond
+             ((= 0 candlen)
+              (player:tell "This room has no exit in direction '" dir "'."))
+             ((> 1 candlen)
+              (do
+                (player:tell "Ambiguous exit string '" dir "'. Possibilities are: ")
+                (map (lambda (exit)
+                       (player:tell "  " exit.dir))
+                     candidates)))
+             ((let ((exit-to-delete (get candidates 0)))
+                (let ((src exit-to-delete.source)
+                      (dest exit-to-delete.destination))
+                  (do
+                    (player:disconnect-rooms-with src dest exit-to-delete)
+                    (player:tell "Disconnected " ($o src) " from " ($o dest) ".")
+                    (player:tell ($o exit-to-delete) " should be recycled now."))))))))))))
+.
+7
+0
+oAny pAny oAny
+5
+.
+connect-rooms-with
+(do
+ (settaskperms caller)
+ (let ((source (get args 0))
+       (dest (get args 1))
+       (exit (get args 2)))
+   (do
+    (source:add-exit exit)
+    (dest:add-entrance exit))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+@recycle
+(do
+ (settaskperms caller)
+ (if (= caller dobj)
+     (player:tell "Don't recycle yourself.")
+     (let ((name ($o dobj)))
+       (do
+        ($recycler:_recycle dobj)
+        (player:tell name " recycled.")))))
+.
+7
+0
+oAny pNone oNone
+5
+.
+@create
+;;; Syntax: @create <parent> named <new-name>
+
+(if (not (= (len args) 3))
+    (do 
+     (player:tell "Syntax: " verb " <parent> named <new-name>")
+     (player:tell "If more than one word, new-name must be in quotes"))
+    (let ((parent-str (get args 0))
+          (parent-query (query player parent-str))
+          (parent-query-len (len parent-query))
+          (new-name (get args 2)))
+      (cond
+       ((= 0 parent-query-len)
+        (player:tell "I can't see a " parent-query " here."))
+       ((> 1 parent-query-len)
+        (player:tell "Ambiguous query: " parent-query "."))
+       ((let ((parent-obj (get parent-query 0))
+              (child (player:_create parent-obj)))
+          (do
+           (setprop child "name" new-name)
+           (setprop child "aliases" (setadd child.aliases new-name))
+           (setprop child "description" new-name)
+           (move child caller)
+           (player:tell "Created child of " ($o parent-obj)
+                        ", " ($o child))))))))
+.
+7
+0
+oAny pAny oAny
+5
+.
+_create
+(do 
+ (settaskperms caller) 
+ (if (self:build-option "bi-create")
+     (verbcall $quotautils "bi-create" args)
+     (verbcall $recycler verb args)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+build-option
+;;; (:build-option option default=0)
+;;; Returns the build option specified by `option`
+
+(if (not (or (= caller self) ($permutils:controls? caller self)))
+    (err E_PERM (cat caller " cannot access build options of " self))
+    (let ((option (get args 0))
+          (default (get args 1 0)))
+      ($buildopts:get self.build-options option default)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+set-build-option
+;;; (:set-build-option option new-value)
+;;; Sets the build option `option` to `new-value`
+
+(if (not (or (= caller self) ($permutils:controls? caller self)))
+    (err E_PERM (cat caller " cannot modify build options of " self))
+    (let ((option (get args 0))
+          (new-value (get args 1)))
+      (setprop self "build-options"
+        ($buildopts:set self.build-options option new-value))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+@reusepool
+;;; Measure the pool size in 2 ways: (len (children $garbage)) and
+;;; (len $recycler.contents) and report if they don't agree.
+    
+(let ((pool-size-1 (len (children $garbage)))
+      (pool-size-2 (len $recycler.contents)))
+  (if (= pool-size-1 pool-size-2)
+      (player:tell "There are " pool-size-1 " garbage objects ready for "
+                   "reuse.")
+
+      (do (player:tell "Discrepancy exists between (children $garbage) and "
+                       "$recycler.contents (former = " pool-size-1
+                       ", latter = " pool-size-2 ").")
+
+          (if (> (len args) 0)
+              (do (player:tell "Attempting to remedy this...")
+                  (map (lambda (child) ($recycler:_recycle child)) (children $garbage))
+                  (player:tell "Success."))
+              (player:tell "Use '" verb " fix' to fix this.")))))
+.
+7
+0
+oAny pAny oAny
+5
+.
+@addexit
+;;; `dobj` is the exit
+;;; `iobj` is the room
+;;; `player` needs to control `room` 
+
+(if (nil? dobj)
+    (player:tell "There is no '" dobjstr "' here.")
+    (if (nil? iobj)
+        (player:tell "There is no '" iobjstr "' here.")
+        
+        ;; Check if `player` controls `iobj`
+        (if (not ($permutils:controls? player iobj))
+            (player:tell "Permission denied (for modifying " iobj ")")
+            
+            ;; Good to go, just add the exit now
+            (do
+             (iobj:add-exit dobj)
+             (player:tell "Added exit " dobj " to " iobj ".")))))
+.
+7
+0
+oAny pAt oAny
+5
+.
+@addentrance
+;;; `dobj` is the exit
+;;; `iobj` is the room
+;;; `player` needs to control `room` 
+
+(if (nil? dobj)
+    (player:tell "There is no '" dobjstr "' here.")
+    (if (nil? iobj)
+        (player:tell "There is no '" iobjstr "' here.")
+        
+        ;; Check if `player` controls `iobj`
+        (if (not ($permutils:controls? player iobj))
+            (player:tell "Permission denied (for modifying " iobj ")")
+            
+            ;; Good to go, just add the exit now
+            (do
+             (iobj:add-entrance dobj)
+             (player:tell "Added entrance " dobj " to " iobj ".")))))
+.
+7
+0
+oAny pAt oAny
+5
+.
+disconnect-rooms-with
+(do
+ (settaskperms caller)
+ (let ((source (get args 0))
+       (dest (get args 1))
+       (exit (get args 2)))
+   (do
+    (source:rm-exit exit)
+    (dest:rm-entrance exit))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+@set
+(do
+ (settaskperms player)
+ (let ((parts (split argstr " to ")))
+   (if (not (= 2 (len parts)))
+     (player:tell "Syntax: " verb " <object>.<property> to <new-value>")
+     (let ((propdesc (get parts 0))
+           (propdesc-parsed ($verbutils:parse-propstr propdesc))
+           (newvalue-str (get parts 1))
+           (newvalue (try (parse newvalue-str)
+                          (do (player:tell "Could not parse value.") nil))))
+       (cond
+         ((istype newvalue "nil") nil)
+         ((istype propdesc-parsed "str") (player:tell propdesc-parsed))
+         ((istype propdesc-parsed "list")
+          (let ((obj      (get propdesc-parsed 0))
+                (prop-ref (get propdesc-parsed 1)))
+            (if ($verbutils:has-prop? obj prop-ref)
+                (try (do
+                      (setprop obj prop-ref newvalue)
+                      (player:tell "Set " obj "." prop-ref " to " newvalue))
+                     (cond
+                       ((erristype error E_PERM)
+                        (player:tell "Permission denied."))
+                       (error)))
+                (player:tell ($o obj) " has no property '" prop-ref "'."))))
+         ((player:tell "Something went terribly wrong. $verbutils:parse-propstr returned something it shouldn't have ("
+                       propdesc-parsed ")")))))))
+.
+7
+0
+oAny pAny oAny
+5
+.

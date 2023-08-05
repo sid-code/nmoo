@@ -1,0 +1,85 @@
+133
+0
+131
+
+9
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Login Button")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(0)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+location
+(#7)
+7
+0
+0
+5
+.
+aliases
+(("Generic Resource Fragment" "Login Button"))
+7
+0
+0
+5
+.
+description
+("Login Button")
+7
+0
+0
+5
+.
+1
+render-partial
+(let ((headers (get args 2))
+      (authuser (tget headers "authuser" nil))
+      (path (tget headers "path")))
+  
+  (if (= $guest (parent authuser))
+      (cat
+       "<a href='/login?redirect=" ($webutils:url-encode path) "'>Login</a>")
+      (cat
+       "Hello, " (authuser:name) ". <a href='/logout'>Log out</a>")))
+.
+7
+0
+oThis pNone oThis
+5
+.

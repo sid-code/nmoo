@@ -1,0 +1,78 @@
+99
+0
+1
+100
+6
+pubread
+(1)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(1)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Generic Option Package")
+7
+0
+0
+5
+.
+2
+get
+;;; (:get optlist option default-value=nil)
+;;; Returns the value of `option` from `optlist`.
+;;; If the option does not exist, returns `default-value` which
+;;;  defaults to nil
+
+(let ((optlist (get args 0))
+      (option  (get args 1))
+      (default (get args 2 nil)))
+  ($listutils:assoc optlist option default))
+.
+7
+0
+oThis pNone oThis
+5
+.
+set
+;;; (:set optist option value=1) => new optlist
+;;; sets the option in optlist to value which defaults to 0.
+
+(let ((optlist (get args 0))
+      (option  (get args 1))
+      (value   (get args 2 0)))
+  ($listutils:assoc-set optlist option value))
+.
+7
+0
+oThis pNone oThis
+5
+.

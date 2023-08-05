@@ -1,0 +1,156 @@
+7
+1
+45
+
+14
+level
+(0)
+7
+0
+0
+5
+.
+pubread
+(1)
+7
+0
+0
+5
+.
+description
+("This is the Creator of All Things (tm)")
+7
+0
+0
+5
+.
+contents
+((#61 #101 #73 #103 #108 #109 #110 #111 #112 #104 #105 #107 #46 #27 #27 #119 #120 #122 #121 #123 #127 #129 #130 #131 #133 #134 #137 #132 #135))
+7
+0
+0
+5
+.
+name
+("Creator")
+7
+0
+0
+5
+.
+password-salt
+("$2a$05$ANfpLb/q4AuQB.vgZwBZRe")
+7
+0
+0
+5
+.
+password-hash
+("$2a$05$ANfpLb/q4AuQB.vgZwBZReuOoMeyuDbB5ZHGBl8a.YTSae65hsY3.")
+7
+0
+0
+5
+.
+address
+("127.0.0.1")
+7
+0
+0
+5
+.
+build-options
+((("dig-class" 1)))
+7
+0
+0
+5
+.
+test-property
+(())
+7
+0
+0
+5
+.
+inventory
+((#101))
+7
+0
+0
+5
+.
+gender
+(())
+7
+0
+0
+5
+.
+gender.name
+(nil)
+7
+0
+0
+5
+.
+location
+(#88)
+7
+0
+0
+5
+.
+5
+testverb
+(reduce-right (lambda (l1 l2) (do (echo l1 l2) (reduce-right (lambda (x y) (+ x y)) l1))) '((1 
+2 3) (4 5 6)))
+.
+7
+0
+oNone pNone oNone
+5
+.
+testverb2
+
+.
+7
+0
+oNone pNone oNone
+5
+.
+name
+(cat "The " (pass))
+.
+7
+0
+oThis pNone oThis
+5
+.
+help
+(do
+ (player:tell "Preliminary helpfile:\n")
+ (player:tell "Right now, this world is barren and incomplete.")
+ (player:tell "You can poke around with the following verbs: ")
+ (player:tell "  @show, @verbs, @list, eval")
+ (player:tell "eval takes a s-exp (or literal) as its argument, and can be shortcutted by typing")
+ (player:tell "the s-exp by itself, similar to LambdaMOO's ';'. For example: ")
+ (player:tell "  (children #1)")
+ (player:tell "Will show you the children of #1")
+ (player:tell "You can find a list of these builtin functions by generating the docs by running")
+ (player:tell "  ./nakefile docs")
+ (player:tell "in the source root directory."))
+.
+7
+0
+oNone pNone oNone
+5
+.
+defmacros
+(define-syntax macro (lambda (args) (echo args)))
+.
+7
+0
+oThis pNone oThis
+5
+.

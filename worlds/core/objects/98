@@ -1,0 +1,74 @@
+98
+0
+98
+98
+8
+pubread
+(1)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(1)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Permission Utilities")
+7
+0
+0
+5
+.
+location
+(#3)
+98
+0
+0
+5
+.
+contents
+(())
+98
+0
+0
+5
+.
+1
+controls?
+(let ((user (get args 0))
+      (what (get args 1)))
+  (or (= 0 (level user))      ; user is a wizard
+      (= what.owner user)     ; user owns the object
+      what.pubwrite))         ; object is publicly writable
+.
+7
+0
+oThis pNone oThis
+5
+.

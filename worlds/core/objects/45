@@ -1,0 +1,85 @@
+45
+1
+8
+7
+6
+level
+(0)
+45
+0
+0
+5
+.
+owner
+(#1)
+45
+0
+0
+5
+.
+pubread
+(1)
+45
+0
+0
+5
+.
+pubwrite
+(0)
+45
+0
+0
+5
+.
+fertile
+(1)
+45
+0
+0
+5
+.
+name
+("Generic Wizard")
+45
+0
+0
+5
+.
+2
+@requests
+(let
+  ((reqs #0.char-requests))
+  
+  (if (= 0 (len reqs))
+    (echo "There are no character requests pending.")
+    (do
+      (echo "The following character requests are pending: ")
+      (map (lambda (req)
+             (let ((name  (get req 0 "No name"))
+                   (email (get req 1 "No email"))
+                   (ip    (get req 2 "No IP")))
+               (player:tell (cat (fit name 16) (fit email 25) (fit ip 16)))))
+           reqs))))
+.
+45
+0
+oNone pNone oNone
+4
+.
+@ogrep
+(let ((search (get args 0)))
+  ($objutils:for-each-obj
+   (lambda (obj)
+     (do
+      (let ((name (getprop obj "name" nil)))
+        (or (nil? name)
+            (let ((find-result (find name search)))
+              (and find-result
+                   (player:tell ($o obj))))))
+      (suspend 0.1)))))
+.
+7
+0
+oAny pAny oAny
+5
+.

@@ -1,0 +1,127 @@
+103
+0
+48
+106
+13
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Generic Door")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(1)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+location
+(#7)
+7
+0
+0
+5
+.
+aliases
+(("Generic Door"))
+7
+0
+0
+5
+.
+description
+("Generic Door")
+7
+0
+0
+5
+.
+open
+(1)
+7
+0
+0
+5
+.
+locked
+(0)
+7
+0
+0
+5
+.
+key
+(nil)
+7
+0
+0
+5
+.
+closedmsg
+("The door is closed.")
+7
+0
+0
+5
+.
+2
+try-enter
+(let ((pl (get args 0))) ; the player
+  (if self.open 1 (do (pl:tell self.closedmsg) 0)))
+.
+7
+0
+oNone pNone oNone
+5
+.
+open
+(let ((capname ($strutils:capitalize (self:name))))
+  (if self.open
+      (player:tell capname " is already open.")
+      (call-cc (lambda (return)
+        (do
+         (if self.locked
+             (let ((unlock-attempt self.unlock ))
+               (if unlock-attempt ; successful unlock
+                   (player:tell unlock-attempt)
+                   (call return
+                         (player:tell capname " is locked and you can't unlock it."))))
+             nil)
+         (setprop self "open" 1)
+         (player:tell capname " is open now."))))))
+.
+7
+0
+oThis pNone oNone
+5
+.

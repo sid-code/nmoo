@@ -1,0 +1,145 @@
+1
+0
+1
+2 1 91 99 73 108 48 110 104 107 112 131
+10
+level
+(0)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+pubread
+(1)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(1)
+7
+0
+0
+5
+.
+name
+("root")
+7
+0
+0
+5
+.
+aliases
+(())
+7
+0
+0
+5
+.
+description
+("The root from which all objects sprout.")
+7
+0
+0
+5
+.
+contents
+(())
+7
+0
+0
+5
+.
+location
+(#3)
+7
+0
+0
+5
+.
+7
+description
+self.description
+.
+7
+0
+oThis pNone oThis
+5
+.
+name
+(try self.name "Unnamed object")
+.
+7
+0
+oThis pNone oThis
+5
+.
+@describe
+(let ((new-desc iobjstr))
+  (do
+   (settaskperms player)
+   (setprop self "description" new-desc)
+   (player:tell "Description of " self " changed to \"" new-desc "\"")))
+.
+7
+0
+oThis pAs oStr
+5
+.
+look
+(do
+ (player:tell (self:name))
+ (player:tell (self:description)))
+.
+7
+0
+oThis pNone oNone
+5
+.
+tell
+(notify self (call cat args))
+.
+7
+0
+oThis pNone oThis
+5
+.
+@alias
+(do
+ (settaskperms caller)
+ (let ((cur-aliases self.aliases)
+       (new-aliases (setadd cur-aliases iobjstr)))
+   (do 
+    (setprop self "aliases" new-aliases)
+    (player:tell "Added alias \"" iobjstr "\" to \"" ($o self) ". "
+                 "This object is now also known as " new-aliases "."))))
+.
+7
+0
+oThis pAt oAny
+5
+.
+@unalias
+(echo "HI")
+.
+7
+0
+oThis pFrom oAny
+5
+.

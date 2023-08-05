@@ -1,0 +1,209 @@
+12
+0
+12
+12
+9
+level
+(0)
+12
+0
+0
+5
+.
+owner
+(#1)
+12
+0
+0
+5
+.
+pubread
+(1)
+12
+0
+0
+5
+.
+pubwrite
+(0)
+12
+0
+0
+5
+.
+fertile
+(1)
+12
+0
+0
+5
+.
+1
+("String Utilities")
+12
+0
+0
+5
+.
+name
+("String Utilities")
+12
+0
+0
+5
+.
+contents
+(())
+12
+0
+0
+5
+.
+location
+(#0)
+12
+0
+0
+5
+.
+9
+join
+(let
+  ((lst (get args 0))
+   (sep (get args 1 "")))
+   
+  (if (= 0 (len lst))
+      ""
+      (reduce-right (lambda (cur nxt) (cat ($ cur) sep ($ nxt))) lst)))
+.
+7
+0
+oNone pNone oNone
+5
+.
+starts-with
+(= 0 (index (get args 0) (get args 1)))
+.
+7
+0
+oNone pNone oNone
+5
+.
+expand-exit-name
+(let ((name (get args 0))
+      (standard ("north" "east" "south" "west" "up" "down"))
+      (attempt ($listutils:filter (lambda (fullname)
+                            ($strutils:starts-with fullname name))
+                          standard)))
+
+  (if (= 0 (len attempt))
+      name
+      (get attempt 0)))
+.
+7
+0
+oNone pNone oNone
+5
+.
+joinlist
+(let
+  ((lst (get args 0))
+   (last-sep (get args 1))
+   (if-empty (get args 2 "")))
+   
+  (cond 
+    ((= 0 (len lst)) if-empty)
+    ((= 1 (len lst)) (get lst 0))
+    ((= 2 (len lst)) (cat ($ (get lst 0)) " " last-sep " " (get lst 1)))
+    ((let
+        ((last (get lst -1))
+         (mod-lst (set lst -1 (cat last-sep " " last))))
+         
+        ($strutils:join mod-lst ", ")))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+fit
+(let ((str (get args 0))
+      (strlen (len str))
+      (size (get args 1))
+      (fill (get args 2 " "))
+      (toolong (get args 3 "...")))
+
+ (cond
+  ((= size strlen) str)
+  ((> size strlen)
+   (let ((difference (- size strlen))
+         (numfills (+ 1 (/ difference (len fill)))))
+    (substr (cat str (repeat fill numfills)) 0 (- size 1))))
+  ((< size strlen)
+   (let ((pos (- size (+ 1 (len toolong)))))
+
+    (if (> 1 pos) (substr str 0 size)
+     (cat (substr str 0 pos) toolong))))
+  ("empty else clause")))
+.
+7
+0
+oNone pNone oNone
+5
+.
+id-gen
+(let ((size (get args 0 5)))
+  ($strutils:join (map (lambda (x) (chr (random 97 123))) (range 1 size))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+is-upper?
+(let ((c (get args 0)))
+  (= (upcase c) c))
+.
+7
+0
+oThis pNone oThis
+5
+.
+gsub
+(call-cc
+ (lambda (return)
+   (let ((str   (get args 0))
+         (pat   (get args 1))
+         (fn    (get args 2))
+         (state (call-cc (lambda (x) (list str 0 x))))
+         (cur         (get state 0))
+         (start-index (get state 1))
+         (ct          (get state 2))
+         (find-result (or (find cur pat start-index) (return cur)))
+         ;; note:          ^
+         ;; find returns (start:Int end:Int capturing-groups:List)
+         (new-start   (get find-result 0))
+         (new-end     (get find-result 1))
+         (fn-result   (call fn find-result))
+         ;(new-end     (+ (len fn-result) (get find-result 1)))
+         (spliced     (splice cur new-start new-end fn-result)))
+     (ct (list spliced (+ (len fn-result) new-start) ct)))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+capitalize
+(let ((str (get args 0)))
+  (if (= 0 (len str))
+      str
+      (let ((first (substr str 0 0))
+            (rest (substr str 1 -1)))
+        (cat (upcase first) rest))))
+.
+7
+0
+oNone pNone oNone
+5
+.

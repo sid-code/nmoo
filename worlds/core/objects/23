@@ -1,0 +1,106 @@
+23
+0
+23
+23
+8
+level
+(0)
+23
+0
+0
+5
+.
+owner
+(#1)
+23
+0
+0
+5
+.
+pubread
+(1)
+23
+0
+0
+5
+.
+pubwrite
+(0)
+23
+0
+0
+5
+.
+fertile
+(1)
+23
+0
+0
+5
+.
+name
+("Object Utilities")
+23
+0
+0
+5
+.
+contents
+(())
+23
+0
+0
+5
+.
+location
+(#0)
+23
+0
+0
+5
+.
+3
+contains
+(let
+  ((container (get args 0))
+   (obj (get args 1)))
+  
+  (and
+    (= (getprop obj "location" nil) container)
+    (< -1 (in (getprop container "contents" ()) obj))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+descendents
+(let
+  ((what (get args 0))
+   (childs (children what)))
+
+  (if (= 0 (len childs)) ()  
+    (call cat (map (lambda (child)
+                (if (= child what) ()
+                    (push (self:descendents child) child))) childs))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+for-each-obj
+(let ((func (get args 0))
+      (high (maxobj)))
+  ($listutils:countup (lambda (x)
+                        (let ((o (toobj x)))
+                          (and (valid o)
+                               (func o))))
+                      0
+                      high))
+.
+7
+0
+oNone pNone oNone
+5
+.

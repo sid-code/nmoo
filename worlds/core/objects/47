@@ -1,0 +1,415 @@
+47
+0
+8
+
+6
+level
+(1)
+47
+0
+0
+5
+.
+owner
+(#1)
+47
+0
+0
+5
+.
+pubread
+(1)
+47
+0
+0
+5
+.
+pubwrite
+(0)
+47
+0
+0
+5
+.
+fertile
+(1)
+47
+0
+0
+5
+.
+name
+("Verb Utilities")
+47
+0
+0
+5
+.
+16
+get-verb-argstr
+(let ((obj (get args 0))
+      (verbdesc (get args 1)))
+
+ (call cat (map (lambda (str) (fit str 6)) (getverbargs obj verbdesc))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+name-matches?
+(let ((vname (get args 0))
+      (str   (get args 1))
+      (rname (strsub vname "*" ""))
+      (slen  (len str))
+      (vlen  (len rname))
+      (star-index (index vname "*"))
+      (star-loc (if (= -1 star-index) 9000000000 star-index)))
+  (cond ((= slen vlen) (= str rname))
+        ((> slen vlen)
+         (and (= star-loc vlen) (= rname (substr str 0 (- vlen 1)))))
+        ((< slen vlen)
+         (and (<= star-loc slen) (= str (substr rname 0 (- slen 1)))))
+        (("empty else clause"))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+verbname-matches?
+(let ((name  (get args 0))
+      (str   (get args 1))
+      (names (split name))
+      (matches
+       ($listutils:filter (lambda (vname) ($verbutils:name-matches? vname str))
+                  names)))
+  (> (len matches) 0))
+.
+7
+0
+oNone pNone oNone
+5
+.
+find-verb
+(let ((obj   (get args 0))
+      (name  (get args 1))
+      (arg-spec (get args 2 nil))
+      (verb-list (verbs obj))
+      (num-verbs (len verb-list)))
+  (get ($listutils:filter (lambda (idx)
+                    (let ((verb-name (get verb-list idx)))
+                      (and
+                       ($verbutils:verbname-matches? verb-name name)
+                       (if (nil? arg-spec)
+                           1
+                           (= arg-spec (getverbargs obj idx))))))
+                    
+                  (range 0 (- num-verbs 1)))
+       0
+       nil))
+.
+7
+0
+oNone pNone oNone
+5
+.
+parse-verbstr
+;;; This is the frontend for $verbutils;parse-verbstr-plumbing
+;;; it will return either a string or
+;;;   (object-that-defines-verb verb-index obj)
+;;; when parsing "obj:verb"
+
+;;; It also takes a second argument which tells it whether to
+;;; accept verbs defined on the object's ancestors.
+(let ((str (get args 0))
+      (check-parents? (get args 1 1))
+      (result-from-plumbing (self:parse-verbstr-plumbing str))
+      (result-code (get result-from-plumbing 0))
+      (obj-defined-on (get result-from-plumbing 1))
+      (verb-index (get result-from-plumbing 2))
+      (obj-original (get result-from-plumbing 3)))
+  (cond
+   ((= result-code 1)
+    (cat "Invalid verb string: " str))
+   ((= result-code 2)
+    (cat "There is no \"" obj-defined-on "\" around here."))
+   ((= result-code 3)
+    (cat ($o obj-original) " does not define that verb."))
+   ((and 
+     (not check-parents?)
+     (= result-code 0) 
+     (not (= obj-defined-on obj-original)))
+    (cat ($o obj-original) " does not define that verb, but "
+         "it's ancestor " ($o obj-defined-on) " does. Perhaps "
+         "you mean to refer to that verb instead?"))
+   ((= result-code 4) "Malformed argspc string")
+   ((= result-code 5)
+    (cat "Invalid argspec \"" (get result-from-plumbing 5) "\"."))
+   ((= result-code 0)               ;success!
+    (slice result-from-plumbing 1))
+   ((err E_ARGS (cat "Unknown result code" result-code)))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+find-verb-rec
+(let ((obj  (get args 0))
+      (pt   (parent obj))
+      (name (get args 1))
+      (arg-spec (get args 2 nil))
+      (original-object (get args 3 obj))
+      (attempt ($verbutils:find-verb obj name arg-spec)))
+  
+  (if (nil? attempt)
+   	  (if (= obj pt)
+    	  nil
+          ($verbutils:find-verb-rec pt name arg-spec original-object))
+      (list obj attempt original-object)))
+.
+7
+0
+oNone pNone oNone
+5
+.
+parse-verbstr-dire
+(let ((parse-result (verbcall self "parse-verbstr" args)))
+  (cond
+   ((istype parse-result "str") (err E_ARGS parse-result))
+   ((istype parse-result "list") parse-result)
+   ((err E_ARGS "something went terribly wrong. $verbutils:parse-verbstr was expected to return a str or list but returned instead " parse-result))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+dump-verb
+(let ((obj   (get args 0))
+      (vname (get args 1)))
+  ((getverbinfo obj vname)
+   (getverbargs obj vname)
+   (getverbcode obj vname)))
+.
+7
+0
+oNone pNone oNone
+5
+.
+add-dumped-verb
+(let ((obj   (get args 0))
+      (dump  (get args 1))
+      (info  (get dump 0))
+      (args  (get dump 1))
+      (code  (get dump 2))
+      (vname (get info 2)))
+  (do
+   (addverb obj vname)
+   (setverbinfo obj vname info)
+   (setverbargs obj vname args)
+   (setverbcode obj vname code)))
+.
+7
+0
+oNone pNone oNone
+5
+.
+move-verb
+(let ((obj1  (get args 0))
+      (vname (get args 1))
+      (obj2  (get args 2)))
+  (do
+   ($verbutils:copy-verb obj1 vname obj2)
+   (delverb obj1 vname)))
+.
+7
+0
+oNone pNone oNone
+5
+.
+copy-verb
+(let ((obj1  (get args 0))
+      (vname (get args 1))
+      (obj2  (get args 2))
+      (dump  ($verbutils:dump-verb obj1 vname)))
+  (do
+   ($verbutils:add-dumped-verb obj2 dump)))
+.
+7
+0
+oNone pNone oNone
+5
+.
+parse-verbstr-plumbing
+;;; Like git divides its commands (or verbs!) into "plumbing and 
+;;; porcelain", I'm doing the same here. This is the plumbing
+;;; version of 'parse-verbstr' that doesn't return nice string
+;;; messages.
+
+;;; The return value of this verb is always a list containing 4 
+;;; items. If the list doesn't need to contain 5 items (for example,
+;;; if it's an error, it will still be padded with zeros to reach
+;;; 6 elements.
+
+;;; The first element is the return status of the call. If everything
+;;; worked out right, it will be 0.  
+;;; If the verb string was not formatted correctly it will be 1. 
+;;; If the OBJECT could not be found, it will be 2.
+;;; If the VERB could not be found on the object, it will be 3.
+;;; If a malformed arg spec string was included, it will be 4
+;;; If an invalid arg is in the arg spec string, it will be 5
+
+;;; The second, third, and fourth elements are the following,
+;;; respectively: object verb is defined on, verb INDEX, original
+;;; object from the query.
+
+;;; The fifth element will be the "verb" part of the verb string
+;;; passed in.
+
+;;; The sixth argument will be the argspec tha was passed in. For
+;;; example, if the string passed in was "#1:give(this,to,any")
+;;; it will contain ("this" "to" "any"). If none was provided,
+;;; then it will be nil.
+
+;;; For example, "#2:tell" will parse into (0 #1 2 #2) if #1
+;;; is the parent of #2 and defines tell (which happens to be in
+;;; position 2.
+
+(let ((str (get args 0))
+      (parsed (match str "([^:]+):([^(]+)(?:%(([^)]+)%))?")))
+  (if (nil? parsed)
+      (1 0 0 0 0 nil)
+      (call-cc 
+       (lambda (return)
+         (let ((obj-ref (get parsed 0))
+               (obj-query (get (query player obj-ref) 0 nil))
+               (verb-ref (get parsed 1))
+               (arg-str (get parsed 2))
+               (arg-spec
+                 (if (or (nil? arg-str) (= 0 (len arg-str)))
+                     nil
+                     (let ((argstr-parse 
+                            ($verbutils:parse-argstr-plumbing arg-str))
+                           (argstr-result-code (get argstr-parse 0))
+                           (argstr-result-value (get argstr-parse 1)))
+                       (cond
+                        ((= argstr-result-code 0) argstr-result-value)
+                        ((= argstr-result-code 1) (call return ((4 0 0 0 0 nil))))
+                        ((< -1 (in (2 3) argstr-result-code)) (call return ((5 0 0 0 0 argstr-result-value))))
+                        ((err E_ARGS "parse-argstr returned something absurd!")))))))
+           (if (nil? obj-query)
+               (2 0 0 0 verb-ref arg-spec)
+               (let ((verb-loc ($verbutils:find-verb-rec obj-query verb-ref arg-spec)))
+                 (if (nil? verb-loc)
+                     (3 obj-query -1 obj-query verb-ref arg-spec)
+                     (cat (unshift verb-loc 0) (list verb-ref arg-spec))))))))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+parse-argstr-plumbing
+;;; Parses strings like "this,none,this" into ("this" "none" "this")
+;;; The return value consists of the error code and the actual result.
+;;;    (error-code result)
+
+;;; Error code meanings and corresponding results:
+;;;   0 - success, result is a list containing the three argspecs
+;;;   1 - malformed list, result is garbage
+;;;   2 - invalid objspec, result is the invalid objspec
+;;;   3 - invalid prepspec, result is the invalid prepspec
+
+(let ((str (get args 0))
+      (spl (split str ",")))
+  (if (not (= 3 (len spl)))
+      (1 ())
+      (let ((direct (get spl 0))
+            (indirect (get spl 2))
+            (preposition (get spl 1))
+            (objspecs #0.possible-objspecs)
+            (prepspecs #0.possible-prepspecs))
+        (if (= -1 (in objspecs direct))
+            (2 direct)
+            (if (= -1 (in objspecs indirect))
+                (2 indirect)
+                (if (= -1 (in prepspecs preposition))
+                    (3 preposition)
+                    (0 spl)))))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+parse-propstr-plumbing
+;;; Parses a string like "obj-str.prop" into (#5 "prop"), 
+;;; assuming "obj-str" is a name of #5.
+
+;;; The actual return value has 3 elements. The first, as usual, is
+;;; the result code.
+;;;   0 - success, return value: (obj prop)
+;;;   1 - malformed property string, return value: nil
+;;;   2 - missing object, return value: (obj-str prop) <-- note no obj
+;;; The second element will be the real return value, if applicable.
+
+;;; This differs from parse-verbstr verbs because it does NOT check
+;;; whether the property exists. That's the job of whatever verb calls
+;;; this one.
+
+(let ((str (get args 0))
+      (parsed (match str "([^.]+)%.(.+)")))
+  (if (nil? parsed)
+      (1 nil)
+      (let ((obj-ref (get parsed 0))
+            (obj-query (get (query player obj-ref) 0 nil))
+            (prop-ref (get parsed 1)))
+        (if (nil? obj-query)
+            (2 parsed)
+            (0 (list obj-query prop-ref))))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+parse-propstr
+(let ((str (get args 0))
+      (result-from-plumbing 
+       ($verbutils:parse-propstr-plumbing str))
+      (result-code (get result-from-plumbing 0))
+      (result-value (get result-from-plumbing 1)))
+  (cond
+   ((= result-code 1)
+    (cat "Your property string is malformed. The correct "
+         "syntax is simply <object>.<property>"))
+   ((= result-code 2)
+    (cat "The object " (get result-value 0) " could not be "
+         "found."))
+   ((= result-code 0) result-value)
+   ((cat "$verbutils:parse-propstr-plumbing returned an invalid "
+         "error code: " result-code))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+has-prop?
+;;; ($verbutils:has-prop? obj prop-name)
+
+(let ((obj (get args 0))
+      (objparent (parent obj))
+      (prop-name (get args 1)))
+  (or (< -1 (in (props obj) prop-name))
+      (if (= obj objparent)
+          nil
+          (verbcall self verb (list objparent prop-name)))))
+.
+7
+0
+oNone pNone oNone
+5
+.

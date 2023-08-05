@@ -1,0 +1,8 @@
+(let ((ct (call-cc (lambda (x) (list "" x)))))
+ (if (istype ct "str") (substr ct 1 -1)
+     (let ((buffer       (get ct 0))
+           (continuation (get ct 1))
+           (next-line    (read)))
+       (if (= next-line ".") 
+           (continuation buffer)
+           (continuation (list (cat buffer "\n" next-line) continuation))))))

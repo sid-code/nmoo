@@ -1,0 +1,91 @@
+137
+0
+131
+
+9
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Verb Bytecode View")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(0)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+location
+(#7)
+7
+0
+0
+5
+.
+aliases
+(("Generic Resource Fragment" "Verb Bytecode View"))
+7
+0
+0
+5
+.
+description
+("Verb Bytecode View")
+7
+0
+0
+5
+.
+1
+render-partial
+(define instruction-to-html
+  (lambda (instruction)
+    (cat ($webutils:html-fragment-for-data instruction)
+         "<br>")))
+
+(define bytecode-to-html
+  (lambda (bytecode)
+    (call cat (map instruction-to-html bytecode))))
+    
+(call (lambda (method path headers body pargs)
+        (let ((obj (get pargs 0))
+              (verb-num (get pargs 1))
+              (bytecode (getverbbytecode obj verb-num)))
+          (bytecode-to-html bytecode)))
+      args)
+.
+7
+0
+oThis pNone oThis
+5
+.

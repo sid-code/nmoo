@@ -1,0 +1,11 @@
+(let ((obj   (get args 0))
+      (dump  (get args 1))
+      (info  (get dump 0))
+      (args  (get dump 1))
+      (code  (get dump 2))
+      (vname (get info 2)))
+  (do
+   (addverb obj vname)
+   (setverbinfo obj vname info)
+   (setverbargs obj vname args)
+   (setverbcode obj vname code)))

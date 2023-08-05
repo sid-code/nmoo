@@ -1,0 +1,413 @@
+119
+0
+119
+119
+12
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Web Utilities")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(0)
+7
+0
+0
+5
+.
+aliases
+(("Web Utilities"))
+7
+0
+0
+5
+.
+description
+("Web Utilities")
+7
+0
+0
+5
+.
+location
+(#7)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+mimetable
+((table ("html" "text/html") ("txt" "text/plain") ("css" "text/css") ("js" "application/javascript")))
+7
+0
+0
+5
+.
+contents
+(())
+119
+0
+0
+5
+.
+authenticator
+(#124)
+7
+0
+0
+5
+.
+11
+guess-mime
+(let ((filename (get args 0))
+      (mtable self.mimetable)
+      (ext (get (match filename ".+?%.(%w+)$") 0 nil))
+      (guess (tget mtable ext "text/plain")))
+  guess)
+.
+7
+0
+oThis pNone oThis
+5
+.
+make-resource
+;;; ($webutils:make-resources name:Str parent:Obj=$resource)
+(if (or (< (len args) 1) (> (len args) 2))
+    (err E_ARGS "1 or 2 arguments required")
+    (let ((name (get args 0))
+          (prnt (get args 1 $resource)))
+      (player:_create prnt name)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+base64-encode
+(define base64-encode-triplet
+  (lambda (c1 c2 c3)
+    (if (nil? c1) (err E_ARGS "base64-encode-triplet's first argument must be not nil")
+        (let ((e1 (/ c1 4))
+              (e2-partial (* (% c1 4) 16)))
+          (if (nil? c2) (list e1 e2-partial -1 -1)
+              (let ((e2 (+ e2-partial (/ c2 16)))
+                    (e3-partial (* (% c2 16) 4)))
+                (if (nil? c3) (list e1 e2 e3-partial -1)
+                    (let ((e3 (+ e3-partial (/ c3 64)))
+                          (e4 (% c3 64)))
+                      (list e1 e2 e3 e4)))))))))
+
+(define base64-lookup
+  (lambda (value)
+    (cond
+     ((= value -1) "=") ; padding
+     ((< value 26) (chr (+ value (ord "A"))))
+     ((< value 52) (chr (+ (- value 26) (ord "a"))))
+     ((< value 62) (chr (+ (- value 52) (ord "0"))))
+     ((= value 62) "+")
+     ((= value 63) "/")
+     ((err E_ARGS (cat "base 64 value out of range: " value))))))
+
+(define base64-encode
+  (lambda (str)
+    (let ((size        (len str))
+          (num-blocks  (/ size 3))
+          (no-padding? (= 0 (% size 3)))
+          (blocks      (range 0 (if no-padding? (- num-blocks 1) num-blocks))))
+      (if (= 0 size) ""
+          (call cat
+                (map (lambda (block)
+                       (let ((idx (* block 3))
+                                        ; guaranteed not to be out of bounds
+                             (c1 (ord (substr str idx idx)))
+                             (c2 (if (> idx (- size 2)) nil (ord (substr str (+ idx 1) (+ idx 1)))))
+                             (c3 (if (> idx (- size 3)) nil (ord (substr str (+ idx 2) (+ idx 2))))))
+                         (call cat (map base64-lookup (base64-encode-triplet c1 c2 c3)))))
+                     blocks))))))
+
+(if (not (= 1 (len args)))
+    (err E_ARGS (cat verb " takes one string argument"))
+    (let ((str (get args 0)))
+      (base64-encode str)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+base64-decode
+(define base64-decode-quadruplet
+  (lambda (e1 e2 e3 e4)
+    (let ((c3 (if (= -1 e4) nil
+                  (+ e4 (* (% e3 4) 64))))
+          (c2 (if (= -1 e3) nil
+                  (+ (/ e3 4) (* (% e2 16) 16))))
+          (c1 (if (= -1 e2) nil
+                  (+ (/ e2 16) (* e1 4)))))
+      (list c1 c2 c3))))
+
+(define base64-delookup
+  (lambda (char)
+    (let ((o (ord char))
+          (oA (ord "A"))
+          (oZ (ord "Z"))
+          (oa (ord "a"))
+          (oz (ord "z"))
+          (o0 (ord "0"))
+          (o9 (ord "9")))
+      (cond
+       ((= char "=") -1)
+       ((= char "+") 62)
+       ((= char "/") 63)
+       ((and (>= o oA) (<= o oZ)) (- o oA))
+       ((and (>= o oa) (<= o oz)) (+ 26 (- o oa)))
+       ((and (>= o o0) (<= o o9)) (+ 52 (- o o0)))
+       ((err E_ARGS (cat "invalid base64 character '" char "' (ascii " o ")")))))))
+
+(define my-chr
+  (lambda (num-or-nil)
+    (if (nil? num-or-nil) "" (chr num-or-nil))))
+
+(define base64-decode
+  (lambda (str)
+    (let ((size (len str))
+          (num-blocks (/ size 4))
+          (blocks (range 0 (- num-blocks 1))))
+      (if (= 0 size) ""
+          (if (not (= 0 (% size 4)))
+              (err E_ARGS "cannot decode base64 string whose length isn't a multiple of 4")
+              (call cat (map (lambda (block)
+                               (let ((idx (* block 4))
+                                     (e1 (base64-delookup (substr str idx idx)))
+                                     (e2 (base64-delookup (substr str (+ idx 1) (+ idx 1))))
+                                     (e3 (base64-delookup (substr str (+ idx 2) (+ idx 2))))
+                                     (e4 (base64-delookup (substr str (+ idx 3) (+ idx 3)))))
+                                 (call cat (map my-chr (base64-decode-quadruplet e1 e2 e3 e4)))))
+                             blocks)))))))
+
+(if (not (= 1 (len args)))
+    (err E_ARGS (cat verb " takes one string argument"))
+    (let ((str (get args 0)))
+      (base64-decode str)))
+.
+7
+0
+oThis pNone oThis
+5
+.
+escape-html
+(let ((html (get args 0))
+      (escape-quotes (get args 1 0)))
+  ;; TODO: implement quote escaping
+  (gsub (gsub (gsub html "&" "&amp;") "<" "&lt;") ">" "&gt;"))
+.
+7
+0
+oThis pNone oThis
+5
+.
+html-fragment-for-data
+;; ::
+;;    (:html-fragment-for-data data:Any
+;;                             obj-hyperlink-schema:Callable = default-hyperlink-schema)
+;;
+;; Convert `data` into html fragment. Use argument
+;; `obj-hyperlink-schema` to convert objects into hyperlinks to their
+;; own pages.
+
+
+(define default-hyperlink-schema
+  (lambda (o) (cat "/obj/" (strsub ($ o) "#" ""))))
+
+(define html-fragment-for-data
+  (lambda (data ohs)
+    (cond
+     ((istype data "obj")
+      (cat "<a href=\"" (ohs data) "\">" ($o data) "</a>"))
+     ((istype data "table")
+      (cat "(table "
+           ($strutils:join
+            (map (lambda (pair)
+                   (cat "("
+                        (html-fragment-for-data (get pair 0) ohs)
+                        " "
+                        (html-fragment-for-data (get pair 1) ohs)
+                        ")"))
+                 (tpairs data)) " ")
+           ")"))
+     ((istype data "list")
+      (cat "("
+           ($strutils:join
+            (map (lambda (d) (html-fragment-for-data d ohs)) data) " ")
+           ")"))
+     
+     ((istype data "str")
+      (cat "\"" data "\""))
+     (($ data)))))
+
+(if (or (< (len args) 1) (> (len args) 2))
+    (error E_ARGS (cat self ":" verb " takes 1 or 2 arguments"))
+    (let ((data (get args 0))
+          (object-hyperlink-schema (get args 1 default-hyperlink-schema)))
+      ($webutils:escape-html (call html-fragment-for-data (list data object-hyperlink-schema)))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+parse-cookies
+;;; (self:parse-cookies cookie-str:Str):Table
+;;;
+;;; If any of the cookies are malformed, E_PARSE is raised.
+;;;
+;;; The return value is a table that maps cookie names to values.
+(let ((cookie-str (get args 0)))
+  (if (= 0 (len cookie-str))
+      (table)
+      (let ((cookies (split cookie-str "; "))
+            (cookie-parts (map (lambda (cook)
+                                 (let ((cook-parts (split cook "=")))
+                                   (if (not (= 2 (len cook-parts)))
+                                       (err E_PARSE (cat "invalid cookie: " cook))
+                                       cook-parts)))
+                               cookies)))
+        (call table cookie-parts))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+parse-query
+;;; This function takes any URL fragment and extracts the URL-encoded
+;;; query data.
+
+;;; For example:
+;;;   "/foo/baz/?a=b&c=d" => (table ("a" "b") ("c" "d"))
+
+(call-cc
+ ;; Early return idiom: calling `return` with parameter X inside the
+ ;; following lambda will cause the entire call-cc block to return
+ ;; with X
+ (lambda (return)
+   (let ((url (get args 0))
+         ;; Now, extract everything after the first ?.
+         ;; Note: we still expect any stray ?s to be URL-encoded, so the
+         ;; assumption that the first literal ? in the string is the
+         ;; start of the query is valid.
+         (q-index (index url "?"))
+
+         (_ (player:tell q-index))
+
+         ;; Check if the query string is empty, if so then execute an
+         ;; early return. The name `GUARD-CLAUSE` is purely for clarity.
+         (GUARD-CLAUSE (if (or (= q-index (- 1 (len url))) (= q-index -1))
+                           (call return (list (table)))
+                           nil))
+
+         (q-str   (substr url (+ 1 q-index) -1))
+         (q-parts (split q-str "&"))
+         (q-parts-split (map (lambda (part)
+                               (let ((part-split (split part "=")))
+                                 (if (not (= 2 (len part-split)))
+                                     (list nil nil)
+                                     (map (lambda (str) ($webutils:url-decode str))
+                                          part-split))))
+                             q-parts)))
+     (tdelete (call table q-parts-split) nil))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+url-decode
+(define hex-char-to-int
+  (lambda (hc)
+    (let ((o (ord hc))
+          (oA (ord "A"))
+          (o0 (ord "0")))
+      (cond
+       ((>= o oA) (+ 10 (- o oA)))
+       ((>= o o0) (- o o0))
+       ((err E_ARGS (cat "invalid hex character " hc)))))))
+
+(let ((url-fragment (get args 0)))
+  ($strutils:gsub url-fragment "%%([0-9a-fA-F]{2})"
+                  (lambda (start end groups)
+                    (let ((hex-str (get groups 0))
+                          (char0   (substr hex-str 0 0))
+                          (char1   (substr hex-str 1 1))
+                          (hc0     (hex-char-to-int char0))
+                          (hc1     (hex-char-to-int char1)))
+                      (chr (+ (* hc0 16) hc1))))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+eval-template
+
+.
+7
+0
+oThis pNone oThis
+5
+.
+url-encode
+(define hex-char
+  (lambda (n)
+    (substr "0123456789ABCDEF" n n)))
+
+(define encode-char
+  (lambda (c)
+    (let ((o (ord c))
+          (c1 (/ o 16))
+          (c2 (% o 16))
+          (hc1 (hex-char c1))
+          (hc2 (hex-char c2)))
+
+    (cat "%" hc1 hc2))))
+
+(let ((str (get args 0)))
+  ($strutils:gsub str "([^A-Za-z0-9])"
+                  (lambda (start end groups)
+                    (encode-char (get groups 0)))))
+.
+7
+0
+oThis pNone oThis
+5
+.

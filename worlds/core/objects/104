@@ -1,0 +1,116 @@
+104
+0
+1
+105
+10
+level
+(0)
+7
+0
+0
+5
+.
+name
+("Generic URL Router")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+fertile
+(1)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+location
+(#7)
+7
+0
+0
+5
+.
+aliases
+(("Generic Garbage Object" "the trapdoor" "Generic URL Router"))
+7
+0
+0
+5
+.
+description
+("Generic URL Router")
+7
+0
+0
+5
+.
+four-oh-four
+(#46)
+7
+0
+0
+5
+.
+3
+route
+;; override this method
+(list self.four-oh-four (get args 0) '())
+.
+7
+0
+oThis pNone oThis
+5
+.
+add-route
+(let ((path (get args 0))
+      (dest (get args 1))
+      (routes self.routes))
+
+  (cond
+   ;; routes must point to a valid object
+   ((not (valid dest))
+    (err E_ARGS (cat dest " is not a valid object")))
+
+   ;; the route cannot already exist
+   ((not (nil? ($listutils:assoc routes path)))
+    (err E_ARGS (cat "route " path " already exists")))
+
+   ;; all checks passed
+   ((setprop self "routes"
+               (push self.routes (list path dest))))))
+.
+7
+0
+oThis pNone oThis
+5
+.
+rm-route
+
+.
+7
+0
+oThis pNone oThis
+5
+.

@@ -1,0 +1,96 @@
+121
+0
+107
+123
+10
+name
+("Generic Static Resource")
+7
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+fertile
+(1)
+7
+0
+0
+5
+.
+aliases
+(("i" "Generic Web Resource" "Generic Static Resource"))
+7
+0
+0
+5
+.
+description
+("Generic Static Resource")
+7
+0
+0
+5
+.
+location
+(#7)
+121
+0
+0
+5
+.
+value
+(nil)
+7
+0
+0
+5
+.
+data
+(nil)
+7
+0
+0
+5
+.
+mtime
+(nil)
+7
+0
+0
+5
+.
+asset-path
+(nil)
+7
+0
+0
+5
+.
+2
+fetch
+(settaskperms caller)
+(let ((contents (file-contents self.asset-path)))
+  (setprop self "data" contents))
+.
+7
+0
+oThis pNone oThis
+5
+.
+render
+(list 200
+      (table ("Content-Type" ($webutils:guess-mime self.asset-path)))
+      self.data)
+.
+7
+0
+oThis pNone oThis
+5
+.

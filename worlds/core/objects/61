@@ -1,0 +1,104 @@
+61
+0
+48
+
+12
+name
+("Generic Portal")
+7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+location
+(#7)
+7
+0
+0
+5
+.
+dir
+("west")
+7
+0
+0
+5
+.
+source
+(#55)
+7
+0
+0
+5
+.
+destination
+(#3)
+7
+0
+0
+5
+.
+level
+(0)
+61
+0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+fertile
+(0)
+7
+0
+0
+5
+.
+aliases
+(("Generic Portal"))
+7
+0
+0
+5
+.
+description
+("Generic Portal")
+7
+0
+0
+5
+.
+1
+enter
+(let ((dest self.destination))
+  (if (= dest $nowhere)
+      (player:tell "This portal leads to nowhere!")
+      (do
+        (player:tell self.entermsg)
+        (move player dest)
+        (dest:look))))
+.
+7
+0
+oThis pNone oNone
+5
+.

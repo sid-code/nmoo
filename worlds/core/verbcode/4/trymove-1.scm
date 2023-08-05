@@ -1,0 +1,6 @@
+(let ((dir (get args 0))
+      (exits (self:get-exits-by-dir dir)))
+  (if (= 0 (len exits))
+      (player:tell "You can't go that way.")
+      (let ((exit (get exits 0)))
+        (exit:trymove player))))

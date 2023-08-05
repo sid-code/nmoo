@@ -1,0 +1,65 @@
+29
+1
+6
+30 31 35 36 37 38 41 42 43 44
+7
+level
+(3)
+29
+0
+0
+5
+.
+owner
+(#1)
+29
+0
+0
+5
+.
+pubread
+(1)
+29
+0
+0
+5
+.
+pubwrite
+(0)
+29
+0
+0
+5
+.
+fertile
+(1)
+29
+0
+0
+5
+.
+name
+("Generic Guest")
+29
+0
+0
+5
+.
+available
+(0)
+29
+0
+0
+5
+.
+1
+disconnect
+(do
+  (setprop self "available" 1)
+  (echo ($ self) " disconnected."))
+.
+7
+0
+oThis pNone oThis
+5
+.
