@@ -348,11 +348,12 @@ proc serve {.async.} =
   server = newAsyncSocket()
   server.setSockOpt(OptReuseAddr, true)
 
-  defBuiltin "clients":
-    if not isWizard(task.owner):
-      E_PERM.md("only wizards can use the " & bname & " builtin").pack
-    else:
-      clients.mapIt(@[it.player.md, it.address.md].md).md.pack
+  when defined(includeWizardUtils):
+    defBuiltin "clients":
+      if not isWizard(task.owner):
+        E_PERM.md("only wizards can use the " & bname & " builtin").pack
+      else:
+        clients.mapIt(@[it.player.md, it.address.md].md).md.pack
 
   server.bindAddr(port, host)
   server.listen()
