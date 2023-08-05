@@ -2647,9 +2647,9 @@ defBuiltin "pass":
       return nilD.pack
     let verbName = verbd.strVal
 
-    let verb = parent.getVerb(verbName)
+    let (obj, verb) = parent.getVerbAndObj(verbName)
 
-    if isNil(verb):
+    if isNil(obj):
       runtimeError(E_VERBNF, "Pass failed, verb is not inherited.")
 
     var res: Option[TaskID]
@@ -2658,7 +2658,7 @@ defBuiltin "pass":
       self,
       verb,
       player, caller,
-      args, symtable = symtable, holder = parent,
+      args, symtable = symtable, holder = obj,
       callback = some(tid)
     )
 
