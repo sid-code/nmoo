@@ -14,7 +14,7 @@ import persist
 import rdstdin
 
 let
-  world = loadWorld("min")
+  world = loadWorld("core")
   player = world.getObjects()[7]
 
 try:

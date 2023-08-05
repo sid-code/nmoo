@@ -394,7 +394,7 @@ proc handler() {.noconv.} =
 proc initWorld =
   var worldName: string
   if paramCount() < 1:
-    worldName = "min"
+    worldName = "core"
   else:
     worldName = paramStr(1)
   info "Loading world \"$#\"." % worldName
