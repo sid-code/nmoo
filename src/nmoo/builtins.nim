@@ -565,9 +565,9 @@ template getPropOn(objd, propd: MData, die = true, useDefault = false,
 
   let
     propName = extractString(propd)
-    (objOn, propObj) = obj.getPropAndObj(propName, all)
+    objPropO = obj.getPropAndObj(propName, all)
 
-  if isNil(propObj):
+  if objPropO.isNone:
     if useDefault:
       res = (nil, newProperty("default", default, nil))
     else:
@@ -576,6 +576,7 @@ template getPropOn(objd, propd: MData, die = true, useDefault = false,
       else:
         return nilD.pack
   else:
+    let (objOn, propObj) = objPropO.unsafeGet
     if not all and not inherited and obj.propIsInherited(propObj):
       runtimeError(E_PROPNF, "property $1 not found on $2" % [propName, $obj.toObjStr()])
 

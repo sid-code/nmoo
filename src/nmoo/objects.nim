@@ -8,6 +8,7 @@ import tables
 import logging
 import times
 import options
+import std/sugar
 # NOTE: verbs is imported later on!
 
 proc blankObject*: MObject
@@ -17,7 +18,7 @@ proc getAliases*(obj: MObject): seq[string]
 proc getLocation*(obj: MObject): MObject not nil
 proc getContents*(obj: MObject): seq[MObject]
 proc getPropVal*(obj: MObject, name: string, all = true): MData
-proc getPropAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, p: MProperty]
+proc getPropAndObj*(obj: MObject, name: string, all = true): Option[tuple[o: MObject, p: MProperty]]
 proc setProp*(obj: MObject, name: string, newVal: MData): tuple[p: MProperty, e: MData]
 proc delPropRec*(obj: MObject, prop: MProperty): seq[tuple[o: MObject, p: MProperty]]
 proc propIsInherited*(obj: MObject, name: string): bool
@@ -166,7 +167,7 @@ proc toObjStr*(objd: MData, world: World): string =
 #import verbs
 
 proc hasPropCalled(obj: MObject, name: string): bool =
-  obj.getPropAndObj(name) != (nil, nil)
+  obj.getPropAndObj(name).isSome
 
 # The following two procs assume that `obj` has a property called `name` and as
 # such does not bother to check.
@@ -177,20 +178,20 @@ proc propIsInherited*(obj: MObject, name: string): bool =
 proc propIsInherited*(obj: MObject, prop: MProperty): bool =
   propIsInherited(obj, prop.name)
 
-proc getPropAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, p: MProperty] =
+proc getPropAndObj*(obj: MObject, name: string, all = true): Option[tuple[o: MObject, p: MProperty]] =
   for p in obj.props:
     if p.name == name:
-      return (obj, p)
+      return some((obj, p))
 
   if all:
     let parent = obj.parent
     if not isNil(parent) and parent != obj:
       return parent.getPropAndObj(name, all)
 
-  return (nil, nil)
+  return none((MObject, MProperty))
 
 proc getProp*(obj: MObject, name: string, all = true): MProperty =
-  obj.getPropAndObj(name, all).p
+  obj.getPropAndObj(name, all).map(r => r.p).get(nil)
 
 proc setPropChildCopy*(obj: MObject, name: string, newVal: bool): bool =
   var prop = obj.getProp(name)
