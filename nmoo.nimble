@@ -19,6 +19,8 @@ requires "asynctools"
 const coverage = getEnv("NMOO_COVERAGE") == "1"
 const debugBuild = getEnv("NMOO_DEBUG") == "1"
 const releaseBuild = getEnv("NMOO_RELEASE") == "1"
+const estpProfiler = getEnv("NMOO_PROFILE") == "default"
+const hottieProfiler = getEnv("NMOO_PROFILE") == "hottie"
 const useGcAssert = getEnv("NMOO_GC_ASSERT") == "1"
 
 proc getBuildFlags(): string =
@@ -27,7 +29,13 @@ proc getBuildFlags(): string =
     result &= " --debugger:native"
 
   if releaseBuild:
-    result &= " -d:release"
+    result &= " -d:release -d:danger"
+
+  if estpProfiler:
+    result &= " -d:profiler --profiler:on --stacktrace:on"
+
+  if hottieProfiler:
+    result &= " --debugger:native -d:release -d:danger --passL:\"-no-pie\""
 
   if useGcAssert:
     result &= " -d:useGcAssert"
