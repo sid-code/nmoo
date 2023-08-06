@@ -414,7 +414,7 @@ proc initWorld =
     worldName = paramStr(1)
   info "Loading world \"$#\"." % worldName
 
-  if not existsDir("worlds" / worldName):
+  if not dirExists("worlds" / worldName):
     fatal "World \"$#\" doesn't exist." % worldName;
     quit(1)
 
