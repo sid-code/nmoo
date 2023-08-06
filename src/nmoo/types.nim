@@ -400,7 +400,7 @@ proc byID*(world: World, id: ObjID): Option[MObject] =
   if idint >= world.objects.len:
     return none[MObject]()
   else:
-    return some(world.objects[id.int])
+    return option(world.objects[id.int])
 
 proc newSymbolTable*: SymbolTable = initTable[string, MData]()
 proc toData*(st: SymbolTable): MData =
