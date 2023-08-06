@@ -2864,11 +2864,11 @@ defBuiltin "queued-tasks":
     runtimeError(E_ARGS, "queued-tasks takes no argumnts")
 
   var res: seq[MData] = @[]
-  for otask in world.tasks:
+  for otid, otask in world.tasks.pairs:
     if isWizardT() or task.owner == otask.owner:
       if otask.status notin {tsSuspended, tsAwaitingInput}:
         continue
-      let taskID = otask.id.int.md
+      let taskID = otid.int.md
       let startTime = otask.suspendedUntil.toUnix.int.md
       let programmer = otask.owner.md
       let verbLoc = otask.globals["holder"]

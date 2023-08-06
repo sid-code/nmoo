@@ -560,8 +560,7 @@ proc run(world: World, task: Task, limit = -1): TaskResult =
 
         task.waitingFor.map(
           proc (id: TaskID) =
-            # TODO: FIX THIS
-            system.delete(task.world.tasks, int32(id)))
+            task.world.tasks.del(id))
 
       of tsDone:
         let res = task.top()
@@ -663,5 +662,5 @@ proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
     else:
       newTask.registerCallback(cbTask.unsafeGet))
 
-  world.tasks.add(newTask)
+  world.tasks[newTask.id] = newTask
   return newTask.id

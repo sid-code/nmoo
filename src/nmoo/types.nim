@@ -22,7 +22,7 @@ type
     persistent*: bool
     objects*: seq[MObject]
     verbObj*: MObject # object that holds global verbs
-    tasks*: seq[Task]
+    tasks*: Table[TaskID, Task]
     taskIDCounter*: int
     taskFinishedCallback*: proc(world: World, tid: TaskID)
 
@@ -582,7 +582,7 @@ proc copy*(verb: MVerb): MVerb =
 proc newWorld*: World =
   World( objects: @[],
          verbObj: nil,
-         tasks: @[],
+         tasks: initTable[TaskID, Task](),
          taskIDCounter: 0,
          taskFinishedCallback: proc(world: World, tid: TaskID) = discard)
 
@@ -596,8 +596,7 @@ proc `$`*(t: TaskID): string {.borrow.}
 proc `==`*(t1, t2: TaskID): bool {.borrow.}
 
 proc getTaskByID*(world: World, id: TaskID): Option[Task] =
-  for task in world.tasks:
-    if task.id == id:
-      return some(task)
+  if id in world.tasks:
+    return some(world.tasks[id])
 
   return none(Task)

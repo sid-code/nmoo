@@ -294,7 +294,7 @@ proc readTask(world: World, stream: FileStream) =
   task.caller = caller
   task.owner = owner
   task.world = world
-  world.tasks.add(task)
+  world.tasks[task.id] = task
 
 proc readObjectCount(world: World, stream: FileStream) =
   let ctr = readNum(stream)
@@ -427,9 +427,9 @@ proc persist*(world: World) =
   createDir(taskDir)
 
   var taskCount = 0
-  for task in world.tasks:
+  for id, task in world.tasks:
     taskCount += 1
-    world.persist(task.id)
+    world.persist(id)
 
   info "Wrote " & $taskCount & " tasks to disk."
 

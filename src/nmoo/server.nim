@@ -461,10 +461,18 @@ proc runInitVerb(world: World): bool =
       world.verbObj.send("The task for #0:server-started ran for too long!")
       return false
 
+proc pruneFinishedTasks(world: World) =
+  var prune: seq[TaskID] = @[]
+  for tid, task in world.tasks.pairs:
+    if task.status == tsDone:
+      prune.add(tid)
+  for tid in prune:
+      world.tasks.del(tid)
+
 proc tick(world: World) =
-  world.tasks.keepItIf(it.status != tsDone)
-  for idx in world.tasks.low..world.tasks.high:
-    let task = world.tasks[idx]
+  let tids = toSeq(world.tasks.keys)
+  for tid in tids:
+    let task = world.tasks[tid]
     if task.status == tsDone:
       if defined(showTicks):
         debug "Task " & task.name & " finished, used " & $task.tickCount & " ticks."
@@ -476,7 +484,7 @@ proc tick(world: World) =
 
     if not task.isRunning(): continue
     try:
-      let tr = world.run(task.id, task.tickQuota)
+      let tr = world.run(tid, task.tickQuota)
       case tr.typ:
         of trFinish, trSuspend:
           discard
@@ -488,10 +496,9 @@ proc tick(world: World) =
       let exception = getCurrentException()
       warn exception.repr
       task.doError(E_INTERNAL.md(exception.msg))
-
+  world.pruneFinishedTasks()
 
 proc startServer {.async.} =
-
   if runInitVerb(world):
     (host, port) = getHostAndPort()
 
