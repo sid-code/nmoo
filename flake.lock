@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "nim2-nixpkgs": {
+      "locked": {
+        "lastModified": 1691061499,
+        "narHash": "sha256-T7D692SP0+CYMEbx6vMhhGVYVr30zoNr+y+khzIruy0=",
+        "owner": "ehmry",
+        "repo": "nixpkgs",
+        "rev": "7d5d3c60eb7bd368c0b28f8b193366758a9b19c6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ehmry",
+        "ref": "nim",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1690893464,
@@ -18,6 +34,7 @@
     },
     "root": {
       "inputs": {
+        "nim2-nixpkgs": "nim2-nixpkgs",
         "nixpkgs": "nixpkgs"
       }
     }
