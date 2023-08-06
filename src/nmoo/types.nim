@@ -98,7 +98,7 @@ type
       of dList: listVal*: seq[MData]
       of dTable: tableVal*: Table[MData, MData]
       of dObj: objVal*: ObjID
-      of dNil: nilVal*: int # dummy
+      of dNil: nilVal*: int    # dummy
 
   ## The type of a builtin return package. See docs of `Package` type
   ## for more information.
@@ -186,8 +186,8 @@ type
   InstructionType* = enum
     inPUSH, inDUP, inCALL, inACALL, inLABEL, inJ0, inJT, inJNT, inJMP, inPOP,
     inRET, inRETJ
-    inLPUSH, # strictly for labels - gets replaced by the renderer
-    inGTID, # Push the task's ID onto the stack
+    inLPUSH,          # strictly for labels - gets replaced by the renderer
+    inGTID,           # Push the task's ID onto the stack
     inMCONT, inCCONT, # first-class continuations
     inSTO, inGET, inGGET, inGSTO, inCLIST,
     inPOPL, inPUSHL, inLEN, inSWAP, inSWAP3, inREV,
@@ -221,15 +221,16 @@ type
   SyntaxTransformer* = ref object
     code*: MData
 
-  SpecialProc* = proc(compiler: MCompiler, args: seq[MData], pos: CodePosition): MData
+  SpecialProc* = proc(compiler: MCompiler, args: seq[MData],
+      pos: CodePosition): MData
 
   MCompileError* = object of Exception
 
   VSymTable* = Table[int, MData]
   Frame* = ref object
-    symtable*:   VSymTable
+    symtable*: VSymTable
     calledFrom*: int
-    tries*:      seq[int]
+    tries*: seq[int]
 
   TaskType* = enum
     ttFunction, ttInput
@@ -240,10 +241,10 @@ type
 
   # First class continuations
   Continuation* = object
-    pc*:      int
-    stack*:   seq[MData]
+    pc*: int
+    stack*: seq[MData]
     globals*: SymbolTable
-    frames*:  seq[Frame]
+    frames*: seq[Frame]
 
   TaskID* = distinct int
   Task* = ref object
@@ -251,23 +252,23 @@ type
     name*: string
     startTime*: Time
 
-    stack*:     seq[MData]
+    stack*: seq[MData]
     when defined(depthStack):
       depthStack*: seq[int]
 
-    symtables*: seq[VSymTable]     ## All of the symbol tables
-    globals*:   SymbolTable        ## Same type as used by parser
-    code*:      seq[Instruction]
-    pc*:        int                ## Program counter
+    symtables*: seq[VSymTable]        ## All of the symbol tables
+    globals*: SymbolTable             ## Same type as used by parser
+    code*: seq[Instruction]
+    pc*: int                          ## Program counter
 
-    frames*:    seq[Frame]
-    continuations*: seq[Continuation]  ## For continuations
+    frames*: seq[Frame]
+    continuations*: seq[Continuation] ## For continuations
 
-    world*:     World
-    self*:      MObject
-    player*:    MObject
-    caller*:    MObject
-    owner*:     MObject
+    world*: World
+    self*: MObject
+    player*: MObject
+    caller*: MObject
+    owner*: MObject
 
     status*: TaskStatus
     suspendedUntil*: Time
@@ -321,8 +322,10 @@ proc md*(x: int): MData {.procvar.} = MData(dtype: dInt, intVal: x)
 proc md*(x: float): MData {.procvar.} = MData(dtype: dFloat, floatVal: x)
 proc md*(x: string): MData {.procvar.} = MData(dtype: dStr, strVal: x)
 proc mds*(x: string): MData {.procvar.} = MData(dtype: dSym, symVal: x)
-proc md*(x: MError): MData {.procvar.} = MData(dtype: dErr, errVal: x, errMsg: "no message set", trace: @[])
-proc md*(x: MError, s: string): MData {.procvar.} = MData(dtype: dErr, errVal: x, errMsg: s, trace: @[])
+proc md*(x: MError): MData {.procvar.} = MData(dtype: dErr, errVal: x,
+    errMsg: "no message set", trace: @[])
+proc md*(x: MError, s: string): MData {.procvar.} = MData(dtype: dErr,
+    errVal: x, errMsg: s, trace: @[])
 proc md*(x: seq[MData]): MData {.procvar.} = MData(dtype: dList, listVal: x)
 proc md*(x: ObjID): MData {.procvar.} = MData(dtype: dObj, objVal: x)
 proc md*(x: MObject): MData {.procvar.} = x.id.md
@@ -335,7 +338,7 @@ proc pack*(x: MData): Package = Package(ptype: ptData, val: x)
 proc pack*(phase: int): Package = Package(ptype: ptCall, phase: phase)
 proc inputPack*(phase: int): Package = Package(ptype: ptInput, phase: phase)
 
-proc isType*(datum: MData, dtype: MDataType): bool {.inline.}=
+proc isType*(datum: MData, dtype: MDataType): bool {.inline.} =
   return datum.dtype == dtype
 
 
@@ -353,7 +356,8 @@ proc `$`*(x: MData): string {.inline, procvar.} =
     of dFloat: $x.floatVal
     of dStr: x.strVal.escape
     of dSym: "\'" & x.symVal
-    of dErr: $x.errVal & ": " & x.errMsg & "\n" & x.trace.mapIt($it.pos & "  " & it.name).join("\n")
+    of dErr: $x.errVal & ": " & x.errMsg & "\n" & x.trace.mapIt($it.pos & "  " &
+        it.name).join("\n")
     of dList:
       "(" & x.listVal.mapIt($it).join(" ") & ")"
     of dTable: `$M`(x.tableVal)
@@ -580,7 +584,7 @@ proc copy*(verb: MVerb): MVerb =
   )
 
 proc newWorld*: World =
-  World( objects: @[],
+  World(objects: @[],
          verbObj: nil,
          tasks: initTable[TaskID, Task](),
          taskIDCounter: 0,
