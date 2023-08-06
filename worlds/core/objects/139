@@ -1,8 +1,57 @@
 139
 0
-95
+48
 
+12
+name
+("porcelain toilet")
 7
+0
+0
+5
+.
+pubwrite
+(0)
+7
+0
+0
+5
+.
+owner
+(#7)
+7
+0
+0
+5
+.
+location
+(#52)
+7
+0
+0
+5
+.
+dir
+("west")
+7
+0
+0
+5
+.
+source
+(#136)
+7
+0
+0
+5
+.
+destination
+(#136)
+7
+0
+0
+5
+.
 level
 (0)
 139
@@ -10,21 +59,7 @@ level
 0
 5
 .
-name
-("Garbage Object #139")
-7
-0
-0
-5
-.
 pubread
-(0)
-7
-0
-0
-5
-.
-pubwrite
 (0)
 7
 0
@@ -38,18 +73,30 @@ fertile
 0
 5
 .
-owner
-(#91)
+aliases
+(("porcelain" "throne" "toilet"))
 7
 0
 0
 5
 .
-location
-(#90)
-139
+description
+("A magnificent thronelike toilet made out of porcelain. Judging by the wear patterns, you can tell the creator spends a lot of time here.")
+7
 0
 0
 5
 .
+1
+flush
+(do
+    (player:tell "You pull the chain.")
+    (suspend 2)
+    (player:tell "The toilet flushes."))
+;; TODO: tell others in the room.
+.
+7
 0
+oThis pNone oNone
+5
+.
