@@ -520,7 +520,7 @@ proc mainLoop =
       unqueueAll()
 
   except:
-    fatal getCurrentExceptionMsg()
+    fatal getCurrentExceptionMsg(), "\n", getCurrentException().getStackTrace()
   finally:
     cleanUp()
 
