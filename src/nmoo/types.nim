@@ -100,9 +100,18 @@ type
       of dObj: objVal*: ObjID
       of dNil: nilVal*: int # dummy
 
+  ## The type of a builtin return package. See docs of `Package` type
+  ## for more information.
   PackageType* = enum
-    ptData, ptCall, ptInput
+    ## The builtin has completed and is returning data.
+    ptData,
+    ## The builtin is calling something else and waiting for a result.
+    ptCall,
+    ## The builtin is waiting for user input.
+    ptInput
 
+  ## The actual return value of a builtin proc, which may represent a
+  ## partial result of the builtin.
   Package* = object
     case ptype*: PackageType
       of ptData:
