@@ -16,5 +16,5 @@ template defBuiltin*(name: string, body: untyped) {.dirty.} =
           self, player, caller, owner: MObject,
           symtable: SymbolTable, pos: CodePosition, phase = 0,
           tid: TaskID): Package =
-      let task {.used.} = world.getTaskByID(tid)
+      let task {.used.} = world.getTaskByID(tid).get
       body

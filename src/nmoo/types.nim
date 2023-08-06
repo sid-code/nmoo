@@ -586,9 +586,9 @@ proc getVerbObj*(world: World): MObject =
 proc `$`*(t: TaskID): string {.borrow.}
 proc `==`*(t1, t2: TaskID): bool {.borrow.}
 
-proc getTaskByID*(world: World, id: TaskID): Task =
+proc getTaskByID*(world: World, id: TaskID): Option[Task] =
   for task in world.tasks:
     if task.id == id:
-      return task
+      return some(task)
 
-  return nil
+  return none(Task)

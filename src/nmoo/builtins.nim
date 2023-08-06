@@ -115,6 +115,13 @@ template checkForError(value: MData) =
   if valueV.isType(dErr) and valueV.errVal != E_NONE:
     return valueV.pack
 
+# If option is empty, do something with the control flow (like return)
+template orElse[T](opt: Option[T], body: untyped): T =
+  if opt.isNone:
+    body
+  else:
+    opt.unsafeGet
+
 template runtimeError(error: MError, message: string) =
   return error.md(message).pack
 
@@ -2806,10 +2813,9 @@ defBuiltin "resume":
     runtimeError(E_ARGS, "resume takes 1 or 2 arguments")
   let taskID = TaskID(extractInt(args[0]))
   let value = if alen == 2: args[1] else: nilD
-  let otask = world.getTaskByID(taskID)
-
-  if isNil(otask):
+  let otask = world.getTaskByID(taskID).orElse:
     runtimeError(E_ARGS, "attempt to resume nonexistent task")
+
   if otask.status notin {tsSuspended, tsAwaitingInput}:
     runtimeError(E_ARGS, "attempt to resume non-suspended task")
   if not isWizardT() and task.owner != otask.owner:
@@ -2885,10 +2891,9 @@ defBuiltin "kill-task":
   if args.len != 1:
     runtimeError(E_ARGS, "kill-task takes 1 argument")
   let taskID = TaskID(extractInt(args[0]))
-  let otask = world.getTaskByID(taskID)
-
-  if isNil(otask):
+  let otask = world.getTaskByID(taskID).orElse:
     runtimeError(E_ARGS, "attempt to kill nonexistent task")
+
   if otask.status notin {tsSuspended, tsAwaitingInput}:
     runtimeError(E_ARGS, "attempt to resume non-suspended task")
   if not isWizardT() and task.owner != otask.owner:

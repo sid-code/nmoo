@@ -132,7 +132,7 @@ proc dumpObject*(obj: MObject): string =
 proc dumpTask(world: World, tid: TaskID): string =
   let resultSS = newStringStream()
 
-  let task = world.getTaskByID(tid)
+  let task = world.getTaskByID(tid).get
   let self = task.self
   let player = task.player
   let caller = task.caller

@@ -56,8 +56,7 @@ proc callDisconnect(player: MObject) =
   var dcTask: Option[TaskID]
   verbCall(dcTask, player, "disconnect", world.verbObj, world.verbObj, @[])
 
-  if dcTask.isSome:
-    discard world.run(world.getTaskByID(dcTask.unsafeGet))
+  dcTask.map(proc (t: TaskID) = discard world.run(t))
 
 proc close(client: Client) =
   client.sock.close()
@@ -91,7 +90,7 @@ proc clearInputTask(client: Client) =
 proc inputTaskRunning(client: Client): bool =
   let inputTask = client.currentInputTask
   return inputTask
-    .flatMap((tid: TaskID) => option(world.getTaskById(tid)))
+    .flatMap((tid: TaskID) => world.getTaskById(tid))
     .map(t => t.status notin {tsDone})
     .get(false)
 
@@ -139,8 +138,8 @@ proc unqueueIn(client: Client): bool =
     if tid.isNone:
       client.flushOut()
     else:
-      let task = world.getTaskByID(tid.unsafeGet)
-      if task.taskType == ttInput:
+      let taskO = world.getTaskByID(tid.unsafeGet)
+      if taskO.isSome and taskO.unsafeGet.taskType == ttInput:
         client.setInputTask(tid.unsafeGet)
 
   return true
@@ -168,15 +167,20 @@ proc supplyTaskWithInput(client: Client, input: string) =
   let tid = client.tasksWaitingForInput.pop()
   when defined(debug): debug "Supplied task ", tid, " with input ", input
   let task = world.getTaskById(tid)
-  if isNil(task):
+  if task.isNone:
     warn "Tried to supply nonexistent task ", tid, " with input"
   # FIXME: if input is empty, this might result in invalid state
-  task.resume(input.md)
+  task.unsafeGet.resume(input.md)
 
 # Called whenever a task finishes. This is used to determine when
 # to flush queues/etc
 proc taskFinished(world: World, tid: TaskID) =
-  let task = world.getTaskByID(tid)
+  let taskO = world.getTaskByID(tid)
+  if taskO.isNone:
+    warn "Tried to finish nonexistent task ", tid
+    return
+
+  let task = taskO.unsafeGet
   if task.status in {tsDone, tsSuspended}:
     flushOutAll()
 
@@ -195,8 +199,7 @@ proc taskFinished(world: World, tid: TaskID) =
       if task.callback.isSome:
         let cbTask = world.getTaskByID(task.callback.unsafeGet)
         callerClient.setInputTask(task.callback.unsafeGet)
-        if isNil(cbTask):
-          discard callerClient.unqueueIn()
+        discard cbTask.map(_ => callerClient.unqueueIn())
       else:
         let res = task.top()
         if res.isType(dErr):
@@ -217,7 +220,7 @@ proc determinePlayer(world: World, address: string): tuple[o: MObject, msg: stri
 
   if hcTask.isNone:
     return
-  let tr = world.run(world.getTaskByID(hcTask.unsafeGet))
+  let tr = world.run(hcTask.unsafeGet)
   case tr.typ:
     of trFinish:
       if tr.res.isType(dObj):
@@ -317,7 +320,7 @@ proc processClient(client: Client, address: string) {.async.} =
         verbCall(greetTask, newPlayer, "greet", newPlayer, newPlayer, @[], taskType = ttInput)
         greetTask.map(
           proc (tid: TaskID) =
-            discard world.run(world.getTaskByID(tid)))
+            discard world.run(tid))
         client.flushOut()
 
 var server: asyncnet.AsyncSocket
@@ -443,7 +446,7 @@ proc runInitVerb(world: World): bool =
   if initTask.isNone:
     warn "Server doesn't specify #0:server-started"
     return true
-  let tr = world.run(world.getTaskByID(initTask.unsafeGet))
+  let tr = world.run(initTask.unsafeGet)
   case tr.typ:
     of trFinish:
       world.verbObj.send("The task for #0:server-started returned " & $tr.res)
@@ -473,7 +476,7 @@ proc tick(world: World) =
 
     if not task.isRunning(): continue
     try:
-      let tr = world.run(task, task.tickQuota)
+      let tr = world.run(task.id, task.tickQuota)
       case tr.typ:
         of trFinish, trSuspend:
           discard

@@ -408,7 +408,7 @@ proc handleLoginCommand*(player: MObject, command: string): MObject =
     player.send("Failed to run your login command; server is set up incorrectly.")
     return nil
 
-  let tr = world.run(world.getTaskByID(lcTask.unsafeGet))
+  let tr = world.run(lcTask.unsafeGet)
   case tr.typ:
     of trFinish:
       if tr.res.isType(dObj):

@@ -255,7 +255,7 @@ proc staticEval(compiler: MCompiler, code: MData, name = "compile-time task"):
     symtable = symtable,
     code = compiled)
 
-  return (E_NONE.md, world.run(world.getTaskByID(staticTask)))
+  return (E_NONE.md, world.run(staticTask))
 
 proc callTransformer(compiler: MCompiler, name: string, code: MData): MData =
   let transformer = compiler.syntaxTransformers[name]

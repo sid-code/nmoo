@@ -44,7 +44,7 @@ proc setStatus*(task: Task, newStatus: TaskStatus) =
   if newStatus != tsRunning:
     task.world.taskFinishedCallback(task.world, task.id)
 
-proc run*(world: World, task: Task, limit = -1): TaskResult
+proc run*(world: World, tid: TaskID, limit = -1): TaskResult
 
 import compile
 import builtins
@@ -155,7 +155,7 @@ var instImpls = initTable[InstructionType, InstructionProc]()
 template impl(itype: InstructionType, body: untyped) {.dirty.} =
   instImpls[itype] =
     proc(world: World, tid: TaskID, operand: MData) =
-      let task {.used.} = world.getTaskByID(tid)
+      let task {.used.} = world.getTaskByID(tid).get
       body
 
 proc top*(task: Task): MData =
@@ -493,8 +493,9 @@ proc finish*(task: Task) =
   var res = task.top()
 
   callback.map(proc (t: TaskID) =
-    let cbTask = task.world.getTaskByID(t)
-    if not isNil(cbTask):
+    let cbTaskO = task.world.getTaskByID(t)
+    if cbTaskO.isSome:
+      let cbTask = cbTaskO.get
       cbTask.tickCount += task.tickCount
       cbTask.waitingFor = none(TaskID)
       cbTask.resume(res)
@@ -540,7 +541,7 @@ proc step*(world: World, task: Task) =
     if task.tickCount >= task.tickQuota:
       task.doError(E_QUOTA.md("task has exceeded tick quota"))
 
-proc run*(world: World, task: Task, limit = -1): TaskResult =
+proc run(world: World, task: Task, limit = -1): TaskResult =
   if limit > -1:
     task.tickQuota = limit
 
@@ -549,11 +550,9 @@ proc run*(world: World, task: Task, limit = -1): TaskResult =
       of tsSuspended, tsAwaitingInput, tsReceivedInput:
         return TaskResult(typ: trSuspend)
       of tsAwaitingResult:
-        let otask = task.waitingFor.map(x => task.world.getTaskByID(x)).get(nil)
-
-        if isNil(otask):
+        if task.waitingFor.isNone:
           return TaskResult(typ: trSuspend)
-        var res = world.run(otask, limit=task.tickQuota)
+        var res = world.run(task.waitingFor.unsafeGet, limit=task.tickQuota)
         if res.typ in {trError, trTooLong, trSuspend}:
           if res.typ == trError:
             res.err.trace.add(task.currentTraceLine())
@@ -575,6 +574,10 @@ proc run*(world: World, task: Task, limit = -1): TaskResult =
         task.tickQuota -= 1
 
   return TaskResult(typ: trTooLong)
+
+proc run*(world: World, tid: TaskID, limit = -1): TaskResult =
+  world.getTaskByID(tid).map(t => world.run(t, limit)).get(
+    TaskResult(typ: trError, err: E_INTERNAL.md("task $# not found" % $tid)))
 
 proc addCoreGlobals*(st: SymbolTable): SymbolTable =
   result = st
@@ -655,10 +658,10 @@ proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
 
   callback.map(proc (cbtask: TaskID) =
     let cbTask = world.getTaskByID(cbtask)
-    if isNil(cbTask):
+    if cbTask.isNone:
       warn "Warning: callback for task '", newTask.name, "' doesn't exist."
     else:
-      newTask.registerCallback(cbTask))
+      newTask.registerCallback(cbTask.unsafeGet))
 
   world.tasks.add(newTask)
   return newTask.id
