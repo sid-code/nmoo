@@ -11,7 +11,7 @@ skipFiles     = @["sidechtest.nim"]
 
 # Dependencies
 
-requires "nim >= 0.20"
+requires "nim >= 1.16.4"
 requires "bcrypt"
 requires "nimboost"
 requires "asynctools"
@@ -24,6 +24,12 @@ const hottieProfiler = getEnv("NMOO_PROFILE") == "hottie"
 const useGcAssert = getEnv("NMOO_GC_ASSERT") == "1"
 
 proc getBuildFlags(): string =
+  result &= " --legacy:laxEffects"
+  result &= " --mm:orc --deepcopy:on"
+
+  # without this we get weird ORC segfaults
+  result &= " -d:useMalloc"
+
   if debugBuild:
     result &= " -d:debug"
     result &= " --debugger:native"
