@@ -1,3 +1,41 @@
 * nmoo emacs integration
 
 This directory is for emacs lisp code for interacting with nmoo.
+
+* Dumping ground
+this is the place to dump new code until it can be sorted
+
+#+begin_src elisp :results silent
+  (define-derived-mode nmoo-mode comint-mode "NMOO interaction"
+    "A major mode for talking to an NMOO instance.")
+
+  (defun nmoo-connect (host port)
+    (interactive "MEnter the host: \nNEnter the port: " )
+    (let ((buf (get-buffer-create (format "*nmoo@%s:%s*" host port))))
+      (with-current-buffer buf
+	(nmoo-mode)
+	(setq-local nmoo-address host)
+	(setq-local nmoo-port port)
+	(nmoo--init))
+      (pop-to-buffer buf)))
+
+  (defun nmoo--process-filter (proc string)
+    (when (buffer-live-p (process-buffer proc))
+      (with-current-buffer (process-buffer proc)
+	(let ((moving (= (point) (process-mark proc))))
+	  (save-excursion
+	    ;; Insert the text, advancing the process marker.
+	    (goto-char (process-mark proc))
+	    (insert (replace-regexp-in-string "" "" string))
+	    (set-marker (process-mark proc) (point)))
+	  (if moving (goto-char (process-mark proc)))))))
+
+  (defun nmoo--init ()
+    (let ((proc (make-network-process
+		 :name "nmoo"
+		 :host nmoo-address
+		 :service nmoo-port
+		 :buffer (current-buffer))))
+      (set-process-filter proc #'nmoo--process-filter)
+      (setq-local nmoo-process proc)))
+#+end_src
