@@ -231,8 +231,7 @@ proc setProp*(obj: MObject, name: string, newVal: MData):
       let defaultValue = BuiltinPropertyData[name]
       if not newVal.isType(defaultValue.dtype):
         let msg = "Cannot set $#.$# to $#, only to a value of type $#"
-        e.errVal = E_TYPE
-        e.errMsg =  msg % [$obj.md, name, $newVal, $defaultValue.dtype]
+        e = E_TYPE.md(msg % [$obj.md, name, $newVal, $defaultValue.dtype])
         p.val = defaultValue
       else:
         p.val = newVal
