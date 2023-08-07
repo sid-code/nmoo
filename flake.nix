@@ -25,7 +25,13 @@
   in {
     devShells = forAllSystems (system: pkgs: {
       default = pkgs.mkShell {
-        nativeBuildInputs = with pkgs; [nim nimlsp libxcrypt watchexec];
+        nativeBuildInputs = with pkgs; [
+          nim
+          nimble-unwrapped
+          nimlsp
+          libxcrypt
+          watchexec
+        ];
       };
     });
   };
