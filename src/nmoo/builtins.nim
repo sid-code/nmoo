@@ -98,6 +98,11 @@ template extractError(d: MData): tuple[e: MError, s: string] =
   checkType(dV, dErr)
   (dV.errVal, dV.errMsg)
 
+template extractObjectID(objd: MData): ObjID =
+  let objdV = objd
+  checkType(objdV, dObj)
+  objdV.objVal
+
 template extractObject(objd: MData): MObject =
   let objdV = objd
   checkType(objdV, dObj)
@@ -465,7 +470,7 @@ proc extractArgs(verb: MVerb): MData =
 
 type
   PropInfo = tuple[owner: MObject, perms: string, newName: string]
-  VerbInfo = tuple[owner: MObject, perms: string, newName: string]
+  VerbInfo = tuple[owner: ObjID, perms: string, newName: string]
   VerbArgs = tuple[doSpec: ObjSpec, prepSpec: PrepType, ioSpec: ObjSpec]
 
 template propInfoFromInput(info: seq[MData]): PropInfo =
@@ -494,8 +499,7 @@ template verbInfoFromInput(info: seq[MData]): VerbInfo =
   var res: VerbInfo
 
   let ownerd = info[0]
-  let ownero = extractObject(ownerd)
-  res.owner = ownero
+  res.owner = extractObjectID(ownerd)
 
   let perms = extractString(info[1])
   res.perms = perms
@@ -595,14 +599,15 @@ template getVerbOn(objd, verbdescd: MData, die = true,
   if verbdescd2.isType(dStr):
     let verbdesc = verbdescd2.strVal
 
-    let (objOn, verb) = obj.getVerbAndObj(verbdesc, all)
-    if isNil(verb):
+    let resO = obj.getVerbAndObj(verbdesc, all)
+
+    if isNone(resO):
       if die:
         runtimeError(E_VERBNF, "verb $1 not found on $2" % [verbdesc, obj.toObjStr()])
       else:
         return nilD.pack
 
-    res = (objOn, verb)
+    res = resO.unsafeGet
   elif verbdescd2.isType(dInt):
     let verbnum = verbdescd2.intVal
 
@@ -947,7 +952,7 @@ defBuiltin "addverb":
 
   var verb = newVerb(
     names = names,
-    owner = owner,
+    owner = owner.id,
   )
 
   checkForError(verb.setCode("", owner))
@@ -1021,7 +1026,7 @@ defBuiltin "setverbcode":
 
   let newCode = extractString(args[2])
 
-  let err = verb.setCode(newCode, verb.owner)
+  let err = verb.setCode(newCode, world.byId(verb.owner).get)
   checkForError(err)
   world.persist(obj)
   return nilD.pack
@@ -2655,9 +2660,7 @@ defBuiltin "pass":
       return nilD.pack
     let verbName = verbd.strVal
 
-    let (obj, verb) = parent.getVerbAndObj(verbName)
-
-    if isNil(obj):
+    let (obj, verb) = parent.getVerbAndObj(verbName).orElse:
       runtimeError(E_VERBNF, "Pass failed, verb is not inherited.")
 
     var res: Option[TaskID]

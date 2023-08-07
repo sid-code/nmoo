@@ -13,7 +13,7 @@ import types
 proc getVerb*(obj: MObject, name: string, all = true): MVerb
 proc getVerb*(obj: MObject, index: int): MVerb
 proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true): MData
-proc getVerbAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, v: MVerb]
+proc getVerbAndObj*(obj: MObject, name: string, all = true): Option[tuple[o: MObject, v: MVerb]]
 proc addVerb*(obj: MObject, verb: MVerb): MVerb
 proc delVerb*(obj: MObject, verb: MVerb): MVerb
 proc verbCallRaw*(res: var Option[TaskID],
@@ -177,16 +177,16 @@ proc getVerb*(obj: MObject, index: int): MVerb =
   else:
     nil
 
-proc getVerbAndObj*(obj: MObject, name: string, all = true): tuple[o: MObject, v: MVerb] =
+proc getVerbAndObj*(obj: MObject, name: string, all = true): Option[tuple[o: MObject, v: MVerb]] =
   for v in obj.matchingVerbs(name, false):
-    return (obj, v)
+    return some((obj, v))
 
   if all:
     let parent = obj.parent
     if not isNil(parent) and parent != obj:
       return parent.getVerbAndObj(name, all)
 
-  return (nil, nil)
+  return none((MObject, MVerb))
 
 proc addVerb*(obj: MObject, verb: MVerb): MVerb =
   obj.verbs.add(verb)
@@ -205,7 +205,7 @@ proc call(verb: MVerb, world: World, self, player, caller, holder: MObject,
   let name = "$#:$#" % [holder.toObjStr(), verb.names]
   return some(world.addTask(
     name,
-    self, player, caller, verb.owner,
+    self, player, caller, world.byId(verb.owner).get,
     symtable, verb.compiled, taskType, callback
   ))
 

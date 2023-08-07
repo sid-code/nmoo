@@ -15,7 +15,6 @@ import options
 from asyncnet import AsyncSocket
 
 type
-
   ObjID* = distinct int
   World* = ref object
     name*: string
@@ -67,7 +66,7 @@ type
 
   MVerb* = ref object
     names*: string
-    owner*: MObject
+    owner*: ObjID
     inherited*: bool
 
     code*: string # This has to be public but don't use it, use setCode
@@ -521,7 +520,7 @@ proc newProperty*(
 
 proc newVerb*(
   names: string,
-  owner: MObject,
+  owner: ObjID,
   inherited: bool = false,
 
   code: string = "",
@@ -582,6 +581,10 @@ proc copy*(verb: MVerb): MVerb =
     pubWrite: verb.pubWrite,
     pubExec: verb.pubExec
   )
+
+proc equiv*(v1, v2: MVerb): bool =
+  (v1.names == v2.names) and (v1.doSpec == v2.doSpec) and (v1.ioSpec ==
+      v2.ioSpec) and(v1.prepSpec == v2.prepSpec)
 
 proc newWorld*: World =
   World(objects: @[],

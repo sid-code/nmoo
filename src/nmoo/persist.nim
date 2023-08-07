@@ -75,17 +75,20 @@ proc unpack3(packed: int): tuple[a: bool, b: bool, c: bool] =
 proc dumpData(data: MData): string =
   $(@[data].md)
 
+proc dumpObjID(objd: ObjID): string =
+  $int(objd)
+
 proc dumpObjID(obj: MObject): string =
   if isNil(obj):
     ""
   else:
-    $obj.getID()
+    dumpObjID(obj.getID)
 
 proc dumpObjID(objd: MData): string =
   if not objd.isType(dObj):
     ""
   else:
-    $objd.objVal
+    dumpObjID(objd.objVal)
 
 proc dumpBool(b: bool): string =
   if b:
@@ -213,7 +216,7 @@ proc readProp(world: World, stream: FileStream): MProperty =
 proc readVerb(world: World, stream: FileStream): MVerb =
   result = newVerb(
     names = "",
-    owner = nil
+    owner = 0.ObjID
   )
   result.names = stream.readLine().strip()
   var
@@ -224,9 +227,10 @@ proc readVerb(world: World, stream: FileStream): MVerb =
     code &= curLine
     curLine = stream.readLine() & "\n"
 
-  result.owner = readObjectID(world, stream)
+  let owner = readObjectID(world, stream)
+  result.owner = owner.id
 
-  let err = result.setCode(code, result.owner, compileIt = false)
+  let err = result.setCode(code, owner, compileIt = false)
   if err != E_NONE.md:
     warn "A verb called \"" & result.names & "\" failed to compile."
     warn $err
@@ -360,7 +364,7 @@ proc readVerbCode*(world: World, obj: MObject, verb: MVerb, programmer: MObject)
     return E_ARGS.md("cannot read code for verb $# because the verb code directory doesn't exist".format(vstr))
 
   for index, v in obj.verbs:
-    if v == verb:
+    if equiv(v, verb):
       var fileName = dir / getVerbCodeFile(v, index)
       return v.setCode(readFile(fileName), programmer)
 
@@ -538,7 +542,7 @@ proc loadWorld*(name: string): World =
         when defined(debug):
           debug "Compiling verb " & obj.toObjStr() & ":" & v.names
         # this time really compile it
-        let err = v.setCode(v.code, v.owner)
+        let err = v.setCode(v.code, result.byId(v.owner).get)
         if err != E_NONE.md:
           error "A verb " & obj.toObjStr() & ":" & v.names & " failed to compile."
           error $err

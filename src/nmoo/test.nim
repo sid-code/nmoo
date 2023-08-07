@@ -113,7 +113,7 @@ suite "object tests":
   test "verbs fire correctly":
     var verb = newVerb(
       names = "action",
-      owner = root,
+      owner = root.id,
       doSpec = oThis,
       prepSpec = pOn,
       ioSpec = oThis,
@@ -128,7 +128,7 @@ suite "object tests":
   test "verbs call correctly":
     var verb = newVerb(
       names = "action",
-      owner = root,
+      owner = root.id,
       prepSpec = pNone,
       doSpec = oNone,
       ioSpec = oNone,
@@ -232,7 +232,7 @@ suite "evaluator":
 
     var verb = newVerb(
       names = "verb name",
-      owner = root,
+      owner = root.id,
       doSpec = oNone,
       prepSpec = pWith,
       ioSpec = oNone
@@ -582,7 +582,7 @@ suite "evaluator":
 
     var fverb = newVerb(
       names = "funcverb",
-      owner = obj,
+      owner = obj.id,
     )
 
     check fverb.setCode("(get args 0)", root) == E_NONE.md

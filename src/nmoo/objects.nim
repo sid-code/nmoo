@@ -121,7 +121,7 @@ proc owns*(who, obj: MObject): bool {.inline.} =
 proc owns*(who: MObject, prop: MProperty): bool {.inline.} =
   who.isWizard() or prop.owner == who
 proc owns*(who: MObject, verb: MVerb): bool {.inline.} =
-  who.isWizard() or verb.owner == who
+  who.isWizard() or verb.owner == who.id
 
 proc canRead*(reader, obj: MObject): bool {.inline.} =
   reader.owns(obj) or obj.pubRead
