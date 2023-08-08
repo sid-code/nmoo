@@ -104,23 +104,32 @@ interpolate
 (let ((str (get args 0))
       (obj (get args 1))
       (get-identifier (lambda (o)
-                        (if o
-                            (try (o:name) (getprop o "name" ($ o)))
-                            "(nil)")))
-      (pct-n (get-identifier obj))
-      (pct-t (get-identifier self))
-      (pct-d (get-identifier dobj))
-      (pct-d (get-identifier iobj))
-      (pct-l (get-identifier obj.location))
-      (x (player:tell (getprop obj "gender")))
-      (gender (getprop obj "gender" $gender))
-      (pct-s gender.subject)
-      (pct-o gender.object)
-      (pct-p gender.posadj)
-      (pct-q gender.posnoun))
+			(if o
+			    (try (o:name) (getprop o "name" ($ o)))
+			    "(nil)")))
+      (gender (getprop obj "gender" $gender)))
   ($strutils:gsub str "%%(%%|[#ntdilsopqrNTDILSOPQR]|%[[^%]]%])"
-                  (lambda (start end capture)
-                    (get capture 0))))
+		  (lambda (start end capture)
+		    (let ((char    (substr (get capture 0) 0 0))
+			  (isupper ($strutils:is-upper? char))
+			  (symb    (downcase char))
+			  (expansion
+			   (cond
+			    ((= symb "s") gender.subject)
+			    ((= symb "o") gender.object)
+			    ((= symb "p") gender.posadj)
+			    ((= symb "q") gender.posnoun)
+			    ((= symb "r") gender.reflexive)
+
+			    ((= symb "n") (get-identifier obj))
+			    ((= symb "t") (get-identifier self))
+			    ((= symb "d") (get-identifier dobj))
+			    ((= symb "i") (get-identifier iobj))
+			    ((= symb "l") (get-identifier obj.location))
+			    ((cat "UNIMP(" symb ")")))))
+		      (if isupper
+			  ($strutils:capitalize expansion)
+			  expansion)))))
 .
 7
 0
