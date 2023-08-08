@@ -2,6 +2,7 @@ import unittest
 import options
 import tables
 import strutils
+import std/sets
 
 import types
 import server
@@ -785,6 +786,20 @@ suite "evaluator":
 
     result = evalS("(setremove (1 2) 3)")
     check result.listVal.len == 2
+
+  test "setdiff statement works":
+    var result = evalS("(setdiff (1 2 3 4 5) (1 2 9))")
+    check result.listVal.toSet == @[3.md, 4.md, 5.md].toSet
+
+    result = evalS("(setdiff () (1 2 9))")
+    check result == @[].md
+
+  test "setdiffsym statement works":
+    var result = evalS("(setdiffsym (1 2 3 4 5) (1 2 9))")
+    check result.listVal.toSet == @[3.md, 4.md, 5.md, 9.md].toSet
+
+    result = evalS("(setdiffsym () (1 2 9))")
+    check result.listVal.toSet == @[1.md, 2.md, 9.md].toSet
 
   test "tget statement works":
     var result = evalS("(tget (table (1 10) (2 20)) 2)")

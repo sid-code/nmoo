@@ -7,6 +7,7 @@ import math
 import nre
 import options
 import times
+import std/sets
 
 import types
 import objects
@@ -2557,6 +2558,60 @@ defBuiltin "setremove":
       break
 
   return list.md.pack
+
+## ::
+##
+##   (setdiffsym list1:List list2:List):List
+##
+## Takes the difference of `list1` and `list2`. The result contains
+## all elements of `list1` that are not contained in `list2`.
+##
+## Note: this does not preserve the order of elements in `list1`!
+##
+## Examples::
+##
+##   (setdiff '(1 2 3 4 5) '(2 3)) ; => '(1 4 5)
+##   (setdiff '(2 3) '(1 2 3 4 5)) ; => '(1 4 5)
+##
+defBuiltin "setdiff":
+  if args.len != 2:
+    runtimeError(E_ARGS, "setdiffsym takes 3 arguments")
+
+  checkType(args[0], dList)
+  checkType(args[1], dList)
+
+  let set1 = args[0].listVal.toSet
+  let set2 = args[1].listVal.toSet
+
+  return difference(set1, set2).items.toSeq.md.pack
+
+## ::
+##
+##   (setdiffsym list1:List list2:List):List
+##
+## Takes the symmetric difference of `list1` and `list2`. The result
+## contains all elements that show up either in `list1` or `list2`, but
+## not both.
+##
+## Note: this does not preserve the order of elements in `list1` or
+## `list2`!
+##
+## Examples::
+##
+##   (setdiff '(1 2 3 4 5) '(2 3)) ; => '(1 4 5)
+##   (setdiff '(2 3) '(1 2 3 4 5)) ; => '(1 4 5)
+##
+defBuiltin "setdiffsym":
+  if args.len != 2:
+    runtimeError(E_ARGS, "setdiffsym takes 3 arguments")
+
+  checkType(args[0], dList)
+  checkType(args[1], dList)
+
+  let set1 = args[0].listVal.toSet
+  let set2 = args[1].listVal.toSet
+
+  return symmetricDifference(set1, set2).items.toSeq.md.pack
 
 # (tget table key default)
 # Looks up `key` in `table` and returns the associated value.  If the
