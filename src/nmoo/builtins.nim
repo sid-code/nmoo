@@ -2558,6 +2558,10 @@ defBuiltin "setremove":
 
   return list.md.pack
 
+# (tget table key default)
+# Looks up `key` in `table` and returns the associated value.  If the
+# key is not found, and `default` is provided, `default` is returned.
+# Otherwise, throws `E_BOUNDS`.
 defBuiltin "tget":
   if args.len != 2 and args.len != 3:
     runtimeError(E_ARGS, "tget takes 2 or 3 arguments")
