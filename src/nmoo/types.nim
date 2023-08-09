@@ -206,18 +206,46 @@ type
     coOptInline
 
   MCompiler* = ref object
+    ## The object (usually player) whose permissions any compile-time
+    ## tasks will run with.
     programmer*: MObject
+
+    ## The program is devided into two sections:
+    ##
+    ## subrs
+    ##   Any subroutines that can be called by the program
+    ##
+    ## real
+    ##   The "main subroutine" of the program.
     subrs*, real*: seq[Instruction]
+
     options*: set[MCompilerOption]
+
+    ## A mapping from symbol name to position in the runtime's symbol
+    ## table.
     symtable*: CSymTable
+
+    ## A stack of extra locals defined.
+    ##
+    ## Warning: This is extremely janky.
+    ## Push (`add`) to the stack when entering a new scope and add
+    ## names to it. These will be cleaned up when exiting the scope.
+    ##
+    ## NB: This is (at least IMO) needed to implement `define`. I
+    ## can't think of any other way that doesn't involve rewriting the
+    ## whole compiler.
     extraLocals*: seq[HashSet[string]]
 
+    ## Symbol name generator.
     symgen*: SymGen
 
-    ## __compile-time__ call stack depth
+    ## Compile-time call stack depth.
     depth*: int
 
-    ## for macros
+    ## Map of macro name to macro function.
+    ##
+    ## Macro functions are extremely simple; they take code as input
+    ## (any value, usually a list) and returns any code as an output.
     syntaxTransformers*: TableRef[string, SyntaxTransformer]
 
   SyntaxTransformer* = ref object
