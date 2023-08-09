@@ -28,7 +28,7 @@ proc write*[T](s: AsyncStream, x: T) {.async.} =
   else:
     quit(0)
 
-proc readStr*(s: AsyncStream, length: int): Future[TaintedString] {.async.} =
+proc readStr*(s: AsyncStream, length: int): Future[string] {.async.} =
   return await s.readData(length)
 
 # Write a string by writing the length first then the string
