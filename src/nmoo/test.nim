@@ -288,6 +288,18 @@ suite "evaluator":
              ,body)))))
 """
 
+  test "define statement works":
+    let result = evalS("(do (define x 100) x)")
+    check result == 100.md
+
+  test "define statement binds symbols locally":
+    let result = evalS("""
+    (let ((x "unshadowed outer value")
+          (lam (lambda (arg) (do (define x arg) x))))
+      (list x (lam 100)))
+    """)
+    check result == @["unshadowed outer value".md, 100.md].md
+
   test "let statement binds symbols locally":
     let result = evalS("""
     (do (let ((a "b") (b a)) b) (echo a))
