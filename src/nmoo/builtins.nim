@@ -1,5 +1,21 @@
+## This file contains definitions for most builtin functions.
+##
+## See `builtindef.nim` for the template that is used to define
+## builtins. It essentially just adds a proc to a table whose keys are
+## the names of the builtins.
+##
+## The builtin definitions make heavy use of templates that affect
+## control flow. I'm still not sure if this was a good idea, but in
+## practice builtin function definitions are short (with a few
+## exceptions) so the templates might actually not affect the
+## readability of the code much.
+##
+## The templates affect the control flow by using `return`. This
+## returns from the builtin proc (not the template).
+##
+## IDEA: maybe prefix the templates with some obnoxious string so that
+## it's obvious they affect control flow?
 {.used.}
-# Here are all of the builtin functions that verbs can call
 
 import strutils
 import tables
