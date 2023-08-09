@@ -125,7 +125,7 @@ proc getSymInst(symtable: CSymTable, sym: MData): Instruction =
       return ins(inGGET, name.mds, pos)
 
 proc shadowName(name: string): string = MagicShadowPrefix & name
-proc unshadowName(name: string): string =
+proc unshadowName(name: string): string {.used.} =
   if name.len > 10:
     name[10..^1]
   else:

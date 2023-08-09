@@ -15,7 +15,7 @@ import objects
 import compile
 import util/msstreams # for multisync write
 
-proc writeResponse(s: Stream | AsyncStream, id: uint32, d: MData) {.multisync.} =
+proc writeResponse(s: Stream | AsyncStream, id: uint32, d: MData) {.used, multisync.} =
   await s.writeChar(SideChannelEscapeChar)
   await s.write(id)
   await s.writeMData(d)

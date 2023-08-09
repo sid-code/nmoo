@@ -348,7 +348,7 @@ proc writeVerbCode*(world: World, obj: MObject, init = false) =
   if init:
     removeDir(dir)
 
-  if not existsDir(dir):
+  if not dirExists(dir):
     createDir(dir)
 
   for index, v in obj.verbs:
@@ -360,7 +360,7 @@ proc readVerbCode*(world: World, obj: MObject, verb: MVerb, programmer: MObject)
 
   let vstr = "$#:$#".format($obj.md, verb.names)
 
-  if not existsDir(dir):
+  if not dirExists(dir):
     return E_ARGS.md("cannot read code for verb $# because the verb code directory doesn't exist".format(vstr))
 
   for index, v in obj.verbs:
@@ -450,7 +450,7 @@ proc dbDelete*(world: World, obj: MObject) =
 
 proc acquireLock*(name: string): bool =
   let lockFile = getWorldLockFile(name)
-  if existsFile(lockFile):
+  if fileExists(lockFile):
     return false
 
   writeFile(lockFile, "")
@@ -458,18 +458,18 @@ proc acquireLock*(name: string): bool =
 
 proc releaseLock*(name: string): bool =
   let lockFile = getWorldLockFile(name)
-  if existsFile(lockFile):
+  if fileExists(lockFile):
     removeFile(lockFile)
     return true
 
   return false
 
-proc backupWorld(name: string) =
+proc backupWorld(name: string) {.used.} =
   var suffix = 0
   let backupBase = name & ".b"
   var backupDir = getWorldDir(backupBase & $suffix)
 
-  while existsDir(backupDir):
+  while dirExists(backupDir):
     inc suffix
     backupDir = getWorldDir(backupBase & $suffix)
 
@@ -546,8 +546,6 @@ proc loadWorld*(name: string): World =
         if err != E_NONE.md:
           error "A verb " & obj.toObjStr() & ":" & v.names & " failed to compile."
           error $err
-
-  var oresult = result
 
 when isMainModule:
   let obj = blankObject()

@@ -351,7 +351,7 @@ impl inCALL:
         let origin = TaskID(lcall[3].intVal)
         let bounds = lcall[4].listVal.map(proc (x: MData): string = x.symVal)
         let expectedNumArgs = bounds.len
-        let expression = lcall[5]
+        # let expression = lcall[5]
 
         if expectedNumArgs != numArgs:
           task.doError(E_ARGS.md("lambda expected $1 args but got $2" %
@@ -587,7 +587,7 @@ proc createTask*(id: TaskID, name: string, startTime: Time, compiled: CpOutput,
            globals = newSymbolTable(), tickQuota: int, taskType: TaskType,
            callback: Option[TaskID]): Task not nil =
   let st = newVSymTable()
-  let (entry, code, err) = compiled
+  let (entry, code, _) = compiled
 
   let globals = addCoreGlobals(globals)
 

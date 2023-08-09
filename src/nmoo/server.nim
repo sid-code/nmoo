@@ -151,7 +151,7 @@ proc unqueueAll =
 proc clearIn(client: Client) =
   setLen(client.inputQueue, 0)
 
-proc clearInAll =
+proc clearInAll {.used.} =
   for client in clients:
     client.clearIn()
 
@@ -507,8 +507,8 @@ proc startServer {.async.} =
 
 
 proc mainLoop =
-  var totalPulses = 0
-  var totalPulseTime = 0.0
+  var totalPulses {.used.} = 0
+  var totalPulseTime {.used.}  = 0.0
 
   setControlCHook(handler)
 

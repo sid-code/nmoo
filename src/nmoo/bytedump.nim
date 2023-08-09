@@ -165,7 +165,7 @@ proc readSymbolTable(s: Stream | AsyncStream): Future[SymbolTable] {.multisync.}
     result[key] = val
 
 
-proc `$`(fr: Frame): string =
+proc `$`(fr: Frame): string {.used.} =
   $fr.symtable & " " & $fr.tries
 
 proc writeFrame(s: Stream | AsyncStream, fr: Frame) {.multisync.} =
