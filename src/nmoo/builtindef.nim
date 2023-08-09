@@ -1,3 +1,4 @@
+{.used.}
 import types
 import tables
 import std/options
