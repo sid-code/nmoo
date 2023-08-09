@@ -6,7 +6,6 @@ import sequtils
 import strutils
 import tables
 import logging
-import times
 import options
 import std/sugar
 # NOTE: verbs is imported later on!
