@@ -268,17 +268,16 @@ proc getLocation*(obj: MObject): MObject not nil =
 
   let locd = obj.getPropVal("location")
 
-  if locd.isType(dObj):
-    let locO = world.byID(locd.objVal)
-
-    if locO.isSome():
-      let loc = locO.get()
-      if not isNil(loc):
-        return loc
-
-    raise newException(InvalidWorldError, "$# doesn't exist".format(locd))
-  else:
+  if not locd.isType(dObj):
     raise newException(InvalidWorldError, "$#.location wasn't an object".format(locd))
+  let locO = world.byID(locd.objVal)
+
+  if locO.isSome():
+    let loc = locO.get()
+    if not isNil(loc):
+      return loc
+
+  raise newException(InvalidWorldError, "$# doesn't exist".format(locd))
 
 proc getRawContents(obj: MObject): seq[MData] =
   let contents = obj.getPropVal("contents")
