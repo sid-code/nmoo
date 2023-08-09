@@ -1,4 +1,3 @@
-{.experimental: "notnil".}
 # This file has methods for manipulating objects and their properties
 
 import types
@@ -14,7 +13,7 @@ proc blankObject*: MObject
 proc getProp*(obj: MObject, name: string, all = true): MProperty
 proc getStrProp*(obj: MObject, name: string, all = true): string
 proc getAliases*(obj: MObject): seq[string]
-proc getLocation*(obj: MObject): MObject not nil
+proc getLocation*(obj: MObject): MObject
 proc getContents*(obj: MObject): seq[MObject]
 proc getPropVal*(obj: MObject, name: string, all = true): MData
 proc getPropAndObj*(obj: MObject, name: string, all = true): Option[tuple[o: MObject, p: MProperty]]
@@ -261,7 +260,7 @@ proc getOwnProps*(obj: MObject): seq[string] =
     if not propIsInherited(obj, name):
       result.add(name)
 
-proc getLocation*(obj: MObject): MObject not nil =
+proc getLocation*(obj: MObject): MObject =
   let world = obj.getWorld()
   if isNil(world):
     raise newException(InvalidWorldError, "world is nil")
