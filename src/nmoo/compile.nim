@@ -174,6 +174,7 @@ proc newCompiler(programmer: MObject, options: set[MCompilerOption]): MCompiler 
     subrs: @[],
     options: options,
     symtable: newCSymTable(),
+    extraLocals: @[initHashSet[string]()],
     symgen: newSymGen(),
     depth: 0,
     syntaxTransformers: newTable[string, SyntaxTransformer]())

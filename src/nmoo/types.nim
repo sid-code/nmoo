@@ -11,6 +11,7 @@ import hashes
 import deques
 import streams
 import options
+import std/sets
 
 from asyncnet import AsyncSocket
 
@@ -209,6 +210,8 @@ type
     subrs*, real*: seq[Instruction]
     options*: set[MCompilerOption]
     symtable*: CSymTable
+    extraLocals*: seq[HashSet[string]]
+
     symgen*: SymGen
 
     ## __compile-time__ call stack depth
