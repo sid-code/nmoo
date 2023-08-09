@@ -8,7 +8,6 @@ import net
 import times
 import logging
 import os
-import options
 import sequtils
 import logfmt
 import std/sugar
