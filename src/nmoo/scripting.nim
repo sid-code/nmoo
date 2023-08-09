@@ -221,7 +221,7 @@ proc toData(image: string, pos: CodePosition): (MData, string) =
       try:
         let num = parseInt(rest)
         return (num.ObjID.md, "")
-      except OverflowError:
+      except OverflowDefect:
         return (nilD, "object id overflow " & image)
       except ValueError:
         return (nilD, "invalid object " & image)
@@ -233,7 +233,7 @@ proc toData(image: string, pos: CodePosition): (MData, string) =
           return (parseFloat(image).md, "")
         else:
           return (parseInt(image).md, "")
-      except OverflowError:
+      except OverflowDefect:
         return (nilD, "literal number overflow " & image)
       except ValueError:
         return (image.mds, "")
