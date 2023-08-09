@@ -60,12 +60,14 @@ task test, "Run tests":
   exec "nim c -r " & compilerParams & " src/nmoo/test.nim"
 
 task serve, "Run the server":
-  var compilerParams: string
-
+  var compilerParams = getBuildFlags()
   compilerParams &= " -d:includeWizardUtils"
-  compilerParams &= getBuildFlags()
+  exec "nim c -r " & compilerParams & " -o:bin/server src/nmoo.nim"
 
-  exec "nim c -r " & compilerParams & " -o:bin/server src/nmoo"
+task sccli, "Build the side channel CLI":
+  var compilerParams = getBuildFlags()
+  compilerParams &= " -d:includeWizardUtils"
+  exec "nim c " & compilerParams & " -o:bin/sccli src/nmoo/schanlib/eval.nim"
 
 task serveHttp, "Run the http server":
   var compilerParams: string
