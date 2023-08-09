@@ -2496,9 +2496,9 @@ defBuiltin "slice":
 
   if start in 0..length - 1:
     if endv in 0..length - 1:
-      return list[start..endv].md.pack
+      return list[start .. endv].md.pack
     elif endv in -length..(-1):
-      return list[start..^ -endv].md.pack
+      return list[start ..^ -endv].md.pack
     else:
       runtimeError(E_BOUNDS, "end index $1 is out of bounds." % [$endv])
   elif start == length:
