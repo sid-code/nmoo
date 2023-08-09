@@ -143,12 +143,12 @@ suite "object tests":
 
 suite "parser":
   setup:
-    proc parse(str: string, options: set[MParserOption] = {}): MData =
+    proc parse(str: string, options: set[MParserOption] = {}): MData {.used.} =
       var parser = newParser(str, options)
       result = parser.parseFull()
       if parser.error.errVal != E_NONE:
         return parser.error
-    proc parseOne(str: string, options: set[MParserOption] = {}): MData =
+    proc parseOne(str: string, options: set[MParserOption] = {}): MData {.used.} =
       var parser = newParser(str, options)
       result = parser.parseAtom()
       if parser.error.errVal != E_NONE:
