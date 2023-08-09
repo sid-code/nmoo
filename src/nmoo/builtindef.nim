@@ -10,7 +10,7 @@ proc builtinExists*(name: string): bool =
 # defining builtins
 
 template defBuiltin*(name: string, body: untyped) {.dirty.} =
-  template bname: string {.used.} = name
+  template bname: string {.used, redefine.} = name
   builtins[name] =
     proc (args: seq[MData], world: World,
           self, player, caller, owner: MObject,
