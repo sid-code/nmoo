@@ -57,7 +57,7 @@ task test, "Run tests":
 
   compilerParams &= getBuildFlags()
 
-  exec "nim c -r " & compilerParams & " src/nmoo/test.nim"
+  exec "nim c -r " & compilerParams & " -o:bin/test src/nmoo/test.nim"
 
 task serve, "Run the server":
   var compilerParams = getBuildFlags()
