@@ -2581,8 +2581,8 @@ defBuiltin "setdiff":
   checkType(args[0], dList)
   checkType(args[1], dList)
 
-  let set1 = args[0].listVal.toSet
-  let set2 = args[1].listVal.toSet
+  let set1 = args[0].listVal.toHashSet
+  let set2 = args[1].listVal.toHashSet
 
   return difference(set1, set2).items.toSeq.md.pack
 
@@ -2609,8 +2609,8 @@ defBuiltin "setdiffsym":
   checkType(args[0], dList)
   checkType(args[1], dList)
 
-  let set1 = args[0].listVal.toSet
-  let set2 = args[1].listVal.toSet
+  let set1 = args[0].listVal.toHashSet
+  let set2 = args[1].listVal.toHashSet
 
   return symmetricDifference(set1, set2).items.toSeq.md.pack
 
