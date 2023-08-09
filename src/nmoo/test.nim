@@ -44,10 +44,6 @@ suite "core data tests":
     let x = @[@[1.md, 2.md, 3.md].md, 3.md].md
     check ($x) == "((1 2 3) 3)"
 
-proc checkOption[T](x: Option[T]): T =
-  check isSome(x)
-  return x.get()
-
 suite "object tests":
   setup:
     var world = createWorld("test", persistent = false)
