@@ -1,7 +1,6 @@
 {.used.}
 import types
 import tables
-import std/options
 
 var builtins* = initTable[string, BuiltinProc]()
 

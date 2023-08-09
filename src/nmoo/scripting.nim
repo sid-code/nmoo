@@ -3,13 +3,11 @@
 import tables
 import strutils
 import math
-import sequtils
 import streams
 import deques
 from parseutils import parseHex
 
 import types
-import objects
 
 proc `$`*(token: Token): string {.inline.} =
   token.image
