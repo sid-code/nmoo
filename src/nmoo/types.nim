@@ -100,19 +100,17 @@ type
       of dObj: objVal*: ObjID
       of dNil: nilVal*: int    # dummy
 
-  ## The type of a builtin return package. See docs of `Package` type
-  ## for more information.
   PackageType* = enum
-    ## The builtin has completed and is returning data.
-    ptData,
-    ## The builtin is calling something else and waiting for a result.
-    ptCall,
-    ## The builtin is waiting for user input.
-    ptInput
+    ## The type of a builtin return package. See docs of `Package`
+    ## type for more information.
+    ptData, ## The builtin has completed and is returning data.
+    ptCall, ## The builtin is calling something else and waiting for a
+            ## result.
+    ptInput ## The builtin is waiting for user input.
 
-  ## The actual return value of a builtin proc, which may represent a
-  ## partial result of the builtin.
   Package* = object
+    ## The actual return value of a builtin proc, which may represent a
+    ## partial result of the builtin.
     case ptype*: PackageType
       of ptData:
         val*: MData
@@ -155,10 +153,10 @@ type
     pos*: CodePosition
 
   MParserOption* = enum
+    poTransformDataForms ## \
     ## transform (table (a b) (c d)) into the appropriate data type
     ## instead of just leaving it as a list. This should only ever be
     ## used for data serialization.
-    poTransformDataForms
 
   MLexer* = object
     stream*: Stream
@@ -206,47 +204,46 @@ type
     coOptInline
 
   MCompiler* = ref object
-    ## The object (usually player) whose permissions any compile-time
-    ## tasks will run with.
-    programmer*: MObject
+    programmer*: MObject ## \
+      ## The object (usually player) whose permissions any
+      ## compile-time tasks will run with.
 
-    ## The program is devided into two sections:
-    ##
-    ## subrs
-    ##   Any subroutines that can be called by the program
-    ##
-    ## real
-    ##   The "main subroutine" of the program.
-    subrs*, real*: seq[Instruction]
+    subrs*, real*: seq[Instruction] ## \
+      ## The program is devided into two sections:
+      ##
+      ## subrs
+      ##   Any subroutines that can be called by the program
+      ##
+      ## real
+      ##   The "main subroutine" of the program.
 
     options*: set[MCompilerOption]
 
-    ## A mapping from symbol name to position in the runtime's symbol
-    ## table.
-    symtable*: CSymTable
+    symtable*: CSymTable ## \
+      ## A mapping from symbol name to position in the runtime's
+      ## symbol table.
 
-    ## A stack of extra locals defined.
-    ##
-    ## Warning: This is extremely janky.
-    ## Push (`add`) to the stack when entering a new scope and add
-    ## names to it. These will be cleaned up when exiting the scope.
-    ##
-    ## NB: This is (at least IMO) needed to implement `define`. I
-    ## can't think of any other way that doesn't involve rewriting the
-    ## whole compiler.
-    extraLocals*: seq[HashSet[string]]
+    extraLocals*: seq[HashSet[string]] ## \
+      ## A stack of extra locals defined.
+      ##
+      ## Warning: This is extremely janky.  Push (`add`) to the stack
+      ## when entering a new scope and add names to it. These will be
+      ## cleaned up when exiting the scope.
+      ##
+      ## NB: This is (at least IMO) needed to implement `define`. I
+      ## can't think of any other way that doesn't involve rewriting
+      ## the whole compiler.
 
-    ## Symbol name generator.
-    symgen*: SymGen
+    symgen*: SymGen ## Symbol name generator.
 
-    ## Compile-time call stack depth.
-    depth*: int
+    depth*: int ## Compile-time call stack depth.
 
-    ## Map of macro name to macro function.
-    ##
-    ## Macro functions are extremely simple; they take code as input
-    ## (any value, usually a list) and returns any code as an output.
-    syntaxTransformers*: TableRef[string, SyntaxTransformer]
+    syntaxTransformers*: TableRef[string, SyntaxTransformer] ## \
+      ## Map of macro name to macro function.
+      ##
+      ## Macro functions are extremely simple; they take code as input
+      ## (any value, usually a list) and returns any code as an
+      ## output.
 
   SyntaxTransformer* = ref object
     code*: MData
