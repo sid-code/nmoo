@@ -3,7 +3,6 @@
 
 import sequtils
 import strutils
-import tables
 import options
 
 import types

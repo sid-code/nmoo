@@ -5,9 +5,7 @@ import asyncnet
 import asyncdispatch
 import strutils
 import net
-import streams
 import times
-import math
 import logging
 import os
 import options

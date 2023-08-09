@@ -7,10 +7,8 @@ import os
 import streams
 import sequtils
 import strutils
-import marshal
 import tables
 import logging
-import asyncdispatch
 import options
 
 import types
@@ -18,7 +16,6 @@ import objects
 import verbs
 import scripting
 import bytedump
-import tasks
 
 # object format:
 #

@@ -6,7 +6,6 @@ import boost/io/asyncstreams
 import times
 import tables
 import std/options
-import std/sugar
 
 import types
 import util/msstreams

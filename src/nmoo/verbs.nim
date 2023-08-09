@@ -27,9 +27,7 @@ proc verbCall*(res: var Option[TaskID], owner: MObject, name: string, player, ca
 import tasks
 import objects
 import querying
-import scripting
 import compile
-import persist
 
 type
 
