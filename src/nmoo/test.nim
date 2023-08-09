@@ -789,17 +789,17 @@ suite "evaluator":
 
   test "setdiff statement works":
     var result = evalS("(setdiff (1 2 3 4 5) (1 2 9))")
-    check result.listVal.toSet == @[3.md, 4.md, 5.md].toSet
+    check result.listVal.toHashSet == @[3.md, 4.md, 5.md].toHashSet
 
     result = evalS("(setdiff () (1 2 9))")
     check result == @[].md
 
   test "setdiffsym statement works":
     var result = evalS("(setdiffsym (1 2 3 4 5) (1 2 9))")
-    check result.listVal.toSet == @[3.md, 4.md, 5.md, 9.md].toSet
+    check result.listVal.toHashSet == @[3.md, 4.md, 5.md, 9.md].toHashSet
 
     result = evalS("(setdiffsym () (1 2 9))")
-    check result.listVal.toSet == @[1.md, 2.md, 9.md].toSet
+    check result.listVal.toHashSet == @[1.md, 2.md, 9.md].toHashSet
 
   test "tget statement works":
     var result = evalS("(tget (table (1 10) (2 20)) 2)")
