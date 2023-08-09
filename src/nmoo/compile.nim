@@ -724,7 +724,16 @@ defSpecial "define":
   let symbol = args[0]
   let value = args[1]
   let symbolIndex = compiler.defSymbol(symbol.symVal, extraLocal = true)
+
+  # WARNING: BROKEN CODE HERE; FIX IT PLEASE
+  # First store a nil to make sure the symbol exists in the VM's
+  # symbol table.
+  emit(ins(inPUSH, nilD))
+  emit(ins(inSTO, symbolIndex.md))
+
   propogateError(compiler.codeGen(value))
+
+  # Now store the real value.
   emit(ins(inDUP))
   emit(ins(inSTO, symbolIndex.md))
 
