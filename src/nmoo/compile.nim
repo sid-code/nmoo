@@ -1,3 +1,5 @@
+{.used.}
+
 import tables
 import options
 import strutils

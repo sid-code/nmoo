@@ -1,3 +1,4 @@
+{.used.}
 # Here are all of the builtin functions that verbs can call
 
 import strutils
