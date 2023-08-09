@@ -25,7 +25,7 @@ type
     taskIDCounter*: int
     taskFinishedCallback*: proc(world: World, tid: TaskID)
 
-  InvalidWorldError* = object of Exception
+  InvalidWorldError* = object of ValueError
 
   OutputProc = proc(obj: MObject, msg: string)
 
@@ -223,7 +223,7 @@ type
   SpecialProc* = proc(compiler: MCompiler, args: seq[MData],
       pos: CodePosition): MData
 
-  MCompileError* = object of Exception
+  MCompileError* = object of ValueError
 
   VSymTable* = Table[int, MData]
   Frame* = ref object
