@@ -4,6 +4,7 @@ import tables
 import options
 import strutils
 import sequtils
+import std/sets
 
 import types
 import builtindef
@@ -152,18 +153,36 @@ proc unmarkSymbolShadowed(compiler: MCompiler, name: string) =
   if name in compiler.symtable:
     del(compiler.symtable, shadow)
 
-template defSymbol(compiler: MCompiler, name: string): int =
+proc currentExtraLocals(compiler: MCompiler): var HashSet[string]
+template defSymbol(compiler: MCompiler, name: string, extraLocal = false): int =
   if name in compiler.symtable:
     compiler.markSymbolShadowed(name)
 
   let index = compiler.symtable.len
   compiler.symtable[name] = index
+  if extraLocal:
+    compiler.defineExtraLocal(name)
+
   index
 
 template undefSymbol(compiler: MCompiler, name: string) =
   del(compiler.symtable, name)
   compiler.unmarkSymbolShadowed(name)
 
+proc enterScope(compiler: MCompiler) =
+  compiler.extraLocals.add(initHashSet[string]())
+proc leaveScope(compiler: MCompiler) =
+  if compiler.extraLocals.len == 0:
+    return
+  let els = compiler.extraLocals.pop()
+  for local in els:
+    compiler.undefSymbol(local)
+proc currentExtraLocals(compiler: MCompiler): var HashSet[string] =
+  if compiler.extraLocals.len == 0:
+    compiler.enterScope()
+  return compiler.extraLocals[compiler.extraLocals.len - 1]
+proc defineExtraLocal(compiler: MCompiler, name: string) =
+  compiler.currentExtraLocals.incl(name)
 
 ## Constructor
 
@@ -492,6 +511,8 @@ defSpecial "lambda":
 
   let labelName = compiler.addLabel(subrs)
 
+  compiler.enterScope()
+
   for bound in bounds.reversed():
     if not bound.isType(dSym):
       compileError("lambda variables can only be symbols", bound.pos)
@@ -518,9 +539,13 @@ defSpecial "lambda":
     compiler.real.delete(realBeforeSize..realAfterSize - 1)
   compiler.subrs.add(addedReal)
 
+
   for bound in bounds:
     let name = bound.symVal
     compiler.undefSymbol(name)
+
+  compiler.leaveScope()
+
   emit(ins(inRET), 1)
   emit(addedSubrs, 1)
 
@@ -698,9 +723,10 @@ defSpecial "define":
 
   let symbol = args[0]
   let value = args[1]
+  let symbolIndex = compiler.defSymbol(symbol.symVal, extraLocal = true)
   propogateError(compiler.codeGen(value))
-  emit(ins(inDUP, symbol))
-  emit(ins(inGSTO, symbol))
+  emit(ins(inDUP))
+  emit(ins(inSTO, symbolIndex.md))
 
 defSpecial "let":
   verifyArgs("let", args, @[dList, dNil], varargs = true)
