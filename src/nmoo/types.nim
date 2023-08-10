@@ -253,9 +253,9 @@ type
 
   MCompileError* = object of ValueError
 
-  VSymTable* = Table[int, MData]
+  VSymTable* = TableRef[int, MData]
   Frame* = ref object
-    symtable*: VSymTable
+    symtableIndex*: uint
     calledFrom*: int
     tries*: seq[int]
 

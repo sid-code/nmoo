@@ -51,7 +51,7 @@ import builtins
 
 proc hash(itype: InstructionType): auto = ord(itype).hash
 
-proc newVSymTable: VSymTable = initTable[int, MData]()
+proc newVSymTable: VSymTable = newTable[int, MData]()
 
 proc combine(cst: CSymTable, vst: VSymTable): SymbolTable =
   result = newSymbolTable()
@@ -60,11 +60,15 @@ proc combine(cst: CSymTable, vst: VSymTable): SymbolTable =
 
 proc curFrame(task: Task): Frame =
   task.frames[task.frames.len - 1]
-proc curST(task: Task): var VSymTable =
-  task.curFrame().symtable
+proc curST(task: Task): VSymTable =
+  task.symtables[task.curFrame().symtableIndex]
 
-proc pushFrame(task: Task, symtable: VSymTable) =
-  let frame = Frame(symtable: symtable, calledFrom: task.pc, tries: @[])
+proc pushFrame(task: Task, symtableIndex: uint) =
+  let frame = Frame(
+    symtableIndex: symtableIndex,
+    calledFrom: task.pc,
+    tries: @[]
+  )
   task.frames.add(frame)
 
 proc popFrame(task: Task) =
@@ -266,15 +270,12 @@ impl inCLIST:
   task.spush(task.collect(size).md)
 
 impl inMENV:
-  var newST: VSymTable
-  deepCopy(newST, task.curST())
-  let envID = task.symtables.len
-  task.symtables.add(newST)
+  let envID = task.curFrame().symtableIndex
   let cst = task.spop().toCST()
 
   # push the environment's ID onto the stack so that it can be accessed
-  task.spush(envID.md)
-  task.spush(cst.combine(newST).toData())
+  task.spush(envID.int.md)
+  task.spush(cst.combine(task.curST()).toData())
 
 impl inMCONT:
   var cont: Continuation
@@ -347,6 +348,10 @@ impl inCALL:
       try:
         let jmploc = lcall[0]
         let env = lcall[1].intVal
+        if env < 0:
+          task.doError(E_ARGS.md("invalid environment index " & $env))
+          return
+
         let envData = lcall[2]
         let origin = TaskID(lcall[3].intVal)
         let bounds = lcall[4].listVal.map(proc (x: MData): string = x.symVal)
@@ -364,7 +369,8 @@ impl inCALL:
             # there's no need to push another stack frame
             discard
           else:
-            task.pushFrame(symtable = task.symtables[env])
+            task.pushFrame(symtableIndex = uint(task.symtables.len))
+            task.symtables.add(task.symtables[env].deepCopy)
           task.pc = jmploc.intVal
         else:
           let args = task.collect(numArgs)
@@ -531,6 +537,14 @@ proc step*(world: World, task: Task) =
     let itype = inst.itype
     let operand = inst.operand
 
+    when defined(singleStepTasks):
+      echo "--------------------------"
+      echo "NAME   ", task.name
+      echo "STACK  ", task.stack
+      echo "SYMS   ", task.curST
+      echo "INST   ", inst
+      discard stdin.readLine()
+
     if instImpls.hasKey(itype):
       instImpls[itype](world, task.id, operand)
     else:
@@ -630,7 +644,8 @@ proc createTask*(id: TaskID, name: string, startTime: Time, compiled: CpOutput,
   when defined(depthStack):
     task.depthStack = @[]
 
-  task.pushFrame(newVSymTable())
+  task.symtables.add(newVSymTable())
+  task.pushFrame(symtableIndex = 0)
   return task
 
 proc addTask*(world: World, name: string, self, player, caller, owner: MObject,

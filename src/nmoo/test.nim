@@ -291,7 +291,10 @@ suite "evaluator":
              ,body)))))
 """
   test "recursive define statement works":
-    let result = evalS("(do (define x (lambda (y) (if (< y 1) 1 (+ y (call x (list (- y 1))))))) (call x (list 5)))")
+    let result = evalS("""
+    (do
+      (define x (lambda (y) (if (< y 1) 0 (+ y (call x (list (- y 1)))))))
+      (call x (list 5)))""")
     check result == 15.md
 
   test "define statement works":
@@ -305,6 +308,19 @@ suite "evaluator":
       (list x (lam 100)))
     """)
     check result == @["unshadowed outer value".md, 100.md].md
+
+  test "define bindings disappear once out of scope":
+    let result = evalS("""
+    (let ((lam (lambda (arg) (do (define x arg) x))))
+      (list (lam 100))
+      x)
+    """)
+
+    check result.isType(dErr)
+    check result.errVal == E_UNBOUND
+    # Make sure it's happening in the right place.  Line 1's usage is
+    # legitimate, line 3's usage should be where the error is.
+    check result.trace[0].pos.line == 3
 
   test "let statement binds symbols locally":
     let result = evalS("""

@@ -139,7 +139,7 @@ proc writeVSymTable(s: Stream | AsyncStream, vst: VSymTable) {.multisync.} =
     await s.writeMData(v)
 
 proc readVSymTable(s: Stream | AsyncStream): Future[VSymTable] {.multisync.} =
-  result = initTable[int, MData]()
+  result = newTable[int, MData]()
   var count = await s.readInt32()
   while count > 0:
     dec count
@@ -165,10 +165,10 @@ proc readSymbolTable(s: Stream | AsyncStream): Future[SymbolTable] {.multisync.}
 
 
 proc `$`(fr: Frame): string {.used.} =
-  $fr.symtable & " " & $fr.tries
+  $fr.symtableIndex & " " & $fr.tries
 
 proc writeFrame(s: Stream | AsyncStream, fr: Frame) {.multisync.} =
-  await s.writeVSymTable(fr.symtable)
+  await s.write(uint32(fr.symtableIndex))
   await s.write(int32(fr.calledFrom))
 
   await s.write(int32(fr.tries.len))
@@ -177,7 +177,7 @@ proc writeFrame(s: Stream | AsyncStream, fr: Frame) {.multisync.} =
 
 proc readFrame(s: Stream | AsyncStream): Future[Frame] {.multisync.} =
   new result
-  result.symtable = await s.readVSymTable()
+  result.symtableIndex = await s.readUint32()
   result.calledFrom = await s.readInt32()
 
   var count = await s.readInt32()
