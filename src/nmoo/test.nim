@@ -290,6 +290,9 @@ suite "evaluator":
                                 (call continuation (list (list continuation realvals)))))))
              ,body)))))
 """
+  test "recursive define statement works":
+    let result = evalS("(do (define x (lambda (y) (if (< y 1) 1 (+ y (call x (list (- y 1))))))) (call x (list 5)))")
+    check result == 15.md
 
   test "define statement works":
     let result = evalS("(do (define x 100) x)")
