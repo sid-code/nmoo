@@ -11,7 +11,6 @@ import hashes
 import deques
 import streams
 import options
-import std/sets
 
 from asyncnet import AsyncSocket
 
@@ -223,7 +222,7 @@ type
       ## A mapping from symbol name to position in the runtime's
       ## symbol table.
 
-    extraLocals*: seq[HashSet[string]] ## \
+    extraLocals*: seq[SymbolTable] ## \
       ## A stack of extra locals defined.
       ##
       ## Warning: This is extremely janky.  Push (`add`) to the stack

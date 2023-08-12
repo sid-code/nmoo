@@ -108,22 +108,19 @@ template ins(typ: InstructionType): Instruction =
 proc makeSymbol(compiler: MCompiler): MData =
   compiler.symgen.genSym().mds
 
-proc getSymbol(symtable: CSymTable, name: string): Option[MData] =
-  if symtable.hasKey(name):
-    return some(symtable[name].md)
-  else:
-    return none[MData]()
 
-proc getSymInst(symtable: CSymTable, sym: MData): Instruction =
+proc currentExtraLocals(compiler: MCompiler): var SymbolTable
+proc getSymInst(compiler: MCompiler, sym: MData): Instruction =
   let pos = sym.pos
   let name = sym.symVal
 
   if builtinExists(name):
     return ins(inPUSH, name.mds, pos)
   else:
-    let indexO = symtable.getSymbol(name)
-    if indexO.isSome():
-      return ins(inGET, indexO.get(), pos)
+    if name in compiler.symtable:
+      return ins(inGET, compiler.symtable[name].md, pos)
+    elif name in compiler.currentExtraLocals():
+      return ins(inPUSH, compiler.currentExtraLocals()[name], pos)
     else:
       return ins(inGGET, name.mds, pos)
 
@@ -153,15 +150,14 @@ proc unmarkSymbolShadowed(compiler: MCompiler, name: string) =
   if name in compiler.symtable:
     del(compiler.symtable, shadow)
 
-proc currentExtraLocals(compiler: MCompiler): var HashSet[string]
-template defSymbol(compiler: MCompiler, name: string, extraLocal = false): int =
+template defSymbol(compiler: MCompiler, name: string, extraLocal = none(MData)): int =
   if name in compiler.symtable:
     compiler.markSymbolShadowed(name)
 
   let index = compiler.symtable.len
   compiler.symtable[name] = index
-  if extraLocal:
-    compiler.defineExtraLocal(name)
+  if extraLocal.isSome:
+    compiler.defineExtraLocal(name, extraLocal.unsafeGet())
 
   index
 
@@ -170,19 +166,19 @@ template undefSymbol(compiler: MCompiler, name: string) =
   compiler.unmarkSymbolShadowed(name)
 
 proc enterScope(compiler: MCompiler) =
-  compiler.extraLocals.add(initHashSet[string]())
+  compiler.extraLocals.add(newSymbolTable())
 proc leaveScope(compiler: MCompiler) =
   if compiler.extraLocals.len == 0:
     return
   let els = compiler.extraLocals.pop()
-  for local in els:
+  for local in els.keys():
     compiler.undefSymbol(local)
-proc currentExtraLocals(compiler: MCompiler): var HashSet[string] =
+proc currentExtraLocals(compiler: MCompiler): var SymbolTable =
   if compiler.extraLocals.len == 0:
     compiler.enterScope()
   return compiler.extraLocals[compiler.extraLocals.len - 1]
-proc defineExtraLocal(compiler: MCompiler, name: string) =
-  compiler.currentExtraLocals.incl(name)
+proc defineExtraLocal(compiler: MCompiler, name: string, staticValue: MData) =
+  compiler.currentExtraLocals[name] = staticValue
 
 ## Constructor
 
@@ -193,7 +189,7 @@ proc newCompiler(programmer: MObject, options: set[MCompilerOption]): MCompiler 
     subrs: @[],
     options: options,
     symtable: newCSymTable(),
-    extraLocals: @[initHashSet[string]()],
+    extraLocals: @[newSymbolTable()],
     symgen: newSymGen(),
     depth: 0,
     syntaxTransformers: newTable[string, SyntaxTransformer]())
@@ -266,7 +262,7 @@ proc staticEval(compiler: MCompiler, code: MData, name = "compile-time task"):
   compiler.syntaxTransformers = ocompiler.syntaxTransformers
 
   let compiled = ocompiler.render()
-  let symtable = newSymbolTable()
+  let symtable = compiler.currentExtraLocals()
 
   let staticTask = world.addTask(
     name = name,
@@ -723,7 +719,7 @@ defSpecial "define":
 
   let symbol = args[0]
   let value = args[1]
-  let symbolIndex = compiler.defSymbol(symbol.symVal, extraLocal = true)
+  let symbolIndex = compiler.defSymbol(symbol.symVal, extraLocal = some(value))
 
   # WARNING: BROKEN CODE HERE; FIX IT PLEASE
   # First store a nil to make sure the symbol exists in the VM's
