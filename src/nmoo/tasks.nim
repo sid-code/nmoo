@@ -275,6 +275,8 @@ impl inMENV:
 
   # push the environment's ID onto the stack so that it can be accessed
   task.spush(envID.int.md)
+  # cst maps symbol names to task symbols. (TODO: add ref)
+  # task.curST() maps task symbols to their values.
   task.spush(cst.combine(task.curST()).toData())
 
 impl inMCONT:
