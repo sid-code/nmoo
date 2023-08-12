@@ -322,6 +322,15 @@ suite "evaluator":
     # legitimate, line 3's usage should be where the error is.
     check result.trace[0].pos.line == 3
 
+  test "define bindings are accessible from define-syntax":
+    let result = evalS("""
+    (define x 123)
+    (define-syntax makro (lambda (code) x))
+    (makro)
+    """)
+
+    check result == 123.md
+
   test "let statement binds symbols locally":
     let result = evalS("""
     (do (let ((a "b") (b a)) b) (echo a))
