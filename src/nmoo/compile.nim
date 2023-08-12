@@ -254,7 +254,12 @@ proc staticEval(compiler: MCompiler, code: MData, name = "compile-time task"):
 
   let ocompiler = newCompiler(programmer, compiler.options)
   ocompiler.syntaxTransformers = compiler.syntaxTransformers
-  let compilationError = ocompiler.codeGen(code)
+  var lets: seq[MData] = @[]
+  for els in compiler.extraLocals:
+    for symbol, val in els.pairs:
+      lets.add(@[symbol.mds, val].md)
+
+  let compilationError = ocompiler.codeGen(@["let".mds, lets.md, code].md)
   if compilationError != E_NONE.md:
     result.compilationError = compilationError
     return
@@ -262,7 +267,6 @@ proc staticEval(compiler: MCompiler, code: MData, name = "compile-time task"):
   compiler.syntaxTransformers = ocompiler.syntaxTransformers
 
   let compiled = ocompiler.render()
-  let symtable = compiler.currentExtraLocals()
 
   let staticTask = world.addTask(
     name = name,
@@ -270,7 +274,7 @@ proc staticEval(compiler: MCompiler, code: MData, name = "compile-time task"):
     player = programmer,
     caller = programmer,
     owner = programmer,
-    symtable = symtable,
+    symtable = newSymbolTable(),
     code = compiled)
 
   return (E_NONE.md, world.run(staticTask))

@@ -328,6 +328,15 @@ suite "evaluator":
 
     check result == 123.md
 
+  test "define lambda works from define-syntax":
+    let result = evalS("""
+    (define fn (lambda (x) (+ x 1)))
+    (define-syntax plusone (lambda (code) (map fn (tail code))))
+    (plusone 1 2 3)
+    """)
+
+    check result == @[2.md, 3.md, 4.md].md
+
   test "let statement binds symbols locally":
     let result = evalS("""
     (do (let ((a "b") (b a)) b) (echo a))
