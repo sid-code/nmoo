@@ -391,7 +391,7 @@ impl inCALL:
       except:
         task.doError(E_ARGS.md("invalid lambda"))
     else:
-      task.doError(E_ARGS.md("can't call " & $lcall))
+      task.doError(E_ARGS.md("can't call " & $(lcall.md)))
   elif what.isType(dSym):
     # It's a builtin call
     let args = task.collect(numArgs)
