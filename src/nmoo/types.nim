@@ -381,7 +381,7 @@ proc `$`*(x: MData): string {.inline, procvar.} =
     of dInt: $x.intVal
     of dFloat: $x.floatVal
     of dStr: x.strVal.escape
-    of dSym: "\'" & x.symVal
+    of dSym: x.symVal
     of dErr: $x.errVal & ": " & x.errMsg & "\n" & x.trace.mapIt($it.pos & "  " &
         it.name).join("\n")
     of dList:
