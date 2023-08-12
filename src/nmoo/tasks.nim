@@ -654,6 +654,10 @@ proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
   let tickQuotad = world.getGlobal("tick-quota")
   let tickQuota = if tickQuotad.isType(dInt): tickQuotad.intVal else: 20000
 
+  when defined(dumpTaskCode):
+    for ins in code.code:
+      echo ins
+
   let newTask = createTask(
     id = TaskID(world.taskIDCounter),
     name = name,

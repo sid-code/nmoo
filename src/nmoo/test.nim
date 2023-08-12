@@ -242,9 +242,6 @@ suite "evaluator":
     proc evalS(code: string, who: MObject = root): MData =
       let name = "test task"
       let compiled = compileCode(code, who)
-      when defined(evalSDumpBytecode):
-        for ins in compiled.code:
-          echo ins
       if compiled.error != E_NONE.md:
         return compiled.error
 
