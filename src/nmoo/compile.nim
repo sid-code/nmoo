@@ -396,7 +396,7 @@ proc codeGen(compiler: MCompiler, data: MData): MData =
       return compiler.codeGen(expanded)
     else:
       try:
-        compiler.radd(compiler.symtable.getSymInst(data))
+        compiler.radd(compiler.getSymInst(data))
       except:
         compiler.radd(ins(inPUSH, data, data.pos))
   else:
