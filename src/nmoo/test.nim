@@ -358,10 +358,11 @@ suite "evaluator":
       (list
        a
        (let ((a 10))
-         a)))
+         a)
+       a))
     """)
 
-    check result == @[5.md, 10.md].md
+    check result == @[5.md, 10.md, 5.md].md
 
   test "cond statement works":
     var result = evalS("""
