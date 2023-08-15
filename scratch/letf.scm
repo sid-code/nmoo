@@ -73,9 +73,9 @@
 
 (define-syntax letf
   (lambda (code)
-    (let ((argspec (get code 0))
-	  (data    (get code 1))
-	  (forms   (slice code 2))) 
+    (let ((argspec (get code 1))
+	  (data    (get code 2))
+	  (forms   (slice code 3)))
       `(let ,(call make-extractor (list argspec data 'letf))
 	 ,(unshift forms 'do)))))
 
