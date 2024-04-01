@@ -208,13 +208,11 @@ type
       ## compile-time tasks will run with.
 
     subrs*, real*: seq[Instruction] ## \
-      ## The program is devided into two sections:
-      ##
-      ## subrs
-      ##   Any subroutines that can be called by the program
-      ##
-      ## real
-      ##   The "main subroutine" of the program.
+      ## Two sections of code that grow independently.
+      ## All code generated from functions (or lambdas) are appended
+      ## to `subrs`. All other code generated from the toplevel goes
+      ## in `real`. At the end of compilation, these two sections are
+      ## concatenated.
 
     options*: set[MCompilerOption]
 
