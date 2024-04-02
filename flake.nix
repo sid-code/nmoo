@@ -22,7 +22,7 @@
         nativeBuildInputs = with pkgs; [
           nim
           nimble
-          nimlsp
+          nimlangserver
           libxcrypt
           watchexec
         ];
