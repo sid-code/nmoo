@@ -16,6 +16,7 @@ this is the place to dump new code until it can be sorted
 	(nmoo-mode)
 	(setq-local nmoo-address host)
 	(setq-local nmoo-port port)
+	(setq scroll-conservatively 1000)
 	(nmoo--init))
       (pop-to-buffer buf)))
 
