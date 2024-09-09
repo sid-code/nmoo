@@ -1743,6 +1743,24 @@ defBuiltin "nil?":
 
 ## ::
 ##
+##   (symbol s:Str):Sym
+##
+## Returns a symbol with the name ``s``.
+##
+## Examples::
+##
+##   (symbol "hi") ; => 'hi
+##   (symbol 5)    ; => E_TYPE
+##   (symbol ())   ; => E_TYPE
+defBuiltin "symbol":
+  if args.len != 1:
+    runtimeError(E_ARGS, "symbol takes 1 argument")
+  let what = args[0]
+  checkType(what, dStr)
+  return what.strVal.mds
+
+## ::
+##
 ##   ($ x:Any):Str
 ##
 ## Returns a string representation of ``x``.
