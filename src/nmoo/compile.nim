@@ -890,7 +890,20 @@ defSpecial "list":
 defSpecial "if":
   if args.len != 3:
     compileError("if takes 3 arguments (condition, if-true, if-false)", pos)
+
   propogateError(compiler.codeGen(@["cond".mds, @[args[0], args[1]].md, @[args[2]].md].md))
+
+defSpecial "when":
+  if args.len != 2:
+    compileError("when takes 2 arguments (condition, if-true)", pos)
+
+  propogateError(compiler.codeGen(@["if".mds, args[0], args[1], nilD].md))
+
+defSpecial "unless":
+  if args.len != 2:
+    compileError("unless takes 2 arguments (condition, if-false)", pos)
+
+  propogateError(compiler.codeGen(@["if".mds, args[0], nilD, args[1]].md))
 
 defSpecial "call-cc":
   verifyArgs("call-cc", args, @[dNil])

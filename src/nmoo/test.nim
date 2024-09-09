@@ -389,6 +389,27 @@ suite "evaluator":
     check result.isType(dStr)
     check result.strVal == "it works"
 
+  test "if statement works":
+    var result = evalS("""
+    (if 1 "it works" "it doesn't work")
+    """)
+
+    check result == "it works".md
+
+  test "when statement works":
+    var result = evalS("""
+    (when 1 "it works")
+    """)
+
+    check result == "it works".md
+
+  test "unless statement works":
+    var result = evalS("""
+    (unless 0 "it works")
+    """)
+
+    check result == "it works".md
+
   test "parse statement works":
     let result = evalS("""
     (parse "(a b (c d e) 4.5)")
