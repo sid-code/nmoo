@@ -1592,7 +1592,8 @@ defBuiltin "verbcall":
       verb = verb,
       player = player,
       caller = self,
-      cargs, symtable = symtable,
+      cargs,
+      symtable = symtable,
       holder = holder,
       taskType = task.taskType,
       callback = some(tid)
