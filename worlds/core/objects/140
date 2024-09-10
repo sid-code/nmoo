@@ -1,76 +1,105 @@
 140
 0
-95
+48
 
-10
-level
-(0)
-91
-0
-0
-5
-.
+12
 name
-("Garbage Object #140")
-91
-0
-0
-5
-.
-pubread
-(0)
-91
+("toilet plunger")
+7
 0
 0
 5
 .
 pubwrite
 (0)
-91
-0
-0
-5
-.
-fertile
-(0)
-91
+7
 0
 0
 5
 .
 owner
-(#91)
-91
+(#7)
+7
 0
 0
 5
 .
 location
-(#90)
-91
+(#52)
+7
 0
 0
 5
 .
 dir
 ("west")
-91
+7
 0
 0
 5
 .
 source
 (#136)
-91
+7
 0
 0
 5
 .
 destination
 (#88)
-91
+7
 0
 0
 5
 .
+level
+(0)
+140
 0
+0
+5
+.
+pubread
+(0)
+7
+0
+0
+5
+.
+fertile
+(0)
+7
+0
+0
+5
+.
+aliases
+(("toilet" "plunger"))
+7
+0
+0
+5
+.
+description
+("This is a rubber hemisphere attached to a stick, probably used for unclogging various pipes.")
+7
+0
+0
+5
+.
+1
+use
+(try (let ((clogged (getprop iobj "clogged"))
+	   (name (try (iobj:name) "mysteriosly named object.")))
+       (if clogged
+	   (do
+	       (setprop iobj "clogged" nil)
+	       (player:tell "You unclog the " name "."))
+	   (player:tell "The " name " not clogged.")))
+     (player:tell "It's not clear what that would accomplish."))
+.
+7
+0
+oThis pOn oAny
+5
+.

@@ -1,7 +1,7 @@
 4
 0
 1
-88 92 52 55 136
+88 92 52 55 136 142
 14
 level
 (0)
@@ -101,7 +101,7 @@ oentermsg
 0
 5
 .
-15
+16
 look
 (do
   (player:tell self.name)
@@ -160,7 +160,7 @@ announce
 (let ((announcer (get args 0))
       (msg (get args 1))
       (who (call (if (istype announcer "list") setdiff setremove)
-		 (list contents announcer))))
+		 (list self.contents announcer))))
   (map (lambda (obj) (obj:tell msg)) who))
 .
 7
@@ -277,5 +277,13 @@ accept
 7
 0
 oNone pNone oNone
+5
+.
+go
+(player:tell "Typically, \"go\" is not used to move around. Just type direction names themselves, like n, e, s.")
+.
+7
+0
+oAny pAny oAny
 5
 .

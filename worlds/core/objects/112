@@ -73,7 +73,7 @@ contents
 0
 5
 .
-4
+5
 macro-letf
 
 .
@@ -137,5 +137,87 @@ setf
 7
 0
 oThis pNone oThis
+5
+.
+pcase
+(let ((unify-literal
+       (lambda (exp args match-handler err-handler)
+         (let ((literal (get args 0)))
+           (if (= literal exp)
+               '()
+               (unify-error-mismatch literal exp err-handler)))))
+
+      (pcase-special-table
+       (table '(literal (("sym") unify-literal))
+              '(rest    (("sym") unify-rest))))
+
+      (special-symbols
+       (lambda (special-table)
+         (map (lambda (x) (symbol (cat "&" ($ (head x))))) (tpairs special-table))))
+
+      (unify-error-mismatch
+       (lambda (exp pat err-handler)
+         (err-handler 'mismatch "Mismatch" pat exp)))
+
+      (unify-mismatch-ignoring-handler
+       (lambda (err-handler)
+         (lambda (err-type helpstr pat exp)
+           (unless (= err-type 'mismatch)
+             (err-handler err-type helpstr pat exp)))))
+
+      (unify-list
+       ;; err-handler is a function that takes 4 arguments:
+       ;; error kind, reason, the pattern, the expression that didn't match.
+       (lambda (exp listpat match-handler err-handler)
+         (if (= 0 (len listpat))
+             (if (= exp listpat)
+                 '()
+                 (unify-error-mismatch exp listpat err-handler))
+             (let ((phead (head listpat)))
+               (if (and (istype phead "sym") (= "&" (substr ($ phead) 0 0)))
+                   (let ((special-name (substr ($ phead) 1 -1))
+                         (special-entry (tget pcase-special-table special-name nil)))
+                     (when (nil? special-entry)
+                       (err-handler 'unknown-special-pattern
+                                    (cat "Invalid special pattern " listpat ".")
+                                    listpat exp))
+                     (let ((types (get special-entry 0))
+                           (fn (get special-entry 1))
+                           (patargs (tail listpat)))
+                       (call fn patargs)
+                       ))
+                   (if (istype exp "list")
+                       (do
+                           (unify (head exp) phead match-handler err-handler)
+                           (unify-list (tail exp) (tail listpat) match-handler err-handler))
+                       (unify-error-mismatch exp listpat err-handler)))))))
+
+      (unify
+       (lambda (exp pat match-handler err-handler)
+         (cond
+          ((and (istype pat "list"))
+           (unify-list exp pat match-handler err-handler))
+          ((istype pat "sym") (match-handler pat exp))
+          ((err-handler 'malformed-pattern "Malformed pattern" pat exp))))))
+
+  (let ((ct (call-cc (lambda (x)
+                       (list () () x)))))
+    (if (= 2 (len ct))
+        ((get ct 0) (get ct 1))
+        (let ((matches (get ct 0))
+              (errors (get ct 1))
+              (continuation (get ct 2)))
+          (unify '(a b c) '(1 2 3)
+                 (lambda (sym val)
+                   (continuation (push matches (sym val))
+                                 errors
+                                 continuation))
+                 (lambda (err-type helpstr pat exp)
+                   (continuation matches
+                                 (push errors '(err-type helpstr pat exp)))))))))
+.
+7
+0
+oNone pNone oNone
 5
 .

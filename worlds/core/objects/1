@@ -84,6 +84,11 @@ oThis pNone oThis
 .
 name
 (try self.name "Unnamed object")
+;; hello this is a comment
+
+;; hi
+
+;; hi
 .
 7
 0

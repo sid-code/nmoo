@@ -1,5 +1,5 @@
 (let ((announcer (get args 0))
       (msg (get args 1))
       (who (call (if (istype announcer "list") setdiff setremove)
-		 (list contents announcer))))
+		 (list self.contents announcer))))
   (map (lambda (obj) (obj:tell msg)) who))

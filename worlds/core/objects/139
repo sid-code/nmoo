@@ -2,7 +2,7 @@
 0
 48
 
-12
+13
 name
 ("porcelain toilet")
 7
@@ -87,12 +87,21 @@ description
 0
 5
 .
+clogged
+(nil)
+7
+0
+0
+5
+.
 1
 flush
 (do
-    (player:tell "You pull the chain.")
-    (suspend 2)
-    (player:tell "The toilet flushes."))
+  (player:tell "You pull the chain.")
+  (suspend 2)
+  (if self.clogged
+      (player:tell "Water spills everywhere. The toilet appears to be clogged!")
+    (player:tell "The toilet flushes.")))
 ;; TODO: tell others in the room.
 .
 7
