@@ -57,6 +57,10 @@ proc main {.async.} =
   asyncCheck scc.startReader()
 
   let prog = parse(stdin.readAll())
-  echo $(await scc.request(prog))
+  let result = await scc.request(prog)
+  if result.isType dStr:
+    echo result.strVal
+  else:
+    echo $result
 
 waitFor main()
