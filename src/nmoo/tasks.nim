@@ -61,7 +61,8 @@ proc copy(vst: VSymTable): VSymTable =
 proc combine(cst: CSymTable, vst: VSymTable): SymbolTable =
   result = newSymbolTable()
   for key, val in cst:
-    result[key] = vst[val]
+    if val in vst:
+      result[key] = vst[val]
 
 proc curFrame(task: Task): Frame =
   task.frames[task.frames.len - 1]
@@ -211,8 +212,11 @@ proc foreignLambdaCall(task: Task, symtable: SymbolTable, lambda: seq[MData]) =
 # causes problems later, I'll add type-checking
 impl inGET:
   let index = operand.intVal
-  let got = task.curST[index]
-  task.spush(got)
+  if index in task.curST:
+    let got = task.curST[index]
+    task.spush(got)
+  else:
+    task.doError(E_UNBOUND.md("Unbound variable access"))
 
 impl inSTO:
   let what = task.spop()
