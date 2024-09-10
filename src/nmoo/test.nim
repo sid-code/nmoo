@@ -820,6 +820,14 @@ suite "evaluator":
     result = evalS("(= (3 3 \"cat\" 4) (3 3 \"cat\"))")
     check result == 0.md
 
+  test "symbol statement works":
+    var result = evalS("(symbol \"hi\")")
+    check result == "hi".mds
+
+    result = evalS("(symbol 4)")
+    check result.isType(dErr)
+    check result.errVal == E_TYPE
+
   test "cat statement works":
     var result = evalS("(cat (1 2 3) (2 3 4))")
     check result.isType(dList)
