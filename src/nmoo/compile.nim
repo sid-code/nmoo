@@ -741,10 +741,11 @@ defSpecial "let":
   verifyArgs("let", args, @[dList, dNil], varargs = true)
 
   # Keep track of what's bound so we can unbind them later
-  var binds: seq[string]
+  var binds: seq[(string, MData, int)]
   newSeq(binds, 0)
 
   let asmts = args[0].listVal
+
   for assignd in asmts:
     if not assignd.isType(dList):
       compileError("let: first argument must be a list of 2-size lists", pos)
@@ -758,9 +759,11 @@ defSpecial "let":
     if not sym.isType(dSym):
       compileError("let: only symbols can be bound", pos)
 
-    propogateError(compiler.codeGen(val))
     let symIndex = compiler.defSymbol(sym.symVal)
-    binds.add(sym.symVal)
+    binds.add((sym.symVal, val, symIndex))
+
+  for (_, val, symIndex) in binds:
+    propogateError(compiler.codeGen(val))
     emit(ins(inSTO, symIndex.md))
 
   for i in 1..args.len-1:
@@ -768,8 +771,8 @@ defSpecial "let":
     propogateError(compiler.codeGen(args[i]))
 
   # We're outside scope so unbind the symbols
-  for bound in binds:
-    compiler.undefSymbol(bound)
+  for (sym, _, _) in binds:
+    compiler.undefSymbol(sym)
 
 defSpecial "define-syntax":
   verifyArgs("define-syntax", args, @[dSym, dNil])

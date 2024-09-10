@@ -294,6 +294,32 @@ suite "evaluator":
       (call x (list 5)))""")
     check result == 15.md
 
+  test "mutually recursive let statement works":
+    let result = evalS("""
+    (let ((x (lambda (val) (if (<= val 0) 0 (call y (list (- val 1))))))
+          (y (lambda (val) (if (<= val 0) 0 (call x (list (- val 1)))))))
+      (call x (list 10)))
+    """)
+
+    check result == 0.md
+
+  test "mutually dependent let statement doesn't work":
+    var result = evalS("""
+    (let ((x y)
+          (y x))
+      x)
+    """)
+
+    check result.errVal == E_UNBOUND
+
+    result = evalS("""
+    (let ((x y)
+          (y 10))
+      x)
+    """)
+
+    check result.errVal == E_UNBOUND
+
   test "define statement works":
     let result = evalS("(do (define x 100) x)")
     check result == 100.md
