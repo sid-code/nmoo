@@ -63,4 +63,5 @@ proc main {.async.} =
   else:
     echo $result
 
-waitFor main()
+when isMainModule:
+  waitFor main()
