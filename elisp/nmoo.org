@@ -2,41 +2,145 @@
 
 This directory is for emacs lisp code for interacting with nmoo.
 
-* Dumping ground
-this is the place to dump new code until it can be sorted
+** Constants
+Some variables and defaults.
+
+#+begin_src elisp :results silent
+  (defvar *nmoo-default-host* "0.0.0.0"
+    "The default address to connect to.")
+  (defvar *nmoo-default-port* 4444
+    "The default port to connect on.")
+
+  (defvar nmoo-sccli-path "./bin/sccli"
+    "The path to the side-channel evaluation script.
+
+  This script is invoked like so:
+    sccli --address:ADDR --port:PORT
+
+  And an expression to evaluate is sent on standard input.")
+#+end_src
+
+** nmoo-mode for actually talking to the game
+Define a major mode that inherits from ~comint-mode~.
 
 #+begin_src elisp :results silent
   (define-derived-mode nmoo-mode comint-mode "NMOO interaction"
-    "A major mode for talking to an NMOO instance.")
+    "A major mode for talking to an NMOO instance."
+    (make-variable-buffer-local 'nmoo-process)
+    (make-variable-buffer-local 'nmoo-address)
+    (make-variable-buffer-local 'nmoo-port))
+#+end_src
 
+*** Connect to the server
+
+#+begin_src elisp :results silent
   (defun nmoo-connect (host port)
-    (interactive "MEnter the host: \nNEnter the port: " )
+    (interactive
+     (list
+      (read-string (format "nmoo host (%s): " *nmoo-default-host*) nil nil *nmoo-default-host*)
+      (read-number (format "nmoo port (%d): " *nmoo-default-port*) *nmoo-default-port*)))
     (let ((buf (get-buffer-create (format "*nmoo@%s:%s*" host port))))
       (with-current-buffer buf
-	(nmoo-mode)
-	(setq-local nmoo-address host)
-	(setq-local nmoo-port port)
-	(setq scroll-conservatively 1000)
-	(nmoo--init))
+        (nmoo-mode)
+        (setq-local nmoo-address host)
+        (setq-local nmoo-port port)
+        (setq scroll-conservatively 1000)
+        (nmoo--init))
       (pop-to-buffer buf)))
-
-  (defun nmoo--process-filter (proc string)
-    (when (buffer-live-p (process-buffer proc))
-      (with-current-buffer (process-buffer proc)
-	(let ((moving (= (point) (process-mark proc))))
-	  (save-excursion
-	    ;; Insert the text, advancing the process marker.
-	    (goto-char (process-mark proc))
-	    (insert (replace-regexp-in-string "" "" string))
-	    (set-marker (process-mark proc) (point)))
-	  (if moving (goto-char (process-mark proc)))))))
 
   (defun nmoo--init ()
     (let ((proc (make-network-process
-		 :name "nmoo"
-		 :host nmoo-address
-		 :service nmoo-port
-		 :buffer (current-buffer))))
+                       :name "nmoo"
+                       :host nmoo-address
+                       :service nmoo-port
+                       :buffer (current-buffer))))
       (set-process-filter proc #'nmoo--process-filter)
       (setq-local nmoo-process proc)))
+
+  (defun nmoo--fix-string (string)
+    (replace-regexp-in-string "" "" string))
+  (defun nmoo--process-filter (proc string)
+    (when (buffer-live-p (process-buffer proc))
+      (with-current-buffer (process-buffer proc)
+        (let ((moving (= (point) (process-mark proc))))
+          (save-excursion
+            ;; Insert the text, advancing the process marker.
+            (goto-char (process-mark proc))
+            (insert (nmoo--fix-string string))
+            (set-marker (process-mark proc) (point)))
+          (when moving
+            (goto-char (process-mark proc)))))))
+#+end_src
+
+** Minor mode
+*** Definition
+#+begin_src elisp :results silent
+  (define-minor-mode nmoo-minor-mode
+    "Ties this buffer to a NMOO instance."
+    :keymap (let ((keymap (make-sparse-keymap)))
+              (define-key keymap (kbd "C-x C-e") #'nmoo-eval-last-sexp)
+              (define-key keymap (kbd "C-c C-s") #'nmoo-save-verb)
+              keymap)
+
+    (make-variable-buffer-local 'nmoo-parent-buffer)
+    (make-variable-buffer-local 'nmoo-edit-verb-object)
+    (make-variable-buffer-local 'nmoo-edit-verb-name))
+
+#+end_src
+
+*** Talking over the side channel
+#+begin_src elisp :results silent
+  (defun nmoo-eval (expr)
+    (let ((addrarg (format "--address:%s" nmoo-address))
+          (portarg (format "--port:%d" nmoo-port)))
+      (with-temp-buffer
+        (let ((proc (call-process-region
+                     expr nil ;; START END; START is a string and END is ignored.
+                     nmoo-sccli-path nil t nil ;; PROGRAM DELETE BUFFER DISPLAY
+                     addrarg portarg)))
+          (string-trim (buffer-string))))))
+
+  (defun nmoo--get-last-sexp ()
+    (let ((cp (point)))
+      (save-excursion
+        (backward-sexp)
+        (buffer-substring (point) cp))))
+
+  (defun nmoo-eval-last-sexp ()
+    (interactive)
+    (message "%s" (nmoo-eval (nmoo--get-last-sexp))))
+
+#+end_src
+
+*** Editing verbs
+#+begin_src elisp :results silent
+  (defun nmoo-edit-verb (obj verb)
+    (interactive
+     (list (read-number "Object number: ")
+           (read-string "Verb name: ")))
+    (let ((parent-buffer (current-buffer))
+          (vars (buffer-local-variables)))
+      (with-current-buffer (get-buffer-create (format "nmoo verb #%d:%s" obj verb))
+        (scheme-mode)
+        (nmoo-minor-mode)
+        (setq-local nmoo-parent-buffer parent-buffer)
+        (setq-local nmoo-address (alist-get 'nmoo-address vars))
+        (setq-local nmoo-port (alist-get 'nmoo-port vars))
+        (setq-local nmoo-edit-verb-object obj)
+        (setq-local nmoo-edit-verb-name verb)
+        (erase-buffer)
+        (insert (nmoo-eval (format "(getverbcode #%d \"%s\")" obj verb)))
+        (switch-to-buffer (current-buffer)))))
+
+  (defun nmoo--newlineify (str)
+    (if (string-suffix-p "\n" str)
+        str
+      (concat (string-trim-right str) "\n")))
+  (defun nmoo-save-verb ()
+    (interactive)
+    (let* ((vars (buffer-local-variables nmoo-parent-buffer))
+           (proc (alist-get 'nmoo-process vars)))
+      (process-send-string proc (format "@program #%d:%s\n" nmoo-edit-verb-object nmoo-edit-verb-name))
+      (process-send-string proc (nmoo--newlineify (buffer-string)))
+      (process-send-string proc ".\n")))
 #+end_src
