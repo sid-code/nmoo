@@ -1755,9 +1755,8 @@ defBuiltin "nil?":
 defBuiltin "symbol":
   if args.len != 1:
     runtimeError(E_ARGS, "symbol takes 1 argument")
-  let what = args[0]
-  checkType(what, dStr)
-  return what.strVal.mds
+  let what = extractString(args[0])
+  return what.mds.pack
 
 ## ::
 ##
