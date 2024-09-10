@@ -53,6 +53,11 @@ proc hash(itype: InstructionType): auto = ord(itype).hash
 
 proc newVSymTable: VSymTable = newTable[int, MData]()
 
+proc copy(vst: VSymTable): VSymTable =
+  result = newVSymTable()
+  for key, val in vst:
+    result[key] = val
+
 proc combine(cst: CSymTable, vst: VSymTable): SymbolTable =
   result = newSymbolTable()
   for key, val in cst:
@@ -372,7 +377,7 @@ impl inCALL:
             discard
           else:
             task.pushFrame(symtableIndex = uint(task.symtables.len))
-            task.symtables.add(task.symtables[env].deepCopy)
+            task.symtables.add(task.symtables[env].copy)
           task.pc = jmploc.intVal
         else:
           let args = task.collect(numArgs)
