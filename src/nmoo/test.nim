@@ -400,6 +400,14 @@ suite "evaluator":
 
     check result == @[5.md, 10.md, 5.md].md
 
+  test "let-syntax statement works":
+    let result = evalS("""
+    (let-syntax ((test (lambda (code) 0)))
+      (test a b c))
+    """)
+
+    check result == 0.md
+
   test "cond statement works":
     var result = evalS("""
     (cond (1 "it works") (0 "it doesn't work") ("it doesn't work!!!"))

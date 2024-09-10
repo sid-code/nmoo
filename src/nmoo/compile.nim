@@ -784,6 +784,38 @@ defSpecial "define-syntax":
   compiler.syntaxTransformers[name] = SyntaxTransformer(code: args[1])
   emit(ins(inPUSH, nilD))
 
+defSpecial "let-syntax":
+  verifyArgs("let", args, @[dList, dNil], varargs = true)
+  var temporaryMacros: HashSet[string]
+
+  let macros = args[0].listVal
+  for macrod in macros:
+    if not macrod.isType(dList):
+      compileError("let-syntax: first argument must be a list of 2-size lists", pos)
+    let macrodef = macrod.listVal
+    if not macrodef.len == 2:
+      compileError("let-syntax: first argument must be a list of 2-size lists", pos)
+
+    let named = macrodef[0]
+
+    if not named.isType(dSym):
+      compileError("let-syntax: macro names must be symbols", pos)
+
+    let name = named.symVal
+    let transformer = macrodef[1]
+    if compiler.macroExists(name):
+      compileError("define-syntax: macro " & name & " already exists.", pos)
+
+    compiler.syntaxTransformers[name] = SyntaxTransformer(code: transformer)
+    temporaryMacros.incl(name)
+
+  for i in 1..args.len-1:
+    if i > 1: emit(ins(inPOP))
+    propogateError(compiler.codeGen(args[i]))
+
+  for name in temporaryMacros:
+    compiler.syntaxTransformers.del(name)
+
 defSpecial "try":
   let alen = args.len
   if alen != 2 and alen != 3:
