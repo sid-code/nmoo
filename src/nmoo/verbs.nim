@@ -326,8 +326,6 @@ proc handleCommand*(player: MObject, command: string): Option[TaskID] =
     case v.doSpec:
       of oAny:
         if doQuerySuccess:
-          if o != player and o != loc:
-            continue
           symtable["dobj"] = dobject.md
       of oThis:
         if doQuerySuccess and dobject == o: symtable["dobj"] = o.md else: continue
@@ -338,8 +336,6 @@ proc handleCommand*(player: MObject, command: string): Option[TaskID] =
     case v.ioSpec:
       of oAny:
         if ioQuerySuccess:
-          if o != player and o != loc:
-            continue
           symtable["iobj"] = iobject.md
       of oThis:
         if ioQuerySuccess and iobject == o: symtable["iobj"] = o.md else: continue
