@@ -375,7 +375,8 @@ impl inCALL:
           return
 
         if origin == task.id:
-          if task.nextInstruction().itype == inRET:
+          # TODO: Tail call optimization is broken.
+          if false and task.nextInstruction().itype == inRET:
             # we have a tail call!
             # there's no need to push another stack frame
             discard
