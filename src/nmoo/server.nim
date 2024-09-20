@@ -272,8 +272,14 @@ proc processClient(client: Client, address: string) {.async.} =
   # Has the player connected to an existing character?
   var connected = false
 
+  var line: string
   while true:
-    var line = await client.recvLine()
+    try:
+      line = await client.recvLine()
+    except:
+      error "Failed to get input from client: $#" % getCurrentExceptionMsg()
+      removeClient(client)
+      break
 
     # Disconnection check
     if line.len == 0 or line[0] == '\0':
