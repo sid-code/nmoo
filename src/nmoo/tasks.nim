@@ -292,8 +292,8 @@ impl inMCONT:
   var cont: Continuation
   cont.pc = operand.intVal
   cont.globals = task.globals
-  deepCopy(cont.stack, task.stack)
-  deepCopy(cont.frames, task.frames)
+  cont.stack = task.stack
+  cont.frames = task.frames
 
   # push the continuation's ID onto the stack so that it can be accessed
   let contID = task.continuations.len
@@ -322,8 +322,8 @@ proc callContinuation(task: Task, contID: int) =
 
   let cont = task.continuations[contID]
   task.pc = cont.pc
-  deepCopy(task.stack, cont.stack)
-  deepCopy(task.frames, cont.frames)
+  task.stack = cont.stack
+  task.frames = cont.frames
 
   task.spush(res)
 
