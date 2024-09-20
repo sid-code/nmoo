@@ -14,8 +14,8 @@
         (if (not (istype cont-symbol "sym"))
             (err E_ARGS "third argument to loop must be a symbol")
             nil)
-        `(let ((_CONT (call-cc (lambda (cont)
-                                 (cont (list cont ,initvals)))))
+        `(let ((_CONT (call-cc (lambda (_cont)
+                                 (_cont (list _cont ,initvals)))))
                (,loopvars (get _CONT 1))
                (,cont-symbol (lambda (vals)
                                ;; avoid nasty surprises
