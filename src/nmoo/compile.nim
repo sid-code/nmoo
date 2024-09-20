@@ -518,7 +518,7 @@ defSpecial "lambda":
       compileError("lambda variables can only be symbols", bound.pos)
     let name = bound.symVal
     let index = compiler.defSymbol(name)
-    compiler.subrs.add(ins(inSTO, index.md))
+    compiler.subrs.add(ins(inSTO, index.md, bound.pos))
 
   let
     subrsBeforeSize = compiler.subrs.len
@@ -764,7 +764,7 @@ defSpecial "let":
 
   for (_, val, symIndex) in binds:
     propogateError(compiler.codeGen(val))
-    emit(ins(inSTO, symIndex.md))
+    emit(ins(inSTO, symIndex.md, val.pos))
 
   for i in 1..args.len-1:
     if i > 1: emit(ins(inPOP))
