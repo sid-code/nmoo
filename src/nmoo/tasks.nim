@@ -7,6 +7,7 @@ import sequtils
 import times
 import std/options
 import std/sugar
+import std/strformat
 
 import types
 import builtindef
@@ -157,7 +158,7 @@ proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
     elif res.ptype in {ptCall, ptInput}:
       task.setCallPackage(res, builtin, args)
   else:
-    task.doError(E_BUILTIN.md("unknown builtin '$1'" % builtinName))
+    task.doError(E_BUILTIN.md(fmt"unknown builtin '{builtinName}'"))
 
 
 var instImpls = initTable[InstructionType, InstructionProc]()
@@ -267,7 +268,7 @@ impl inGGET:
     let value = task.globals[name]
     task.spush(value)
   else:
-    task.doError(E_UNBOUND.md("unbound symbol '$1'" % name))
+    task.doError(E_UNBOUND.md(fmt"unbound symbol '{name}'"))
 
 impl inGSTO:
   let name = operand.symVal
@@ -370,8 +371,7 @@ impl inCALL:
         # let expression = lcall[5]
 
         if expectedNumArgs != numArgs:
-          task.doError(E_ARGS.md("lambda expected $1 args but got $2" %
-                                 [$expectedNumArgs, $numArgs]))
+          task.doError(E_ARGS.md(fmt"lambda expected {expectedNumArgs} args but got {numArgs}"))
           return
 
         if origin == task.id:
@@ -387,7 +387,7 @@ impl inCALL:
         else:
           let args = task.collect(numArgs)
           if args.len != numArgs:
-            task.doError(E_INTERNAL.md("insufficient arguments for lambda (need " & $numArgs & ")"))
+            task.doError(E_INTERNAL.md("insufficient arguments for lambda (need {numArgs})"))
             return
 
           var symtable = envData.toST()
@@ -408,9 +408,9 @@ impl inCALL:
     if args.len == numArgs:
       task.builtinCall(what, args)
     else:
-      task.doError(E_INTERNAL.md("insufficient arguments for builtin (need " & $numArgs & ")"))
+      task.doError(E_INTERNAL.md(fmt"insufficient arguments for builtin (need {numArgs})"))
   else:
-    task.doError(E_ARGS.md("cannot call '$1'" % [$what]))
+    task.doError(E_ARGS.md(fmt"cannot call '{what}'"))
 
 impl inRET:
   task.popFrame()
@@ -462,7 +462,7 @@ impl inPUSHL:
 impl inLEN:
   let listd = task.top()
   if not listd.isType(dList):
-    task.doError(E_INTERNAL.md("not a list: ".format(listd)))
+    task.doError(E_INTERNAL.md(fmt"not a list: {listd}"))
     return
 
   let list = listd.listVal
@@ -522,7 +522,7 @@ proc finish*(task: Task) =
       # make sure that the task's callback isn't crucial to the operation of
       # the system, and if it is, then debug more.
 
-      warn "Warning: callback for task '$#' didn't exist." % [task.name])
+      warn fmt"Warning: callback for task '{task.name}' didn't exist.")
 
 proc registerCallback*(task, cbTask: Task) =
   cbTask.waitingFor = some(task.id)
@@ -560,7 +560,7 @@ proc step*(world: World, task: Task) =
     if instImpls.hasKey(itype):
       instImpls[itype](world, task.id, operand)
     else:
-      raise newException(Exception, "instruction '$1' not implemented" % [$itype])
+      raise newException(Exception, fmt"instruction '{itype}' not implemented")
 
     task.pc += 1
     task.tickCount += 1
@@ -602,7 +602,7 @@ proc run(world: World, task: Task, limit = -1): TaskResult =
 
 proc run*(world: World, tid: TaskID, limit = -1): TaskResult =
   world.getTaskByID(tid).map(t => world.run(t, limit)).get(
-    TaskResult(typ: trError, err: E_INTERNAL.md("task $# not found" % $tid)))
+    TaskResult(typ: trError, err: E_INTERNAL.md(fmt"task {tid} not found")))
 
 proc addCoreGlobals*(st: SymbolTable): SymbolTable =
   result = st
