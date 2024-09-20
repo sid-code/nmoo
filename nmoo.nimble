@@ -69,6 +69,11 @@ task sccli, "Build the side channel CLI":
   compilerParams &= " -d:includeWizardUtils"
   exec "nim c " & compilerParams & " -o:bin/sccli src/nmoo/schanlib/eval.nim"
 
+task neval, "Build the evaluation CLI":
+  var compilerParams = getBuildFlags()
+  compilerParams &= " -d:includeWizardUtils"
+  exec "nim c " & compilerParams & " -d:dumpTaskCode -d:singleStepTasks -o:bin/neval src/nmoo/util/eval.nim"
+
 task serveHttp, "Run the http server":
   var compilerParams: string
   compilerParams &= getBuildFlags()
