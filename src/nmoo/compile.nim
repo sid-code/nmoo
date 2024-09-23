@@ -5,6 +5,7 @@ import options
 import strutils
 import sequtils
 import std/sets
+import std/strformat
 
 import types
 import builtindef
@@ -61,7 +62,7 @@ proc newSymGen(prefix: string): SymGen = SymGen(counter: 0, prefix: prefix)
 proc newSymGen: SymGen = newSymGen("L")
 
 proc genSym(symgen: SymGen): string =
-  result = "$1$2" % [symgen.prefix, $symgen.counter]
+  result = fmt"{symgen.prefix}{symgen.counter}"
   symgen.counter += 1
 
 
@@ -201,7 +202,7 @@ proc `$`*(ins: Instruction): string =
   if ins.operand == nilD:
     return itypeStr & "\t"
   else:
-    return "$1\t$2\t$3" % [itypeStr, $ins.operand, $ins.pos]
+    return fmt"{itypeStr}\t{ins.operand}\t{ins.pos}"
 
 proc `$`*(compiler: MCompiler): string =
   var slines: seq[string] = @[]
@@ -315,18 +316,25 @@ template defSpecial(name: string, body: untyped) {.dirty.} =
 
 # dNil means any type is allowed
 template verifyArgs(name: string, args: seq[MData], spec: seq[MDataType], varargs = false) =
-  if varargs:
-    if args.len < spec.len - 1:
-      compileError("$1: expected at least $2 arguments but got $3" %
-                   [$name, $(spec.len - 1), $args.len])
-  else:
-    if args.len != spec.len:
-      compileError("$1: expected $2 arguments but got $3" % [name, $spec.len, $args.len])
+  # Workaround documented here:
+  # https://nim-lang.github.io/Nim/strformat.html#limitations
+  block:
+    let name1 {.inject.} = name
+    let args1 {.inject.} = args
+    let spec1 {.inject.} = spec
+    if varargs:
+      if args.len < spec.len - 1:
+        compileError(fmt"{name1}: expected at least {spec1.len - 1} arguments but got {args1.len}")
+    else:
+      if args.len != spec.len:
+        compileError(fmt"{name1}: expected {spec1.len} arguments but got {args1.len}")
 
-  for o, e in args.zip(spec).items:
-    if e != dNil and not o.isType(e):
-      compileError("$1: expected argument of type $2 but got $3" %
-        [name, $e, $o.dtype])
+    for o, e in args.zip(spec).items:
+      if e != dNil and not o.isType(e):
+        block:
+          let o1 {.inject.} = o
+          let e1 {.inject.} = e
+          compileError(fmt"{name1}: expected argument of type {e1} but got {o1.dtype}")
 
 proc codeGen(compiler: MCompiler, code: seq[MData], pos: CodePosition): MData =
   if code.len == 0:
@@ -685,7 +693,7 @@ defSpecial "static-eval":
       of trSuspend:
         compileError("compile-time evaluation unexpectedly suspended", pos)
       of trError:
-        tr.err.errMsg = "compile time error: $#" % tr.err.errMsg
+        tr.err.errMsg = fmt"compile time error: {tr.err.errMsg}"
         compileError(tr.err)
       of trTooLong:
         compileError("compile-time evaluation took too long", pos)
