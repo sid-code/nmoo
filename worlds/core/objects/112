@@ -73,7 +73,7 @@ contents
 0
 5
 .
-5
+6
 macro-letf
 
 .
@@ -140,6 +140,38 @@ oThis pNone oThis
 5
 .
 pcase
+(let ((exp (head args))
+      (cases (tail args))
+      (err-handler
+       (lambda (err-type helpstr pat oexp)
+         (if (= 'mismatch err-type)
+             ()
+             (err E_ARGS
+                  (cat "Error " err-type ": " helpstr
+                       "\nPattern: " pat
+                       "\nExpression: " oexp))))))
+  (@#112:loop v (0) next
+              (let ((i (get v 0)))
+                (if (>= i (len cases))
+                    nil
+                    (let ((cs (get cases i))
+                          (pat (get cs 0))
+                          (res (get cs 1))
+                          
+                          (unif (#112:unify pat exp err-handler)))
+                      (if (nil? unif)
+                          (next ((+ i 1)))
+                          (eval `(let ,(map (lambda (p) (let ((k (get p 0))
+                                                              (v (get p 1)))
+                                                          (list k ('quote v)))) unif)
+                                   ,res))))))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+unify
 (let ((unify-literal
        (lambda (exp args err-handler)
          (let ((literal (get args 0)))
@@ -174,7 +206,7 @@ pcase
        (lambda (err-type helpstr pat exp)
          (err E_ARGS (cat "unify failed:\n"
                           "type:   " err-type "\n"
-                          "reason: " hint  "\n"
+                          "reason: " helpstr  "\n"
                           "pat:    " pat "\n"
                           "exp:    " exp "\n"))))
 
@@ -188,22 +220,30 @@ pcase
 
       (unify-listrec
        (lambda (listpat listexp i err-handler)
-         (let ((patitem (get listpat i))
-               (expitem (get listexp i)))
-           (cat
-            (if (special-clause? patitem)
-                (unify patitem (slice listexp i)
-                       (lambda (type hint pat exp)
-                         (unify patitem expitem err-handler)))
-                (unify patitem expitem err-handler))
-            (let ((endofpat (>= i (- (len listpat) 1)))
-                  (endofexp (>= i (- (len listexp) 1))))
-              (cond
-               ((and endofpat endofexp) '())
-               (endofpat (err-handler 'mismatch "Expression had too many elements" listpat listexp))
-               (endofexp (err-handler 'mismatch "Expression is missing elements" listpat listexp))
-               ((unify-listrec listpat listexp (+ i 1) err-handler))))))))
-       
+         (if (> i (- (len listpat) 1))
+             (err-handler 'mismatch "Expression had too many elements" listpat listexp)
+             (let ((patitem (get listpat i))
+                   (is-special-clause? (special-clause? patitem))
+                   (is-rest-clause? (and is-special-clause? (= '&rest (head patitem)))))
+               (if (> i (- (len listexp) 1))
+                   (if is-rest-clause?
+                       (list (list (get patitem 1) ()))
+                       (err-handler 'mismatch
+                                    (cat "Expression is missing elements " patitem) listpat listexp))
+                   (let ((expitem (get listexp i)))
+                     (cat
+                      (if is-special-clause?
+                          (unify patitem (slice listexp i)
+                                 (lambda (type hint pat exp)
+                                   (unify patitem expitem err-handler)))
+                          
+                          (unify patitem expitem err-handler))
+                      (let ((endofpat (>= i (- (len listpat) 1)))
+                            (endofexp (>= i (- (len listexp) 1))))
+                        (cond
+                         ((and endofpat endofexp) '())
+                         ((unify-listrec listpat listexp (+ i 1) err-handler)))))))))))
+      
       (unify-special
        (lambda (listpat exp err-handler)
          (let ((special-name (symbol (substr ($ (get listpat 0)) 1 -1)))
@@ -235,11 +275,10 @@ pcase
             ((unify-listrec pat exp 0 err-handler))))
           ((istype pat "sym") (list (list pat exp)))
           ((err-handler 'malformed-pattern "Malformed pattern" pat exp))))))
-
-  (unify '(a (b c1) (&rest c)) '(ayy (bee1 bee2) c) unify-throwing-handler))
+  (call unify args))
 .
 7
 0
-oNone pNone oNone
+oThis pNone oThis
 5
 .
