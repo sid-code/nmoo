@@ -25,6 +25,7 @@ import nre
 import options
 import times
 import std/sets
+import std/strformat
 
 import types
 import objects
@@ -326,7 +327,7 @@ defBuiltin "eval":
     let instructions = compileCode(form, player)
     checkForError(instructions.error)
 
-    discard world.addTask("eval", self, player, caller, owner, symtable, instructions,
+    discard world.addTask(fmt"eval {form}", self, player, caller, owner, symtable, instructions,
                           taskType = task.taskType, callback = some(task.id))
     task.setStatus(tsAwaitingResult)
     return 1.pack
