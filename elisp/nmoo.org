@@ -92,7 +92,7 @@ Define a major mode that inherits from ~comint-mode~.
 #+begin_src elisp :results silent
   (defun nmoo-eval (expr)
     (let ((addrarg (format "--address:%s" nmoo-address))
-          (portarg (format "--port:%d" nmoo-port)))
+          (portarg (format "--port:%s" nmoo-port)))
       (with-temp-buffer
         (let ((proc (call-process-region
                      expr nil ;; START END; START is a string and END is ignored.
@@ -120,7 +120,7 @@ Define a major mode that inherits from ~comint-mode~.
            (read-string "Verb name: ")))
     (let ((parent-buffer (current-buffer))
           (vars (buffer-local-variables)))
-      (with-current-buffer (get-buffer-create (format "nmoo verb #%d:%s" obj verb))
+      (with-current-buffer (get-buffer-create (format "nmoo verb #%s:%s" obj verb))
         (scheme-mode)
         (nmoo-minor-mode)
         (setq-local nmoo-parent-buffer parent-buffer)
@@ -129,7 +129,7 @@ Define a major mode that inherits from ~comint-mode~.
         (setq-local nmoo-edit-verb-object obj)
         (setq-local nmoo-edit-verb-name verb)
         (erase-buffer)
-        (insert (nmoo-eval (format "(getverbcode #%d \"%s\")" obj verb)))
+        (insert (nmoo-eval (format "(getverbcode #%s \"%s\")" obj verb)))
         (switch-to-buffer (current-buffer)))))
 
   (defun nmoo--newlineify (str)
