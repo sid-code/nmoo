@@ -26,10 +26,11 @@ const useGcAssert = getEnv("NMOO_GC_ASSERT") == "1"
 proc getBuildFlags(): string =
   result &= " --legacy:laxEffects"
   result &= " --mm:orc --deepcopy:on"
+  result &= " --passC:\"-Wno-implicit-function-declaration\""
+  result &= " --passC:\"-Wno-int-conversion\""
 
   # without this we get weird ORC segfaults
   result &= " -d:useMalloc"
-
   if debugBuild:
     result &= " -d:debug"
     result &= " --debugger:native"
