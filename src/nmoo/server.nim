@@ -286,10 +286,13 @@ proc processClient(client: Client, address: string) {.async.} =
       removeClient(client)
       break
 
-    # Check side channel escape code before basically everything else.
+    # Check side channel escape code — only for authenticated clients.
     if line[0] == SideChannelEscapeChar:
-      client.player.output = devnull
-      await client.processEscapeSequence()
+      if connected:
+        client.player.output = devnull
+        await client.processEscapeSequence()
+      else:
+        when defined(debug): debug "Unauthenticated side-channel message from $#", address
       continue
 
     client.player.output = ssend
@@ -359,6 +362,7 @@ proc getHostAndPort: tuple[host: string, port: Port] =
 
 var host: string
 var port: Port
+
 
 proc serve {.async.} =
   clients = @[]
@@ -500,7 +504,6 @@ proc tick(world: World) =
       warn exception.repr
       task.doError(E_INTERNAL.md(exception.msg))
   world.pruneFinishedTasks()
-
 proc startServer {.async.} =
   if runInitVerb(world):
     (host, port) = getHostAndPort()

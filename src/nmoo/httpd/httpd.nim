@@ -5,6 +5,7 @@ import options
 import strutils
 import logging
 import tables
+import os
 
 import ../server
 import ../types
@@ -135,9 +136,27 @@ proc serve(mws: MWebServer) {.async.} =
     let body = bodyd.strVal
 
     await req.respond(returnCode.get(), body, headers=respHeaders.get())
-
   let sock = newAsyncSocket()
   await sock.connect(mws.schost, mws.scport)
+
+  # TODO: find a better auth scheme here.
+  # Authenticate through the game protocol.
+  let user = getEnv("NMOO_SERVICE_USER", "httpd")
+  let pass = getEnv("NMOO_SERVICE_PASS")
+  if pass.len == 0:
+    fatal "NMOO_SERVICE_PASS environment variable is required"
+    quit 1
+
+  # Discard the initial welcome line.
+  discard await sock.recvLine()
+
+  await sock.send("connect " & user & " " & pass & "\n")
+
+  # Read the response — "Incorrect …" means auth failed.
+  let authResp = await sock.recvLine()
+  if authResp.contains("Incorrect"):
+    fatal "HTTP server failed to authenticate with the nmoo server: $#" % authResp
+    quit 1
 
   mws.sc = newAsyncSideChannelClient(sock)
   asyncCheck mws.sc.startReader()

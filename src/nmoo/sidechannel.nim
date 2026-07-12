@@ -1,5 +1,6 @@
 import strutils
 import asyncdispatch
+import asyncnet
 import streams
 import boost/io/asyncstreams
 import tables
@@ -16,28 +17,21 @@ proc writeResponse(s: Stream | AsyncStream, id: uint32, d: MData) {.used, multis
   await s.write(id)
   await s.writeMData(d)
 
-# This function is called when the client sends
-# ``SideChannelEscapeChar`` as the first byte of a message.
-proc processEscapeSequence*(client: Client) {.async.} =
-  let stream = newAsyncSocketStream(client.sock)
+proc processEscapeSequence*(sock: AsyncSocket, player: MObject, world: World) {.async.} =
+  ## Process a side-channel escape sequence on a raw socket.
+  ## Called when the client sends ``SideChannelEscapeChar`` as the first byte.
+  let stream = newAsyncSocketStream(sock)
 
-  # Set ID to 0 so that if anything happens, we can check the ID
-  # against 0 to see if it was actually set. Of course, this means
-  # that the client should never provide a zero ID. If the ID is zero,
-  # then the whole request is ignored.
   var id: uint32 = 0
   try:
-    # This ID will be sent back along with the result
     id = await stream.readUint32()
 
-    # We do not allow the client-provided ID to be zero
     if id == 0:
       return
 
     let d = await stream.readMData()
 
-    # compile the code!
-    let instructions = compileCode(d, client.player)
+    let instructions = compileCode(d, player)
 
     when defined(dumpSideChannelCode):
       for idx, instr in instructions.code:
@@ -47,19 +41,17 @@ proc processEscapeSequence*(client: Client) {.async.} =
       await stream.writeResponse(id, instructions.error)
       return
 
-    # TODO: Stop writing this code over and over
-    # There needs to be a standard symtable that new tasks use.
     var symtable = newSymbolTable()
     symtable = addCoreGlobals(symtable)
-    symtable["self"] = client.player.md
-    symtable["player"] = client.player.md
-    symtable["caller"] = client.player.md
+    symtable["self"] = player.md
+    symtable["player"] = player.md
+    symtable["caller"] = player.md
 
-    let t = client.player.world.addTask("side-channel-task",
-                                        client.player, client.player, client.player, client.player,
-                                        symtable, instructions)
+    let t = world.addTask("side-channel-task",
+                          player, player, player, player,
+                          symtable, instructions)
 
-    let tr = client.player.world.run(t)
+    let tr = world.run(t)
     if tr.typ == trFinish:
       await stream.writeResponse(id, tr.res)
     else:
@@ -72,7 +64,9 @@ proc processEscapeSequence*(client: Client) {.async.} =
         of trTooLong:
           await stream.writeResponse(id, E_SIDECHAN.md("side-channel task took too long"))
   except:
-    # If id == 0 then it's likely that it wasn't initialized.
     if id != 0:
       await stream.writeResponse(id, getCurrentExceptionMsg().md)
-  
+
+# Legacy wrapper — delegates to the standalone proc.
+proc processEscapeSequence*(client: Client) {.async.} =
+  await client.sock.processEscapeSequence(client.player, client.player.world)
