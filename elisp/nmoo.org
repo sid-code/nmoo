@@ -2,6 +2,8 @@
 
 This directory is for emacs lisp code for interacting with nmoo.
 
+To run all of this, run elisp:org-babel-execute-buffer.
+
 ** Constants
 Some variables and defaults.
 
