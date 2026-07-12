@@ -67,7 +67,7 @@ owner
 5
 .
 mimetable
-((table ("html" "text/html") ("txt" "text/plain") ("css" "text/css") ("js" "application/javascript")))
+((table ("txt" "text/plain") ("css" "text/css") ("js" "application/javascript") ("html" "text/html")))
 7
 0
 0

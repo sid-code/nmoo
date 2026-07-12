@@ -476,7 +476,7 @@ proc pruneFinishedTasks(world: World) =
   for tid in prune:
       world.tasks.del(tid)
 
-proc tick(world: World) =
+proc tick*(world: World) =
   let tids = toSeq(world.tasks.keys)
   for tid in tids:
     let task = world.tasks[tid]
