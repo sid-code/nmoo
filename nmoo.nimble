@@ -82,3 +82,7 @@ task serveHttp, "Run the http server":
 
 task docs, "Generate builtin function documentation":
   exec "nim c -r src/nmoo/doc/builtindocgen.nim"
+
+task inline, "Run inline server (for debugging stuff)":
+  var compilerParams = getBuildFlags()
+  exec "nim c -r " & compilerParams & " -o:bin/main src/nmoo/main.nim"
