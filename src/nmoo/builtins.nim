@@ -1003,7 +1003,9 @@ defBuiltin "delverb":
   if isNil(verb) or verb.inherited:
     runtimeError(E_VERBNF, "$1 does not define a verb $2" % [obj.toObjStr, $args[1]])
 
-  discard obj.delVerb(verb)
+  let idx = obj.verbs.find(verb)
+  if idx >= 0:
+    obj.verbs.delete(idx)
   world.persist(obj)
 
   return obj.md.pack
