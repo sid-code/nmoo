@@ -976,10 +976,10 @@ defBuiltin "addverb":
 
   checkForError(verb.setCode("", owner))
 
-  discard obj.addVerb(verb)
+  obj.verbs.add(move(verb))
   world.persist(obj)
 
-  return objd.pack
+  return obj.md.pack
 
 ## ::
 ##
