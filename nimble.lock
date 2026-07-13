@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "packages": {
+    "asynctools": {
+      "version": "0.1.1",
+      "vcsRevision": "a1a17d06713727d97810cad291e29dd7c672738f",
+      "url": "https://github.com/cheatfate/asynctools",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "3f7096335282f45ebab49b939b20a1ed52cdec31"
+      }
+    },
+    "bcrypt": {
+      "version": "0.2.1",
+      "vcsRevision": "9747d7f6ad3277c169444b5dedb5b99075cd140c",
+      "url": "https://github.com/ithkuil/bcryptnim/",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "5d8719a26c03137b6c38dbf13e9a102b985f8d18"
+      }
+    },
+    "patty": {
+      "version": "0.3.5",
+      "vcsRevision": "31bb61b990b8b3bae1cba2f353fb978448942318",
+      "url": "https://github.com/andreaferretti/patty",
+      "downloadMethod": "git",
+      "dependencies": [],
+      "checksums": {
+        "sha1": "6bc181924709c8a2d06b1459a31e73eb42cf1283"
+      }
+    },
+    "nimboost": {
+      "version": "0.5.5",
+      "vcsRevision": "68d8e681cbdd1e6b805327d335ab1319e5d6eaf9",
+      "url": "https://github.com/vegansk/nimboost",
+      "downloadMethod": "git",
+      "dependencies": [
+        "patty"
+      ],
+      "checksums": {
+        "sha1": "43f6fa8c7b9706c65659ab7c3650c31641a801a5"
+      }
+    }
+  },
+  "tasks": {}
+}

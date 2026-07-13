@@ -16,73 +16,31 @@ requires "bcrypt"
 requires "nimboost"
 requires "asynctools"
 
-const coverage = getEnv("NMOO_COVERAGE") == "1"
-const debugBuild = getEnv("NMOO_DEBUG") == "1"
-const releaseBuild = getEnv("NMOO_RELEASE") == "1"
-const estpProfiler = getEnv("NMOO_PROFILE") == "default"
-const hottieProfiler = getEnv("NMOO_PROFILE") == "hottie"
-const useGcAssert = getEnv("NMOO_GC_ASSERT") == "1"
-
-proc getBuildFlags(): string =
-  result &= " --legacy:laxEffects"
-  result &= " --mm:orc --deepcopy:on"
-  result &= " --passC:\"-Wno-implicit-function-declaration\""
-  result &= " --passC:\"-Wno-int-conversion\""
-
-  # without this we get weird ORC segfaults
-  result &= " -d:useMalloc"
-  if debugBuild:
-    result &= " -d:debug"
-    result &= " --debugger:native"
-
-  if releaseBuild:
-    result &= " -d:release -d:danger"
-
-  if estpProfiler:
-    result &= " -d:profiler --profiler:on --stacktrace:on"
-
-  if hottieProfiler:
-    result &= " --debugger:native -d:release -d:danger --passL:\"-no-pie\""
-
-  if useGcAssert:
-    result &= " -d:useGcAssert"
 
 task test, "Run tests":
   var compilerParams: string
-  if coverage:
-    let gccParams = "'-ftest-coverage -fprofile-arcs'"
+  let gccParams = "'-ftest-coverage -fprofile-arcs'"
 
-    compilerParams &= " --passC:" & gccParams &
-      " --passL:" & gccParams &
-      " --nimcache:./nimcache"
-
-  compilerParams &= getBuildFlags()
+  compilerParams &= " --passC:" & gccParams &
+    " --passL:" & gccParams &
+    " --nimcache:./nimcache"
 
   exec "nim c -r " & compilerParams & " -o:bin/test src/nmoo/test.nim"
 
 task serve, "Run the server":
-  var compilerParams = getBuildFlags()
-  compilerParams &= " -d:includeWizardUtils"
-  exec "nim c -r " & compilerParams & " -o:bin/server src/nmoo.nim"
+  exec "nim c -r -o:bin/server src/nmoo.nim"
 
 task sccli, "Build the side channel CLI":
-  var compilerParams = getBuildFlags()
-  compilerParams &= " -d:includeWizardUtils"
-  exec "nim c " & compilerParams & " -o:bin/sccli src/nmoo/schanlib/eval.nim"
+  exec "nim c -o:bin/sccli src/nmoo/schanlib/eval.nim"
 
 task neval, "Build the evaluation CLI":
-  var compilerParams = getBuildFlags()
-  compilerParams &= " -d:includeWizardUtils"
-  exec "nim c " & compilerParams & " -d:dumpTaskCode -d:singleStepTasks -o:bin/neval src/nmoo/util/eval.nim"
+  exec "nim c -d:dumpTaskCode -d:singleStepTasks -o:bin/neval src/nmoo/util/eval.nim"
 
 task serveHttp, "Run the http server":
-  var compilerParams: string
-  compilerParams &= getBuildFlags()
-  exec "nim c -r " & compilerParams & " -o:bin/httpd src/nmoo/httpd/httpd.nim"
+  exec "nim c -r -o:bin/httpd src/nmoo/httpd/httpd.nim"
 
 task docs, "Generate builtin function documentation":
   exec "nim c -r src/nmoo/doc/builtindocgen.nim"
 
 task inline, "Run inline server (for debugging stuff)":
-  var compilerParams = getBuildFlags()
-  exec "nim c -r " & compilerParams & " -o:bin/main src/nmoo/main.nim"
+  exec "nim c -r -o:bin/main src/nmoo/main.nim"
