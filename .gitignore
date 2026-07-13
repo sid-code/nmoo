@@ -3,3 +3,6 @@ bin/*
 nimcache
 
 .direnv
+nimble.develop
+nimble.paths
+nimbledeps
