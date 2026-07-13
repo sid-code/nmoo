@@ -33,7 +33,7 @@ proc stripNewLines(s: string): string =
   s.replace("\n", "")
 
 while true:
-  while world.numTasks() > 0:
+  while world.tasks.len() > 0:
     world.tick()
   world.persist()
 
