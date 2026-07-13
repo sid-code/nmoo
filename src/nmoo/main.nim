@@ -3,6 +3,7 @@ import strutils
 import nre
 import options
 import tables
+import std/strformat
 
 import types
 import server
@@ -68,8 +69,11 @@ while true:
       discard os.execShellCmd("$EDITOR edit.tmp -c \"set filetype=lisp\"")
       let newCode = readFile("edit.tmp")
 
-      verb.setCode(newCode, player, compileIt = true)
-      echo "Succesfully edited verb '$1'" % verbname
+      let err = verb.setCode(newCode, player, compileIt = true)
+      if err == E_NONE.md:
+        echo fmt"Succesfully edited verb '${verbname}'"
+      else:
+        echo fmt"Failed to edit verb '${verbname}': ${err}"
 
 
     except:
