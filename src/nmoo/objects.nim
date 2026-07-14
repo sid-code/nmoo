@@ -113,6 +113,7 @@ proc `==`(d: MData, obj: MObject): bool =
 ## Permissions handling
 
 proc isWizard*(obj: MObject): bool = obj.level == 0
+proc isProgrammer*(obj: MObject): bool = obj.level <= 1
 
 proc owns*(who, obj: MObject): bool {.inline.} =
   who.isWizard() or obj.owner == who

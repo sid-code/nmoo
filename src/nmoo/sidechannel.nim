@@ -6,6 +6,7 @@ import boost/io/asyncstreams
 import tables
 
 import types
+import objects
 import server
 import tasks
 import bytedump
@@ -21,12 +22,17 @@ proc processEscapeSequence*(sock: AsyncSocket, player: MObject, world: World) {.
   ## Process a side-channel escape sequence on a raw socket.
   ## Called when the client sends ``SideChannelEscapeChar`` as the first byte.
   let stream = newAsyncSocketStream(sock)
+  
 
   var id: uint32 = 0
   try:
     id = await stream.readUint32()
 
     if id == 0:
+      return
+
+    if not player.isProgrammer:
+      await stream.writeResponse(id, E_PERM.md)
       return
 
     let d = await stream.readMData()
