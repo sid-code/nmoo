@@ -8,6 +8,8 @@ To run all of this, run elisp:org-babel-execute-buffer.
 Some variables and defaults.
 
 #+begin_src elisp :results silent
+  (setq lexical-binding t)
+
   (defvar *nmoo-default-host* "0.0.0.0"
     "The default address to connect to.")
   (defvar *nmoo-default-port* 4444
@@ -30,22 +32,28 @@ Define a major mode that inherits from ~comint-mode~.
     "A major mode for talking to an NMOO instance."
     (make-variable-buffer-local 'nmoo-process)
     (make-variable-buffer-local 'nmoo-address)
-    (make-variable-buffer-local 'nmoo-port))
+    (make-variable-buffer-local 'nmoo-port)
+    (make-variable-buffer-local 'nmoo-user)
+    (make-variable-buffer-local 'nmoo-pass))
 #+end_src
 
 *** Connect to the server
 
 #+begin_src elisp :results silent
-  (defun nmoo-connect (host port)
+  (defun nmoo-connect (host port user pass)
     (interactive
      (list
       (read-string (format "nmoo host (%s): " *nmoo-default-host*) nil nil *nmoo-default-host*)
-      (read-number (format "nmoo port (%d): " *nmoo-default-port*) *nmoo-default-port*)))
+      (read-number (format "nmoo port (%d): " *nmoo-default-port*) *nmoo-default-port*)
+      (read-string "nmoo user: ")
+      (read-passwd "nmoo password: ")))
     (let ((buf (get-buffer-create (format "*nmoo@%s:%s*" host port))))
       (with-current-buffer buf
         (nmoo-mode)
         (setq-local nmoo-address host)
         (setq-local nmoo-port port)
+        (setq-local nmoo-user user)
+        (setq-local nmoo-pass pass)
         (setq scroll-conservatively 1000)
         (nmoo--init))
       (pop-to-buffer buf)))
@@ -56,23 +64,88 @@ Define a major mode that inherits from ~comint-mode~.
                        :host nmoo-address
                        :service nmoo-port
                        :buffer (current-buffer))))
+      (process-send-string proc (concat "connect " nmoo-user " " nmoo-pass "\n"))
       (set-process-filter proc #'nmoo--process-filter)
       (setq-local nmoo-process proc)))
+#+end_src
 
+And now the process filter, the function that actually reads the
+output from nmoo and decides what to do.
+
+This function implements the very beginnings of a real MOO/MUD client,
+especially the part about capturing lines between {tags}.
+
+#+begin_src elisp :results silent
   (defun nmoo--fix-string (string)
     (replace-regexp-in-string "" "" string))
+
+
   (defun nmoo--process-filter (proc string)
     (when (buffer-live-p (process-buffer proc))
       (with-current-buffer (process-buffer proc)
-        (let ((moving (= (point) (process-mark proc))))
-          (save-excursion
-            ;; Insert the text, advancing the process marker.
-            (goto-char (process-mark proc))
-            (insert (nmoo--fix-string string))
-            (set-marker (process-mark proc) (point)))
-          (when moving
-            (goto-char (process-mark proc)))))))
+        ;; second parameter to `string-lines' prevents stripping newlines
+        (cl-loop for line in (string-lines (nmoo--fix-string string) nil t)
+                 do (nmoo--process-line proc line)))))
+
+  (defun nmoo--process-line (proc line)
+    (let ((moving (= (point) (process-mark proc))))
+      (save-excursion
+        ;; Insert the text, advancing the process marker.
+        (goto-char (process-mark proc))
+        (let* ((trimmed (string-trim line)))
+          (cond
+           ;; if we're in the middle of capturing, add to the current string
+           (nmoo--tag-capturing
+            (if (string= (format "{/%s}" nmoo--tag-capture) trimmed)
+                (nmoo--end-capture)
+              ;; no match, just insert
+              (setq nmoo--tag-current (concat nmoo--tag-current line))))
+           ;; if we're ready to capture, check if we've seen a tag
+           (nmoo--tag-capture
+            (if (string= (format "{%s}" nmoo--tag-capture) trimmed)
+                (nmoo--start-capture)
+             ;; no match, just insert
+             (insert line)))
+           ;; we're not capturing or gearing up to capture, just insert
+           (t (insert line))))
+        (set-marker (process-mark proc) (point)))
+      (when moving
+        (goto-char (process-mark proc)))))
 #+end_src
+
+
+These are the variables for keeping track of the current tag
+capture, and the function for starting a capture.
+
+This is very simple and does not support nested tag capturing.
+
+#+begin_src elisp :results silent
+  ;; capture tag
+  (setq nmoo--tag-capture nil)
+  (setq nmoo--tag-current nil)
+  (setq nmoo--tag-capturing nil)
+  (setq nmoo--tag-continuation nil)
+
+  (defun nmoo-capture-next-tag (tag continuation)
+    (setq nmoo--tag-capture tag)
+    (setq nmoo--tag-current nil)
+    (setq nmoo--tag-capturing nil)
+    (setq nmoo--tag-continuation continuation))
+
+  (defun nmoo--start-capture ()
+    (setq nmoo--tag-current "")
+    (setq nmoo--tag-capturing t))
+
+  (defun nmoo--end-capture ()
+    (unless (null nmoo--tag-continuation)
+      (funcall nmoo--tag-continuation nmoo--tag-current))
+    (setq nmoo--tag-capture nil)
+    (setq nmoo--tag-current nil)
+    (setq nmoo--tag-continuation nil)
+    (setq nmoo--tag-capturing nil))
+
+#+end_src
+
 
 ** Minor mode
 *** Definition
@@ -94,12 +167,14 @@ Define a major mode that inherits from ~comint-mode~.
 #+begin_src elisp :results silent
   (defun nmoo-eval (expr)
     (let ((addrarg (format "--address:%s" nmoo-address))
-          (portarg (format "--port:%s" nmoo-port)))
+          (portarg (format "--port:%s" nmoo-port))
+          (userarg (format "--user:%s" nmoo-user))
+          (passarg (format "--pass:%s" nmoo-pass)))
       (with-temp-buffer
         (let ((proc (call-process-region
                      expr nil ;; START END; START is a string and END is ignored.
                      nmoo-sccli-path nil t nil ;; PROGRAM DELETE BUFFER DISPLAY
-                     addrarg portarg)))
+                     addrarg portarg userarg passarg)))
           (string-trim (buffer-string))))))
 
   (defun nmoo--get-last-sexp ()
@@ -120,24 +195,29 @@ Define a major mode that inherits from ~comint-mode~.
     (interactive
      (list (read-number "Object number: ")
            (read-string "Verb name: ")))
-    (let ((parent-buffer (current-buffer))
-          (vars (buffer-local-variables)))
-      (with-current-buffer (get-buffer-create (format "nmoo verb #%s:%s" obj verb))
-        (scheme-mode)
-        (nmoo-minor-mode)
-        (setq-local nmoo-parent-buffer parent-buffer)
-        (setq-local nmoo-address (alist-get 'nmoo-address vars))
-        (setq-local nmoo-port (alist-get 'nmoo-port vars))
-        (setq-local nmoo-edit-verb-object obj)
-        (setq-local nmoo-edit-verb-name verb)
-        (erase-buffer)
-        (insert (nmoo-eval (format "(getverbcode #%s \"%s\")" obj verb)))
-        (switch-to-buffer (current-buffer)))))
+    (let* ((parent-buffer (current-buffer))
+           (vars (buffer-local-variables))
+           (proc (alist-get 'nmoo-process vars)))
+      (process-send-string proc (format "@list #%d:%s tags no-line-numbers\n" obj verb))
+      (nmoo-capture-next-tag "verbcode"
+        (apply-partially #'nmoo--open-verb-edit-buffer obj verb parent-buffer))))
+
+  (defun nmoo--open-verb-edit-buffer (obj verb parent-buffer verbcode)
+    (with-current-buffer (get-buffer-create (format "nmoo verb #%s:%s" obj verb))
+      (scheme-mode)
+      (nmoo-minor-mode)
+      (setq-local nmoo-parent-buffer parent-buffer)
+      (setq-local nmoo-edit-verb-object obj)
+      (setq-local nmoo-edit-verb-name verb)
+      (erase-buffer)
+      (insert verbcode)
+      (switch-to-buffer (current-buffer))))
 
   (defun nmoo--newlineify (str)
     (if (string-suffix-p "\n" str)
         str
       (concat (string-trim-right str) "\n")))
+
   (defun nmoo-save-verb ()
     (interactive)
     (let* ((vars (buffer-local-variables nmoo-parent-buffer))
