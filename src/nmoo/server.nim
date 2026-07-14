@@ -290,7 +290,7 @@ proc processClient(client: Client, address: string) {.async.} =
     if line[0] == SideChannelEscapeChar:
       if connected:
         client.player.output = devnull
-        await client.processEscapeSequence()
+        await processEscapeSequence(client.sock, client.player, world)
       else:
         when defined(debug): debug "Unauthenticated side-channel message from $#", address
       continue
