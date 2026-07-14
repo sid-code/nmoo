@@ -108,9 +108,7 @@ oThis pAs oStr
 5
 .
 look
-(do
- (player:tell (self:name))
- (player:tell (self:description)))
+(player:tell (self:description))
 .
 7
 0

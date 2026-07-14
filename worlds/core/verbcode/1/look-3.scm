@@ -1,3 +1,1 @@
-(do
- (player:tell (self:name))
- (player:tell (self:description)))
+(player:tell (self:description))
