@@ -253,6 +253,10 @@ proc writeTask*(s: Stream | AsyncStream, t: Task) {.multisync.} =
   
   await s.writeSymbolTable(t.globals)
 
+  await s.write(int32(t.symtables.len))
+  for vst in t.symtables:
+    await s.writeVSymTable(vst)
+
   await s.write(int32(t.code.len))
   for inst in t.code:
     await s.writeInstruction(inst)
@@ -303,7 +307,14 @@ proc readTask*(s: Stream | AsyncStream): Future[Task] {.multisync.} =
   t.stack = stackd.listVal
 
   t.globals = await s.readSymbolTable()
-  
+
+  newSeq(t.symtables, 0)
+  count = await s.readInt32()
+  while count > 0:
+    dec count
+    let vst = await s.readVSymTable()
+    t.symtables.add(vst)
+
   newSeq(t.code, 0)
   count = await s.readInt32()
   while count > 0:
