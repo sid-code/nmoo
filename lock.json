@@ -1,0 +1,52 @@
+{
+  "depends": [
+    {
+      "method": "fetchzip",
+      "path": "/nix/store/j1m0d846177armf92gk4b7kcwxj8az32-source",
+      "rev": "56a92be34b7ae1f04da8444c7192f43d364c2dd9",
+      "sha256": "0avrjz3rr3823m7g4spbrwpx3czr0rrzbc44g4pzq88ykkch26qm",
+      "url": "https://github.com/ithkuil/bcryptnim/archive/56a92be34b7ae1f04da8444c7192f43d364c2dd9.tar.gz",
+      "ref": "update",
+      "packages": [
+        "bcrypt"
+      ],
+      "srcDir": ""
+    },
+    {
+      "method": "fetchzip",
+      "path": "/nix/store/98wlavxl61qzvvraimmdrwlwv9khx9fv-source",
+      "rev": "68d8e681cbdd1e6b805327d335ab1319e5d6eaf9",
+      "sha256": "0vxyhai9xiwbngfi75m8l6rgzh1admn72mn7ymnsq1sw0r1sv3z7",
+      "url": "https://github.com/vegansk/nimboost/archive/68d8e681cbdd1e6b805327d335ab1319e5d6eaf9.tar.gz",
+      "ref": "v0.5.5",
+      "packages": [
+        "nimboost"
+      ],
+      "srcDir": "src"
+    },
+    {
+      "method": "fetchzip",
+      "path": "/nix/store/7hkns6lb477pnpyzkj2cq8q10shbshwn-source",
+      "rev": "a1a17d06713727d97810cad291e29dd7c672738f",
+      "sha256": "160h0k26f7xd5fbblc2l29d19ndgixb3aand3j5adrdbkkqhlgz0",
+      "url": "https://github.com/cheatfate/asynctools/archive/a1a17d06713727d97810cad291e29dd7c672738f.tar.gz",
+      "ref": "master",
+      "packages": [
+        "asynctools"
+      ],
+      "srcDir": ""
+    },
+    {
+      "method": "fetchzip",
+      "path": "/nix/store/137668f80hm34sszcnw2c3cqsz35j2h3-source",
+      "rev": "31bb61b990b8b3bae1cba2f353fb978448942318",
+      "sha256": "0qj2r3vhlx3afw9w3ndpjj638qdl8ccbmb8n4hscw0a024xqdn66",
+      "url": "https://github.com/andreaferretti/patty/archive/31bb61b990b8b3bae1cba2f353fb978448942318.tar.gz",
+      "ref": "0.3.5",
+      "packages": [
+        "patty"
+      ],
+      "srcDir": ""
+    }
+  ]
+}

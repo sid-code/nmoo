@@ -27,14 +27,29 @@
     in
     {
       packages = forAllSystems (
-        { pkgs, ... }: {
+        { pkgs, ... }:
+        let
+          fs = pkgs.lib.fileset;
+        in
+        {
           default = pkgs.buildNimPackage {
             pname = "nmoo";
             version = "0.1.0";
-            src = ./.;
-            lockFile = ./nimble.lock;
-
-            nativeBuildInputs = [ pkgs.libxcrypt ];
+            src = fs.toSource {
+              root = ./.;
+              fileset = fs.unions [
+                ./nmoo.nimble
+                ./src
+                ./config.nims
+              ];
+            };
+            nimFlags = [
+              "-d:release"
+              "-d:danger"
+            ];
+            lockFile = ./lock.json;
+            buildInputs = [ pkgs.libxcrypt ];
+            nativeBuildInputs = [ pkgs.pkg-config ];
           };
         }
       );

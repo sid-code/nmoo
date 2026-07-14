@@ -16,3 +16,8 @@ when getEnv("NMOO_RELEASE") == "1":
   --d:release
   --d:danger
 
+# begin Nimble config (version 2)
+--noNimblePath
+when withDir(thisDir(), system.fileExists("nimble.paths")):
+  include "nimble.paths"
+# end Nimble config
