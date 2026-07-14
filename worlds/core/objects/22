@@ -59,7 +59,7 @@ location
 0
 5
 .
-6
+7
 unique
 (let ((lst (get args 0)))
 
@@ -162,6 +162,17 @@ countup
             (do
              (func idx)
              (cont ((+ idx 1) cont)))))))
+.
+7
+0
+oNone pNone oNone
+5
+.
+sample
+(let ((lst (get args 0))
+      (size (len lst))
+      (idx (random size)))
+  (get lst idx))
 .
 7
 0
