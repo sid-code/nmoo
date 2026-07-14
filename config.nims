@@ -12,7 +12,11 @@ when getEnv("NMOO_DEBUG") == "1":
   --d:debug
   --debugger:native
 
-when getEnv("NMOO_RELEASE") == "1": 
+when getEnv("NMOO_SINGLE_STEP") == "1":
+  --d:debug
+  --d:singleStepTasks
+
+when getEnv("NMOO_RELEASE") == "1":
   --d:release
   --d:danger
 
