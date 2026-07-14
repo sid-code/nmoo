@@ -154,7 +154,8 @@ This is very simple and does not support nested tag capturing.
     "Ties this buffer to a NMOO instance."
     :keymap (let ((keymap (make-sparse-keymap)))
               (define-key keymap (kbd "C-x C-e") #'nmoo-eval-last-sexp)
-              (define-key keymap (kbd "C-c C-s") #'nmoo-save-verb)
+              (define-key keymap (kbd "C-c C-c") #'nmoo-save-verb)
+              (define-key keymap (kbd "C-c C-k") #'nmoo-edit-cancel)
               keymap)
 
     (make-variable-buffer-local 'nmoo-parent-buffer)
@@ -225,4 +226,9 @@ This is very simple and does not support nested tag capturing.
       (process-send-string proc (format "@program #%d:%s\n" nmoo-edit-verb-object nmoo-edit-verb-name))
       (process-send-string proc (nmoo--newlineify (buffer-string)))
       (process-send-string proc ".\n")))
+
+  (defun nmoo-edit-cancel ()
+    (interactive)
+    (kill-current-buffer)
+    (message "Aborted editing verb."))
 #+end_src
