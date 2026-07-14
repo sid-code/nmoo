@@ -22,7 +22,6 @@ proc processEscapeSequence*(sock: AsyncSocket, player: MObject, world: World) {.
   ## Process a side-channel escape sequence on a raw socket.
   ## Called when the client sends ``SideChannelEscapeChar`` as the first byte.
   let stream = newAsyncSocketStream(sock)
-  
 
   var id: uint32 = 0
   try:

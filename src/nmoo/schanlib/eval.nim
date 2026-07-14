@@ -1,6 +1,7 @@
 import asyncnet
 import asyncdispatch
 import std/strutils
+import std/strformat
 import std/parseopt
 
 import schan
@@ -13,16 +14,16 @@ proc parse(str: string): MData =
   var parser = newParser(str)
   return parser.parseFull()
 
-proc parseCliArgs(): tuple[address: string, port: uint16] =
+proc parseCliArgs(): tuple[address: string, port: uint16, user: string, pass: string] =
   var
     addressSet = false
     portSet = false
+    userSet = false
+    passSet = false
 
-    
   proc checkPort(port: int): uint16 =
     if port < int(low(uint16)) or port > int(high(uint16)):
-      quit("invalid --port value: $#.\nIt must be between $# and $#." %
-            [$port, $low(uint16), $high(uint16)])
+      quit(&"invalid --port value: {port}.\nIt must be between {low(uint16)} and {high(uint16)}.")
     return uint16(port)
 
   for kind, key, val in parseopt.getopt():
@@ -35,6 +36,12 @@ proc parseCliArgs(): tuple[address: string, port: uint16] =
         elif key == "port":
           result.port = checkPort(val.parseInt)
           portSet = true
+        elif key == "user":
+          result.user = val
+          userSet = true
+        elif key == "pass":
+          result.pass = val
+          passSet = true
         else:
           quit("Invalid option: " & key)
       of cmdArgument:
@@ -44,9 +51,13 @@ proc parseCliArgs(): tuple[address: string, port: uint16] =
     quit("missing --address parameter")
   if not portSet:
     quit("missing --port parameter")
+  if not userSet:
+    quit("missing --user parameter")
+  if not passSet:
+    quit("missing --pass parameter")
 
 proc main {.async.} =
-  let (address, port) = parseCliArgs()
+  let (address, port, user, pass) = parseCliArgs()
 
   let sock = newAsyncSocket()
   await sock.connect(address, Port(port))
@@ -55,6 +66,8 @@ proc main {.async.} =
 
   # This is so that we can receive responses
   asyncCheck scc.startReader()
+  await sock.send(&"connect {user} {pass}\n")
+  echo await sock.recvLine()
 
   let prog = parse(stdin.readAll())
   let result = await scc.request(prog)

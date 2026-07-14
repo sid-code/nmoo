@@ -13,7 +13,6 @@ import ../types
 proc arc4random: uint32 {.importc: "arc4random".}
 
 type
-
   AsyncSideChannelClient* = object
     lock: AsyncLock
     sock*: AsyncSocket
