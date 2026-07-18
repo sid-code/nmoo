@@ -26,6 +26,7 @@ import options
 import times
 import std/sets
 import std/strformat
+import std/options
 
 import types
 import objects
@@ -488,8 +489,8 @@ proc extractArgs(verb: MVerb): MData =
   return res.md
 
 type
-  PropInfo = tuple[owner: MObject, perms: string, newName: string]
-  VerbInfo = tuple[owner: ObjID, perms: string, newName: string]
+  PropInfo = tuple[owner: MObject, perms: string, newName: Option[string]]
+  VerbInfo = tuple[owner: ObjID, perms: string, newName: Option[string]]
   VerbArgs = tuple[doSpec: ObjSpec, prepSpec: PrepType, ioSpec: ObjSpec]
 
 template propInfoFromInput(info: seq[MData]): PropInfo =
@@ -507,7 +508,7 @@ template propInfoFromInput(info: seq[MData]): PropInfo =
 
   if info.len == 3:
     let newName = extractString(info[2])
-    res.newName = newName
+    res.newName = some(newName)
 
   res
 
@@ -525,7 +526,7 @@ template verbInfoFromInput(info: seq[MData]): VerbInfo =
 
   if info.len == 3:
     let newName = extractString(info[2])
-    res.newName = newName
+    res.newName = some(newName)
 
   res
 
@@ -564,7 +565,7 @@ proc setInfo(prop: MProperty, info: PropInfo) =
   prop.pubWrite = "w" in info.perms
   prop.ownerIsParent = "c" in info.perms
 
-  prop.name = info.newName
+  info.newName.map(proc (n: string) = prop.name = n)
 
 proc setInfo(verb: MVerb, info: VerbInfo) =
   verb.owner = info.owner
@@ -572,7 +573,7 @@ proc setInfo(verb: MVerb, info: VerbInfo) =
   verb.pubWrite = "w" in info.perms
   verb.pubExec = "x" in info.perms
 
-  verb.names = info.newName
+  info.newName.map(proc (n: string) = verb.names = n)
 
 proc setArgs(verb: MVerb, args: VerbArgs) =
   verb.doSpec = args.doSpec

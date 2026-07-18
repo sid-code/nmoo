@@ -538,6 +538,15 @@ suite "evaluator":
     check prop.pubRead
     check(not prop.ownerIsParent)
 
+  test "setpropinfo works with empty new name":
+    var result = evalS("""(setpropinfo #1 "name" (#1 "rw"))""")
+    check result == 1.ObjID.md
+    let prop = root.getProp("name")
+    check(not isNil(prop))
+    check prop.name == "name"
+    check prop.pubWrite
+    check prop.pubRead
+
   test "setpropinfo checks permissions":
     var result = evalS("""(setpropinfo #1 "name" (#1 "rw" "name1"))""", unworthy)
     check result.isType(dErr)
