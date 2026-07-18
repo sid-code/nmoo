@@ -172,7 +172,7 @@ proc hasPropCalled(obj: MObject, name: string): bool =
 # such does not bother to check.
 proc propIsInherited*(obj: MObject, name: string): bool =
   let parent = obj.parent
-  return not isNil(parent) and obj.parent != obj and obj.parent.hasPropCalled(name)
+  return not isNil(parent) and parent != obj and parent.hasPropCalled(name)
 
 proc propIsInherited*(obj: MObject, prop: MProperty): bool =
   propIsInherited(obj, prop.name)
