@@ -454,7 +454,7 @@ proc parseFull*(parser: var MParser): MData =
   if parser.error.errVal != E_NONE:
     return parser.error
 
-  var forms = @["do".mds]
+  var forms = @["begin".mds]
 
   while parser.peek().ttype != tokEnd:
     forms.add(parser.parseAtom())

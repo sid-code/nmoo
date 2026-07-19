@@ -153,19 +153,19 @@ suite "parser":
   test "parser works":
     let parsed = parse("(echo \"hello world\" (sub-list \"who knew?\" 3.14))")
 
-    check parsed == @["do".mds, @["echo".mds, "hello world".md, @["sub-list".mds, "who knew?".md, 3.14.md].md].md].md
+    check parsed == @["begin".mds, @["echo".mds, "hello world".md, @["sub-list".mds, "who knew?".md, 3.14.md].md].md].md
 
   test "quote works":
     let parsed = parse("'(1 2 3)")
-    check parsed == @["do".mds, @["quote".mds, @[1.md, 2.md, 3.md].md].md].md
+    check parsed == @["begin".mds, @["quote".mds, @[1.md, 2.md, 3.md].md].md].md
 
   test "quasiquote/unquote works":
     let parsed = parse("`(2 3 ,(x))")
-    check parsed == @["do".mds, @["quasiquote".mds, @[2.md, 3.md, @["unquote".mds, @["x".mds].md].md].md].md].md
+    check parsed == @["begin".mds, @["quasiquote".mds, @[2.md, 3.md, @["unquote".mds, @["x".mds].md].md].md].md].md
 
   test "parser expands (obj:verb) shorthand correctly":
     let parsed = parse("(#0:filter closed door-list)")
-    check parsed == @["do".mds, @["verbcall".mds, 0.ObjID.md, "filter".md, @["list".mds, "closed".mds, "door-list".mds].md].md].md
+    check parsed == @["begin".mds, @["verbcall".mds, 0.ObjID.md, "filter".md, @["list".mds, "closed".mds, "door-list".mds].md].md].md
 
   test "parser handles weird cases":
     var parsed = parse("((((()))))")
@@ -180,11 +180,11 @@ suite "parser":
 
   test "parser treats 5.5.5 as a symbol":
     let parsed = parse("5.5.5")
-    check parsed == @["do".mds, "5.5.5".mds].md
+    check parsed == @["begin".mds, "5.5.5".mds].md
 
   test "parser treats 5.5 as a float":
     let parsed = parse("5.5")
-    check parsed == @["do".mds, md(5.5)].md
+    check parsed == @["begin".mds, md(5.5)].md
 
   test "parser rejects trailing parens":
     let parsed = parse("(abc))")
