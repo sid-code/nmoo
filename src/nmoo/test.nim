@@ -444,6 +444,16 @@ suite "evaluator":
 
     check result == "it works".md
 
+  test "begin statement works":
+    var result = evalS("(begin)")
+    check result == nilD
+
+    result = evalS("(begin 1 2 3)")
+    check result == 3.md
+
+    result = evalS("(begin (define x 4) 2 x)")
+    check result == 4.md
+
   test "parse statement works":
     let result = evalS("""
     (parse "(a b (c d e) 4.5)")

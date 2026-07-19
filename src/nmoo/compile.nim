@@ -948,6 +948,17 @@ defSpecial "unless":
 
   propogateError(compiler.codeGen(@["if".mds, args[0], nilD, args[1]].md))
 
+defSpecial "begin":
+  let size = args.len
+  if size == 0:
+    emit(ins(inPUSH, nilD))
+    return E_NONE.md
+  for i in 0..size-2:
+    propogateError(compiler.codeGen(args[i]))
+    emit(ins(inPOP))
+
+  propogateError(compiler.codeGen(args[size-1]))
+
 defSpecial "call-cc":
   verifyArgs("call-cc", args, @[dNil])
   # continuations will be of the form (cont <ID>)
