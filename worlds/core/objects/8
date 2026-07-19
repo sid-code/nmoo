@@ -59,7 +59,7 @@ contents
 0
 5
 .
-10
+11
 @show
 (let ((show-obj
        (lambda (obj)
@@ -352,5 +352,51 @@ oAny pAny oAny
 7
 0
 oAny pNone oNone
+5
+.
+@listbc
+(define show-syntax
+  (lambda () (player:tell "Syntax: @listbc obj:verb [tags]")))
+
+(define format-instruction
+  (lambda (inst println)
+    (let ((opcode (get inst 0))
+          (arg    (get inst 1))
+          (line   (get inst 2))
+          (col    (get inst 3)))
+      (if (= opcode 'LABEL)
+          (println (cat arg ":"))
+          (println (cat "        " (fit ($ opcode) 6) (fit ($ arg) 10)))))))
+
+(if (= 0 (len args))
+    (show-syntax)
+    (let ((verb-str (get args 0))
+          (rest-args (slice args 1))
+          (show-tags? (< -1 (in rest-args "tags")))
+          (allow-ancestors? (= -1 (in rest-args "no-ancestors")))
+          (verb-loc ($verbutils:parse-verbstr verb-str allow-ancestors?)))
+      (cond
+       ((istype verb-loc "str") (player:tell verb-loc))
+       ((istype verb-loc "list")
+        (let ((obj  (get verb-loc 0))
+              (vidx (get verb-loc 1))
+              (original-object (get verb-loc 2))
+              (vname (get (verbs obj) vidx))
+              (bytecode (getverbbytecode obj vidx)))
+          (begin
+            (when show-tags? (player:tell "{verbbytecode}"))
+            (map (lambda (inst)
+                   (begin
+                     (when (< (ticks-remaining) 2000) (suspend 0))
+                     (format-instruction inst (lambda (line) (player:tell line))))) bytecode)
+            (when show-tags? (player:tell "{/verbbytecode}")))))
+       ((player:tell
+         "Something went terribly wrong. ($verbutils:parse-verbstr returned "
+         verb-loc
+         " which was of unexpected type.")))))
+.
+7
+0
+oAny pAny oAny
 5
 .

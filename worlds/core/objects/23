@@ -59,7 +59,7 @@ location
 0
 5
 .
-3
+4
 contains
 (let
   ((container (get args 0))
@@ -102,5 +102,25 @@ for-each-obj
 7
 0
 oNone pNone oNone
+5
+.
+is-descendant
+;;; ($objutils:is-descendant ancestor obj)
+;;;
+;;; Returns 1 whether `ancestor` has `obj` as a  descendant, 0 otherwise.
+(define go
+  (lambda (ancestor obj)
+    (cond
+     ((= ancestor obj) 1)
+     ((= obj (parent obj)) 0)
+     ((go ancestor (parent obj))))))
+
+(let ((ancestor (get args 0))
+      (obj (get args 1)))
+  (go ancestor obj))
+.
+7
+0
+oThis pNone oThis
 5
 .

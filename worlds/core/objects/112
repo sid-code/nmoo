@@ -145,7 +145,7 @@ pcase
                   (cat "Error " err-type ": " helpstr
                        "\nPattern: " pat
                        "\nExpression: " oexp))))))
-  (@#112:loop v (0) next
+  (@$codeutils:loop v (0) next
               (let ((i (get v 0)))
                 (if (>= i (len cases))
                     nil
