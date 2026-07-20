@@ -1,7 +1,6 @@
 {.experimental: "notnil".}
 import tables
 import hashes
-import strutils
 import objects
 import sequtils
 import times
