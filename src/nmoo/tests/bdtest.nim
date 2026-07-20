@@ -29,9 +29,9 @@ suite "bytedump tests":
     check data == dataCopy
 
   test "VSymTable dumps correctly":
-    var vst: VSymTable = newTable[int, MData]()
-    vst[0] = data
-    vst[1] = 10.md
+    var vst: VSymTable = @[]
+    vst.add(data)
+    vst.add(10.md)
 
     ss = newStringStream()
     ss.writeVSymTable(vst)

@@ -134,18 +134,15 @@ proc readMData*(s: Stream | AsyncStream): Future[MData] {.multisync.} =
 
 proc writeVSymTable(s: Stream | AsyncStream, vst: VSymTable) {.multisync.} =
   await s.write(int32(vst.len))
-  for k, v in vst.pairs:
-    await s.write(int32(k))
+  for v in vst:
     await s.writeMData(v)
 
 proc readVSymTable(s: Stream | AsyncStream): Future[VSymTable] {.multisync.} =
-  result = newTable[int, MData]()
+  result = newSeq[MData]()
   var count = await s.readInt32()
-  while count > 0:
-    dec count
-    let key = int(await s.readInt32())
-    let val = await s.readMData()
-    result[key] = val
+  result.setLen(count)
+  for i in 0 ..< count:
+    result[i] = await s.readMData()
 
 proc writeSymbolTable(s: Stream | AsyncStream, st: SymbolTable) {.multisync.} =
   await s.write(int32(st.len))
