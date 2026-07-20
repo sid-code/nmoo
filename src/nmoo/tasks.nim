@@ -160,7 +160,14 @@ proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
     task.doError(E_BUILTIN.md(fmt"unknown builtin '{builtinName}'"))
 
 
-var instImpls = initTable[InstructionType, InstructionProc]()
+var instImpls: array[InstructionType, InstructionProc]
+
+proc unimplementedInstruction(world: World, tid: TaskID, operand: MData) =
+  let task = world.getTaskByID(tid).get
+  raise newException(Exception, fmt"instruction '{task.code[task.pc].itype}' not implemented")
+
+for itype in {low(InstructionType)..high(InstructionType)}:
+  instImpls[itype] = unimplementedInstruction
 
 template impl(itype: InstructionType, body: untyped) {.dirty.} =
   instImpls[itype] =
@@ -556,10 +563,14 @@ proc step*(world: World, task: Task) =
       echo "INST   ", inst
       discard stdin.readLine()
 
-    if instImpls.hasKey(itype):
-      instImpls[itype](world, task.id, operand)
-    else:
-      raise newException(Exception, fmt"instruction '{itype}' not implemented")
+    # Inline the most frequent instructions to avoid indirect call + task lookup
+    case itype:
+      of inPUSH: task.spush(operand)
+      of inPOP:  discard task.spop()
+      of inDUP:  task.spush(task.top())
+      of inLABEL: discard
+      of inHALT: task.finish()
+      else: instImpls[itype](world, task.id, operand)
 
     task.pc += 1
     task.tickCount += 1
