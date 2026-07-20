@@ -1075,7 +1075,7 @@ defBuiltin "getverbcode":
 # EXPERIMENTAL
 defBuiltin "getverbbytecode":
   if args.len != 2:
-    runtimeError(E_ARGS, "getverbcode takes 2 arguments")
+    runtimeError(E_ARGS, "getverbbytecode takes 2 arguments")
 
   let (obj, verb) = getVerbOn(args[0], args[1])
   discard obj
