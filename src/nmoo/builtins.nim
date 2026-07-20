@@ -2929,6 +2929,17 @@ defBuiltin "resume":
 
 ## ::
 ##
+##   (ticks-remaining)
+##
+## Returns the number of remaining ticks in the current task's quota.
+## If running low, you might want to `suspend`.
+defBuiltin "ticks-remaining":
+  if args.len != 0:
+    runtimeError(E_ARGS, "ticks-remaining takes no arguments")
+  return (task.tickQuota - task.tickCount).md.pack
+  
+## ::
+##
 ##   (taskid):Int
 ##
 ## Returns the currently running task's ID that can be used in other builtins
