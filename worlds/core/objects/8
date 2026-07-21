@@ -366,7 +366,7 @@ oAny pNone oNone
           (col    (get inst 3)))
       (if (= opcode 'LABEL)
           (println (cat arg ":"))
-          (println (cat "        " (fit ($ opcode) 6) (fit ($ arg) 10)))))))
+          (println (cat "        " (fit ($ opcode) 6) ($ arg)))))))
 
 (if (= 0 (len args))
     (show-syntax)
