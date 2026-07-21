@@ -582,6 +582,7 @@ proc run(world: World, task: Task, limit = -1): TaskResult =
   while task.tickQuota > 0:
     case task.status:
       of tsSuspended, tsAwaitingInput, tsReceivedInput:
+        task.tickQuota = limit # refresh tick quota
         return TaskResult(typ: trSuspend)
       of tsAwaitingResult:
         if task.waitingFor.isNone:
