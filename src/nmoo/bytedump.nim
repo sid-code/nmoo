@@ -228,7 +228,7 @@ proc readInstruction(s: Stream | AsyncStream): Future[Instruction] {.multisync.}
 proc writePackage(s: Stream | AsyncStream, p: Package) {.multisync.} =
   await s.write(int8(p.ptype))
   case p.ptype:
-    of ptData:
+    of ptData, ptError:
       await s.writeMData(p.val)
     of ptCall, ptInput:
       await s.write(int8(p.phase))
@@ -236,7 +236,7 @@ proc writePackage(s: Stream | AsyncStream, p: Package) {.multisync.} =
 proc readPackage(s: Stream | AsyncStream): Future[Package] {.multisync.} =
   result = Package(ptype: PackageType(await s.readInt8()))
   case result.ptype:
-    of ptData:
+    of ptData, ptError:
       result.val = await s.readMData()
     of ptCall, ptInput:
       result.phase = await s.readInt8()

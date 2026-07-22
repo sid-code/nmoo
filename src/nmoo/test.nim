@@ -638,6 +638,10 @@ suite "evaluator":
     var result = evalS("(try (+ a b) ((erristype error E_UNBOUND) (erristype error E_ARGS)))")
     check result == @[1.md, 0.md].md
 
+  test "errors returned by builtins don't throw":
+    var result = evalS("""(begin (get (list 1 E_TYPE) 1) 5)""")
+    check result == 5.md
+
   test "move statement works":
     suite "move statement":
       setup:

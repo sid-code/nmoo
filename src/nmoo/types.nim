@@ -103,6 +103,7 @@ type
     ## The type of a builtin return package. See docs of `Package`
     ## type for more information.
     ptData, ## The builtin has completed and is returning data.
+    ptError, ## The builtin is signaling a runtime error.
     ptCall, ## The builtin is calling something else and waiting for a
             ## result.
     ptInput ## The builtin is waiting for user input.
@@ -111,7 +112,7 @@ type
     ## The actual return value of a builtin proc, which may represent a
     ## partial result of the builtin.
     case ptype*: PackageType
-      of ptData:
+      of ptData, ptError:
         val*: MData
       of ptCall, ptInput:
         phase*: int
@@ -361,6 +362,7 @@ proc md*(x: openArray[(MData, MData)]): MData {.procvar.} =
 proc pack*(x: MData): Package = Package(ptype: ptData, val: x)
 proc pack*(phase: int): Package = Package(ptype: ptCall, phase: phase)
 proc inputPack*(phase: int): Package = Package(ptype: ptInput, phase: phase)
+proc errorPack*(x: MData): Package = Package(ptype: ptError, val: x)
 
 proc isType*(datum: MData, dtype: MDataType): bool {.inline.} =
   return datum.dtype == dtype

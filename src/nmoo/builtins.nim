@@ -138,7 +138,7 @@ template extractObject(objd: MData): MObject =
 template checkForError(value: MData) =
   let valueV = value
   if valueV.isType(dErr) and valueV.errVal != E_NONE:
-    return valueV.pack
+    return valueV.errorPack
 
 # If option is empty, do something with the control flow (like return)
 template orElse[T](opt: Option[T], body: untyped): T =
@@ -148,7 +148,7 @@ template orElse[T](opt: Option[T], body: untyped): T =
     opt.unsafeGet
 
 template runtimeError(error: MError, message: string) =
-  return error.md(message).pack
+  return error.md(message).errorPack
 
 template checkType(value: MData, expected: MDataType, ifnot: MError = E_TYPE) =
   let valueV = value
@@ -431,7 +431,7 @@ defBuiltin "err":
 
   err.errMsg = msg
   err.trace = @[]
-  return err.pack
+  return err.errorPack
 
 ## ::
 ##

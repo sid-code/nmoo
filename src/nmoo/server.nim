@@ -372,7 +372,7 @@ proc serve {.async.} =
   when defined(includeWizardUtils):
     defBuiltin "clients":
       if not isWizard(task.owner):
-        E_PERM.md("only wizards can use the " & bname & " builtin").pack
+        E_PERM.md("only wizards can use the " & bname & " builtin").errorPack
       else:
         clients.mapIt(@[it.player.md, it.address.md].md).md.pack
 

@@ -145,12 +145,9 @@ proc builtinCall(task: Task, builtin: MData, args: seq[MData], phase = 0) =
       tid = task.id)
 
     if res.ptype == ptData:
-      let val = res.val
-
-      if val.isType(dErr):
-        task.doError(val)
-      else:
-        task.spush(val)
+      task.spush(res.val)
+    elif res.ptype == ptError:
+      task.doError(res.val)
     elif res.ptype in {ptCall, ptInput}:
       task.setCallPackage(res, builtin, args)
   else:
