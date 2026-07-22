@@ -67,6 +67,10 @@ Define a major mode that inherits from ~comint-mode~.
       (process-send-string proc (concat "connect " nmoo-user " " nmoo-pass "\n"))
       (set-process-filter proc #'nmoo--process-filter)
       (setq-local nmoo-process proc)))
+
+  (defun nmoo-reconnect ()
+    (interactive)
+    (nmoo--init))
 #+end_src
 
 And now the process filter, the function that actually reads the
