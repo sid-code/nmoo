@@ -20,6 +20,10 @@ when getEnv("NMOO_RELEASE") == "1":
   --d:release
   --d:danger
 
+when getEnv("NMOO_PROFILE") == "1":
+  --stackTrace:on
+  --profiler:on
+
 # begin Nimble config (version 2)
 --noNimblePath
 when withDir(thisDir(), system.fileExists("nimble.paths")):
