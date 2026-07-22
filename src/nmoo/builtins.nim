@@ -17,13 +17,12 @@
 ## it's obvious they affect control flow?
 {.used.}
 
-import strutils
-import tables
-import sequtils
-import math
-import nre
-import options
-import times
+import std/strutils
+import std/tables
+import std/sequtils
+import std/math
+import std/nre
+import std/times
 import std/sets
 import std/strformat
 import std/options

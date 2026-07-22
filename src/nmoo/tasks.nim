@@ -49,7 +49,7 @@ proc run*(world: World, tid: TaskID, limit = -1): TaskResult
 import compile
 import builtins
 
-proc hash(itype: InstructionType): auto = ord(itype).hash
+proc hash(itype: InstructionType): auto {.used.} = ord(itype).hash
 
 proc newVSymTable: VSymTable = @[]
 

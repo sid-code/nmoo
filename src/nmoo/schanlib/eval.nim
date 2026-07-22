@@ -5,9 +5,7 @@ import std/strformat
 import std/parseopt
 
 import schan
-import ../server
 import ../types
-import ../bytedump
 import ../scripting # for parser
 
 proc parse(str: string): MData =

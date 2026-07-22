@@ -3,10 +3,8 @@ import asyncdispatch
 import boost/io/asyncstreams
 import asynctools/asyncsync
 import tables
-import deques
 
 import ../server
-import ../sidechannel
 import ../bytedump
 import ../types
 
