@@ -30,6 +30,7 @@ suite "bytedump tests":
 
   test "VSymTable dumps correctly":
     var vst: VSymTable = @[]
+    data = "abc".md
     vst.add(data)
     vst.add(10.md)
 

@@ -83,7 +83,7 @@ type
   MDataType* = enum
     dInt, dFloat, dStr, dSym, dErr, dList, dTable, dObj, dNil
 
-  MData* = object
+  MData* = ref object
     pos*: CodePosition
     case dtype*: MDataType
       of dInt: intVal*: int

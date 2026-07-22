@@ -12,7 +12,7 @@ import types
 
 proc getVerb*(obj: MObject, name: string, all = true): MVerb
 proc getVerb*(obj: MObject, index: int): MVerb
-proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true): MData
+proc setCode*(verb: MVerb, newCode: string, programmer: MObject, res: var MData, compileIt = true)
 proc getVerbAndObj*(obj: MObject, name: string, all = true): Option[tuple[o: MObject, v: MVerb]]
 proc addVerb*(obj: MObject, verb: MVerb): MVerb
 proc delVerb*(obj: MObject, verb: MVerb): MVerb
@@ -23,6 +23,8 @@ proc verbCallRaw*(res: var Option[TaskID],
 proc verbCall*(res: var Option[TaskID], owner: MObject, name: string, player, caller: MObject,
                args: seq[MData], symtable = newSymbolTable(),
                taskType = ttFunction, callback = none(TaskID))
+proc handleCommand*(player: MObject, command: string): Option[TaskID]
+proc handleLoginCommand*(player: MObject, command: string): MObject
 
 import tasks
 import objects
@@ -238,14 +240,16 @@ proc verbCall*(res: var Option[TaskID], owner: MObject, name: string, player, ca
       return
   res = none(TaskID)
 
-proc setCode*(verb: MVerb, newCode: string, programmer: MObject, compileIt = true): MData =
+proc setCode*(verb: MVerb, newCode: string, programmer: MObject, res: var MData, compileIt = true) =
   verb.code = newCode
   if compileIt:
     let compiled = compileCode(newCode, programmer)
     if compiled.error != E_NONE.md:
-      return compiled.error
+      res = compiled.error
+      return
     verb.compiled = compiled
-  return E_NONE.md
+
+  res = E_NONE.md
 
 proc preprocess(command: string): string =
   if command.len == 0: return command

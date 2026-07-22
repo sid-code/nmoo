@@ -974,7 +974,10 @@ defBuiltin "addverb":
     owner = owner.id,
   )
 
-  checkForError(verb.setCode("", owner))
+  var res: MData
+  verb.setCode("", owner, res)
+  echo res
+  checkForError(res)
 
   obj.verbs.add(move(verb))
   world.persist(obj)
@@ -1047,7 +1050,8 @@ defBuiltin "setverbcode":
 
   let newCode = extractString(args[2])
 
-  let err = verb.setCode(newCode, world.byId(verb.owner).get)
+  var err: MData
+  verb.setCode(newCode, world.byId(verb.owner).get, err)
   checkForError(err)
   world.persist(obj)
   return nilD.pack

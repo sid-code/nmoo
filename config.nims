@@ -2,14 +2,14 @@
 # --noNimblePath
 --legacy:laxEffects
 --mm:orc
---deepcopy:on
+# --deepcopy:on
 --passC:"-Wno-implicit-function-declaration"
 --passC:"-Wno-int-conversion"
---d:useMalloc
 --d:includeWizardUtils
 
 when getEnv("NMOO_DEBUG") == "1":
   --d:debug
+  --d:useGcAssert
   --debugger:native
 
 when getEnv("NMOO_SINGLE_STEP") == "1":

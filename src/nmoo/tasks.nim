@@ -9,6 +9,10 @@ import std/sugar
 import std/strformat
 
 import types
+
+proc top*(task: Task): MData
+proc doError*(task: Task, error: MData)
+
 import builtindef
 import logging
 ## VM (Task)

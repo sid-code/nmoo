@@ -71,7 +71,8 @@ proc mainLoop =
         discard os.execShellCmd("$EDITOR edit.tmp -c \"set filetype=lisp\"")
         let newCode = readFile("edit.tmp")
 
-        let err = verb.setCode(newCode, player, compileIt = true)
+        var err: MData
+        verb.setCode(newCode, player, err, compileIt = true)
         if err == E_NONE.md:
           echo fmt"Succesfully edited verb '${verbname}'"
         else:

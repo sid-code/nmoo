@@ -227,7 +227,8 @@ proc readVerb(world: World, stream: FileStream): MVerb =
   let owner = readObjectID(world, stream)
   result.owner = owner.id
 
-  let err = result.setCode(code, owner, compileIt = false)
+  var err: MData
+  result.setCode(code, owner, err, compileIt = false)
   if err != E_NONE.md:
     warn "A verb called \"" & result.names & "\" failed to compile."
     warn $err
@@ -363,7 +364,9 @@ proc readVerbCode*(world: World, obj: MObject, verb: MVerb, programmer: MObject)
   for index, v in obj.verbs:
     if equiv(v, verb):
       var fileName = dir / getVerbCodeFile(v, index)
-      return v.setCode(readFile(fileName), programmer)
+      var err: MData
+      v.setCode(readFile(fileName), programmer, err)
+      return err
 
   return E_ARGS.md("cannot read code for verb $#".format(vstr))
 
@@ -539,7 +542,8 @@ proc loadWorld*(name: string): World =
         when defined(debug):
           debug "Compiling verb " & obj.toObjStr() & ":" & v.names
         # this time really compile it
-        let err = v.setCode(v.code, result.byId(v.owner).get)
+        var err: MData
+        v.setCode(v.code, result.byId(v.owner).get, err)
         if err != E_NONE.md:
           error "A verb " & obj.toObjStr() & ":" & v.names & " failed to compile."
           error $err
