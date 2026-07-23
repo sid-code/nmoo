@@ -104,6 +104,10 @@ template extractString(d: MData): string =
   let dV = d
   checkType(dV, dStr)
   dV.strVal
+template extractSymbol(d: MData): string =
+  let dV = d
+  checkType(dV, dSym)
+  dV.symVal
 template extractList(d: MData): seq[MData] =
   let dV = d
   checkType(dV, dList)
@@ -1764,6 +1768,23 @@ defBuiltin "symbol":
     runtimeError(E_ARGS, "symbol takes 1 argument")
   let what = extractString(args[0])
   return what.mds.pack
+
+## ::
+##
+##   (symbol-name s:Sym):Str
+##
+## Inverse of ``symbol``.
+##
+## Examples::
+##
+##   (symbol 'hi) ; => "hi"
+##   (symbol 5)    ; => E_TYPE
+##   (symbol ())   ; => E_TYPE
+defBuiltin "symbol-name":
+  if args.len != 1:
+    runtimeError(E_ARGS, "symbol-name takes 1 argument")
+  let what = extractSymbol(args[0])
+  return what.md.pack
 
 ## ::
 ##
