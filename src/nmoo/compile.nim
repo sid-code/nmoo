@@ -185,6 +185,8 @@ proc leaveScope(compiler: MCompiler) =
   if compiler.extraLocals.len == 0:
     return
   let els = compiler.extraLocals.pop()
+  if els.len == 0:
+    return
   for local in els.keys():
     compiler.undefSymbol(local)
 proc currentExtraLocals(compiler: MCompiler): var SymbolTable =
