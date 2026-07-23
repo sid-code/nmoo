@@ -367,6 +367,14 @@ suite "evaluator":
 
     check result == @[2.md, 3.md, 4.md].md
 
+  test "define-syntax works with weird macro":
+    let result = evalS("""
+    (define-syntax x (lambda (c) (tail c)))
+    (x 4)
+    """)
+
+    check result == nilD
+
   test "recursive define lambda works from define-syntax":
     let result = evalS("""
     (define fn (lambda (x rec) (if (< x 1) 0 (+ x (rec (- x 1) rec)))))
