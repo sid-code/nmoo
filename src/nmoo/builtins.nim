@@ -980,7 +980,6 @@ defBuiltin "addverb":
 
   var res: MData
   verb.setCode("", owner, res)
-  echo res
   checkForError(res)
 
   obj.verbs.add(move(verb))
