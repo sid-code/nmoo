@@ -128,7 +128,7 @@ proc readMData*(s: Stream | AsyncStream): Future[MData] {.multisync.} =
     of dObj:
       result = ObjID(int(await s.readInt32())).md
     of dNil:
-      discard
+      result = nilD
 
   result.pos = pos
 
