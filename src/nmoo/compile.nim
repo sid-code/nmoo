@@ -109,6 +109,19 @@ template ins(typ: InstructionType): Instruction =
 proc makeSymbol(compiler: MCompiler): MData =
   compiler.symgen.genSym().mds
 
+## Return a symbol that isn't defined either in the symtable or in the extra locals list.
+##
+## This is mainly for use in macros via the "gensym" special form.
+proc makeUniqueSymbol(compiler: MCompiler, prefix: string): MData =
+  var i = 0
+  while true:
+    let proposedSymbol = prefix & $i
+
+    if proposedSymbol in compiler.symtable  or compiler.extraLocals.anyIt(proposedSymbol in it):
+      i += 1
+      continue
+
+    return proposedSymbol.mds
 
 proc currentExtraLocals(compiler: MCompiler): var SymbolTable
 proc getSymInst(compiler: MCompiler, sym: MData): Instruction =
@@ -781,6 +794,21 @@ defSpecial "let":
   # We're outside scope so unbind the symbols
   for (sym, _, _) in binds:
     compiler.undefSymbol(sym)
+
+defSpecial "gensym":
+  if args.len > 1:
+    compileError("gensym takes at most 1 argument.", pos)
+
+  let prefixd = if args.len == 1: args[0] else: "__gensym__".md
+
+  if not prefixd.isType(dStr):
+    compileError("gensym: expected a string", pos)
+  let sym = compiler.makeUniqueSymbol(prefixd.strVal)
+
+  # This is kind of jank -- it defines the symbol but leaves it
+  # uninitialized so that we don't re-use that symbol name later.
+  discard compiler.defSymbol(sym.symVal)
+  emit(ins(inPUSH, sym))
 
 defSpecial "define-syntax":
   verifyArgs("define-syntax", args, @[dSym, dNil])
