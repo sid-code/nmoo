@@ -2,6 +2,7 @@
 # --noNimblePath
 --legacy:laxEffects
 --mm:orc
+# --d:useMalloc
 # --deepcopy:on
 --passC:"-Wno-implicit-function-declaration"
 --passC:"-Wno-int-conversion"
