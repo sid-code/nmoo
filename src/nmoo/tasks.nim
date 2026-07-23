@@ -226,7 +226,7 @@ impl inSTO:
   let what = task.spop()
   let index = operand.intVal
   if task.curST.len <= index:
-    task.curST.setLen(index + 1)
+    task.curST.grow(index + 1, nilD)
   task.curST[index] = what
 
 impl inPUSH:
