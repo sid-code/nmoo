@@ -101,8 +101,12 @@ proc doError*(task: Task, error: MData) =
   # each stack frame/task callback will be a line
   var error = error
 
-  # unwind the stack
+  # If this task was waiting for a result, then it needs to be
+  # awakened.
+  if task.status == tsAwaitingResult:
+    task.status = tsRunning
 
+  # unwind the stack
   while task.frames.len > 0:
     let frame = task.curFrame()
 
@@ -427,6 +431,9 @@ impl inRETJ:
 impl inACALL:
   let what = task.spop()
   let argsd = task.spop()
+  if not argsd.isType(dList):
+    task.doError(E_INTERNAL.md("inACALL: expected list but got " & $argsd))
+    return
   let args = argsd.listVal
   let depth = task.frames.len + 1
   for arg in args:
@@ -506,24 +513,37 @@ proc resume*(task: Task, val: MData) =
   task.spush(val)
 
 proc finish*(task: Task, error: bool) =
-  task.setStatus(if error: tsError else: tsDone)
-
   let callback = task.callback
   var res = task.top()
 
-  callback.map(proc (t: TaskID) =
+  if callback.isSome:
+    # We always set the task status to done, even if it resulted in an error.
+    # This is because the parent task will actually get the error.
+    # If we set the status to "error" here, the error will be
+    # handled in the wrong place.
+    task.setStatus(tsDone)
+
+    let t = callback.get
     let cbTaskO = task.world.getTaskByID(t)
     if cbTaskO.isSome:
+
       let cbTask = cbTaskO.get
       cbTask.tickCount += task.tickCount
       cbTask.waitingFor = none(TaskID)
-      cbTask.resume(res)
+      if error:
+        cbTask.doError(res)
+      else:
+        cbTask.resume(res)
     else:
       # I've decided that a warning here should suffice. The maintainer should
       # make sure that the task's callback isn't crucial to the operation of
       # the system, and if it is, then debug more.
 
-      warn fmt"Warning: callback for task '{task.name}' didn't exist.")
+      warn fmt"Warning: callback for task '{task.name}' didn't exist."
+  elif error:
+    task.setStatus(tsError)
+  else:
+    task.setStatus(tsDone)
 
 proc registerCallback*(task, cbTask: Task) =
   cbTask.waitingFor = some(task.id)
@@ -554,7 +574,8 @@ proc step*(world: World, task: Task) =
       echo "--------------------------"
       echo "NAME   ", task.name
       echo "STACK  ", task.stack
-      echo "SYMS   ", task.curST
+      echo "SYMS   ", task.curST()
+      echo "TRIES  ", task.frames.mapIt(it.tries)
       echo "INST   ", inst
       discard stdin.readLine()
 

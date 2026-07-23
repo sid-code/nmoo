@@ -198,11 +198,6 @@ proc taskFinished(world: World, tid: TaskID) =
         callerClient.setInputTask(task.callback.unsafeGet)
         discard cbTask.map(_ => callerClient.unqueueIn())
       else:
-        let res = task.top()
-        if res.isType(dErr):
-          callerClient.queueOut($res & "\r\n")
-          discard callerClient.unqueueOut()
-
         discard callerClient.unqueueIn()
     elif task.status == tsSuspended and some(tid) == callerClient.currentInputTask:
       callerClient.clearInputTask()
@@ -488,6 +483,11 @@ proc tick*(world: World) =
       let suspendedUntil = task.suspendedUntil
       if suspendedUntil != fromUnix(0) and getTime() >= suspendedUntil:
         task.resume(nilD)
+
+    if task.status == tsError:
+      let res = task.top()
+      task.setStatus(tsDone)
+      continue
 
     if not task.isRunning(): continue
     try:
