@@ -62,6 +62,7 @@
               nimlangserver
               libxcrypt
               watchexec
+              gdb
             ];
           };
         }
