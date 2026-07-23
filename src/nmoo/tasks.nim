@@ -34,7 +34,7 @@ proc spop*(task: Task): MData =
 
 proc resume*(task: Task, val: MData)
 proc isRunning*(task: Task): bool = task.status in {tsRunning, tsReceivedInput}
-proc finish*(task: Task)
+proc finish*(task: Task, error: bool)
 proc addCoreGlobals*(st: SymbolTable): SymbolTable
 
 proc addTask*(world: World, name: string, self, player, caller, owner: MObject,
@@ -119,7 +119,7 @@ proc doError*(task: Task, error: MData) =
     return
 
   task.spush(error)
-  task.finish()
+  task.finish(error = true)
 
 proc setCallPackage(task: Task, package: Package, builtin: MData, args: seq[MData]) =
   task.hasCallPackage = true
@@ -499,18 +499,14 @@ impl inETRY:
   discard task.curFrame.tries.pop()
 
 impl inHALT:
-  task.finish()
+  task.finish(error = false)
 
 proc resume*(task: Task, val: MData) =
   task.setStatus(tsRunning)
-  if val.isType(dErr):
-    task.hasCallPackage = false
-    task.doError(val)
-  else:
-    task.spush(val)
+  task.spush(val)
 
-proc finish*(task: Task) =
-  task.setStatus(tsDone)
+proc finish*(task: Task, error: bool) =
+  task.setStatus(if error: tsError else: tsDone)
 
   let callback = task.callback
   var res = task.top()
@@ -568,7 +564,7 @@ proc step*(world: World, task: Task) =
       of inPOP:  discard task.spop()
       of inDUP:  task.spush(task.top())
       of inLABEL: discard
-      of inHALT: task.finish()
+      of inHALT: task.finish(error = false)
       else: instImpls[itype](world, task.id, operand)
 
     task.pc += 1
@@ -600,10 +596,10 @@ proc run(world: World, task: Task, limit = -1): TaskResult =
 
       of tsDone:
         let res = task.top()
-        if res.isType(dErr):
-          return TaskResult(typ: trError, err: res)
-        else:
-          return TaskResult(typ: trFinish, res: res)
+        return TaskResult(typ: trFinish, res: res)
+      of tsError:
+        let res = task.top()
+        return TaskResult(typ: trError, err: res)
       of tsRunning:
         world.step(task)
         task.tickQuota -= 1

@@ -262,7 +262,7 @@ type
 
   TaskStatus* = enum
     tsRunning, tsAwaitingInput, tsAwaitingResult,
-    tsReceivedInput, tsSuspended, tsDone
+    tsReceivedInput, tsSuspended, tsDone, tsError
 
   # First class continuations
   Continuation* = object

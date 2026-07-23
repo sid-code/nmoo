@@ -3016,7 +3016,8 @@ defBuiltin "kill-task":
     runtimeError(E_PERM, "you must be either a wizard or the owner of a task to kill it")
 
   otask.spush(nilD)
-  otask.finish()
+  # TODO: maybe add an option to kill it with an error?
+  otask.finish(error = false)
 
   return taskID.int.md.pack
 
