@@ -59,7 +59,7 @@ contents
 0
 5
 .
-11
+12
 @show
 (let ((show-obj
        (lambda (obj)
@@ -394,6 +394,25 @@ oAny pNone oNone
          "Something went terribly wrong. ($verbutils:parse-verbstr returned "
          verb-loc
          " which was of unexpected type.")))))
+.
+7
+0
+oAny pAny oAny
+5
+.
+@eval
+(define output-tagged
+  (lambda (tags label val)
+    (begin
+      (when tags (caller:tell "{eval " label "}"))
+      (caller:tell ($ val))
+      (when tags (caller:tell "{/eval}")))))
+
+(let ((tags (< -1 (in args "tags")))
+      (input (caller:read-till-dot)))
+  (try
+   (output-tagged tags "success" (eval (parse input)))
+   (output-tagged tags "error" error)))
 .
 7
 0
