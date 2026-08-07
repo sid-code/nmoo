@@ -63,6 +63,7 @@
               libxcrypt
               watchexec
               gdb
+              valgrind
             ];
           };
         }
