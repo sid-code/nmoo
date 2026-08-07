@@ -11,6 +11,8 @@
 when getEnv("NMOO_DEBUG") == "1":
   --d:debug
   --d:useGcAssert
+  --passC:"-fsanitize=address,undefined"
+  --passL:"-fsanitize=address,undefined"
   --debugger:native
 
 when getEnv("NMOO_SINGLE_STEP") == "1":
