@@ -652,7 +652,7 @@ proc createTask*(id: TaskID, name: string, startTime: Time, compiled: CpOutput,
     stack: @[],
     symtables: @[st],
     globals: globals,
-    code: code,
+    code: code.deepCopy(),
     pc: entry,
 
     frames: @[],

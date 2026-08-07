@@ -3,7 +3,7 @@
 --legacy:laxEffects
 --mm:arc
 --d:useMalloc
-# --deepcopy:on
+--deepcopy:on
 --passC:"-Wno-implicit-function-declaration"
 --passC:"-Wno-int-conversion"
 --d:includeWizardUtils
