@@ -292,11 +292,13 @@ proc consume(parser: var MParser, ttype: TokenType): Token =
     parser.parseError("expected token " & $ttype & ", instead got " & $tok.ttype, tok.pos)
 
   return tok
+
 proc parseList*(parser: var MParser): MData
 
 const QuoteTokens = {tokQuote, tokQuasiQuote, tokUnquote}
 
 proc parseAtom*(parser: var MParser): MData =
+  result = nilD
   # An atom has two (potential) parts. The quote (optional), and the real stuff.
   # Before grabbing the real stuff, we need to check if there's a quote in the way.
   # If there is, we need to tack around the corresponding (quote ...) form.
@@ -406,6 +408,7 @@ proc transformDataForm(parser: var MParser, resultL: seq[MData], pos: CodePositi
   result.pos = pos
 
 proc parseList*(parser: var MParser): MData =
+  result = nilD
   var resultL: seq[MData] = @[]
 
   let oparen = parser.consume(tokOParen)
@@ -458,9 +461,11 @@ proc parseFull*(parser: var MParser): MData =
 
   while parser.peek().ttype != tokEnd:
     forms.add(parser.parseAtom())
-    parser.propogateError()
+    if parser.error.errVal != E_NONE:
+      return parser.error
 
   discard parser.consume(tokEnd)
-  parser.propogateError()
+  if parser.error.errVal != E_NONE:
+    return parser.error
 
   return forms.md
