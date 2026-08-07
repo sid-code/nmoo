@@ -373,7 +373,7 @@ suite "evaluator":
     (x 4)
     """)
 
-    check result == nilD
+    check result == @[4.md].md
 
   test "recursive define lambda works from define-syntax":
     let result = evalS("""
