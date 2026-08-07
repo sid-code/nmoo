@@ -1763,12 +1763,15 @@ defBuiltin "nil?":
 ## Examples::
 ##
 ##   (symbol "hi") ; => 'hi
+##   (symbol "")   ; => E_ARGS
 ##   (symbol 5)    ; => E_TYPE
 ##   (symbol ())   ; => E_TYPE
 defBuiltin "symbol":
   if args.len != 1:
     runtimeError(E_ARGS, "symbol takes 1 argument")
   let what = extractString(args[0])
+  if what.len == 0:
+    runtimeError(E_ARGS, "symbol can't have an empty name")
   return what.mds.pack
 
 ## ::
