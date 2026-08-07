@@ -360,7 +360,7 @@ proc transformVerbCallSyntax(parser: var MParser, form: var seq[MData], pos: Cod
   let name = first.symVal
   let parts = name.split(":")
 
-  var verbCallSymbol: MData
+  var verbCallSymbol = nilD
 
   if parts.len > 1:
     if form.len > 0:
