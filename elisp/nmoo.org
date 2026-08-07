@@ -106,8 +106,9 @@ especially the part about capturing lines between {tags}.
               (setq nmoo--tag-current (concat nmoo--tag-current line))))
            ;; if we're ready to capture, check if we've seen a tag
            (nmoo--tag-capture
-            (if (string= (format "{%s}" nmoo--tag-capture) trimmed)
-                (nmoo--start-capture)
+            
+            (if (string-match (format "{%s ?\\(.*\\)}" nmoo--tag-capture) trimmed)
+                (nmoo--start-capture (match-string 1 trimmed))
              ;; no match, just insert
              (insert line)))
            ;; we're not capturing or gearing up to capture, just insert
@@ -125,31 +126,46 @@ This is very simple and does not support nested tag capturing.
 
 #+begin_src elisp :results silent
   ;; capture tag
-  (setq nmoo--tag-capture nil)
-  (setq nmoo--tag-current nil)
-  (setq nmoo--tag-capturing nil)
-  (setq nmoo--tag-continuation nil)
+  (defvar nmoo--tag-capture nil
+    "The tag that we want to capture next.")
+  (defvar nmoo--tag-current nil
+    "The tag that is currently being captured.")
+  (defvar nmoo--tag-properties nil
+    "The properties on the current tag being captured.
+
+  For exmaple, if we're capturing an \"eval\" tag, and it shows up like this:
+
+    {eval success}
+
+  then this variable will be set to \"success\".")
+  (defvar nmoo--tag-capturing nil
+    "Are we currently capturing a tag?")
+  (defvar nmoo--tag-continuation nil
+    "The function to call with the results of tag capture.")
 
   (defun nmoo-capture-next-tag (tag continuation)
     (setq nmoo--tag-capture tag)
     (setq nmoo--tag-current nil)
+    (setq nmoo--tag-properties nil)
     (setq nmoo--tag-capturing nil)
     (setq nmoo--tag-continuation continuation))
 
-  (defun nmoo--start-capture ()
+  (defun nmoo--start-capture (properties)
     (setq nmoo--tag-current "")
+    (setq nmoo--tag-properties properties)
     (setq nmoo--tag-capturing t))
 
   (defun nmoo--end-capture ()
-    (unless (null nmoo--tag-continuation)
-      (funcall nmoo--tag-continuation nmoo--tag-current))
-    (setq nmoo--tag-capture nil)
-    (setq nmoo--tag-current nil)
-    (setq nmoo--tag-continuation nil)
-    (setq nmoo--tag-capturing nil))
+    (unwind-protect 
+        (unless (null nmoo--tag-continuation)
+          (funcall nmoo--tag-continuation nmoo--tag-current nmoo--tag-properties))
+      (setq nmoo--tag-capture nil)
+      (setq nmoo--tag-current nil)
+      (setq nmoo--tag-properties nil)
+      (setq nmoo--tag-continuation nil)
+      (setq nmoo--tag-capturing nil)))
 
 #+end_src
-
 
 ** Minor mode
 *** Definition
@@ -168,19 +184,21 @@ This is very simple and does not support nested tag capturing.
 
 #+end_src
 
-*** Talking over the side channel
+*** Evaluating s-expressions
 #+begin_src elisp :results silent
-  (defun nmoo-eval (expr)
-    (let ((addrarg (format "--address:%s" nmoo-address))
-          (portarg (format "--port:%s" nmoo-port))
-          (userarg (format "--user:%s" nmoo-user))
-          (passarg (format "--pass:%s" nmoo-pass)))
-      (with-temp-buffer
-        (let ((proc (call-process-region
-                     expr nil ;; START END; START is a string and END is ignored.
-                     nmoo-sccli-path nil t nil ;; PROGRAM DELETE BUFFER DISPLAY
-                     addrarg portarg userarg passarg)))
-          (string-trim (buffer-string))))))
+  (defun nmoo-eval (expstr)
+    (let* ((vars (buffer-local-variables nmoo-parent-buffer))
+           (proc (alist-get 'nmoo-process vars)))
+      (process-send-string proc "@eval tags\n")
+      (process-send-string proc expstr)
+      (process-send-string proc "\n.\n")
+
+      (nmoo-capture-next-tag "eval"
+        (lambda (result status)
+          (cond
+           ((string= status "success") (message result))
+           ((string= status "error") (message "Evaluation error: %s" result))
+           (t (error "Invalid status: %s" status)))))))
 
   (defun nmoo--get-last-sexp ()
     (let ((cp (point)))
@@ -190,7 +208,7 @@ This is very simple and does not support nested tag capturing.
 
   (defun nmoo-eval-last-sexp ()
     (interactive)
-    (message "%s" (nmoo-eval (nmoo--get-last-sexp))))
+    (nmoo-eval (nmoo--get-last-sexp)))
 
 #+end_src
 
@@ -207,7 +225,7 @@ This is very simple and does not support nested tag capturing.
       (nmoo-capture-next-tag "verbcode"
         (apply-partially #'nmoo--open-verb-edit-buffer obj verb parent-buffer))))
 
-  (defun nmoo--open-verb-edit-buffer (obj verb parent-buffer verbcode)
+  (defun nmoo--open-verb-edit-buffer (obj verb parent-buffer verbcode properties)
     (with-current-buffer (get-buffer-create (format "nmoo verb #%s:%s" obj verb))
       (scheme-mode)
       (nmoo-minor-mode)
