@@ -331,7 +331,10 @@ defBuiltin "eval":
     let instructions = compileCode(form, player)
     checkForError(instructions.error)
 
-    discard world.addTask(fmt"eval {form}", self, player, caller, owner, symtable, instructions,
+    var formString = $form
+    if formString.len > 20:
+      formString = formString[0..<17] & "..."
+    discard world.addTask(fmt"eval {formString}", self, player, caller, owner, symtable, instructions,
                           taskType = task.taskType, callback = some(task.id))
     task.setStatus(tsAwaitingResult)
     return 1.pack
