@@ -265,7 +265,7 @@ type
     tsReceivedInput, tsSuspended, tsDone, tsError
 
   # First class continuations
-  Continuation* = object
+  Continuation* = ref object
     pc*: int
     stack*: seq[MData]
     globals*: SymbolTable

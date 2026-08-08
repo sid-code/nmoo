@@ -299,11 +299,12 @@ impl inMENV:
   task.spush(cst.combine(task.curST()).toData())
 
 impl inMCONT:
-  var cont: Continuation
-  cont.pc = operand.intVal
-  cont.globals = task.globals
-  cont.stack = task.stack
-  cont.frames = task.frames
+  var cont = Continuation(
+     pc: operand.intVal,
+     globals: deepCopy(task.globals),
+     stack: deepCopy(task.stack),
+     frames: deepCopy(task.frames)
+  )
 
   # push the continuation's ID onto the stack so that it can be accessed
   let contID = task.continuations.len
@@ -332,8 +333,8 @@ proc callContinuation(task: Task, contID: int) =
 
   let cont = task.continuations[contID]
   task.pc = cont.pc
-  task.stack = cont.stack
-  task.frames = cont.frames
+  task.stack = deepCopy(cont.stack)
+  task.frames = deepCopy(cont.frames)
 
   task.spush(res)
 

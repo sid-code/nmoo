@@ -197,6 +197,7 @@ proc writeContinuation(s: Stream | AsyncStream, cont: Continuation) {.multisync.
     await s.writeFrame(fr)
 
 proc readContinuation(s: Stream | AsyncStream): Future[Continuation] {.multisync.} =
+  new(result)
   result.pc = int(await s.readInt32())
 
   newSeq(result.stack, 0)
