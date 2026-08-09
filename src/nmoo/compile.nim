@@ -217,7 +217,7 @@ proc `$`*(ins: Instruction): string =
   if ins.operand == nilD:
     return itypeStr & "\t"
   else:
-    return fmt"{itypeStr}\t{ins.operand}\t{ins.pos}"
+    return &"{itypeStr}\t{ins.operand}\t{ins.pos}"
 
 proc `$`*(compiler: MCompiler): string =
   var slines: seq[string] = @[]
