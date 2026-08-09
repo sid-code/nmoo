@@ -1,5 +1,6 @@
-import unittest
-import types
+import std/unittest
+
+import nmoo/types
 
 suite "core data tests":
   test "== operator compares MData values properly":

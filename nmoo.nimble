@@ -25,7 +25,7 @@ task test, "Run tests":
     " --passL:" & gccParams &
     " --nimcache:./nimcache"
 
-  exec "nim c -r " & compilerParams & " -o:bin/test src/nmoo/test.nim"
+  exec "nim c -r " & compilerParams & " -o:bin/test test/test.nim"
 
 task serve, "Run the server":
   exec "nim c -r -o:bin/server src/nmoo.nim"

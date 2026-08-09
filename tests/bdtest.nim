@@ -1,4 +1,9 @@
-include ../bytedump
+import std/unittest
+import std/streams
+
+import nmoo/types
+import nmoo/persist
+import nmoo/bytedump
 
 # Test each of the components to make sure they work
 

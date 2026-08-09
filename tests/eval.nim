@@ -1,190 +1,14 @@
-import unittest
-import options
-import tables
-import strutils
+import std/unittest
+import std/strformat
+import std/options
+import std/tables
 import std/sets
 
-import types
-import server
-import querying
-import scripting
-import verbs
-import compile
-import tasks
-import objects
-
-include tests/mdata
-
-suite "object tests":
-  setup:
-    var world = createWorld("test", persistent = false)
-    var root = blankObject()
-    objects.initializeBuiltinProps(root)
-    world.add(root)
-    root.owner = root
-    root.setPropR("name", "root")
-    root.setPropR("aliases", @[])
-    root.setPropR("rootprop", "yes")
-    check root.setPropChildCopy("rootprop", true)
-
-    var genericContainer = root.createChild()
-    world.add(genericContainer)
-    genericContainer.setPropR("name", "generic container")
-    genericContainer.setPropR("contents", @[])
-
-    var nowhere = genericContainer.createChild()
-    world.add(nowhere)
-
-    var genericThing = root.createChild()
-
-    world.add(genericThing)
-    genericThing.setPropR("name", "generic thing")
-    check genericThing.moveTo(nowhere)
-
-    genericContainer.changeParent(genericThing)
-
-    check genericContainer.moveTo(nowhere)
-
-    check nowhere.getContents().len == 2
-
-  test "property inheritance works":
-    var child = root.createChild()
-    world.add(child)
-    child.setPropR("name", "child")
-
-    var evenMoreChild = child.createChild()
-    world.add(evenMoreChild)
-    evenMoreChild.setPropR("rootprop", "no")
-
-    check child.getPropVal("rootprop").strVal != "no"
-    child.changeParent(evenMoreChild)
-
-    check child.getPropVal("rootprop").strVal == "no"
-
-  test "query works":
-    var o1 = genericThing.createChild()
-    world.add(o1)
-
-    var o2 = genericContainer.createChild()
-    world.add(o2)
-
-    o2.setPropR("contents", @[])
-    discard o1.moveTo(o2)
-
-    o1.setPropR("aliases", @["thingy".md])
-    let contents = o2.getContents()
-
-    check contents.len == 1
-    check o2.query("thin").len == 1
-
-  # TODO: fix this and the next one
-  test "verbs fire correctly":
-    var verb = newVerb(
-      names = "action",
-      owner = root.id,
-      doSpec = oThis,
-      prepSpec = pOn,
-      ioSpec = oThis,
-    )
-
-    root.verbs.add(verb)
-
-    var err: MData
-    verb.setCode("(do argstr)", root, err)
-    check err == E_NONE.md
-    #check $root.handleCommand("action root on root") == "@[\"root on root\"]"
-    check true
-
-  test "verbs call correctly":
-    var verb = newVerb(
-      names = "action",
-      owner = root.id,
-      prepSpec = pNone,
-      doSpec = oNone,
-      ioSpec = oNone,
-    )
-
-    root.verbs.add(verb)
-
-    var err: MData
-    verb.setCode("(do args)", root, err)
-    check err == E_NONE.md
-    #check $root.verbCall("action", root, @["hey".md]) == "@[@[\"hey\"]]"
-    check true
-
-suite "parser":
-  setup:
-    proc parse(str: string, options: set[MParserOption] = {}): MData {.used.} =
-      var parser = newParser(str, options)
-      result = parser.parseFull()
-      if parser.error.errVal != E_NONE:
-        return parser.error
-    proc parseOne(str: string, options: set[MParserOption] = {}): MData {.used.} =
-      var parser = newParser(str, options)
-      result = parser.parseAtom()
-      if parser.error.errVal != E_NONE:
-        return parser.error
-
-  test "parser works":
-    let parsed = parse("(echo \"hello world\" (sub-list \"who knew?\" 3.14))")
-
-    check parsed == @["begin".mds, @["echo".mds, "hello world".md, @["sub-list".mds, "who knew?".md, 3.14.md].md].md].md
-
-  test "quote works":
-    let parsed = parse("'(1 2 3)")
-    check parsed == @["begin".mds, @["quote".mds, @[1.md, 2.md, 3.md].md].md].md
-
-  test "quasiquote/unquote works":
-    let parsed = parse("`(2 3 ,(x))")
-    check parsed == @["begin".mds, @["quasiquote".mds, @[2.md, 3.md, @["unquote".mds, @["x".mds].md].md].md].md].md
-
-  test "quasiquote/unquotesplat works":
-    let parsed = parse("`(2 3 ,@x)")
-    check parsed == @["begin".mds, @["quasiquote".mds, @[2.md, 3.md, @["unquotesplat".mds, "x".mds].md].md].md].md
-
-  test "parser expands (obj:verb) shorthand correctly":
-    let parsed = parse("(#0:filter closed door-list)")
-    check parsed == @["begin".mds, @["verbcall".mds, 0.ObjID.md, "filter".md, @["list".mds, "closed".mds, "door-list".mds].md].md].md
-
-  test "parser handles weird cases":
-    var parsed = parse("((((()))))")
-    check parsed.isType(dList)
-
-    parsed = parse("((((((")
-    check parsed.isType(dErr)
-
-  test "parser propogates unexpected token errors properly":
-    let parsed = parse("(let ((x 5) (y '(lambda (x) (+ x ))))) stuff)")
-    check parsed.isType(dErr)
-
-  test "parser treats 5.5.5 as a symbol":
-    let parsed = parse("5.5.5")
-    check parsed == @["begin".mds, "5.5.5".mds].md
-
-  test "parser treats 5.5 as a float":
-    let parsed = parse("5.5")
-    check parsed == @["begin".mds, md(5.5)].md
-
-  test "parser rejects trailing parens":
-    let parsed = parse("(abc))")
-    check parsed.isType(dErr)
-
-  test "parser parses serialized tables properly":
-    let parsed = parseOne("(table (1 2) (3 4))", { poTransformDataForms })
-    check parsed.isType(dTable)
-    check parsed.tableVal.len == 2
-
-  test "parser handles \\n escapes properly":
-    let parsed = parseOne("\"abc\\ndef\"")
-    check parsed == "abc\ndef".md
-
-  test "parser handles \\xHH escapes properly":
-    var parsed = parseOne("\"abc\\x0adef\"")
-    check parsed == "abc\ndef".md
-
-    parsed = parseOne("\"abc\\x11\\x22\\xFF\"")
-    check parsed == "abc\x11\x22\xFF".md
-
+import nmoo/types
+import nmoo/objects
+import nmoo/verbs
+import nmoo/tasks
+import nmoo/compile
 
 suite "evaluator":
   setup:
@@ -196,7 +20,7 @@ suite "evaluator":
     world.add(root)
 
     root.output = proc (o: MObject, msg: string) =
-      echo "Sent to $#: $#".format(o, msg)
+      echo &"Sent to {o}: {msg}"
 
     var worthy = root.createChild()
     worthy.level = 0
@@ -1121,6 +945,3 @@ suite "evaluator":
 """)
 
     check result == E_QUOTA.md
-
-
-include tests/bdtest
