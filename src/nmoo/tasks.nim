@@ -285,7 +285,10 @@ impl inGSTO:
 
 impl inCLIST:
   let size = operand.intVal
-  task.spush(task.collect(size).md)
+  if size == 0:
+    task.spush(@[].md)
+  else:
+    task.spush(task.collect(size).md)
 
 impl inMENV:
   let envID = task.curFrame().symtableIndex
