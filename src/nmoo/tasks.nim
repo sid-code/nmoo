@@ -229,10 +229,9 @@ impl inGET:
 impl inSTO:
   let what = task.spop()
   let index = operand.intVal
-  if task.curST.len <= index:
-    task.curST.grow(index + 1, nilD)
+  while task.curST.len <= index:
+    task.curST.add(nilD)
   task.curST[index] = what
-
 impl inPUSH:
   task.spush(operand)
 
