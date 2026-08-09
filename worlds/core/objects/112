@@ -137,6 +137,19 @@ make-extractor
                  (make-let-forms-list pattern argvar)
                  (make-let-forms-special sp (tail pattern) argvar))))
           ((err E_ARGS (cat "Invalid type for pattern: " ($ pattern) ". Need symbol or list.")))))))
+  (define-syntax letf
+    (lambda (code)
+      (when (< 2 (len code))
+        (err E_ARGS "letf takes at least 2 parameters.")
+        (let ((let-forms
+               (call concat
+                     (map (lambda (pair)
+                            (unless (and (istype pair "list") (= 2 (len pair)))
+                              (err E_ARGS "each element in the first argument of letf needs to be a (pattern arg) pair."))
+                            (make-let-forms '(get pair 0) (get pair 1)))
+
+                          (head code)))))
+          `(let ,let-forms ,@(tail code))))))
   (make-let-forms '((&default x y) (a (&default b 4) c) lol) 'args))
 
 ($codeutils:unify '(a b c d) '(1 2 3) list)
