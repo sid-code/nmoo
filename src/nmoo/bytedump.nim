@@ -132,25 +132,25 @@ proc readMData*(s: Stream | AsyncStream): Future[MData] {.multisync.} =
 
   result.pos = pos
 
-proc writeVSymTable(s: Stream | AsyncStream, vst: VSymTable) {.multisync.} =
+proc writeVSymTable*(s: Stream | AsyncStream, vst: VSymTable) {.multisync.} =
   await s.write(int32(vst.len))
   for v in vst:
     await s.writeMData(v)
 
-proc readVSymTable(s: Stream | AsyncStream): Future[VSymTable] {.multisync.} =
+proc readVSymTable*(s: Stream | AsyncStream): Future[VSymTable] {.multisync.} =
   result = newSeq[MData]()
   var count = await s.readInt32()
   result.setLen(count)
   for i in 0 ..< count:
     result[i] = await s.readMData()
 
-proc writeSymbolTable(s: Stream | AsyncStream, st: SymbolTable) {.multisync.} =
+proc writeSymbolTable*(s: Stream | AsyncStream, st: SymbolTable) {.multisync.} =
   await s.write(int32(st.len))
   for k, v in st.pairs:
     await s.writeStrl(k)
     await s.writeMData(v)
 
-proc readSymbolTable(s: Stream | AsyncStream): Future[SymbolTable] {.multisync.} =
+proc readSymbolTable*(s: Stream | AsyncStream): Future[SymbolTable] {.multisync.} =
   result = newSymbolTable()
 
   var count = await s.readInt32()
@@ -164,7 +164,7 @@ proc readSymbolTable(s: Stream | AsyncStream): Future[SymbolTable] {.multisync.}
 proc `$`(fr: Frame): string {.used.} =
   $fr.symtableIndex & " " & $fr.tries
 
-proc writeFrame(s: Stream | AsyncStream, fr: Frame) {.multisync.} =
+proc writeFrame*(s: Stream | AsyncStream, fr: Frame) {.multisync.} =
   await s.write(uint32(fr.symtableIndex))
   await s.write(int32(fr.calledFrom))
 
@@ -172,7 +172,7 @@ proc writeFrame(s: Stream | AsyncStream, fr: Frame) {.multisync.} =
   for t in fr.tries:
     await s.write(int32(t))
 
-proc readFrame(s: Stream | AsyncStream): Future[Frame] {.multisync.} =
+proc readFrame*(s: Stream | AsyncStream): Future[Frame] {.multisync.} =
   new result
   result.symtableIndex = await s.readUint32()
   result.calledFrom = await s.readInt32()
@@ -214,19 +214,19 @@ proc readContinuation(s: Stream | AsyncStream): Future[Continuation] {.multisync
     dec count
     result.frames.add(await s.readFrame())
 
-proc writeInstruction(s: Stream | AsyncStream, inst: Instruction) {.multisync.} =
+proc writeInstruction*(s: Stream | AsyncStream, inst: Instruction) {.multisync.} =
   await s.write(int8(inst.itype))
   await s.writeMData(inst.operand)
   await s.write(int32(inst.pos.line))
   await s.write(int32(inst.pos.col))
 
-proc readInstruction(s: Stream | AsyncStream): Future[Instruction] {.multisync.} =
+proc readInstruction*(s: Stream | AsyncStream): Future[Instruction] {.multisync.} =
   result = Instruction(itype: InstructionType(await s.readInt8()))
   result.operand = await s.readMData()
   result.pos.line = await s.readInt32()
   result.pos.col = await s.readInt32()
 
-proc writePackage(s: Stream | AsyncStream, p: Package) {.multisync.} =
+proc writePackage*(s: Stream | AsyncStream, p: Package) {.multisync.} =
   await s.write(int8(p.ptype))
   case p.ptype:
     of ptData, ptError:
@@ -234,7 +234,7 @@ proc writePackage(s: Stream | AsyncStream, p: Package) {.multisync.} =
     of ptCall, ptInput:
       await s.write(int8(p.phase))
 
-proc readPackage(s: Stream | AsyncStream): Future[Package] {.multisync.} =
+proc readPackage*(s: Stream | AsyncStream): Future[Package] {.multisync.} =
   result = Package(ptype: PackageType(await s.readInt8()))
   case result.ptype:
     of ptData, ptError:
