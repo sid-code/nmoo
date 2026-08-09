@@ -1,5 +1,6 @@
 # begin Nimble config (version 2)
 # --noNimblePath
+--out:"./bin/"
 --legacy:laxEffects
 --mm:arc
 --d:useMalloc
@@ -7,6 +8,8 @@
 --passC:"-Wno-implicit-function-declaration"
 --passC:"-Wno-int-conversion"
 --d:includeWizardUtils
+
+--path:"./src"
 
 when getEnv("NMOO_DEBUG") == "1":
   --d:debug
