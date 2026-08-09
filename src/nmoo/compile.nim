@@ -432,22 +432,40 @@ proc codeGen(compiler: MCompiler, data: MData): MData =
   return E_NONE.md
 
 # Quoted data needs no extra processing UNLESS quasiquoted in which case we need to watch for unqotes.
-proc codeGenQ(compiler: MCompiler, code: MData, quasi: bool): MData =
+proc codeGenQ(compiler: MCompiler, code: MData, quasi: bool, inList: bool): MData =
+  var splatting = false
+  var splatPos = (0, 0)
+
   if code.isType(dList):
     let list = code.listVal
 
-    if quasi and list.len > 0 and list[0] == "unquote".mds:
-      if list.len == 2:
-        propogateError(compiler.codeGen(list[1]))
-      else:
-        compileError("unquote: too many arguments", code.pos)
+    if quasi and list.len > 0 and (list[0] == "unquote".mds or list[0] == "unquotesplat".mds):
+      if list[0] == "unquote".mds:
+        if list.len == 2:
+          propogateError(compiler.codeGen(list[1]))
+        else:
+          compileError("unquote: too many arguments", code.pos)
+      elif list[0] == "unquotesplat".mds:
+        if list.len == 2:
+          propogateError(compiler.codeGen(list[1]))
+          splatting = true
+          splatPos = list[1].pos
+        else:
+          compileError("unquotesplat: too many arguments", code.pos)
     else:
-      for item in list:
-        propogateError(compiler.codeGenQ(item, quasi))
       let pos = code.pos
-      compiler.radd(ins(inCLIST, list.len.md, pos))
+      compiler.radd(ins(inCLIST, 0.md, pos))
+      for item in list:
+        propogateError(compiler.codeGenQ(item, quasi, inList = true))
   else:
-    compiler.radd(ins(inPUSH, code))
+    compiler.radd(ins(inPUSH, code, code.pos))
+
+  if inList:
+    if splatting:
+      compiler.radd(ins(inPUSH, "cat".mds, splatPos))
+      compiler.radd(ins(inCALL, 2.md, splatPos))
+    else:
+      compiler.radd(ins(inPUSHL, nilD, code.pos))
 
   return E_NONE.md
 
@@ -519,12 +537,12 @@ proc compileCode*(code: string, programmer: MObject, options = compilerDefaultOp
 defSpecial "quote":
   verifyArgs("quote", args, @[dNil])
 
-  propogateError(compiler.codeGenQ(args[0], false))
+  propogateError(compiler.codeGenQ(args[0], quasi = false, inList = false))
 
 defSpecial "quasiquote":
   verifyArgs("quasiquote", args, @[dNil])
 
-  propogateError(compiler.codeGenQ(args[0], true))
+  propogateError(compiler.codeGenQ(args[0], quasi = true, inList = false))
 
 defSpecial "lambda":
   verifyArgs("lambda", args, @[dList, dNil])

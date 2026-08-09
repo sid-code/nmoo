@@ -51,6 +51,9 @@ proc getChar(lexer: var MLexer): char =
       lexer.pos.nextCol()
     return c
 
+proc skipChar(lexer: var MLexer) =
+  discard lexer.getChar()
+
 proc peekChar(lexer: var MLexer): char =
   if lexer.stream.atEnd():
     return '\0'
@@ -164,8 +167,13 @@ proc getToken(lexer: var MLexer): Token =
       result.image = "`"
 
     of ',':
-      result.ttype = tokUnquote
-      result.image = ","
+      if lexer.peekChar == '@':
+        lexer.skipChar()
+        result.ttype = tokUnquoteSplat
+        result.image = ",@"
+      else:
+        result.ttype = tokUnquote
+        result.image = ","
 
     else:
       lexer.throwError("unrecognized character '$#'".format(first))
@@ -295,7 +303,7 @@ proc consume(parser: var MParser, ttype: TokenType): Token =
 
 proc parseList*(parser: var MParser): MData
 
-const QuoteTokens = {tokQuote, tokQuasiQuote, tokUnquote}
+const QuoteTokens = {tokQuote, tokQuasiQuote, tokUnquote, tokUnquoteSplat}
 
 proc parseAtom*(parser: var MParser): MData =
   result = nilD
@@ -339,6 +347,8 @@ proc parseAtom*(parser: var MParser): MData =
         quoteSym = "quasiquote".mds
       of tokUnquote:
         quoteSym = "unquote".mds
+      of tokUnquoteSplat:
+        quoteSym = "unquotesplat".mds
       else:
         parser.parseError("unknown quote token type: " & $quoteTokType, next.pos)
 
