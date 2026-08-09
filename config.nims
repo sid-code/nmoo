@@ -15,6 +15,9 @@ when getEnv("NMOO_DEBUG") == "1":
   --passL:"-fsanitize=address,undefined"
   --debugger:native
 
+when getEnv("NMOO_DUMP_TASKS") == "1":
+  --d:dumpTaskCode
+
 when getEnv("NMOO_SINGLE_STEP") == "1":
   --d:debug
   --d:singleStepTasks
