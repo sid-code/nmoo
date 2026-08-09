@@ -138,6 +138,10 @@ suite "parser":
     let parsed = parse("`(2 3 ,(x))")
     check parsed == @["begin".mds, @["quasiquote".mds, @[2.md, 3.md, @["unquote".mds, @["x".mds].md].md].md].md].md
 
+  test "quasiquote/unquotesplat works":
+    let parsed = parse("`(2 3 ,@x)")
+    check parsed == @["begin".mds, @["quasiquote".mds, @[2.md, 3.md, @["unquotesplat".mds, "x".mds].md].md].md].md
+
   test "parser expands (obj:verb) shorthand correctly":
     let parsed = parse("(#0:filter closed door-list)")
     check parsed == @["begin".mds, @["verbcall".mds, 0.ObjID.md, "filter".md, @["list".mds, "closed".mds, "door-list".mds].md].md].md
