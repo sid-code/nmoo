@@ -417,9 +417,11 @@ defBuiltin "read":
 
 ## ::
 ##
-##   (err error-type:Err message:Str)
+##   (err error:Err message:Str?)
 ##
-## Raises an error with type ``error-type`` and message ``message``.
+## Raises an error ``error``, optionally setting the message to ``message``.
+##
+## Can also be used to re-throw an error from a ``try`` form.
 ##
 ## Example of use::
 ##
@@ -427,15 +429,15 @@ defBuiltin "read":
 ##       (err E_ARGS "too many")
 ##       (do-something-with count))
 defBuiltin "err":
-  if args.len != 2:
-    runtimeError(E_ARGS, "err takes 2 arguments")
+  if args.len != 1 and args.len != 2:
+    runtimeError(E_ARGS, "err takes 1 or 2 arguments")
 
   var err = args[0]
   checkType(err, dErr)
 
-  let msg = extractString(args[1])
+  if args.len == 2:
+    err.errMsg = extractString(args[1])
 
-  err.errMsg = msg
   err.trace = @[]
   return err.errorPack
 
