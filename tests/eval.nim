@@ -945,3 +945,16 @@ suite "evaluator":
 """)
 
     check result == E_QUOTA.md
+
+  test "quasiquote/unquote works":
+    check evalS("`(1 ,(+ 1 1))") == @[1.md, 2.md].md
+    check evalS("`(1 ,(+ 1 1) 3 4)") == @[1.md, 2.md, 3.md, 4.md].md
+
+  test "quasiquote/unquotesplat works":
+    check evalS("`(1 ,@(2 3))") == @[1.md, 2.md, 3.md].md
+    check evalS("`(1 ,@(2 3) ,@(range 4 6))") == @[1.md, 2.md, 3.md, 4.md, 5.md, 6.md].md
+
+  test "quasiquote/unquotesplat throws proper error":
+    var result = evalS("(let ((x 5)) `(1 ,@x))")
+    check result.isType(dErr)
+    check result.errVal == E_TYPE
