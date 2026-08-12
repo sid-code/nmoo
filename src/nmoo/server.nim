@@ -486,6 +486,7 @@ proc tick*(world: World) =
 
     if task.status == tsError:
       let res = task.top()
+      task.player.send($res)
       task.setStatus(tsDone)
       continue
 
@@ -499,6 +500,11 @@ proc tick*(world: World) =
           task.player.send("Your task ran for too long, so it was terminated.")
         of trError:
           task.player.send($tr.err)
+          # It's a bit weird to set the status to tsDone here instead of tsError.
+          # Ultimately, the reason is that if we set it to tsErorr, the next tick will see
+          # an errored-out task and send the error to the player. Since we already sent the
+          # error to the player this tick, we want to avoid that.
+          task.setStatus(tsDone)
     except:
       let exception = getCurrentException()
       warn exception.repr
