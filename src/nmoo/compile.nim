@@ -1035,16 +1035,22 @@ defSpecial "if":
   propogateError(compiler.codeGen(@["cond".mds, @[args[0], args[1]].md, @[args[2]].md].md))
 
 defSpecial "when":
-  if args.len != 2:
-    compileError("when takes 2 arguments (condition, if-true)", pos)
+  if args.len < 2:
+    compileError("when takes at least 2 arguments (condition, if-true[, if-true-2, ...])", pos)
 
-  propogateError(compiler.codeGen(@["if".mds, args[0], args[1], nilD].md))
+  if args.len == 2:
+    propogateError(compiler.codeGen(@["if".mds, args[0], args[1], nilD].md))
+  else:
+    propogateError(compiler.codeGen(@["if".mds, args[0], ("begin".mds & args[1..^1]).md, nilD].md))
 
 defSpecial "unless":
-  if args.len != 2:
-    compileError("unless takes 2 arguments (condition, if-false)", pos)
+  if args.len < 2:
+    compileError("unless takes at least 2 arguments (condition, if-false[, if-false-2, ...])", pos)
 
-  propogateError(compiler.codeGen(@["if".mds, args[0], nilD, args[1]].md))
+  if args.len == 2:
+    propogateError(compiler.codeGen(@["if".mds, args[0], nilD, args[1]].md))
+  else:
+    propogateError(compiler.codeGen(@["if".mds, args[0], nilD, ("begin".mds & args[1..^1]).md].md))
 
 defSpecial "begin":
   let size = args.len
