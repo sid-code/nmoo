@@ -32,14 +32,36 @@
         "type": "github"
       }
     },
+    "nim-flake": {
+      "inputs": {
+        "nim-checksums": "nim-checksums",
+        "nim-csources": "nim-csources",
+        "nim-src": "nim-src",
+        "nimony-src": "nimony-src",
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1786853915,
+        "narHash": "sha256-Wy+vbDbdsezrPVgLbc1W1EgTnr+XlfM50xqCdxILM3I=",
+        "ref": "refs/heads/main",
+        "rev": "c01a9e3cee84ff3582dc574389772e018730107c",
+        "revCount": 2,
+        "type": "git",
+        "url": "https://codeberg.org/skulk/nim-flake.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://codeberg.org/skulk/nim-flake.git"
+      }
+    },
     "nim-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1786224502,
-        "narHash": "sha256-JPhtuL4pyoTYwAt6CEkA2/YO4H2FQ/ySqlaRJfn1Kp8=",
+        "lastModified": 1786773073,
+        "narHash": "sha256-KSDE1fFZAdjj5dpZApTRFUWSOEoiPhNa+JteyAvTMEg=",
         "owner": "nim-lang",
         "repo": "Nim",
-        "rev": "f0e7969bb03a5dc6d7830197c63610559acf2556",
+        "rev": "16920b56d141680cc347020c536ee17158ad3e59",
         "type": "github"
       },
       "original": {
@@ -49,29 +71,47 @@
         "type": "github"
       }
     },
-    "nimony": {
+    "nimony-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1786211705,
-        "narHash": "sha256-SQpL0hgL0PRSfQrIH5rBtLkM+48XUIPnqdLe5u/qSSs=",
-        "owner": "nim-lang",
-        "repo": "nimony",
-        "rev": "43d72f376f99398405c06b8f5715a169d3cffb82",
-        "type": "github"
+        "lastModified": 1786728674,
+        "narHash": "sha256-yH9eMNEn+KKNTKUZZrRcWp8LuVwSwHfziSg6yyI5EWE=",
+        "ref": "refs/heads/master",
+        "rev": "27665f035cd5e819b40ec55eba6961dd9ba643b8",
+        "revCount": 1720,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/nim-lang/nimony.git"
       },
       "original": {
-        "owner": "nim-lang",
-        "repo": "nimony",
-        "type": "github"
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/nim-lang/nimony.git"
       }
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1785975029,
-        "narHash": "sha256-X44cn5rzytELc3NNoQsh0aLkjWA/QzPfc6HPQmsG3sU=",
+        "lastModified": 1786599213,
+        "narHash": "sha256-yNJd40f11EzXBjSByCB7IPpeFFAdeoSKKM67dGkfFoU=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "70ce234312134a463ba7728e94da2486a1d237ac",
+        "rev": "0e251e24a4f24e036a084b6b4b2d2491af4167f4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1786719841,
+        "narHash": "sha256-QcpQOT0NQEFkI77t+YXPZqDJc35iIodG7zinieOwFUg=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "8be7bd0c83f12e2e3bbba07c9044d6fed9e66f7f",
         "type": "github"
       },
       "original": {
@@ -83,11 +123,8 @@
     },
     "root": {
       "inputs": {
-        "nim-checksums": "nim-checksums",
-        "nim-csources": "nim-csources",
-        "nim-src": "nim-src",
-        "nimony": "nimony",
-        "nixpkgs": "nixpkgs"
+        "nim-flake": "nim-flake",
+        "nixpkgs": "nixpkgs_2"
       }
     }
   },
