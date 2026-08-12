@@ -738,6 +738,19 @@ defSpecial "fold-left":
 defSpecial "call":
   verifyArgs("call", args, @[dNil, dNil])
   propogateError(compiler.codeGen(args[1]))
+
+  let argListSym = compiler.makeUniqueSymbol("__call_arg_list__")
+  let argListI = compiler.defSymbol(argListSym.symVal)
+  emit(ins(inDUP))
+  emit(ins(inSTO, argListI.md))
+
+  propogateError(compiler.codeGen(
+    @["unless".mds, @["istype".mds, argListSym, "list".md].md,
+      @["err".mds, E_TYPE.md, "second argument to call must be a list".md].md].md))
+
+  emit(ins(inPOP))
+  compiler.undefSymbol(argListSym.symVal)
+
   propogateError(compiler.codeGen(args[0]))
 
   emit(ins(inACALL))

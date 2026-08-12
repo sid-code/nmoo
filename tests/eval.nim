@@ -522,6 +522,11 @@ suite "evaluator":
     var result = evalS("(call do (4 5))")
     check result == 5.md
 
+  test "call statement throws appropriate error if first argument is not a list":
+    var result = evalS("(call do 4)")
+    check result.isType(dErr)
+    check result.errVal == E_TYPE
+
   test "verbcall statement works":
     var obj = root.createChild()
     world.add(obj)
