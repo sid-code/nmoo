@@ -359,6 +359,12 @@ proc md*(x: openArray[(MData, MData)]): MData {.procvar.} =
   var tableVal = toTable(x)
   MData(dtype: dTable, tableVal: tableVal)
 
+
+proc atPos*(m: sink MData, p: CodePosition): MData =
+  var m = m
+  m.pos = p
+  return m
+
 proc pack*(x: MData): Package = Package(ptype: ptData, val: x)
 proc pack*(phase: int): Package = Package(ptype: ptCall, phase: phase)
 proc inputPack*(phase: int): Package = Package(ptype: ptInput, phase: phase)

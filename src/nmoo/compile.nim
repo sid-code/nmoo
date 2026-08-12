@@ -295,24 +295,26 @@ proc staticEval(compiler: MCompiler, code: MData, name = "compile-time task"):
 
   return (E_NONE.md, world.run(staticTask))
 
-proc callTransformer(compiler: MCompiler, name: string, code: MData): MData =
+proc callTransformer(compiler: MCompiler, name: string, code: MData): tuple[error: MData, res: MData] =
   let transformer = compiler.syntaxTransformers[name]
   var callCode = @["call".mds, transformer.code, @["list".mds, @["quote".mds, code].md].md].md
   callCode.pos = code.pos
   callCode.listVal[0].pos = code.pos
 
   var (cerr, tr) = compiler.staticEval(callCode)
-  propogateError(cerr, "during compilation of macro code", code.pos)
+  if cerr != E_NONE.md:
+    cerr.trace.add( ("during compilation of macro code", code.pos) )
+    return (cerr, nilD)
 
   case tr.typ:
     of trFinish:
-      return tr.res
+      return (E_NONE.md, tr.res)
     of trSuspend:
-      compileError("macro " & name & " unexpectedly suspended", code.pos)
+      return (E_COMPILE.md("macro " & name & " unexpectedly suspended").atPos(code.pos), nilD)
     of trError:
-      compileError(tr.err)
+      return (tr.err, nilD)
     of trTooLong:
-      compileError("macro " & name & "  took too long", code.pos)
+      return (E_COMPILE.md("macro " & name & "  took too long").atPos(code.pos), nilD)
 
 template defSpecial(name: string, body: untyped) {.dirty.} =
   specials[name] = proc (compiler: MCompiler, args: seq[MData], pos: CodePosition): MData =
@@ -351,6 +353,33 @@ template verifyArgs(name: string, args: seq[MData], spec: seq[MDataType], vararg
           let e1 {.inject.} = e
           compileError(fmt"{name1}: expected argument of type {e1} but got {o1.dtype}")
 
+## Expand a macro at the top-level.
+##
+## This is similar to what happens during code generation.
+proc macroexpand(compiler: MCompiler, code: MData, depth = 0): tuple[error: MData, res: MData] =
+  if depth >= MaxMacroDepth:
+    return (E_MAXREC.md("maximum macro recursion depth exceeded").atPos(code.pos), nilD)
+
+  if not code.isType(dList):
+    return (E_NONE.md, code)
+
+  let codeL = code.listVal
+  if codeL.len == 0:
+    return (E_NONE.md, code)
+
+  let first = codeL[0]
+  if not first.isType(dSym):
+    return (E_NONE.md, code)
+
+  if not compiler.macroExists(first.symVal):
+    return (E_NONE.md, code)
+
+  let (transformError, transformedCode) = compiler.callTransformer(first.symVal, code)
+  if transformError != E_NONE.md:
+    return (transformError, nilD)
+
+  return compiler.macroexpand(transformedCode, depth = depth + 1)
+
 proc codeGen(compiler: MCompiler, code: seq[MData], pos: CodePosition): MData =
   if code.len == 0:
     compiler.radd(ins(inCLIST, 0.md, pos))
@@ -361,9 +390,9 @@ proc codeGen(compiler: MCompiler, code: seq[MData], pos: CodePosition): MData =
   if first.isType(dSym):
     let name = first.symVal
     if compiler.macroExists(name):
-      let transformedCode = compiler.callTransformer(name, code.md)
-      if transformedCode.isType(dErr):
-        propogateError(transformedCode)
+      let (transformError, transformedCode) = compiler.callTransformer(name, code.md)
+      if transformError != E_NONE.md:
+        propogateError(transformError)
 
       if compiler.depth >= MaxMacroDepth:
         return E_MAXREC.md("maximum macro recursion depth exceeded")
@@ -758,6 +787,14 @@ defSpecial "macrocall":
       compileError(tr.err)
     of trTooLong:
       compileError("macro call $# took too long".format(callstr), pos)
+
+defSpecial "macroexpand":
+  if args.len != 1:
+    compileError("macroexpand: requires exactly one argument", pos)
+
+  let (err, res) = compiler.macroexpand(args[0])
+  propogateError(err)
+  propogateError(compiler.codeGenQ(res, quasi = false, inList = false))
 
 defSpecial "define":
   verifyArgs("define", args, @[dSym, dNil])
